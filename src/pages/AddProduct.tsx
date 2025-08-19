@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { PlusCircle, Upload, Tag, DollarSign, Package, Plus, Minus } from 'lucide-react';
+import { PlusCircle, Upload, Tag, DollarSign, Package, Plus, Minus, Camera, X, Check } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +11,9 @@ export default function AddProductPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -20,11 +23,12 @@ export default function AddProductPage() {
     unit: 'per litre',
     image_url: '',
     discount_percentage: '',
+    is_active: true,
     benefits: [''],
     ingredients: ['']
   });
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -49,11 +53,92 @@ export default function AddProductPage() {
     }));
   };
 
+  // Handle image file selection
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setImageFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Upload image to Supabase Storage
+  const uploadImage = async (): Promise<string | null> => {
+    if (!imageFile || !user) return null;
+
+    setImageUploading(true);
+    try {
+      const fileExt = imageFile.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(filePath, imageFile);
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        toast({
+          title: "Upload Failed",
+          description: "Failed to upload image. Please try again.",
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      const { data } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Image upload error:', error);
+      toast({
+        title: "Upload Error",
+        description: "An error occurred while uploading the image.",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview('');
+    setFormData(prev => ({ ...prev, image_url: '' }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      // Upload image first if one is selected
+      let imageUrl = formData.image_url;
+      if (imageFile) {
+        const uploadedImageUrl = await uploadImage();
+        if (uploadedImageUrl) {
+          imageUrl = uploadedImageUrl;
+        }
+      }
+
       // Filter out empty strings from arrays
       const benefits = formData.benefits.filter(b => b.trim() !== '');
       const ingredients = formData.ingredients.filter(i => i.trim() !== '');
@@ -65,11 +150,11 @@ export default function AddProductPage() {
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         type: formData.type || null,
         unit: formData.unit,
-        image_url: formData.image_url || null,
+        image_url: imageUrl || null,
         discount_percentage: formData.discount_percentage ? parseFloat(formData.discount_percentage) : 0,
         benefits: benefits.length > 0 ? benefits : null,
         ingredients: ingredients.length > 0 ? ingredients : null,
-        is_active: true,
+        is_active: formData.is_active,
         seller_id: user?.id // Add seller_id to track ownership
       };
 
@@ -232,21 +317,92 @@ export default function AddProductPage() {
               </div>
             </div>
 
-            {/* Right Column */}
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <Upload className="w-4 h-4" />
-                  Image URL
+          {/* Right Column */}
+          <div className="space-y-6">
+            {/* Image Upload */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                <Camera className="w-4 h-4" />
+                Product Image
+              </label>
+              
+              {imagePreview ? (
+                <div className="relative border-2 border-border rounded-2xl p-4">
+                  <img
+                    src={imagePreview}
+                    alt="Product preview"
+                    className="w-full h-48 object-cover rounded-xl"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="absolute top-2 right-2 p-2 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-border rounded-2xl p-8 text-center hover:border-primary/50 transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label htmlFor="image-upload" className="cursor-pointer block">
+                    <Upload className="w-12 h-12 text-secondary mx-auto mb-4" />
+                    <p className="text-secondary mb-2">Drop image here or click to upload</p>
+                    <p className="text-sm text-secondary">PNG, JPG up to 5MB</p>
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {/* Alternative: Image URL Input */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Or paste image URL</label>
+              <input
+                type="url"
+                value={formData.image_url}
+                onChange={(e) => handleInputChange('image_url', e.target.value)}
+                placeholder="https://example.com/image.jpg"
+                className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder:text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+            </div>
+
+            {/* Product Status */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Product Status</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="status"
+                    checked={formData.is_active === true}
+                    onChange={() => handleInputChange('is_active', true)}
+                    className="text-primary focus:ring-primary"
+                  />
+                  <span className="flex items-center gap-2 text-sm">
+                    <Check className="w-4 h-4 text-primary" />
+                    Active
+                  </span>
                 </label>
-                <input
-                  type="url"
-                  value={formData.image_url}
-                  onChange={(e) => handleInputChange('image_url', e.target.value)}
-                  placeholder="https://example.com/image.jpg"
-                  className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder:text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                />
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="status"
+                    checked={formData.is_active === false}
+                    onChange={() => handleInputChange('is_active', false)}
+                    className="text-secondary focus:ring-secondary"
+                  />
+                  <span className="flex items-center gap-2 text-sm">
+                    <X className="w-4 h-4 text-secondary" />
+                    Inactive
+                  </span>
+                </label>
               </div>
+            </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">Discount %</label>
@@ -334,15 +490,23 @@ export default function AddProductPage() {
           <div className="flex flex-col sm:flex-row gap-4 pt-8 border-t border-border">
             <button
               type="submit"
-              disabled={loading}
-              className="zaago-button-primary px-8 py-3 font-semibold disabled:opacity-50"
+              disabled={loading || imageUploading}
+              className="zaago-button-primary px-8 py-3 font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? 'Creating...' : 'Create Product'}
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  {imageUploading ? 'Uploading Image...' : 'Creating Product...'}
+                </>
+              ) : (
+                'Create Product'
+              )}
             </button>
             <Link to="/products">
               <button
                 type="button"
-                className="zaago-button-ghost px-8 py-3 font-semibold w-full sm:w-auto"
+                disabled={loading || imageUploading}
+                className="zaago-button-ghost px-8 py-3 font-semibold w-full sm:w-auto disabled:opacity-50"
               >
                 Cancel
               </button>
