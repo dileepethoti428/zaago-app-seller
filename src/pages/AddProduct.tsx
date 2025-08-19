@@ -12,8 +12,8 @@ export default function AddProductPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -53,76 +53,98 @@ export default function AddProductPage() {
     }));
   };
 
-  // Handle image file selection
+  // Handle multiple image file selection
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const files = e.target.files;
+    if (!files) return;
+
+    const selectedFiles = Array.from(files);
+    const validFiles: File[] = [];
+    const newPreviews: string[] = [];
+
+    selectedFiles.forEach(file => {
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
         toast({
           title: "File too large",
-          description: "Please select an image smaller than 5MB.",
+          description: `${file.name} is larger than 5MB. Please select smaller images.`,
           variant: "destructive",
         });
         return;
       }
+      validFiles.push(file);
+    });
 
-      setImageFile(file);
-      
-      // Create preview
+    if (validFiles.length === 0) return;
+
+    setImageFiles(prev => [...prev, ...validFiles]);
+
+    // Create previews for new files
+    validFiles.forEach(file => {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
+        const result = e.target?.result as string;
+        setImagePreviews(prev => [...prev, result]);
       };
       reader.readAsDataURL(file);
-    }
+    });
   };
 
-  // Upload image to Supabase Storage
-  const uploadImage = async (): Promise<string | null> => {
-    if (!imageFile || !user) return null;
+  // Upload multiple images to Supabase Storage
+  const uploadImages = async (): Promise<string[]> => {
+    if (imageFiles.length === 0 || !user) return [];
 
     setImageUploading(true);
+    const uploadedUrls: string[] = [];
+
     try {
-      const fileExt = imageFile.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
+      for (const file of imageFiles) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('product-images')
-        .upload(filePath, imageFile);
+        const { error: uploadError } = await supabase.storage
+          .from('product-images')
+          .upload(filePath, file);
 
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        toast({
-          title: "Upload Failed",
-          description: "Failed to upload image. Please try again.",
-          variant: "destructive",
-        });
-        return null;
+        if (uploadError) {
+          console.error('Upload error for file:', file.name, uploadError);
+          continue; // Skip this file and continue with others
+        }
+
+        const { data } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(filePath);
+
+        if (data?.publicUrl) {
+          uploadedUrls.push(data.publicUrl);
+        }
       }
 
-      const { data } = supabase.storage
-        .from('product-images')
-        .getPublicUrl(filePath);
+      if (uploadedUrls.length === 0 && imageFiles.length > 0) {
+        toast({
+          title: "Upload Failed",
+          description: "Failed to upload images. Please try again.",
+          variant: "destructive",
+        });
+      }
 
-      return data.publicUrl;
+      return uploadedUrls;
     } catch (error) {
       console.error('Image upload error:', error);
       toast({
         title: "Upload Error",
-        description: "An error occurred while uploading the image.",
+        description: "An error occurred while uploading images.",
         variant: "destructive",
       });
-      return null;
+      return [];
     } finally {
       setImageUploading(false);
     }
   };
 
-  const removeImage = () => {
-    setImageFile(null);
-    setImagePreview('');
-    setFormData(prev => ({ ...prev, image_url: '' }));
+  const removeImage = (index: number) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -130,13 +152,13 @@ export default function AddProductPage() {
     setLoading(true);
 
     try {
-      // Upload image first if one is selected
-      let imageUrl = formData.image_url;
-      if (imageFile) {
-        const uploadedImageUrl = await uploadImage();
-        if (uploadedImageUrl) {
-          imageUrl = uploadedImageUrl;
-        }
+      // Upload all images
+      const uploadedImageUrls = await uploadImages();
+      
+      // Combine uploaded images with any URL from input field
+      const allImages = [...uploadedImageUrls];
+      if (formData.image_url.trim()) {
+        allImages.push(formData.image_url.trim());
       }
 
       // Filter out empty strings from arrays
@@ -150,7 +172,8 @@ export default function AddProductPage() {
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         type: formData.type || null,
         unit: formData.unit,
-        image_url: imageUrl || null,
+        image_url: allImages.length > 0 ? allImages[0] : null, // Keep backward compatibility
+        images: allImages,
         discount_percentage: formData.discount_percentage ? parseFloat(formData.discount_percentage) : 0,
         benefits: benefits.length > 0 ? benefits : null,
         ingredients: ingredients.length > 0 ? ingredients : null,
@@ -326,37 +349,47 @@ export default function AddProductPage() {
                 Product Image
               </label>
               
-              {imagePreview ? (
-                <div className="relative border-2 border-border rounded-2xl p-4">
-                  <img
-                    src={imagePreview}
-                    alt="Product preview"
-                    className="w-full h-48 object-cover rounded-xl"
-                  />
-                  <button
-                    type="button"
-                    onClick={removeImage}
-                    className="absolute top-2 right-2 p-2 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <div className="border-2 border-dashed border-border rounded-2xl p-8 text-center hover:border-primary/50 transition-colors">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageSelect}
-                    className="hidden"
-                    id="image-upload"
-                  />
-                  <label htmlFor="image-upload" className="cursor-pointer block">
-                    <Upload className="w-12 h-12 text-secondary mx-auto mb-4" />
-                    <p className="text-secondary mb-2">Drop image here or click to upload</p>
-                    <p className="text-sm text-secondary">PNG, JPG up to 5MB</p>
-                  </label>
+              {/* Image Previews */}
+              {imagePreviews.length > 0 && (
+                <div className="space-y-4">
+                  <p className="text-sm font-medium text-foreground">Selected Images ({imagePreviews.length})</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {imagePreviews.map((preview, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={preview}
+                          alt={`Product preview ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-xl border border-border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
+
+              {/* Image Upload Area */}
+              <div className="border-2 border-dashed border-border rounded-2xl p-6 text-center hover:border-primary/50 transition-colors">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageSelect}
+                  className="hidden"
+                  id="image-upload"
+                />
+                <label htmlFor="image-upload" className="cursor-pointer block">
+                  <Upload className="w-8 h-8 text-secondary mx-auto mb-3" />
+                  <p className="text-secondary mb-1">Drop images here or click to upload</p>
+                  <p className="text-xs text-secondary">Multiple PNG, JPG files up to 5MB each</p>
+                </label>
+              </div>
             </div>
 
             {/* Alternative: Image URL Input */}
@@ -493,10 +526,10 @@ export default function AddProductPage() {
               disabled={loading || imageUploading}
               className="zaago-button-primary px-8 py-3 font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? (
+                {loading || imageUploading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  {imageUploading ? 'Uploading Image...' : 'Creating Product...'}
+                  {imageUploading ? 'Uploading Images...' : 'Creating Product...'}
                 </>
               ) : (
                 'Create Product'

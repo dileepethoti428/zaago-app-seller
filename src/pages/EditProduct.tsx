@@ -15,6 +15,7 @@ interface Product {
   type?: string;
   unit: string;
   image_url?: string;
+  images?: string[];
   discount_percentage?: number;
   benefits?: string[];
   ingredients?: string[];
@@ -32,8 +33,9 @@ export default function EditProductPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
+  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -86,6 +88,13 @@ export default function EditProductPage() {
           benefits: data.benefits && data.benefits.length > 0 ? data.benefits : [''],
           ingredients: data.ingredients && data.ingredients.length > 0 ? data.ingredients : ['']
         });
+        
+        // Set existing images from both images array and image_url
+        const existingImagesList = [...(data.images || [])];
+        if (data.image_url && !existingImagesList.includes(data.image_url)) {
+          existingImagesList.unshift(data.image_url);
+        }
+        setExistingImages(existingImagesList);
       } catch (error) {
         console.error('Unexpected error:', error);
         toast({
@@ -127,76 +136,101 @@ export default function EditProductPage() {
     }));
   };
 
-  // Handle image file selection
+  // Handle multiple new image file selection
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const files = e.target.files;
+    if (!files) return;
+
+    const selectedFiles = Array.from(files);
+    const validFiles: File[] = [];
+
+    selectedFiles.forEach(file => {
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
         toast({
           title: "File too large",
-          description: "Please select an image smaller than 5MB.",
+          description: `${file.name} is larger than 5MB. Please select smaller images.`,
           variant: "destructive",
         });
         return;
       }
+      validFiles.push(file);
+    });
 
-      setImageFile(file);
-      
-      // Create preview
+    if (validFiles.length === 0) return;
+
+    setNewImageFiles(prev => [...prev, ...validFiles]);
+
+    // Create previews for new files
+    validFiles.forEach(file => {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
+        const result = e.target?.result as string;
+        setNewImagePreviews(prev => [...prev, result]);
       };
       reader.readAsDataURL(file);
-    }
+    });
   };
 
-  // Upload image to Supabase Storage
-  const uploadImage = async (): Promise<string | null> => {
-    if (!imageFile || !user) return formData.image_url || null;
+  // Upload new images to Supabase Storage
+  const uploadNewImages = async (): Promise<string[]> => {
+    if (newImageFiles.length === 0 || !user) return [];
 
     setImageUploading(true);
+    const uploadedUrls: string[] = [];
+
     try {
-      const fileExt = imageFile.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
+      for (const file of newImageFiles) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('product-images')
-        .upload(filePath, imageFile);
+        const { error: uploadError } = await supabase.storage
+          .from('product-images')
+          .upload(filePath, file);
 
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        toast({
-          title: "Upload Failed",
-          description: "Failed to upload image. Please try again.",
-          variant: "destructive",
-        });
-        return formData.image_url || null;
+        if (uploadError) {
+          console.error('Upload error for file:', file.name, uploadError);
+          continue; // Skip this file and continue with others
+        }
+
+        const { data } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(filePath);
+
+        if (data?.publicUrl) {
+          uploadedUrls.push(data.publicUrl);
+        }
       }
 
-      const { data } = supabase.storage
-        .from('product-images')
-        .getPublicUrl(filePath);
+      if (uploadedUrls.length === 0 && newImageFiles.length > 0) {
+        toast({
+          title: "Upload Failed",
+          description: "Failed to upload new images. Please try again.",
+          variant: "destructive",
+        });
+      }
 
-      return data.publicUrl;
+      return uploadedUrls;
     } catch (error) {
       console.error('Image upload error:', error);
       toast({
         title: "Upload Error",
-        description: "An error occurred while uploading the image.",
+        description: "An error occurred while uploading images.",
         variant: "destructive",
       });
-      return formData.image_url || null;
+      return [];
     } finally {
       setImageUploading(false);
     }
   };
 
-  const removeImage = () => {
-    setImageFile(null);
-    setImagePreview('');
-    setFormData(prev => ({ ...prev, image_url: '' }));
+  const removeExistingImage = (url: string) => {
+    setExistingImages(prev => prev.filter(img => img !== url));
+  };
+
+  const removeNewImage = (index: number) => {
+    setNewImageFiles(prev => prev.filter((_, i) => i !== index));
+    setNewImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -206,13 +240,13 @@ export default function EditProductPage() {
     setSaving(true);
 
     try {
-      // Upload new image if one is selected, otherwise keep existing
-      let imageUrl = formData.image_url;
-      if (imageFile) {
-        const uploadedImageUrl = await uploadImage();
-        if (uploadedImageUrl) {
-          imageUrl = uploadedImageUrl;
-        }
+      // Upload new images
+      const newUploadedUrls = await uploadNewImages();
+      
+      // Combine existing images with newly uploaded ones and URL field
+      const allImages = [...existingImages, ...newUploadedUrls];
+      if (formData.image_url.trim() && !allImages.includes(formData.image_url.trim())) {
+        allImages.push(formData.image_url.trim());
       }
 
       // Filter out empty strings from arrays
@@ -226,7 +260,8 @@ export default function EditProductPage() {
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         type: formData.type || null,
         unit: formData.unit,
-        image_url: imageUrl || null,
+        image_url: allImages.length > 0 ? allImages[0] : null, // Keep backward compatibility
+        images: allImages,
         discount_percentage: formData.discount_percentage ? parseFloat(formData.discount_percentage) : 0,
         benefits: benefits.length > 0 ? benefits : null,
         ingredients: ingredients.length > 0 ? ingredients : null,
@@ -491,44 +526,79 @@ export default function EditProductPage() {
 
             {/* Right Column */}
             <div className="space-y-6">
-              {/* Image Upload */}
-              <div className="space-y-2">
+              {/* Image Management */}
+              <div className="space-y-4">
                 <label className="text-sm font-medium text-foreground flex items-center gap-2">
                   <Camera className="w-4 h-4" />
-                  Product Image
+                  Product Images
                 </label>
                 
-                {imagePreview || formData.image_url ? (
-                  <div className="relative border-2 border-border rounded-2xl p-4">
-                    <img
-                      src={imagePreview || formData.image_url}
-                      alt="Product preview"
-                      className="w-full h-48 object-cover rounded-xl"
-                    />
-                    <button
-                      type="button"
-                      onClick={removeImage}
-                      className="absolute top-2 right-2 p-2 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="border-2 border-dashed border-border rounded-2xl p-8 text-center hover:border-primary/50 transition-colors">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageSelect}
-                      className="hidden"
-                      id="image-upload"
-                    />
-                    <label htmlFor="image-upload" className="cursor-pointer block">
-                      <Upload className="w-12 h-12 text-secondary mx-auto mb-4" />
-                      <p className="text-secondary mb-2">Drop image here or click to upload</p>
-                      <p className="text-sm text-secondary">PNG, JPG up to 5MB</p>
-                    </label>
+                {/* Existing Images */}
+                {existingImages.length > 0 && (
+                  <div className="space-y-4">
+                    <p className="text-sm font-medium text-foreground">Current Images ({existingImages.length})</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {existingImages.map((url, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={url}
+                            alt={`Current product image ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-xl border border-border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeExistingImage(url)}
+                            className="absolute -top-2 -right-2 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 transition-colors opacity-0 group-hover:opacity-100"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
+
+                {/* New Images Preview */}
+                {newImagePreviews.length > 0 && (
+                  <div className="space-y-4">
+                    <p className="text-sm font-medium text-foreground">New Images ({newImagePreviews.length})</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {newImagePreviews.map((preview, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={preview}
+                            alt={`New product image ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-xl border border-border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeNewImage(index)}
+                            className="absolute -top-2 -right-2 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 transition-colors opacity-0 group-hover:opacity-100"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Image Upload Area */}
+                <div className="border-2 border-dashed border-border rounded-2xl p-6 text-center hover:border-primary/50 transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageSelect}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label htmlFor="image-upload" className="cursor-pointer block">
+                    <Upload className="w-8 h-8 text-secondary mx-auto mb-3" />
+                    <p className="text-secondary mb-1">Add more images</p>
+                    <p className="text-xs text-secondary">Multiple PNG, JPG files up to 5MB each</p>
+                  </label>
+                </div>
               </div>
 
               {/* Alternative: Image URL Input */}
@@ -651,10 +721,10 @@ export default function EditProductPage() {
               disabled={saving || imageUploading}
               className="zaago-button-primary px-8 py-3 font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {saving ? (
+              {saving || imageUploading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  {imageUploading ? 'Uploading Image...' : 'Saving Changes...'}
+                  {imageUploading ? 'Uploading Images...' : 'Saving Changes...'}
                 </>
               ) : (
                 <>
