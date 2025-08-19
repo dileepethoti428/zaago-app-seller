@@ -4,8 +4,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 export default function AddProductPage() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -67,7 +69,8 @@ export default function AddProductPage() {
         discount_percentage: formData.discount_percentage ? parseFloat(formData.discount_percentage) : 0,
         benefits: benefits.length > 0 ? benefits : null,
         ingredients: ingredients.length > 0 ? ingredients : null,
-        is_active: true
+        is_active: true,
+        seller_id: user?.id // Add seller_id to track ownership
       };
 
       const { data, error } = await supabase

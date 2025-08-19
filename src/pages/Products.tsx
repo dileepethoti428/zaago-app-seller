@@ -1,8 +1,159 @@
 import { motion } from 'framer-motion';
 import { Package, Plus, Search, Filter } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import ProductCard from '@/components/ProductCard';
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image_url?: string;
+  is_active: boolean;
+  description?: string;
+  stock_quantity?: number;
+  created_at: string;
+  seller_id: string;
+}
 
 export default function ProductsPage() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterActive, setFilterActive] = useState<boolean | null>(null);
+
+  // Fetch products
+  const fetchProducts = async () => {
+    if (!user) return;
+
+    try {
+      let query = supabase
+        .from('products')
+        .select('*')
+        .eq('seller_id', user.id)
+        .order('created_at', { ascending: false });
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching products:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch products. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete product
+  const handleDeleteProduct = async (productId: string) => {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId)
+        .eq('seller_id', user?.id);
+
+      if (error) {
+        console.error('Error deleting product:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete product. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Success",
+        description: "Product deleted successfully!",
+      });
+
+      // Refresh products list
+      fetchProducts();
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Set up real-time subscription
+  useEffect(() => {
+    if (!user) return;
+
+    fetchProducts();
+
+    // Set up real-time subscription for products changes
+    const channel = supabase
+      .channel('products-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'products',
+          filter: `seller_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('Real-time update:', payload);
+          fetchProducts(); // Refetch products when changes occur
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  // Filter products based on search and filter
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterActive === null || product.is_active === filterActive;
+    return matchesSearch && matchesFilter;
+  });
+
+  if (loading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="space-y-6"
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-secondary">Loading your products...</p>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -15,25 +166,25 @@ export default function ProductsPage() {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.1, duration: 0.3 }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
       >
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
             <Package className="w-8 h-8 text-primary" />
-            Products
+            Your Products
           </h1>
-          <p className="text-secondary mt-1">Manage your product inventory</p>
+          <p className="text-secondary mt-1">{products.length} products in your inventory</p>
         </div>
         
         <Link to="/products/new">
-          <button className="zaago-button-primary px-6 py-3 flex items-center gap-2 font-semibold">
+          <button className="zaago-button-primary px-6 py-3 font-semibold flex items-center gap-2">
             <Plus className="w-5 h-5" />
             Add Product
           </button>
         </Link>
       </motion.div>
 
-      {/* Search and Filters */}
+      {/* Filters */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -41,42 +192,80 @@ export default function ProductsPage() {
         className="zaago-card p-6"
       >
         <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
+          {/* Search */}
+          <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary w-5 h-5" />
             <input
               type="text"
               placeholder="Search products..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder:text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             />
           </div>
-          <button className="zaago-button-ghost px-4 py-3 flex items-center gap-2">
-            <Filter className="w-5 h-5" />
-            Filters
-          </button>
+
+          {/* Status Filter */}
+          <div className="flex items-center gap-2">
+            <Filter className="w-5 h-5 text-secondary" />
+            <select
+              value={filterActive === null ? 'all' : filterActive ? 'active' : 'inactive'}
+              onChange={(e) => {
+                const value = e.target.value;
+                setFilterActive(value === 'all' ? null : value === 'active');
+              }}
+              className="px-4 py-3 bg-input border border-border rounded-2xl text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            >
+              <option value="all">All Products</option>
+              <option value="active">Active Only</option>
+              <option value="inactive">Inactive Only</option>
+            </select>
+          </div>
         </div>
       </motion.div>
 
-      {/* Products Grid Placeholder */}
+      {/* Products Grid */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-        className="zaago-card p-8 text-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3, duration: 0.3 }}
       >
-        <Package className="w-20 h-20 text-secondary mx-auto mb-4 opacity-50" />
-        <h3 className="text-xl font-semibold text-foreground mb-2">Products List</h3>
-        <p className="text-secondary mb-6">
-          Product listing will be implemented here. This is a placeholder screen ready for your inventory system.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-muted rounded-2xl p-4 animate-pulse">
-              <div className="h-32 bg-border rounded-xl mb-4"></div>
-              <div className="h-4 bg-border rounded mb-2"></div>
-              <div className="h-3 bg-border rounded w-2/3"></div>
-            </div>
-          ))}
-        </div>
+        {filteredProducts.length === 0 ? (
+          <div className="zaago-card p-12 text-center">
+            <Package className="w-16 h-16 text-secondary mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-foreground mb-2">
+              {searchTerm || filterActive !== null ? 'No products found' : 'No products yet'}
+            </h3>
+            <p className="text-secondary mb-6">
+              {searchTerm || filterActive !== null 
+                ? 'Try adjusting your search or filters'
+                : 'Start building your inventory by adding your first product'
+              }
+            </p>
+            {!searchTerm && filterActive === null && (
+              <Link to="/products/new">
+                <button className="zaago-button-primary px-6 py-3 font-semibold">
+                  Add Your First Product
+                </button>
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredProducts.map((product, index) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.3 }}
+              >
+                <ProductCard 
+                  product={product} 
+                  onDelete={handleDeleteProduct}
+                />
+              </motion.div>
+            ))}
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );

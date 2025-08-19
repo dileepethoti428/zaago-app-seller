@@ -1044,6 +1044,7 @@ export type Database = {
           name: string
           nutritional_info: Json | null
           price: number
+          seller_id: string | null
           stock_quantity: number | null
           type: string | null
           unit: string | null
@@ -1063,6 +1064,7 @@ export type Database = {
           name: string
           nutritional_info?: Json | null
           price: number
+          seller_id?: string | null
           stock_quantity?: number | null
           type?: string | null
           unit?: string | null
@@ -1082,6 +1084,7 @@ export type Database = {
           name?: string
           nutritional_info?: Json | null
           price?: number
+          seller_id?: string | null
           stock_quantity?: number | null
           type?: string | null
           unit?: string | null
