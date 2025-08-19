@@ -105,22 +105,76 @@ export default function ProductsPage() {
   useEffect(() => {
     if (!user) return;
 
+    // Initial fetch
     fetchProducts();
 
-    // Set up real-time subscription for products changes
+    // Set up real-time subscription for all products changes (for cross-seller visibility)
     const channel = supabase
-      .channel('products-changes')
+      .channel('products-realtime')
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'products',
-          filter: `seller_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log('Real-time update:', payload);
-          fetchProducts(); // Refetch products when changes occur
+          console.log('New product added:', payload);
+          const newProduct = payload.new as Product;
+          
+          // Only add to list if it belongs to current seller
+          if (newProduct.seller_id === user.id) {
+            setProducts((prev) => [newProduct, ...prev]);
+            toast({
+              title: "Product Added",
+              description: `${newProduct.name} was added successfully!`,
+            });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'products',
+        },
+        (payload) => {
+          console.log('Product updated:', payload);
+          const updatedProduct = payload.new as Product;
+          
+          // Only update if it belongs to current seller
+          if (updatedProduct.seller_id === user.id) {
+            setProducts((prev) =>
+              prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
+            );
+            toast({
+              title: "Product Updated",
+              description: `${updatedProduct.name} was updated successfully!`,
+            });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'products',
+        },
+        (payload) => {
+          console.log('Product deleted:', payload);
+          const deletedProduct = payload.old as Product;
+          
+          // Only remove if it belonged to current seller
+          if (deletedProduct.seller_id === user.id) {
+            setProducts((prev) => prev.filter((p) => p.id !== deletedProduct.id));
+            toast({
+              title: "Product Deleted",
+              description: `${deletedProduct.name} was deleted successfully!`,
+              variant: "destructive",
+            });
+          }
         }
       )
       .subscribe();
@@ -128,7 +182,7 @@ export default function ProductsPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, toast]);
 
   // Filter products based on search and filter
   const filteredProducts = products.filter(product => {
