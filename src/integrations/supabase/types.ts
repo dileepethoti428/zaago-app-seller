@@ -1031,37 +1031,58 @@ export type Database = {
       }
       products: {
         Row: {
+          benefits: string[] | null
           category_id: string | null
           created_at: string
+          description: string | null
+          discount_percentage: number | null
           id: string
           image_url: string | null
+          images: string[] | null
+          ingredients: string[] | null
           is_active: boolean
           name: string
+          nutritional_info: Json | null
           price: number
+          stock_quantity: number | null
           type: string | null
           unit: string | null
           updated_at: string
         }
         Insert: {
+          benefits?: string[] | null
           category_id?: string | null
           created_at?: string
+          description?: string | null
+          discount_percentage?: number | null
           id?: string
           image_url?: string | null
+          images?: string[] | null
+          ingredients?: string[] | null
           is_active?: boolean
           name: string
+          nutritional_info?: Json | null
           price: number
+          stock_quantity?: number | null
           type?: string | null
           unit?: string | null
           updated_at?: string
         }
         Update: {
+          benefits?: string[] | null
           category_id?: string | null
           created_at?: string
+          description?: string | null
+          discount_percentage?: number | null
           id?: string
           image_url?: string | null
+          images?: string[] | null
+          ingredients?: string[] | null
           is_active?: boolean
           name?: string
+          nutritional_info?: Json | null
           price?: number
+          stock_quantity?: number | null
           type?: string | null
           unit?: string | null
           updated_at?: string
