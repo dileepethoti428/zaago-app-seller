@@ -84,13 +84,9 @@ export default function ProductsPage() {
         return;
       }
 
-      toast({
-        title: "Success",
-        description: "Product deleted successfully!",
-      });
-
-      // Refresh products list
-      fetchProducts();
+      // Note: No need to manually refetch or update state here
+      // The realtime subscription will automatically handle the DELETE event
+      // and update the products list with toast notification
     } catch (error) {
       console.error('Unexpected error:', error);
       toast({
