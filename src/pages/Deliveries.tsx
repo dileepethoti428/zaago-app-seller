@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion';
-import { Truck, Clock, CheckCircle, Package, MapPin, Filter, Calendar } from 'lucide-react';
+import { Truck, Clock, CheckCircle, Package, MapPin, Filter, Calendar, Download } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import Papa from 'papaparse';
+import { saveAs } from 'file-saver';
 
 interface DeliveredOrder {
   id: string;
@@ -74,6 +76,104 @@ export default function DeliveriesPage() {
     })).sort((a, b) => b.quantity - a.quantity);
 
     setProductTotals(productTotalsArray);
+  };
+
+  const exportDeliveryReport = () => {
+    if (filteredOrders.length === 0) {
+      toast({
+        title: "No Data to Export",
+        description: "No deliveries available for the selected date",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Prepare detailed orders data
+      const orderRows = filteredOrders.flatMap(order => {
+        if (order.items && Array.isArray(order.items)) {
+          return order.items.map((item: any) => ({
+            'Date': new Date(order.created_at).toLocaleDateString(),
+            'Time': new Date(order.created_at).toLocaleTimeString(),
+            'Order ID': order.id.slice(0, 8),
+            'Customer Name': order.customer_name || 'N/A',
+            'Customer Phone': order.customer_phone || 'N/A',
+            'Product Name': item.name || 'Unknown Product',
+            'Quantity': item.quantity || 0,
+            'Unit Price (₹)': item.unit_price || 0,
+            'Item Total (₹)': (item.quantity || 0) * (item.unit_price || 0),
+            'Order Total (₹)': order.total,
+            'Payment Status': order.payment_status || 'N/A',
+            'Delivery Address': order.address?.full_address || 'N/A',
+            'City': order.address?.city || 'N/A',
+            'Special Instructions': order.special_instructions || 'None',
+          }));
+        }
+        return [];
+      });
+
+      // Add separator row
+      const separatorRow = {
+        'Date': '',
+        'Time': '',
+        'Order ID': '--- PRODUCT SUMMARY ---',
+        'Customer Name': '',
+        'Customer Phone': '',
+        'Product Name': '',
+        'Quantity': '',
+        'Unit Price (₹)': '',
+        'Item Total (₹)': '',
+        'Order Total (₹)': '',
+        'Payment Status': '',
+        'Delivery Address': '',
+        'City': '',
+        'Special Instructions': '',
+      };
+
+      // Prepare product totals summary
+      const summaryRows = productTotals.map(product => ({
+        'Date': selectedDate,
+        'Time': '',
+        'Order ID': 'SUMMARY',
+        'Customer Name': '',
+        'Customer Phone': '',
+        'Product Name': product.name,
+        'Quantity': product.quantity,
+        'Unit Price (₹)': '',
+        'Item Total (₹)': '',
+        'Order Total (₹)': '',
+        'Payment Status': '',
+        'Delivery Address': `${product.orders} orders delivered`,
+        'City': '',
+        'Special Instructions': `Restock Level: ${
+          product.quantity > 50 ? 'High' :
+          product.quantity > 20 ? 'Medium' : 'Low'
+        }`,
+      }));
+
+      // Combine all data
+      const allRows = [...orderRows, separatorRow, ...summaryRows];
+
+      // Generate CSV
+      const csv = Papa.unparse(allRows);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      
+      // Generate filename with date
+      const filename = `zaago-delivery-report-${selectedDate}.csv`;
+      saveAs(blob, filename);
+
+      toast({
+        title: "Export Successful",
+        description: `Delivery report for ${selectedDate} has been downloaded`,
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to generate the delivery report",
+        variant: "destructive",
+      });
+    }
   };
 
   const fetchDeliveredOrders = async () => {
@@ -362,9 +462,20 @@ export default function DeliveriesPage() {
         className="zaago-card"
       >
         <div className="p-6 border-b border-border">
-          <h2 className="text-xl font-semibold text-foreground">
-            Delivered Orders ({filteredOrders.length})
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-foreground">
+              Delivered Orders ({filteredOrders.length})
+            </h2>
+            {filteredOrders.length > 0 && (
+              <button
+                onClick={exportDeliveryReport}
+                className="zaago-button-ghost px-4 py-2 text-sm flex items-center gap-2 hover:bg-primary/10 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Export CSV
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="divide-y divide-border">
