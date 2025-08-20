@@ -30,9 +30,16 @@ interface DeliveryStats {
   thisMonth: number;
 }
 
+interface ProductTotal {
+  name: string;
+  quantity: number;
+  orders: number;
+}
+
 export default function DeliveriesPage() {
   const [deliveredOrders, setDeliveredOrders] = useState<DeliveredOrder[]>([]);
   const [stats, setStats] = useState<DeliveryStats>({ today: 0, thisWeek: 0, thisMonth: 0 });
+  const [productTotals, setProductTotals] = useState<ProductTotal[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
@@ -40,6 +47,34 @@ export default function DeliveriesPage() {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
+
+  const calculateProductTotals = (orders: DeliveredOrder[]) => {
+    const totalsMap: { [key: string]: { quantity: number; orders: number } } = {};
+    
+    orders.forEach(order => {
+      if (order.items && Array.isArray(order.items)) {
+        order.items.forEach((item: any) => {
+          const productName = item.name || 'Unknown Product';
+          const quantity = parseInt(item.quantity) || 0;
+          
+          if (!totalsMap[productName]) {
+            totalsMap[productName] = { quantity: 0, orders: 0 };
+          }
+          
+          totalsMap[productName].quantity += quantity;
+          totalsMap[productName].orders += 1;
+        });
+      }
+    });
+
+    const productTotalsArray = Object.entries(totalsMap).map(([name, data]) => ({
+      name,
+      quantity: data.quantity,
+      orders: data.orders,
+    })).sort((a, b) => b.quantity - a.quantity);
+
+    setProductTotals(productTotalsArray);
+  };
 
   const fetchDeliveredOrders = async () => {
     setLoading(true);
@@ -62,7 +97,9 @@ export default function DeliveriesPage() {
         return;
       }
 
-      setDeliveredOrders(data || []);
+      const ordersData = data || [];
+      setDeliveredOrders(ordersData);
+      calculateProductTotals(ordersData);
     } catch (error) {
       console.error('Unexpected error:', error);
       toast({
@@ -140,7 +177,11 @@ export default function DeliveriesPage() {
           // Add to list if it matches current date filter
           const orderDate = new Date(updatedOrder.created_at).toISOString().split('T')[0];
           if (orderDate === selectedDate) {
-            setDeliveredOrders((prev) => [updatedOrder, ...prev]);
+            setDeliveredOrders((prev) => {
+              const updatedOrders = [updatedOrder, ...prev];
+              calculateProductTotals(updatedOrders);
+              return updatedOrders;
+            });
             toast({
               title: "New Delivery!",
               description: `Order for ${updatedOrder.customer_name} was delivered`,
@@ -242,6 +283,76 @@ export default function DeliveriesPage() {
           </div>
         </div>
       </motion.div>
+
+      {/* Product Totals Analytics */}
+      {!loading && deliveredOrders.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35, duration: 0.5 }}
+          className="zaago-card"
+        >
+          <div className="p-6 border-b border-border">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-foreground">Product-wise Inventory Summary</h2>
+              <p className="text-sm text-secondary">
+                {deliveredOrders.length} orders • {productTotals.reduce((sum, p) => sum + p.quantity, 0)} items delivered
+              </p>
+            </div>
+          </div>
+
+          <div className="p-6">
+            {productTotals.length === 0 ? (
+              <div className="text-center py-8">
+                <Package className="w-12 h-12 text-secondary mx-auto mb-4" />
+                <p className="text-secondary">No product data available for this date</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {productTotals.map((product, index) => (
+                  <motion.div
+                    key={product.name}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.4 + index * 0.05, duration: 0.3 }}
+                    className="p-4 bg-muted/30 rounded-2xl border border-border/50 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="p-2 bg-primary/10 rounded-xl">
+                        <Package className="w-5 h-5 text-primary" />
+                      </div>
+                      <span className="text-xs text-secondary bg-background px-2 py-1 rounded-lg">
+                        {product.orders} orders
+                      </span>
+                    </div>
+                    <h3 className="font-semibold text-foreground text-sm mb-1">{product.name}</h3>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-bold text-primary">{product.quantity}</span>
+                      <span className="text-sm text-secondary">units</span>
+                    </div>
+                    
+                    {/* Stock Planning Indicator */}
+                    <div className="mt-3 pt-3 border-t border-border/30">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-secondary">Restock Level:</span>
+                        <span className={`font-medium ${
+                          product.quantity > 50 ? 'text-green-400' :
+                          product.quantity > 20 ? 'text-yellow-400' :
+                          'text-red-400'
+                        }`}>
+                          {product.quantity > 50 ? 'High' :
+                           product.quantity > 20 ? 'Medium' :
+                           'Low'}
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
 
       {/* Deliveries List */}
       <motion.div
