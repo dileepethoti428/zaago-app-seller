@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          metadata: Json | null
+          title: string
+          type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          metadata?: Json | null
+          title: string
+          type: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          metadata?: Json | null
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      admin_secret_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agent_work_sessions: {
         Row: {
           agent_id: string
@@ -51,6 +117,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      app_notifications: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          priority: string
+          scheduled_at: string | null
+          sent_at: string | null
+          status: string
+          target_audience: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          priority?: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string
+          target_audience?: string
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          priority?: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string
+          target_audience?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       app_ratings: {
         Row: {
@@ -146,6 +260,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_sellers"
             referencedColumns: ["id"]
           },
         ]
@@ -657,6 +778,63 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "favorites_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_recipients: {
+        Row: {
+          created_at: string
+          delivered_at: string | null
+          delivery_method: string
+          email: string | null
+          error_message: string | null
+          id: string
+          notification_id: string
+          phone: string | null
+          sent_at: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          delivered_at?: string | null
+          delivery_method?: string
+          email?: string | null
+          error_message?: string | null
+          id?: string
+          notification_id: string
+          phone?: string | null
+          sent_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          delivered_at?: string | null
+          delivery_method?: string
+          email?: string | null
+          error_message?: string | null
+          id?: string
+          notification_id?: string
+          phone?: string | null
+          sent_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_recipients_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "app_notifications"
+            referencedColumns: ["id"]
+          },
         ]
       }
       notifications: {
@@ -698,6 +876,20 @@ export type Database = {
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "notifications_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders_with_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["transaction_id"]
+          },
         ]
       }
       order_items: {
@@ -737,10 +929,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders_with_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["transaction_id"]
+          },
+          {
             foreignKeyName: "order_items_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_sellers"
             referencedColumns: ["id"]
           },
         ]
@@ -786,6 +999,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_qr_codes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders_with_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_qr_codes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["transaction_id"]
           },
           {
             foreignKeyName: "order_qr_codes_scanned_by_fkey"
@@ -839,6 +1066,20 @@ export type Database = {
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "order_tracking_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders_with_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_tracking_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["transaction_id"]
+          },
         ]
       }
       orders: {
@@ -853,7 +1094,7 @@ export type Database = {
           delivery_time_slot: string | null
           id: string
           items: Json
-          payment_id: string
+          payment_id: string | null
           payment_status: string | null
           special_instructions: string | null
           status: string
@@ -872,7 +1113,7 @@ export type Database = {
           delivery_time_slot?: string | null
           id?: string
           items: Json
-          payment_id: string
+          payment_id?: string | null
           payment_status?: string | null
           special_instructions?: string | null
           status?: string
@@ -891,7 +1132,7 @@ export type Database = {
           delivery_time_slot?: string | null
           id?: string
           items?: Json
-          payment_id?: string
+          payment_id?: string | null
           payment_status?: string | null
           special_instructions?: string | null
           status?: string
@@ -1132,6 +1373,10 @@ export type Database = {
       }
       profiles: {
         Row: {
+          admin_verification_photo: string | null
+          approval_status: string | null
+          approved_at: string | null
+          approved_by: string | null
           avatar_url: string | null
           created_at: string
           default_address: Json | null
@@ -1139,10 +1384,18 @@ export type Database = {
           id: string
           notification_preferences: Json | null
           phone: string | null
+          photo_uploaded_at: string | null
+          photo_url: string | null
+          photo_verified: boolean | null
+          rejection_reason: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          admin_verification_photo?: string | null
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           avatar_url?: string | null
           created_at?: string
           default_address?: Json | null
@@ -1150,10 +1403,18 @@ export type Database = {
           id?: string
           notification_preferences?: Json | null
           phone?: string | null
+          photo_uploaded_at?: string | null
+          photo_url?: string | null
+          photo_verified?: boolean | null
+          rejection_reason?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          admin_verification_photo?: string | null
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           avatar_url?: string | null
           created_at?: string
           default_address?: Json | null
@@ -1161,6 +1422,10 @@ export type Database = {
           id?: string
           notification_preferences?: Json | null
           phone?: string | null
+          photo_uploaded_at?: string | null
+          photo_url?: string | null
+          photo_verified?: boolean | null
+          rejection_reason?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1206,13 +1471,162 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders_with_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["transaction_id"]
+          },
+          {
             foreignKeyName: "reviews_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_sellers"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      secret_code_reset_requests: {
+        Row: {
+          admin_email: string
+          created_at: string
+          expires_at: string
+          id: string
+          reason: string | null
+          request_token: string
+          requested_by_email: string | null
+          requested_by_name: string | null
+          status: string
+          updated_at: string
+          used_at: string | null
+        }
+        Insert: {
+          admin_email: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          reason?: string | null
+          request_token: string
+          requested_by_email?: string | null
+          requested_by_name?: string | null
+          status?: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Update: {
+          admin_email?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          reason?: string | null
+          request_token?: string
+          requested_by_email?: string | null
+          requested_by_name?: string | null
+          status?: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
+      secret_code_usage: {
+        Row: {
+          code_id: string | null
+          email: string
+          full_name: string | null
+          id: string
+          ip_address: string | null
+          status: string
+          used_at: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          code_id?: string | null
+          email: string
+          full_name?: string | null
+          id?: string
+          ip_address?: string | null
+          status?: string
+          used_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          code_id?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          ip_address?: string | null
+          status?: string
+          used_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "secret_code_usage_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "admin_secret_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sellers: {
+        Row: {
+          address: Json | null
+          business_license: string | null
+          business_name: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address?: Json | null
+          business_license?: string | null
+          business_name?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: Json | null
+          business_license?: string | null
+          business_name?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       subscriptions: {
         Row: {
@@ -1408,12 +1822,103 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      orders_with_agents: {
+        Row: {
+          address: Json | null
+          agent_email: string | null
+          agent_id: string | null
+          agent_name: string | null
+          agent_phone: string | null
+          created_at: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          delivered: boolean | null
+          delivery_date: string | null
+          delivery_time_slot: string | null
+          id: string | null
+          items: Json | null
+          payment_status: string | null
+          special_instructions: string | null
+          status: string | null
+          total: number | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_transactions: {
+        Row: {
+          agent_name: string | null
+          amount: number | null
+          customer_name: string | null
+          customer_phone: string | null
+          delivered: boolean | null
+          order_status: string | null
+          payment_id: string | null
+          payment_status: string | null
+          transaction_date: string | null
+          transaction_id: string | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
+      products_with_sellers: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          discount_percentage: number | null
+          id: string | null
+          image_url: string | null
+          images: string[] | null
+          is_active: boolean | null
+          name: string | null
+          price: number | null
+          seller_business: string | null
+          seller_id: string | null
+          seller_name: string | null
+          stock_quantity: number | null
+          type: string | null
+          unit: string | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      approve_user: {
+        Args: { admin_user_id: string; target_user_id: string }
+        Returns: Json
+      }
+      approve_user_with_admin_photo: {
+        Args: {
+          admin_photo_url?: string
+          admin_user_id: string
+          target_user_id: string
+        }
+        Returns: Json
+      }
+      can_register_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       clear_user_cart: {
         Args: { cart_user_id: string }
         Returns: undefined
+      }
+      complete_cod_delivery: {
+        Args: {
+          p_agent_id: string
+          p_order_id: string
+          p_payment_method?: string
+        }
+        Returns: Json
       }
       generate_order_qr_code: {
         Args: { order_uuid: string }
@@ -1422,6 +1927,15 @@ export type Database = {
       get_agent_hours_today: {
         Args: { agent_uuid: string }
         Returns: number
+      }
+      get_agent_performance: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          avg_rating: number
+          deliveries_today: number
+          online_agents: number
+          total_agents: number
+        }[]
       }
       get_agent_profile_with_metrics: {
         Args: { agent_email: string }
@@ -1434,6 +1948,36 @@ export type Database = {
       get_cart_total: {
         Args: { cart_user_id: string }
         Returns: number
+      }
+      get_dashboard_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      get_delivery_performance: {
+        Args: Record<PropertyKey, never> | { time_period?: string }
+        Returns: {
+          confirmed: number
+          date: string
+          delivered: number
+          pending: number
+        }[]
+      }
+      get_top_products: {
+        Args: { limit_count?: number }
+        Returns: {
+          name: string
+          qty_sold: number
+          revenue: number
+        }[]
+      }
+      get_users_by_role: {
+        Args: { target_role: string }
+        Returns: {
+          email: string
+          full_name: string
+          phone: string
+          user_id: string
+        }[]
       }
       has_role: {
         Args: {
@@ -1454,12 +1998,42 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      log_secret_code_usage: {
+        Args: {
+          input_code: string
+          user_agent_string?: string
+          user_email: string
+          user_full_name: string
+          user_ip?: string
+        }
+        Returns: string
+      }
+      reject_user: {
+        Args: { admin_user_id: string; reason?: string; target_user_id: string }
+        Returns: Json
+      }
+      request_secret_code_reset: {
+        Args: {
+          requester_email: string
+          requester_name?: string
+          reset_reason?: string
+        }
+        Returns: Json
+      }
       reset_daily_delivery_counts: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
       scan_qr_and_deliver_order: {
         Args: { agent_id: string; order_id: string; qr_code_id: string }
+        Returns: boolean
+      }
+      validate_reset_token: {
+        Args: { token: string }
+        Returns: boolean
+      }
+      validate_secret_code: {
+        Args: { input_code: string }
         Returns: boolean
       }
     }
