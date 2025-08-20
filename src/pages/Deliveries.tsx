@@ -1,19 +1,174 @@
 import { motion } from 'framer-motion';
-import { Truck, Clock, CheckCircle, Package, MapPin, Filter } from 'lucide-react';
+import { Truck, Clock, CheckCircle, Package, MapPin, Filter, Calendar } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
-const deliveryStatuses = [
-  { label: 'Pending', count: 12, color: 'text-yellow-400', icon: Clock },
-  { label: 'In Transit', count: 8, color: 'text-blue-400', icon: Truck },
-  { label: 'Delivered', count: 45, color: 'text-primary', icon: CheckCircle },
-];
+interface DeliveredOrder {
+  id: string;
+  customer_name: string | null;
+  customer_phone: string | null;
+  total: number;
+  created_at: string;
+  items: any; // JSONB field from database
+  address: any; // JSONB field from database
+  status: string;
+  user_id: string | null;
+  agent_id: string | null;
+  delivered: boolean | null;
+  delivery_date: string | null;
+  delivery_time_slot: string | null;
+  payment_id: string;
+  payment_status: string | null;
+  special_instructions: string | null;
+  updated_at: string;
+}
 
-const sampleDeliveries = [
-  { id: '001', customer: 'John Smith', product: 'Wireless Headphones', status: 'In Transit', address: '123 Main St, New York' },
-  { id: '002', customer: 'Sarah Johnson', product: 'Smart Watch', status: 'Pending', address: '456 Oak Ave, Los Angeles' },
-  { id: '003', customer: 'Mike Davis', product: 'Laptop Stand', status: 'Delivered', address: '789 Pine Rd, Chicago' },
-];
+interface DeliveryStats {
+  today: number;
+  thisWeek: number;
+  thisMonth: number;
+}
 
 export default function DeliveriesPage() {
+  const [deliveredOrders, setDeliveredOrders] = useState<DeliveredOrder[]>([]);
+  const [stats, setStats] = useState<DeliveryStats>({ today: 0, thisWeek: 0, thisMonth: 0 });
+  const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
+  const [searchTerm, setSearchTerm] = useState('');
+  const { toast } = useToast();
+
+  const fetchDeliveredOrders = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('status', 'delivered')
+        .gte('created_at', `${selectedDate}T00:00:00`)
+        .lte('created_at', `${selectedDate}T23:59:59`)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching delivered orders:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch delivered orders",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setDeliveredOrders(data || []);
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const today = new Date();
+      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      // Fetch today's deliveries
+      const { data: todayData } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('status', 'delivered')
+        .gte('created_at', today.toISOString().split('T')[0] + 'T00:00:00')
+        .lte('created_at', today.toISOString().split('T')[0] + 'T23:59:59');
+
+      // Fetch this week's deliveries
+      const { data: weekData } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('status', 'delivered')
+        .gte('created_at', weekAgo.toISOString());
+
+      // Fetch this month's deliveries
+      const { data: monthData } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('status', 'delivered')
+        .gte('created_at', monthAgo.toISOString());
+
+      setStats({
+        today: todayData?.length || 0,
+        thisWeek: weekData?.length || 0,
+        thisMonth: monthData?.length || 0,
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchDeliveredOrders();
+  }, [selectedDate]);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  // Set up realtime subscription for delivered orders
+  useEffect(() => {
+    const channel = supabase
+      .channel('delivered-orders-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: 'status=eq.delivered',
+        },
+        (payload) => {
+          console.log('Order delivered:', payload);
+          const updatedOrder = payload.new as DeliveredOrder;
+          
+          // Add to list if it matches current date filter
+          const orderDate = new Date(updatedOrder.created_at).toISOString().split('T')[0];
+          if (orderDate === selectedDate) {
+            setDeliveredOrders((prev) => [updatedOrder, ...prev]);
+            toast({
+              title: "New Delivery!",
+              description: `Order for ${updatedOrder.customer_name} was delivered`,
+            });
+          }
+          
+          // Refresh stats
+          fetchStats();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedDate, toast]);
+
+  const filteredOrders = deliveredOrders.filter(order =>
+    order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    order.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const deliveryStatuses = [
+    { label: 'Today', count: stats.today, color: 'text-primary', icon: CheckCircle },
+    { label: 'This Week', count: stats.thisWeek, color: 'text-blue-400', icon: Calendar },
+    { label: 'This Month', count: stats.thisMonth, color: 'text-green-400', icon: Truck },
+  ];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -29,9 +184,9 @@ export default function DeliveriesPage() {
       >
         <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
           <Truck className="w-8 h-8 text-primary" />
-          Deliveries
+          Delivered Orders
         </h1>
-        <p className="text-secondary mt-1">Track and manage your deliveries</p>
+        <p className="text-secondary mt-1">Track completed deliveries and manage inventory</p>
       </motion.div>
 
       {/* Stats Cards */}
@@ -72,20 +227,18 @@ export default function DeliveriesPage() {
             <input
               type="text"
               placeholder="Search by customer name or order ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder:text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             />
           </div>
           <div className="flex gap-2">
-            <select className="px-4 py-3 bg-input border border-border rounded-2xl text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
-              <option value="">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="transit">In Transit</option>
-              <option value="delivered">Delivered</option>
-            </select>
-            <button className="zaago-button-ghost px-4 py-3 flex items-center gap-2">
-              <Filter className="w-5 h-5" />
-              More Filters
-            </button>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="px-4 py-3 bg-input border border-border rounded-2xl text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            />
           </div>
         </div>
       </motion.div>
@@ -98,55 +251,73 @@ export default function DeliveriesPage() {
         className="zaago-card"
       >
         <div className="p-6 border-b border-border">
-          <h2 className="text-xl font-semibold text-foreground">Recent Deliveries</h2>
+          <h2 className="text-xl font-semibold text-foreground">
+            Delivered Orders ({filteredOrders.length})
+          </h2>
         </div>
 
         <div className="divide-y divide-border">
-          {sampleDeliveries.map((delivery, index) => (
-            <motion.div
-              key={delivery.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5 + index * 0.1, duration: 0.3 }}
-              className="p-6 hover:bg-muted/50 transition-colors"
-            >
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div className="flex items-start gap-4">
-                  <div className="p-3 bg-primary/10 rounded-2xl">
-                    <Package className="w-6 h-6 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground">Order #{delivery.id}</h3>
-                    <p className="text-secondary text-sm mt-1">{delivery.customer}</p>
-                    <p className="text-foreground mt-1">{delivery.product}</p>
-                    <div className="flex items-center gap-2 mt-2 text-sm text-secondary">
-                      <MapPin className="w-4 h-4" />
-                      {delivery.address}
+          {loading ? (
+            <div className="p-8 text-center">
+              <p className="text-secondary">Loading deliveries...</p>
+            </div>
+          ) : filteredOrders.length === 0 ? (
+            <div className="p-8 text-center">
+              <Package className="w-12 h-12 text-secondary mx-auto mb-4" />
+              <p className="text-secondary">
+                {searchTerm ? 'No deliveries match your search' : 'No deliveries for this date'}
+              </p>
+            </div>
+          ) : (
+            filteredOrders.map((order, index) => (
+              <motion.div
+                key={order.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 + index * 0.1, duration: 0.3 }}
+                className="p-6 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-primary/10 rounded-2xl">
+                      <CheckCircle className="w-6 h-6 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground">Order #{order.id.slice(0, 8)}</h3>
+                      <p className="text-secondary text-sm mt-1">{order.customer_name}</p>
+                      <p className="text-secondary text-sm">{order.customer_phone}</p>
+                      
+                      {/* Order Items */}
+                      <div className="mt-2 space-y-1">
+                        {order.items?.map((item, idx) => (
+                          <div key={idx} className="text-sm text-foreground">
+                            {item.name} × {item.quantity}
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="flex items-center gap-2 mt-2 text-sm text-secondary">
+                        <MapPin className="w-4 h-4" />
+                        {order.address?.full_address}, {order.address?.city}
+                      </div>
                     </div>
                   </div>
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="font-semibold text-foreground">₹{order.total}</p>
+                      <p className="text-sm text-secondary">
+                        {new Date(order.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-primary/20 text-primary">
+                      Delivered
+                    </span>
+                  </div>
                 </div>
-                
-                <div className="flex items-center gap-4">
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    delivery.status === 'Delivered' ? 'bg-primary/20 text-primary' :
-                    delivery.status === 'In Transit' ? 'bg-blue-500/20 text-blue-400' :
-                    'bg-yellow-500/20 text-yellow-400'
-                  }`}>
-                    {delivery.status}
-                  </span>
-                  <button className="zaago-button-ghost px-4 py-2 text-sm">
-                    Track
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        <div className="p-6 text-center border-t border-border">
-          <p className="text-secondary text-sm">
-            Deliveries List (placeholder) - Ready for delivery tracking system integration
-          </p>
+              </motion.div>
+            ))
+          )}
         </div>
       </motion.div>
     </motion.div>
