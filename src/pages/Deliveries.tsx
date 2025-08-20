@@ -1,10 +1,19 @@
 import { motion } from 'framer-motion';
-import { Truck, Clock, CheckCircle, Package, MapPin, Filter, Calendar, Download } from 'lucide-react';
+import { Truck, Clock, CheckCircle, Package, MapPin, Filter, Calendar, Download, CalendarIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import Papa from 'papaparse';
 import { saveAs } from 'file-saver';
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface DeliveredOrder {
   id: string;
@@ -47,6 +56,7 @@ export default function DeliveriesPage() {
     const today = new Date();
     return today.toISOString().split('T')[0];
   });
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
@@ -374,12 +384,34 @@ export default function DeliveriesPage() {
             />
           </div>
           <div className="flex gap-2">
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-4 py-3 bg-input border border-border rounded-2xl text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-            />
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-[240px] justify-start text-left font-normal px-4 py-3 bg-input border border-border rounded-2xl text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all",
+                    !selectedDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {selectedDate ? format(new Date(selectedDate), "PPP") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={selectedDate ? new Date(selectedDate) : undefined}
+                  onSelect={(date) => {
+                    if (date) {
+                      setSelectedDate(date.toISOString().split('T')[0]);
+                      setCalendarOpen(false);
+                    }
+                  }}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
       </motion.div>

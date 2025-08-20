@@ -1,6 +1,6 @@
 'use client';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Package, PlusCircle, Truck, LogIn, Menu } from 'lucide-react';
+import { Package, PlusCircle, Truck, LogIn, Menu, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
   Sidebar as SidebarUI,
@@ -20,6 +20,7 @@ const navigationLinks = [
   { href: '/products', label: 'Products', icon: Package },
   { href: '/products/new', label: 'Add Product', icon: PlusCircle },
   { href: '/deliveries', label: 'Deliveries', icon: Truck },
+  { href: '/profile', label: 'Profile', icon: User },
 ];
 
 export default function Sidebar() {

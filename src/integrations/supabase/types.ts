@@ -1029,6 +1029,36 @@ export type Database = {
         }
         Relationships: []
       }
+      phone_otps: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          otp: string
+          phone: string
+          updated_at: string | null
+          verified: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          otp: string
+          phone: string
+          updated_at?: string | null
+          verified?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          otp?: string
+          phone?: string
+          updated_at?: string | null
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           benefits: string[] | null
