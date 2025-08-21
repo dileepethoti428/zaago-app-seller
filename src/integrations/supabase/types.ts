@@ -2044,6 +2044,10 @@ export type Database = {
         Args: { seller_user_id: string }
         Returns: Json
       }
+      get_seller_stats_with_period: {
+        Args: { seller_user_id: string; time_period?: string }
+        Returns: Json
+      }
       get_top_products: {
         Args: { limit_count?: number }
         Returns: {

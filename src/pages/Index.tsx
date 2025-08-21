@@ -1,26 +1,37 @@
 import { motion } from 'framer-motion';
-import { Package, Truck, TrendingUp, Users, ShoppingCart, DollarSign } from 'lucide-react';
+import { Package, Truck, TrendingUp, Users, ShoppingCart, DollarSign, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const Index = () => {
   const { user } = useAuth();
+  const [selectedPeriod, setSelectedPeriod] = useState('all');
   const [stats, setStats] = useState([
     { label: 'Total Products', value: '0', icon: Package, trend: '+0%' },
     { label: 'Active Orders', value: '0', icon: ShoppingCart, trend: '+0%' },
     { label: 'Deliveries', value: '0', icon: Truck, trend: '+0%' },
-    { label: 'Revenue', value: '$0', icon: DollarSign, trend: '+0%' },
+    { label: 'Revenue', value: '₹0', icon: DollarSign, trend: '+0%' },
   ]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const timePeriods = [
+    { value: 'today', label: 'Today' },
+    { value: '1week', label: '1 Week' },
+    { value: '1month', label: '1 Month' },
+    { value: '3months', label: '3 Months' },
+    { value: '6months', label: '6 Months' },
+    { value: 'all', label: 'All Time' }
+  ];
 
   useEffect(() => {
     if (user) {
       fetchSellerData();
     }
-  }, [user]);
+  }, [user, selectedPeriod]);
 
   const fetchSellerData = async () => {
     if (!user?.id) return;
@@ -48,9 +59,10 @@ const Index = () => {
         }
       }
 
-      // Use the new seller stats function for accurate data
-      const { data: statsData, error: statsError } = await supabase.rpc('get_seller_stats', {
-        seller_user_id: user.id
+      // Use the new seller stats function with time period for accurate data
+      const { data: statsData, error: statsError } = await supabase.rpc('get_seller_stats_with_period', {
+        seller_user_id: user.id,
+        time_period: selectedPeriod
       });
 
       if (statsError) {
@@ -113,6 +125,33 @@ const Index = () => {
         <p className="text-secondary text-sm sm:text-base lg:text-lg leading-relaxed">
           Manage your products, track deliveries, and grow your business
         </p>
+      </motion.div>
+
+      {/* Time Period Filter */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.15, duration: 0.3 }}
+        className="zaago-card"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold text-foreground">Revenue Period</h2>
+          </div>
+          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+            <SelectTrigger className="w-full sm:w-[200px]">
+              <SelectValue placeholder="Select time period" />
+            </SelectTrigger>
+            <SelectContent>
+              {timePeriods.map((period) => (
+                <SelectItem key={period.value} value={period.value}>
+                  {period.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </motion.div>
 
       {/* Stats Grid */}
