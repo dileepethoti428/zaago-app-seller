@@ -3,6 +3,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
 import { LogOut, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
 
 export default function Topbar() {
   const { user, signOut } = useAuth();
@@ -50,14 +51,20 @@ export default function Topbar() {
               <User className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="text-xs sm:text-sm hidden sm:inline truncate max-w-24 lg:max-w-none">{user.email}</span>
             </div>
-            <div className="text-primary font-semibold text-xs sm:text-sm">
+            <Link 
+              to="/" 
+              className="text-primary font-semibold text-xs sm:text-sm hover:text-primary/80 transition-colors cursor-pointer"
+            >
               Seller Dashboard
-            </div>
+            </Link>
           </>
         ) : (
-          <div className="text-primary font-semibold text-xs sm:text-sm">
+          <Link 
+            to="/" 
+            className="text-primary font-semibold text-xs sm:text-sm hover:text-primary/80 transition-colors cursor-pointer"
+          >
             Seller Dashboard
-          </div>
+          </Link>
         )}
       </div>
     </motion.header>
