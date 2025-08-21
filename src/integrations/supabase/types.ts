@@ -340,6 +340,63 @@ export type Database = {
         }
         Relationships: []
       }
+      coupons: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean
+          maximum_discount_amount: number | null
+          minimum_order_amount: number | null
+          name: string
+          updated_at: string
+          usage_limit: number | null
+          used_count: number
+          valid_from: string
+          valid_until: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          discount_type: string
+          discount_value: number
+          id?: string
+          is_active?: boolean
+          maximum_discount_amount?: number | null
+          minimum_order_amount?: number | null
+          name: string
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number
+          valid_from?: string
+          valid_until: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean
+          maximum_discount_amount?: number | null
+          minimum_order_amount?: number | null
+          name?: string
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number
+          valid_from?: string
+          valid_until?: string
+        }
+        Relationships: []
+      }
       delivery_addresses: {
         Row: {
           city: string
@@ -1117,12 +1174,14 @@ export type Database = {
           customer_name: string | null
           customer_phone: string | null
           delivered: boolean | null
+          delivered_at: string | null
           delivery_date: string | null
           delivery_time_slot: string | null
           id: string
           items: Json
           payment_id: string | null
           payment_status: string | null
+          settlement_locked: boolean | null
           special_instructions: string | null
           status: string
           total: number
@@ -1136,12 +1195,14 @@ export type Database = {
           customer_name?: string | null
           customer_phone?: string | null
           delivered?: boolean | null
+          delivered_at?: string | null
           delivery_date?: string | null
           delivery_time_slot?: string | null
           id?: string
           items: Json
           payment_id?: string | null
           payment_status?: string | null
+          settlement_locked?: boolean | null
           special_instructions?: string | null
           status?: string
           total: number
@@ -1155,12 +1216,14 @@ export type Database = {
           customer_name?: string | null
           customer_phone?: string | null
           delivered?: boolean | null
+          delivered_at?: string | null
           delivery_date?: string | null
           delivery_time_slot?: string | null
           id?: string
           items?: Json
           payment_id?: string | null
           payment_status?: string | null
+          settlement_locked?: boolean | null
           special_instructions?: string | null
           status?: string
           total?: number
@@ -1212,31 +1275,40 @@ export type Database = {
       }
       password_reset_requests: {
         Row: {
+          attempts: number | null
           created_at: string
           email: string
           expires_at: string
           id: string
+          ip_address: unknown | null
           is_used: boolean
+          locked_until: string | null
           reset_key: string
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          attempts?: number | null
           created_at?: string
           email: string
           expires_at: string
           id?: string
+          ip_address?: unknown | null
           is_used?: boolean
+          locked_until?: string | null
           reset_key: string
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          attempts?: number | null
           created_at?: string
           email?: string
           expires_at?: string
           id?: string
+          ip_address?: unknown | null
           is_used?: boolean
+          locked_until?: string | null
           reset_key?: string
           updated_at?: string
           user_id?: string | null
@@ -1296,6 +1368,59 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      payouts: {
+        Row: {
+          amount: number | null
+          commission_rate: number | null
+          created_at: string | null
+          failure_reason: string | null
+          id: string
+          period_end: string | null
+          period_start: string | null
+          razorpay_payout_id: string | null
+          seller_id: string | null
+          status: string | null
+          transaction_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number | null
+          commission_rate?: number | null
+          created_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          razorpay_payout_id?: string | null
+          seller_id?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number | null
+          commission_rate?: number | null
+          created_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          razorpay_payout_id?: string | null
+          seller_id?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payouts_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       phone_otps: {
         Row: {
@@ -1405,6 +1530,7 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           avatar_url: string | null
+          commission_rate: number | null
           created_at: string
           default_address: Json | null
           full_name: string | null
@@ -1424,6 +1550,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           avatar_url?: string | null
+          commission_rate?: number | null
           created_at?: string
           default_address?: Json | null
           full_name?: string | null
@@ -1443,6 +1570,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           avatar_url?: string | null
+          commission_rate?: number | null
           created_at?: string
           default_address?: Json | null
           full_name?: string | null
@@ -1455,6 +1583,39 @@ export type Database = {
           rejection_reason?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      rate_limits: {
+        Row: {
+          action: string
+          attempts: number | null
+          created_at: string | null
+          id: string
+          identifier: string
+          locked_until: string | null
+          updated_at: string | null
+          window_start: string | null
+        }
+        Insert: {
+          action: string
+          attempts?: number | null
+          created_at?: string | null
+          id?: string
+          identifier: string
+          locked_until?: string | null
+          updated_at?: string | null
+          window_start?: string | null
+        }
+        Update: {
+          action?: string
+          attempts?: number | null
+          created_at?: string | null
+          id?: string
+          identifier?: string
+          locked_until?: string | null
+          updated_at?: string | null
+          window_start?: string | null
         }
         Relationships: []
       }
@@ -1613,14 +1774,51 @@ export type Database = {
           },
         ]
       }
+      security_audit_log: {
+        Row: {
+          action: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          ip_address: unknown | null
+          resource: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          resource: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          resource?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       sellers: {
         Row: {
+          account_holder_name: string | null
+          account_number: string | null
           address: Json | null
+          bank_name: string | null
           business_license: string | null
           business_name: string | null
           created_at: string
           email: string
           id: string
+          ifsc_code: string | null
           name: string
           phone: string | null
           status: string
@@ -1628,12 +1826,16 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          account_holder_name?: string | null
+          account_number?: string | null
           address?: Json | null
+          bank_name?: string | null
           business_license?: string | null
           business_name?: string | null
           created_at?: string
           email: string
           id?: string
+          ifsc_code?: string | null
           name: string
           phone?: string | null
           status?: string
@@ -1641,12 +1843,16 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          account_holder_name?: string | null
+          account_number?: string | null
           address?: Json | null
+          bank_name?: string | null
           business_license?: string | null
           business_name?: string | null
           created_at?: string
           email?: string
           id?: string
+          ifsc_code?: string | null
           name?: string
           phone?: string | null
           status?: string
@@ -1932,6 +2138,10 @@ export type Database = {
         Args: { p_agent_id: string; p_order_id: string }
         Returns: Json
       }
+      apply_coupon: {
+        Args: { p_coupon_code: string; p_order_total: number }
+        Returns: Json
+      }
       approve_user: {
         Args: { admin_user_id: string; target_user_id: string }
         Returns: Json
@@ -1953,8 +2163,27 @@ export type Database = {
         }
         Returns: string
       }
+      calculate_seller_payouts: {
+        Args: { end_date: string; start_date: string }
+        Returns: {
+          commission_rate: number
+          gross_amount: number
+          net_amount: number
+          order_count: number
+          seller_id: string
+        }[]
+      }
       can_register_admin: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      check_rate_limit: {
+        Args: {
+          p_action: string
+          p_identifier: string
+          p_max_attempts?: number
+          p_window_minutes?: number
+        }
         Returns: boolean
       }
       clear_user_cart: {
@@ -1975,6 +2204,14 @@ export type Database = {
       }
       create_order_from_subscription: {
         Args: { p_order_type?: string; p_subscription_id: string }
+        Returns: string
+      }
+      create_payout: {
+        Args: { end_date: string; start_date: string; target_seller_id: string }
+        Returns: string
+      }
+      create_validated_payout: {
+        Args: { end_date: string; start_date: string; target_seller_id: string }
         Returns: string
       }
       generate_order_qr_code: {
@@ -2005,6 +2242,10 @@ export type Database = {
       get_cart_total: {
         Args: { cart_user_id: string }
         Returns: number
+      }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["app_role"]
       }
       get_dashboard_stats: {
         Args: Record<PropertyKey, never>
@@ -2038,6 +2279,15 @@ export type Database = {
           total: number
           updated_at: string
           user_id: string
+        }[]
+      }
+      get_seller_payout_summary: {
+        Args: { target_seller_id: string }
+        Returns: {
+          paid_amount: number
+          pending_amount: number
+          total_earnings: number
+          total_payouts: number
         }[]
       }
       get_seller_stats: {
@@ -2094,6 +2344,20 @@ export type Database = {
         }
         Returns: string
       }
+      log_security_event: {
+        Args: {
+          p_action: string
+          p_details?: Json
+          p_ip_address?: unknown
+          p_resource: string
+          p_user_agent?: string
+        }
+        Returns: undefined
+      }
+      mark_payout_paid: {
+        Args: { payout_id: string }
+        Returns: undefined
+      }
       process_due_existing_subscriptions: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -2142,6 +2406,15 @@ export type Database = {
           p_phone: string
         }
         Returns: string
+      }
+      validate_bank_details: {
+        Args: {
+          p_account_holder_name: string
+          p_account_number: string
+          p_bank_name: string
+          p_ifsc_code: string
+        }
+        Returns: boolean
       }
       validate_reset_token: {
         Args: { token: string }
