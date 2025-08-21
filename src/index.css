@@ -63,7 +63,8 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased text-sm sm:text-base;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   }
 
   html {
@@ -74,15 +75,15 @@
 @layer components {
   /* Zaago component utilities */
   .zaago-card {
-    @apply bg-card border border-border rounded-2xl shadow-lg;
+    @apply bg-card border border-border rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6;
   }
   
   .zaago-button-primary {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90 rounded-2xl transition-all duration-200;
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl sm:rounded-2xl transition-all duration-200 px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base;
   }
   
   .zaago-button-ghost {
-    @apply hover:bg-zaago-hover rounded-2xl transition-all duration-200;
+    @apply hover:bg-zaago-hover rounded-xl sm:rounded-2xl transition-all duration-200 px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base;
   }
   
   .zaago-nav-active {
@@ -91,6 +92,19 @@
   
   .zaago-nav-inactive {
     @apply hover:bg-zaago-hover text-secondary;
+  }
+
+  /* Mobile responsive utilities */
+  .zaago-mobile-container {
+    @apply px-4 sm:px-6 lg:px-8 max-w-full;
+  }
+
+  .zaago-mobile-text {
+    @apply text-sm sm:text-base leading-relaxed;
+  }
+
+  .zaago-mobile-heading {
+    @apply text-xl sm:text-2xl lg:text-3xl font-bold leading-tight;
   }
 }
 

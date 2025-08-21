@@ -64,10 +64,10 @@ export default function Sidebar() {
   };
 
   return (
-    <SidebarUI className={`${collapsed ? 'w-14' : 'w-64'} bg-zaago-dark border-r border-border`}>
+    <SidebarUI className={`${collapsed ? 'w-12 sm:w-14' : 'w-60 sm:w-64'} bg-zaago-dark border-r border-border`}>
       <SidebarContent className="bg-zaago-dark">
         {/* Header */}
-        <div className="p-4 border-b border-border">
+        <div className="p-3 sm:p-4 border-b border-border">
           {!collapsed && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -76,7 +76,7 @@ export default function Sidebar() {
             >
               <NavLink 
                 to="/"
-                className="text-primary font-bold text-2xl hover:text-primary-glow transition-colors cursor-pointer block"
+                className="text-primary font-bold text-lg sm:text-xl lg:text-2xl hover:text-primary-glow transition-colors cursor-pointer block leading-tight"
               >
                 Zaago Seller Dashboard
               </NavLink>
@@ -84,7 +84,7 @@ export default function Sidebar() {
           )}
           {collapsed && (
             <motion.div 
-              className="text-primary font-bold text-xl text-center"
+              className="text-primary font-bold text-lg sm:text-xl text-center"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
@@ -105,7 +105,7 @@ export default function Sidebar() {
             Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-2 px-4">
+            <SidebarMenu className="space-y-1 sm:space-y-2 px-2 sm:px-4">
               {navigationLinks.map(({ href, label, icon: Icon }) => (
                 <SidebarMenuItem key={href}>
                   <SidebarMenuButton asChild>
@@ -113,14 +113,14 @@ export default function Sidebar() {
                       to={href}
                       className={getNavClassName(href)}
                     >
-                      <Icon size={20} className="shrink-0" />
+                      <Icon size={18} className="shrink-0 sm:w-5 sm:h-5" />
                       {!collapsed && (
                         <motion.span
                           initial={{ opacity: 0, width: 0 }}
                           animate={{ opacity: 1, width: 'auto' }}
                           exit={{ opacity: 0, width: 0 }}
                           transition={{ duration: 0.2 }}
-                          className="font-medium"
+                          className="font-medium text-sm sm:text-base"
                         >
                           {label}
                         </motion.span>
@@ -134,18 +134,18 @@ export default function Sidebar() {
         </SidebarGroup>
 
         {/* Logout and Toggle */}
-        <div className="p-4 border-t border-border space-y-2">
+        <div className="p-2 sm:p-4 border-t border-border space-y-1 sm:space-y-2">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 p-3 rounded-2xl zaago-button-ghost hover:bg-red-500/10 hover:text-red-400 transition-colors"
+            className="w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl sm:rounded-2xl zaago-button-ghost hover:bg-red-500/10 hover:text-red-400 transition-colors"
           >
-            <LogOut size={20} className="shrink-0" />
+            <LogOut size={18} className="shrink-0 sm:w-5 sm:h-5" />
             {!collapsed && (
-              <span className="font-medium">Sign Out</span>
+              <span className="font-medium text-sm sm:text-base">Sign Out</span>
             )}
           </button>
-          <SidebarTrigger className="w-full flex items-center justify-center p-2 rounded-2xl zaago-button-ghost">
-            <Menu size={20} />
+          <SidebarTrigger className="w-full flex items-center justify-center p-2 rounded-xl sm:rounded-2xl zaago-button-ghost">
+            <Menu size={18} className="sm:w-5 sm:h-5" />
           </SidebarTrigger>
         </div>
       </SidebarContent>

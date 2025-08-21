@@ -142,39 +142,40 @@ const Index = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="space-y-8"
+      className="space-y-6 sm:space-y-8"
     >
       {/* Welcome Header */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.1, duration: 0.3 }}
-        className="zaago-card p-8 text-center"
+        className="zaago-card text-center"
       >
-        <h1 className="text-4xl font-bold text-foreground mb-4 flex items-center justify-center gap-3">
-          <span className="text-primary">Zaago</span> Seller Dashboard
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-3 sm:mb-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
+          <span className="text-primary">Zaago</span> 
+          <span>Seller Dashboard</span>
         </h1>
-        <p className="text-secondary text-lg">
+        <p className="text-secondary text-sm sm:text-base lg:text-lg leading-relaxed">
           Manage your products, track deliveries, and grow your business
         </p>
       </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         {stats.map(({ label, value, icon: Icon, trend }, index) => (
           <motion.div
             key={label}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 + index * 0.1, duration: 0.3 }}
-            className="zaago-card p-6"
+            className="zaago-card"
           >
-            <div className="flex items-center justify-between mb-4">
-              <Icon className="w-8 h-8 text-primary" />
-              <span className="text-sm text-primary font-medium">{trend}</span>
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <Icon className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />
+              <span className="text-xs sm:text-sm text-primary font-medium">{trend}</span>
             </div>
-            <h3 className="text-2xl font-bold text-foreground">{value}</h3>
-            <p className="text-secondary text-sm">{label}</p>
+            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground mb-1">{value}</h3>
+            <p className="text-secondary text-xs sm:text-sm">{label}</p>
           </motion.div>
         ))}
       </div>
@@ -184,26 +185,26 @@ const Index = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6, duration: 0.3 }}
-        className="zaago-card p-8"
+        className="zaago-card"
       >
-        <h2 className="text-2xl font-bold text-foreground mb-6">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Link to="/products/new" className="zaago-button-ghost p-6 text-left group">
-            <Package className="w-12 h-12 text-primary mb-4 group-hover:scale-110 transition-transform" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">Add Product</h3>
-            <p className="text-secondary">Create a new product listing</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4 sm:mb-6">Quick Actions</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+          <Link to="/products/new" className="zaago-button-ghost p-4 sm:p-6 text-left group">
+            <Package className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-primary mb-3 sm:mb-4 group-hover:scale-110 transition-transform" />
+            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1 sm:mb-2">Add Product</h3>
+            <p className="text-secondary text-sm">Create a new product listing</p>
           </Link>
           
-          <Link to="/products" className="zaago-button-ghost p-6 text-left group">
-            <ShoppingCart className="w-12 h-12 text-primary mb-4 group-hover:scale-110 transition-transform" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">Manage Products</h3>
-            <p className="text-secondary">View and edit your inventory</p>
+          <Link to="/products" className="zaago-button-ghost p-4 sm:p-6 text-left group">
+            <ShoppingCart className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-primary mb-3 sm:mb-4 group-hover:scale-110 transition-transform" />
+            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1 sm:mb-2">Manage Products</h3>
+            <p className="text-secondary text-sm">View and edit your inventory</p>
           </Link>
           
-          <Link to="/deliveries" className="zaago-button-ghost p-6 text-left group">
-            <Truck className="w-12 h-12 text-primary mb-4 group-hover:scale-110 transition-transform" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">Track Deliveries</h3>
-            <p className="text-secondary">Monitor shipment status</p>
+          <Link to="/deliveries" className="zaago-button-ghost p-4 sm:p-6 text-left group">
+            <Truck className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-primary mb-3 sm:mb-4 group-hover:scale-110 transition-transform" />
+            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1 sm:mb-2">Track Deliveries</h3>
+            <p className="text-secondary text-sm">Monitor shipment status</p>
           </Link>
         </div>
       </motion.div>
@@ -215,27 +216,27 @@ const Index = () => {
         transition={{ delay: 0.8, duration: 0.3 }}
         className="zaago-card"
       >
-        <div className="p-6 border-b border-border">
-          <h2 className="text-xl font-semibold text-foreground">Recent Activity</h2>
+        <div className="p-4 sm:p-6 border-b border-border">
+          <h2 className="text-lg sm:text-xl font-semibold text-foreground">Recent Activity</h2>
         </div>
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="flex items-center justify-center py-6 sm:py-8">
+              <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {recentActivity.length > 0 ? recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-center gap-4 p-3 rounded-2xl hover:bg-muted/50 transition-colors">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-foreground font-medium">{activity.action}</p>
-                    <p className="text-secondary text-sm">{activity.item}</p>
+                <div key={index} className="flex items-center gap-3 sm:gap-4 p-2 sm:p-3 rounded-xl sm:rounded-2xl hover:bg-muted/50 transition-colors">
+                  <div className="w-2 h-2 bg-primary rounded-full shrink-0"></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-foreground font-medium text-sm sm:text-base">{activity.action}</p>
+                    <p className="text-secondary text-xs sm:text-sm truncate">{activity.item}</p>
                   </div>
-                  <span className="text-secondary text-sm">{activity.time}</span>
+                  <span className="text-secondary text-xs sm:text-sm shrink-0">{activity.time}</span>
                 </div>
               )) : (
-                <div className="text-center py-8 text-secondary">
+                <div className="text-center py-6 sm:py-8 text-secondary text-sm sm:text-base">
                   No recent activity found
                 </div>
               )}
