@@ -1023,6 +1023,33 @@ export type Database = {
           },
         ]
       }
+      order_rejections: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          order_id: string
+          reason: string | null
+          rejected_at: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          order_id: string
+          reason?: string | null
+          rejected_at?: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          order_id?: string
+          reason?: string | null
+          rejected_at?: string
+        }
+        Relationships: []
+      }
       order_tracking: {
         Row: {
           created_by: string | null
@@ -1631,12 +1658,15 @@ export type Database = {
       subscriptions: {
         Row: {
           created_at: string
+          delivery_address: Json | null
           delivery_days: string[] | null
           end_date: string | null
           id: string
           is_active: boolean
+          next_delivery_date: string
           product_id: string
           quantity: number
+          special_instructions: string | null
           start_date: string
           subscription_type: string
           updated_at: string
@@ -1644,12 +1674,15 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          delivery_address?: Json | null
           delivery_days?: string[] | null
           end_date?: string | null
           id?: string
           is_active?: boolean
+          next_delivery_date: string
           product_id: string
           quantity?: number
+          special_instructions?: string | null
           start_date?: string
           subscription_type: string
           updated_at?: string
@@ -1657,12 +1690,15 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          delivery_address?: Json | null
           delivery_days?: string[] | null
           end_date?: string | null
           id?: string
           is_active?: boolean
+          next_delivery_date?: string
           product_id?: string
           quantity?: number
+          special_instructions?: string | null
           start_date?: string
           subscription_type?: string
           updated_at?: string
@@ -1892,6 +1928,10 @@ export type Database = {
       }
     }
     Functions: {
+      accept_order: {
+        Args: { p_agent_id: string; p_order_id: string }
+        Returns: Json
+      }
       approve_user: {
         Args: { admin_user_id: string; target_user_id: string }
         Returns: Json
@@ -1903,6 +1943,15 @@ export type Database = {
           target_user_id: string
         }
         Returns: Json
+      }
+      calculate_next_delivery_date: {
+        Args: {
+          p_current_date: string
+          p_frequency_days: string[]
+          p_frequency_type: string
+          p_frequency_value: number
+        }
+        Returns: string
       }
       can_register_admin: {
         Args: Record<PropertyKey, never>
@@ -1919,6 +1968,14 @@ export type Database = {
           p_payment_method?: string
         }
         Returns: Json
+      }
+      create_order_from_existing_subscription: {
+        Args: { p_order_type?: string; p_subscription_id: string }
+        Returns: string
+      }
+      create_order_from_subscription: {
+        Args: { p_order_type?: string; p_subscription_id: string }
+        Returns: string
       }
       generate_order_qr_code: {
         Args: { order_uuid: string }
@@ -2008,6 +2065,18 @@ export type Database = {
         }
         Returns: string
       }
+      process_due_existing_subscriptions: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      process_due_subscriptions: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      reject_order: {
+        Args: { p_agent_id: string; p_order_id: string; p_reason?: string }
+        Returns: Json
+      }
       reject_user: {
         Args: { admin_user_id: string; reason?: string; target_user_id: string }
         Returns: Json
@@ -2024,9 +2093,26 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      resolve_agent_email: {
+        Args: { identifier: string }
+        Returns: string
+      }
       scan_qr_and_deliver_order: {
         Args: { agent_id: string; order_id: string; qr_code_id: string }
         Returns: boolean
+      }
+      trigger_subscription_processing: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      upsert_delivery_agent: {
+        Args: {
+          p_agent_id: string
+          p_email: string
+          p_name: string
+          p_phone: string
+        }
+        Returns: string
       }
       validate_reset_token: {
         Args: { token: string }
@@ -2038,7 +2124,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user" | "agent"
+      app_role: "admin" | "user" | "agent" | "seller" | "rider"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2166,7 +2252,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user", "agent"],
+      app_role: ["admin", "user", "agent", "seller", "rider"],
     },
   },
 } as const
