@@ -940,13 +940,6 @@ export type Database = {
             referencedRelation: "orders_with_agents"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "notifications_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "payment_transactions"
-            referencedColumns: ["transaction_id"]
-          },
         ]
       }
       order_items: {
@@ -991,13 +984,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "orders_with_agents"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "order_items_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "payment_transactions"
-            referencedColumns: ["transaction_id"]
           },
           {
             foreignKeyName: "order_items_product_id_fkey"
@@ -1063,13 +1049,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "orders_with_agents"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "order_qr_codes_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "payment_transactions"
-            referencedColumns: ["transaction_id"]
           },
           {
             foreignKeyName: "order_qr_codes_scanned_by_fkey"
@@ -1157,13 +1136,6 @@ export type Database = {
             referencedRelation: "orders_with_agents"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "order_tracking_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "payment_transactions"
-            referencedColumns: ["transaction_id"]
-          },
         ]
       }
       orders: {
@@ -1239,6 +1211,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      otp_rate_limits: {
+        Row: {
+          attempt_count: number
+          blocked_until: string | null
+          created_at: string
+          id: string
+          identifier: string
+          identifier_type: string
+          last_attempt: string
+        }
+        Insert: {
+          attempt_count?: number
+          blocked_until?: string | null
+          created_at?: string
+          id?: string
+          identifier: string
+          identifier_type: string
+          last_attempt?: string
+        }
+        Update: {
+          attempt_count?: number
+          blocked_until?: string | null
+          created_at?: string
+          id?: string
+          identifier?: string
+          identifier_type?: string
+          last_attempt?: string
+        }
+        Relationships: []
       }
       password_reset_logs: {
         Row: {
@@ -1368,6 +1370,75 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      payment_transactions: {
+        Row: {
+          agent_name: string | null
+          amount: number
+          created_at: string
+          customer_name: string | null
+          customer_phone: string | null
+          delivered: boolean | null
+          id: string
+          order_id: string
+          order_status: string
+          payment_id: string | null
+          payment_method: string | null
+          payment_status: string
+          transaction_date: string
+          transaction_id: string
+          updated_at: string
+        }
+        Insert: {
+          agent_name?: string | null
+          amount: number
+          created_at?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          delivered?: boolean | null
+          id?: string
+          order_id: string
+          order_status?: string
+          payment_id?: string | null
+          payment_method?: string | null
+          payment_status?: string
+          transaction_date?: string
+          transaction_id?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_name?: string | null
+          amount?: number
+          created_at?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          delivered?: boolean | null
+          id?: string
+          order_id?: string
+          order_status?: string
+          payment_id?: string | null
+          payment_method?: string | null
+          payment_status?: string
+          transaction_date?: string
+          transaction_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders_with_agents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payouts: {
         Row: {
@@ -1664,13 +1735,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "orders_with_agents"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reviews_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "payment_transactions"
-            referencedColumns: ["transaction_id"]
           },
           {
             foreignKeyName: "reviews_product_id_fkey"
@@ -2095,22 +2159,6 @@ export type Database = {
           },
         ]
       }
-      payment_transactions: {
-        Row: {
-          agent_name: string | null
-          amount: number | null
-          customer_name: string | null
-          customer_phone: string | null
-          delivered: boolean | null
-          order_status: string | null
-          payment_id: string | null
-          payment_status: string | null
-          transaction_date: string | null
-          transaction_id: string | null
-          updated_at: string | null
-        }
-        Relationships: []
-      }
       products_with_sellers: {
         Row: {
           created_at: string | null
@@ -2138,6 +2186,10 @@ export type Database = {
         Args: { p_agent_id: string; p_order_id: string }
         Returns: Json
       }
+      activate_delivery_agent: {
+        Args: { agent_email: string }
+        Returns: Json
+      }
       apply_coupon: {
         Args: { p_coupon_code: string; p_order_total: number }
         Returns: Json
@@ -2152,6 +2204,10 @@ export type Database = {
           admin_user_id: string
           target_user_id: string
         }
+        Returns: Json
+      }
+      assign_order_to_agent: {
+        Args: { p_agent_id: string; p_order_id: string }
         Returns: Json
       }
       calculate_next_delivery_date: {
@@ -2179,10 +2235,10 @@ export type Database = {
       }
       check_rate_limit: {
         Args: {
-          p_action: string
-          p_identifier: string
-          p_max_attempts?: number
-          p_window_minutes?: number
+          action_type: string
+          max_attempts?: number
+          time_window_minutes?: number
+          user_identifier: string
         }
         Returns: boolean
       }
@@ -2239,6 +2295,21 @@ export type Database = {
         Args: { agent_uuid: string }
         Returns: Json
       }
+      get_available_orders_for_agents: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          area: string
+          created_at: string
+          delivery_date: string
+          order_id: string
+          status: string
+          total: number
+        }[]
+      }
+      get_calculate_seller_payouts_json: {
+        Args: { end_date: string; start_date: string }
+        Returns: Json
+      }
       get_cart_total: {
         Args: { cart_user_id: string }
         Returns: number
@@ -2252,7 +2323,7 @@ export type Database = {
         Returns: Json
       }
       get_delivery_performance: {
-        Args: Record<PropertyKey, never> | { time_period?: string }
+        Args: { time_period?: string }
         Returns: {
           confirmed: number
           date: string
@@ -2261,7 +2332,7 @@ export type Database = {
         }[]
       }
       get_seller_orders: {
-        Args: { seller_user_id: string; status_filter?: string[] }
+        Args: { seller_user_id: string }
         Returns: {
           address: Json
           agent_id: string
@@ -2281,14 +2352,9 @@ export type Database = {
           user_id: string
         }[]
       }
-      get_seller_payout_summary: {
+      get_seller_payouts_summary_json: {
         Args: { target_seller_id: string }
-        Returns: {
-          paid_amount: number
-          pending_amount: number
-          total_earnings: number
-          total_payouts: number
-        }[]
+        Returns: Json
       }
       get_seller_stats: {
         Args: { seller_user_id: string }
@@ -2299,7 +2365,7 @@ export type Database = {
         Returns: Json
       }
       get_top_products: {
-        Args: { limit_count?: number }
+        Args: Record<PropertyKey, never>
         Returns: {
           name: string
           qty_sold: number
@@ -2307,7 +2373,7 @@ export type Database = {
         }[]
       }
       get_users_by_role: {
-        Args: { target_role: string }
+        Args: { target_role: Database["public"]["Enums"]["app_role"] }
         Returns: {
           email: string
           full_name: string
@@ -2388,6 +2454,10 @@ export type Database = {
       }
       resolve_agent_email: {
         Args: { identifier: string }
+        Returns: string
+      }
+      sanitize_input: {
+        Args: { input_text: string }
         Returns: string
       }
       scan_qr_and_deliver_order: {
