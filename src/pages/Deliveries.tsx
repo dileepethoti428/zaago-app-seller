@@ -62,32 +62,57 @@ export default function DeliveriesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
-  const calculateProductTotals = (orders: DeliveredOrder[]) => {
-    const totalsMap: { [key: string]: { quantity: number; orders: number } } = {};
-    
-    orders.forEach(order => {
-      if (order.items && Array.isArray(order.items)) {
-        order.items.forEach((item: any) => {
-          const productName = item.name || 'Unknown Product';
-          const quantity = parseInt(item.quantity) || 0;
-          
-          if (!totalsMap[productName]) {
-            totalsMap[productName] = { quantity: 0, orders: 0 };
-          }
-          
-          totalsMap[productName].quantity += quantity;
-          totalsMap[productName].orders += 1;
-        });
+  const calculateProductTotals = async (orders: DeliveredOrder[]) => {
+    if (!user?.id || orders.length === 0) {
+      setProductTotals([]);
+      return;
+    }
+
+    try {
+      // Get all seller's products to filter correctly
+      const { data: sellerProducts, error } = await supabase
+        .from('products')
+        .select('id, name')
+        .eq('seller_id', user.id);
+
+      if (error) {
+        console.error('Error fetching seller products:', error);
+        return;
       }
-    });
 
-    const productTotalsArray = Object.entries(totalsMap).map(([name, data]) => ({
-      name,
-      quantity: data.quantity,
-      orders: data.orders,
-    })).sort((a, b) => b.quantity - a.quantity);
+      const sellerProductMap = new Map(sellerProducts?.map(p => [p.id, p.name]) || []);
+      const totalsMap: { [key: string]: { quantity: number; orders: Set<string> } } = {};
+      
+      orders.forEach(order => {
+        if (order.items && Array.isArray(order.items)) {
+          order.items.forEach((item: any) => {
+            // Only count items that belong to this seller
+            if (sellerProductMap.has(item.id)) {
+              const productName = sellerProductMap.get(item.id) || item.name || 'Unknown Product';
+              const quantity = parseInt(item.quantity) || 0;
+              
+              if (!totalsMap[productName]) {
+                totalsMap[productName] = { quantity: 0, orders: new Set() };
+              }
+              
+              totalsMap[productName].quantity += quantity;
+              totalsMap[productName].orders.add(order.id);
+            }
+          });
+        }
+      });
 
-    setProductTotals(productTotalsArray);
+      const productTotalsArray = Object.entries(totalsMap).map(([name, data]) => ({
+        name,
+        quantity: data.quantity,
+        orders: data.orders.size, // Use Set size to count unique orders
+      })).sort((a, b) => b.quantity - a.quantity);
+
+      setProductTotals(productTotalsArray);
+    } catch (error) {
+      console.error('Error calculating product totals:', error);
+      setProductTotals([]);
+    }
   };
 
   const exportDeliveryReport = () => {
@@ -214,7 +239,7 @@ export default function DeliveriesPage() {
 
       if (!allOrders || allOrders.length === 0) {
         setDeliveredOrders([]);
-        calculateProductTotals([]);
+        await calculateProductTotals([]);
         return;
       }
 
@@ -230,7 +255,7 @@ export default function DeliveriesPage() {
 
       if (productIds.size === 0) {
         setDeliveredOrders([]);
-        calculateProductTotals([]);
+        await calculateProductTotals([]);
         return;
       }
 
@@ -278,7 +303,7 @@ export default function DeliveriesPage() {
       }));
 
       setDeliveredOrders(mappedOrders);
-      calculateProductTotals(mappedOrders);
+      await calculateProductTotals(mappedOrders);
     } catch (error) {
       console.error('Unexpected error:', error);
       toast({
