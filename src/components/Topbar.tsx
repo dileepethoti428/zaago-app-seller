@@ -46,18 +46,13 @@ export default function Topbar() {
               <User className="w-4 h-4" />
               <span className="text-sm hidden sm:inline">{user.email}</span>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 zaago-button-ghost px-3 py-2 hover:bg-red-500/10 hover:text-red-400 transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="text-sm hidden sm:inline">Logout</span>
-            </button>
+            <div className="text-primary font-semibold">
+              Seller Dashboard
+            </div>
           </>
         ) : (
-          <div className="hidden sm:flex items-center gap-2 text-secondary text-sm">
-            <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-            <span>Online</span>
+          <div className="text-primary font-semibold">
+            Seller Dashboard
           </div>
         )}
       </div>

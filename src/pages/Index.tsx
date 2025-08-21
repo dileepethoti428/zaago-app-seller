@@ -1,14 +1,141 @@
 import { motion } from 'framer-motion';
 import { Package, Truck, TrendingUp, Users, ShoppingCart, DollarSign } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
 
 const Index = () => {
-  const stats = [
-    { label: 'Total Products', value: '2,345', icon: Package, trend: '+12%' },
-    { label: 'Active Orders', value: '87', icon: ShoppingCart, trend: '+5%' },
-    { label: 'Deliveries', value: '156', icon: Truck, trend: '+18%' },
-    { label: 'Revenue', value: '$45,231', icon: DollarSign, trend: '+23%' },
-  ];
+  const { user } = useAuth();
+  const [stats, setStats] = useState([
+    { label: 'Total Products', value: '0', icon: Package, trend: '+0%' },
+    { label: 'Active Orders', value: '0', icon: ShoppingCart, trend: '+0%' },
+    { label: 'Deliveries', value: '0', icon: Truck, trend: '+0%' },
+    { label: 'Revenue', value: '$0', icon: DollarSign, trend: '+0%' },
+  ]);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      fetchSellerData();
+    }
+  }, [user]);
+
+  const fetchSellerData = async () => {
+    try {
+      setLoading(true);
+      
+      // Get seller profile
+      const { data: seller } = await supabase
+        .from('sellers')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!seller) return;
+
+      // Get total products count
+      const { count: productsCount } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .eq('seller_id', user.id)
+        .eq('is_active', true);
+
+      // Get active orders (orders with seller's products)
+      const { data: allOrders } = await supabase
+        .from('orders')
+        .select('*')
+        .in('status', ['placed', 'confirmed', 'assigned', 'out_for_delivery']);
+
+      // Filter orders that contain seller's products
+      let activeOrdersCount = 0;
+      let totalRevenue = 0;
+      let deliveriesCount = 0;
+
+      if (allOrders) {
+        const { data: sellerProducts } = await supabase
+          .from('products')
+          .select('id')
+          .eq('seller_id', user.id);
+
+        const sellerProductIds = sellerProducts?.map(p => p.id) || [];
+
+        for (const order of allOrders) {
+          const items = Array.isArray(order.items) ? order.items : [];
+          const hasSellerProduct = items.some((item: any) => sellerProductIds.includes(item.id));
+          
+          if (hasSellerProduct) {
+            if (['placed', 'confirmed', 'assigned', 'out_for_delivery'].includes(order.status)) {
+              activeOrdersCount++;
+            }
+            if (order.delivered) {
+              deliveriesCount++;
+              // Calculate revenue from seller's products only
+              const sellerItems = items.filter((item: any) => sellerProductIds.includes(item.id));
+              const orderRevenue = sellerItems.reduce((sum: number, item: any) => sum + (Number(item.price) * Number(item.quantity)), 0);
+              totalRevenue += Number(orderRevenue);
+            }
+          }
+        }
+      }
+
+      // Get recent orders for activity
+      const { data: recentOrders } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      const activities = [];
+      if (recentOrders) {
+        const { data: sellerProducts } = await supabase
+          .from('products')
+          .select('id, name')
+          .eq('seller_id', user.id);
+
+        const sellerProductIds = sellerProducts?.map(p => p.id) || [];
+
+        for (const order of recentOrders) {
+          const items = Array.isArray(order.items) ? order.items : [];
+          const sellerItems = items.filter((item: any) => sellerProductIds.includes(item.id));
+          
+          if (sellerItems.length > 0) {
+            const productName = (sellerItems[0] as any).name || 'Unknown Product';
+            const timeAgo = Math.floor((Date.now() - new Date(order.created_at).getTime()) / (1000 * 60));
+            
+            if (order.delivered) {
+              activities.push({
+                action: 'Delivery completed',
+                item: productName,
+                time: timeAgo < 60 ? `${timeAgo} minutes ago` : `${Math.floor(timeAgo / 60)} hours ago`
+              });
+            } else {
+              activities.push({
+                action: 'New order received',
+                item: productName,
+                time: timeAgo < 60 ? `${timeAgo} minutes ago` : `${Math.floor(timeAgo / 60)} hours ago`
+              });
+            }
+          }
+        }
+      }
+
+      setStats([
+        { label: 'Total Products', value: productsCount?.toString() || '0', icon: Package, trend: '+12%' },
+        { label: 'Active Orders', value: activeOrdersCount.toString(), icon: ShoppingCart, trend: '+5%' },
+        { label: 'Deliveries', value: deliveriesCount.toString(), icon: Truck, trend: '+18%' },
+        { label: 'Revenue', value: `$${totalRevenue.toFixed(2)}`, icon: DollarSign, trend: '+23%' },
+      ]);
+
+      setRecentActivity(activities.slice(0, 3));
+
+    } catch (error) {
+      console.error('Error fetching seller data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <motion.div
@@ -92,22 +219,28 @@ const Index = () => {
           <h2 className="text-xl font-semibold text-foreground">Recent Activity</h2>
         </div>
         <div className="p-6">
-          <div className="space-y-4">
-            {[
-              { action: 'New order received', item: 'Wireless Headphones', time: '2 minutes ago' },
-              { action: 'Product updated', item: 'Smart Watch Pro', time: '1 hour ago' },
-              { action: 'Delivery completed', item: 'Laptop Stand', time: '3 hours ago' },
-            ].map((activity, index) => (
-              <div key={index} className="flex items-center gap-4 p-3 rounded-2xl hover:bg-muted/50 transition-colors">
-                <div className="w-2 h-2 bg-primary rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-foreground font-medium">{activity.action}</p>
-                  <p className="text-secondary text-sm">{activity.item}</p>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {recentActivity.length > 0 ? recentActivity.map((activity, index) => (
+                <div key={index} className="flex items-center gap-4 p-3 rounded-2xl hover:bg-muted/50 transition-colors">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  <div className="flex-1">
+                    <p className="text-foreground font-medium">{activity.action}</p>
+                    <p className="text-secondary text-sm">{activity.item}</p>
+                  </div>
+                  <span className="text-secondary text-sm">{activity.time}</span>
                 </div>
-                <span className="text-secondary text-sm">{activity.time}</span>
-              </div>
-            ))}
-          </div>
+              )) : (
+                <div className="text-center py-8 text-secondary">
+                  No recent activity found
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </motion.div>
     </motion.div>
