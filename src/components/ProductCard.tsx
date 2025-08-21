@@ -86,7 +86,6 @@ export default function ProductCard({ product, onDelete }: ProductCardProps) {
 
         <div className="flex items-center gap-4 text-sm">
           <div className="flex items-center gap-2 text-primary">
-            <DollarSign className="w-4 h-4" />
             <span className="font-semibold">{formatPrice(product.price)}</span>
           </div>
           
