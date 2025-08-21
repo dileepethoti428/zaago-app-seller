@@ -23,112 +23,67 @@ const Index = () => {
   }, [user]);
 
   const fetchSellerData = async () => {
+    if (!user?.id) return;
+    
+    setLoading(true);
     try {
-      setLoading(true);
-      
-      // Get seller profile
-      const { data: seller } = await supabase
+      // Check if seller profile exists, create if not
+      const { data: existingSeller } = await supabase
         .from('sellers')
-        .select('*')
+        .select('id')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (!seller) return;
+      if (!existingSeller) {
+        const { error: insertError } = await supabase
+          .from('sellers')
+          .insert({
+            user_id: user.id,
+            email: user.email || '',
+            name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Seller'
+          });
 
-      // Get total products count
-      const { count: productsCount } = await supabase
-        .from('products')
-        .select('*', { count: 'exact', head: true })
-        .eq('seller_id', user.id)
-        .eq('is_active', true);
-
-      // Get active orders (orders with seller's products)
-      const { data: allOrders } = await supabase
-        .from('orders')
-        .select('*')
-        .in('status', ['placed', 'confirmed', 'assigned', 'out_for_delivery']);
-
-      // Filter orders that contain seller's products
-      let activeOrdersCount = 0;
-      let totalRevenue = 0;
-      let deliveriesCount = 0;
-
-      if (allOrders) {
-        const { data: sellerProducts } = await supabase
-          .from('products')
-          .select('id')
-          .eq('seller_id', user.id);
-
-        const sellerProductIds = sellerProducts?.map(p => p.id) || [];
-
-        for (const order of allOrders) {
-          const items = Array.isArray(order.items) ? order.items : [];
-          const hasSellerProduct = items.some((item: any) => sellerProductIds.includes(item.id));
-          
-          if (hasSellerProduct) {
-            if (['placed', 'confirmed', 'assigned', 'out_for_delivery'].includes(order.status)) {
-              activeOrdersCount++;
-            }
-            if (order.delivered) {
-              deliveriesCount++;
-              // Calculate revenue from seller's products only
-              const sellerItems = items.filter((item: any) => sellerProductIds.includes(item.id));
-              const orderRevenue = sellerItems.reduce((sum: number, item: any) => sum + (Number(item.price) * Number(item.quantity)), 0);
-              totalRevenue += Number(orderRevenue);
-            }
-          }
+        if (insertError) {
+          console.error('Error creating seller profile:', insertError);
         }
       }
 
-      // Get recent orders for activity
-      const { data: recentOrders } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(10);
+      // Use the new seller stats function for accurate data
+      const { data: statsData, error: statsError } = await supabase.rpc('get_seller_stats', {
+        seller_user_id: user.id
+      });
 
-      const activities = [];
-      if (recentOrders) {
-        const { data: sellerProducts } = await supabase
-          .from('products')
-          .select('id, name')
-          .eq('seller_id', user.id);
-
-        const sellerProductIds = sellerProducts?.map(p => p.id) || [];
-
-        for (const order of recentOrders) {
-          const items = Array.isArray(order.items) ? order.items : [];
-          const sellerItems = items.filter((item: any) => sellerProductIds.includes(item.id));
-          
-          if (sellerItems.length > 0) {
-            const productName = (sellerItems[0] as any).name || 'Unknown Product';
-            const timeAgo = Math.floor((Date.now() - new Date(order.created_at).getTime()) / (1000 * 60));
-            
-            if (order.delivered) {
-              activities.push({
-                action: 'Delivery completed',
-                item: productName,
-                time: timeAgo < 60 ? `${timeAgo} minutes ago` : `${Math.floor(timeAgo / 60)} hours ago`
-              });
-            } else {
-              activities.push({
-                action: 'New order received',
-                item: productName,
-                time: timeAgo < 60 ? `${timeAgo} minutes ago` : `${Math.floor(timeAgo / 60)} hours ago`
-              });
-            }
-          }
-        }
+      if (statsError) {
+        console.error('Error fetching seller stats:', statsError);
+        return;
       }
+
+      const stats_obj = statsData as any;
+      const totalProducts = stats_obj?.total_products || 0;
+      const activeOrders = stats_obj?.active_orders || 0;
+      const totalDeliveries = stats_obj?.total_deliveries || 0;
+      const revenue = stats_obj?.total_revenue || 0;
+
+      // Get recent activity using seller orders
+      const { data: recentOrders, error: ordersError } = await supabase.rpc('get_seller_orders', {
+        seller_user_id: user.id,
+        status_filter: null
+      });
+
+      const recentActivity = recentOrders?.slice(0, 3).map((order: any) => ({
+        action: order.status === 'delivered' ? 'Delivery completed' : 'New order received',
+        item: `Order #${order.order_id.toString().slice(0, 8)}`,
+        time: new Date(order.created_at).toLocaleString()
+      })) || [];
 
       setStats([
-        { label: 'Total Products', value: productsCount?.toString() || '0', icon: Package, trend: '+12%' },
-        { label: 'Active Orders', value: activeOrdersCount.toString(), icon: ShoppingCart, trend: '+5%' },
-        { label: 'Deliveries', value: deliveriesCount.toString(), icon: Truck, trend: '+18%' },
-        { label: 'Revenue', value: `$${totalRevenue.toFixed(2)}`, icon: DollarSign, trend: '+23%' },
+        { label: 'Total Products', value: totalProducts.toString(), icon: Package, trend: '+12%' },
+        { label: 'Active Orders', value: activeOrders.toString(), icon: ShoppingCart, trend: '+5%' },
+        { label: 'Deliveries', value: totalDeliveries.toString(), icon: Truck, trend: '+18%' },
+        { label: 'Revenue', value: `₹${revenue.toFixed(2)}`, icon: DollarSign, trend: '+23%' },
       ]);
 
-      setRecentActivity(activities.slice(0, 3));
+      setRecentActivity(recentActivity);
 
     } catch (error) {
       console.error('Error fetching seller data:', error);

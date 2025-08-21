@@ -191,17 +191,19 @@ export default function DeliveriesPage() {
   const fetchDeliveredOrders = async () => {
     setLoading(true);
     try {
-      // First, get all orders (including placed, delivered, etc.) for the selected date
-      const { data: allOrders, error } = await supabase
-        .from('orders')
-        .select('*')
-        .in('status', ['delivered', 'placed', 'confirmed', 'assigned', 'out_for_delivery'])
-        .gte('created_at', `${selectedDate}T00:00:00`)
-        .lte('created_at', `${selectedDate}T23:59:59`)
-        .order('created_at', { ascending: false });
+      if (!user?.id) {
+        console.error('No user found');
+        return;
+      }
+
+      // Get seller's orders using the new function
+      const { data: allOrders, error } = await supabase.rpc('get_seller_orders', {
+        seller_user_id: user.id,
+        status_filter: ['delivered', 'placed', 'confirmed', 'assigned', 'out_for_delivery']
+      });
 
       if (error) {
-        console.error('Error fetching orders:', error);
+        console.error('Error fetching seller orders:', error);
         toast({
           title: "Error",
           description: "Failed to fetch orders",
@@ -254,8 +256,29 @@ export default function DeliveriesPage() {
         return order.items.some((item: any) => sellerProductIds.has(item.id));
       });
 
-      setDeliveredOrders(sellerOrders);
-      calculateProductTotals(sellerOrders);
+      // Map to the correct format
+      const mappedOrders = sellerOrders.map(order => ({
+        id: order.order_id,
+        customer_name: order.customer_name || 'N/A',
+        customer_phone: order.customer_phone || 'N/A',
+        address: order.address,
+        items: order.items,
+        total: order.seller_total || 0,
+        status: order.status,
+        created_at: order.created_at,
+        updated_at: order.updated_at,
+        agent_id: order.agent_id,
+        delivered: order.delivered || false,
+        delivery_date: order.delivery_date,
+        delivery_time_slot: null,
+        payment_id: '',
+        payment_status: order.payment_status || 'Pending',
+        special_instructions: order.special_instructions,
+        user_id: order.user_id,
+      }));
+
+      setDeliveredOrders(mappedOrders);
+      calculateProductTotals(mappedOrders);
     } catch (error) {
       console.error('Unexpected error:', error);
       toast({
@@ -270,77 +293,29 @@ export default function DeliveriesPage() {
 
   const fetchStats = async () => {
     try {
-      const today = new Date();
-      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-      // Fetch today's orders (all statuses)
-      const { data: todayData } = await supabase
-        .from('orders')
-        .select('*')
-        .in('status', ['delivered', 'placed', 'confirmed', 'assigned', 'out_for_delivery'])
-        .gte('created_at', today.toISOString().split('T')[0] + 'T00:00:00')
-        .lte('created_at', today.toISOString().split('T')[0] + 'T23:59:59');
-
-      // Fetch this week's orders
-      const { data: weekData } = await supabase
-        .from('orders')
-        .select('*')
-        .in('status', ['delivered', 'placed', 'confirmed', 'assigned', 'out_for_delivery'])
-        .gte('created_at', weekAgo.toISOString());
-
-      // Fetch this month's orders
-      const { data: monthData } = await supabase
-        .from('orders')
-        .select('*')
-        .in('status', ['delivered', 'placed', 'confirmed', 'assigned', 'out_for_delivery'])
-        .gte('created_at', monthAgo.toISOString());
-
-      // Get all unique product IDs from all orders
-      const allProductIds = new Set<string>();
-      [...(todayData || []), ...(weekData || []), ...(monthData || [])].forEach(order => {
-        if (order.items && Array.isArray(order.items)) {
-          order.items.forEach((item: any) => {
-            if (item.id) allProductIds.add(item.id);
-          });
-        }
-      });
-
-      if (allProductIds.size === 0) {
-        setStats({ today: 0, thisWeek: 0, thisMonth: 0 });
+      if (!user?.id) {
+        console.error('No user found');
         return;
       }
 
-      // Get products that belong to this seller
-      const { data: sellerProducts } = await supabase
-        .from('products')
-        .select('id')
-        .eq('seller_id', user?.id)
-        .in('id', Array.from(allProductIds));
-
-      const sellerProductIds = new Set(sellerProducts?.map(p => p.id) || []);
-
-      // Filter orders that contain seller's products
-      const todaySellerOrders = (todayData || []).filter(order => {
-        if (!order.items || !Array.isArray(order.items)) return false;
-        return order.items.some((item: any) => sellerProductIds.has(item.id));
+      // Use the new seller stats function
+      const { data: statsData, error } = await supabase.rpc('get_seller_stats', {
+        seller_user_id: user.id
       });
 
-      const weekSellerOrders = (weekData || []).filter(order => {
-        if (!order.items || !Array.isArray(order.items)) return false;
-        return order.items.some((item: any) => sellerProductIds.has(item.id));
-      });
+      if (error) {
+        console.error('Error fetching seller stats:', error);
+        return;
+      }
 
-      const monthSellerOrders = (monthData || []).filter(order => {
-        if (!order.items || !Array.isArray(order.items)) return false;
-        return order.items.some((item: any) => sellerProductIds.has(item.id));
-      });
-
-      setStats({
-        today: todaySellerOrders.length,
-        thisWeek: weekSellerOrders.length,
-        thisMonth: monthSellerOrders.length,
-      });
+      if (statsData && typeof statsData === 'object') {
+        const stats_obj = statsData as any;
+        setStats({
+          today: stats_obj.today_orders || 0,
+          thisWeek: stats_obj.week_orders || 0,
+          thisMonth: stats_obj.month_orders || 0,
+        });
+      }
     } catch (error) {
       console.error('Error fetching stats:', error);
     }

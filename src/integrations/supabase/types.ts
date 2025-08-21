@@ -2019,6 +2019,31 @@ export type Database = {
           pending: number
         }[]
       }
+      get_seller_orders: {
+        Args: { seller_user_id: string; status_filter?: string[] }
+        Returns: {
+          address: Json
+          agent_id: string
+          created_at: string
+          customer_name: string
+          customer_phone: string
+          delivered: boolean
+          delivery_date: string
+          items: Json
+          order_id: string
+          payment_status: string
+          seller_total: number
+          special_instructions: string
+          status: string
+          total: number
+          updated_at: string
+          user_id: string
+        }[]
+      }
+      get_seller_stats: {
+        Args: { seller_user_id: string }
+        Returns: Json
+      }
       get_top_products: {
         Args: { limit_count?: number }
         Returns: {
