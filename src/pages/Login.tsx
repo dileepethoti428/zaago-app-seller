@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion';
-import { LogIn, Mail, Lock, UserPlus } from 'lucide-react';
+import { LogIn, Mail, Lock, UserPlus, Phone, Building } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function LoginPage() {
   const { signIn, signUp } = useAuth();
@@ -11,7 +12,9 @@ export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
+    phone: '',
+    businessName: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,52 +29,109 @@ export default function LoginPage() {
       return;
     }
 
+    if (isSignUp && (!formData.phone || !formData.businessName)) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter phone number and business name for registration.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const { error } = isSignUp 
-        ? await signUp(formData.email, formData.password)
-        : await signIn(formData.email, formData.password);
-
-      if (error) {
-        // Handle specific error cases
-        let errorMessage = error.message;
+      if (isSignUp) {
+        // Create auth user first
+        const { error: authError } = await signUp(formData.email, formData.password);
         
-        if (error.message?.includes('Invalid login credentials')) {
-          errorMessage = "Invalid email or password. Please check your credentials.";
-        } else if (error.message?.includes('User already registered')) {
-          errorMessage = "This email is already registered. Try signing in instead.";
-          setIsSignUp(false);
-        } else if (error.message?.includes('signup')) {
-          errorMessage = "Account creation failed. Please try again.";
+        if (authError) {
+          throw authError;
         }
 
-        toast({
-          title: isSignUp ? "Sign Up Failed" : "Login Failed",
-          description: errorMessage,
-          variant: "destructive",
-        });
-        return;
-      }
+        // Since the signup was successful, we can try to create seller profile
+        // We'll handle this in a separate step since we need the user_id from auth
+        try {
+          // Get the current user after signup
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          if (user) {
+            // Create seller profile with additional data
+            const { error: sellerError } = await supabase
+              .from('sellers')
+              .insert({
+                user_id: user.id,
+                email: formData.email,
+                name: formData.businessName,
+                phone: formData.phone,
+                business_name: formData.businessName,
+              });
 
-      if (isSignUp) {
+            if (sellerError) {
+              console.error('Error creating seller profile:', sellerError);
+              // Don't fail the signup if seller creation fails, just log it
+            }
+
+            // Create admin notification
+            const { error: notificationError } = await supabase
+              .from('admin_notifications')
+              .insert({
+                type: 'new_seller_signup',
+                title: 'New Seller Registration',
+                message: `New seller "${formData.businessName}" has registered with email ${formData.email}`,
+                metadata: {
+                  seller_email: formData.email,
+                  business_name: formData.businessName,
+                  phone: formData.phone,
+                  signup_date: new Date().toISOString()
+                }
+              });
+
+            if (notificationError) {
+              console.error('Error creating admin notification:', notificationError);
+            }
+          }
+        } catch (profileError) {
+          console.error('Error creating seller profile after signup:', profileError);
+          // Continue with signup success even if profile creation fails
+        }
+
         toast({
           title: "Account Created!",
           description: "Please check your email to verify your account, then sign in.",
         });
         setIsSignUp(false);
-        setFormData({ email: '', password: '' });
+        setFormData({ email: '', password: '', phone: '', businessName: '' });
       } else {
+        const { error } = await signIn(formData.email, formData.password);
+        
+        if (error) {
+          throw error;
+        }
+
         toast({
           title: "Welcome back!",
           description: "Logged in successfully.",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Auth error:', error);
+      
+      // Handle specific error cases
+      let errorMessage = error.message;
+      
+      if (error.message?.includes('Invalid login credentials')) {
+        errorMessage = "Invalid email or password. Please check your credentials.";
+      } else if (error.message?.includes('User already registered')) {
+        errorMessage = "This email is already registered. Try signing in instead.";
+        setIsSignUp(false);
+      } else if (error.message?.includes('signup')) {
+        errorMessage = "Account creation failed. Please try again.";
+      }
+
       toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        title: isSignUp ? "Sign Up Failed" : "Login Failed",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -149,6 +209,40 @@ export default function LoginPage() {
               )}
             </div>
 
+            {isSignUp && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Phone Number</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary w-5 h-5" />
+                    <input
+                      type="tel"
+                      required
+                      value={formData.phone}
+                      onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="Enter your phone number"
+                      className="w-full pl-10 pr-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder:text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Business Name</label>
+                  <div className="relative">
+                    <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary w-5 h-5" />
+                    <input
+                      type="text"
+                      required
+                      value={formData.businessName}
+                      onChange={(e) => setFormData(prev => ({ ...prev, businessName: e.target.value }))}
+                      placeholder="Enter your business name"
+                      className="w-full pl-10 pr-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder:text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
             <button
               type="submit"
               disabled={loading}
@@ -166,7 +260,7 @@ export default function LoginPage() {
               type="button"
               onClick={() => {
                 setIsSignUp(!isSignUp);
-                setFormData({ email: '', password: '' });
+                setFormData({ email: '', password: '', phone: '', businessName: '' });
               }}
               className="text-primary hover:text-primary/80 transition-colors"
             >
