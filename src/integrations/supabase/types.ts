@@ -501,7 +501,7 @@ export type Database = {
       }
       delivery_history: {
         Row: {
-          agent_id: string
+          agent_id: string | null
           completed_at: string
           created_at: string
           customer_name: string
@@ -524,7 +524,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          agent_id: string
+          agent_id?: string | null
           completed_at?: string
           created_at?: string
           customer_name: string
@@ -547,7 +547,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          agent_id?: string
+          agent_id?: string | null
           completed_at?: string
           created_at?: string
           customer_name?: string
@@ -2270,6 +2270,10 @@ export type Database = {
         Args: { end_date: string; start_date: string; target_seller_id: string }
         Returns: string
       }
+      ensure_delivery_data_consistency: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       generate_order_qr_code: {
         Args: { order_uuid: string }
         Returns: string
@@ -2332,7 +2336,9 @@ export type Database = {
         }[]
       }
       get_seller_orders: {
-        Args: { seller_user_id: string }
+        Args:
+          | { seller_user_id: string }
+          | { seller_user_id: string; status_filter?: string[] }
         Returns: {
           address: Json
           agent_id: string
