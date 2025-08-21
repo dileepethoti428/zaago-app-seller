@@ -191,18 +191,11 @@ export default function DeliveriesPage() {
   const fetchDeliveredOrders = async () => {
     setLoading(true);
     try {
-      // Get orders that contain products from this seller
-      const { data: orderData, error } = await supabase
+      // First, get all delivered orders for the selected date
+      const { data: allOrders, error } = await supabase
         .from('orders')
-        .select(`
-          *,
-          order_items!inner(
-            *,
-            products!inner(seller_id)
-          )
-        `)
+        .select('*')
         .eq('status', 'delivered')
-        .eq('order_items.products.seller_id', user?.id)
         .gte('created_at', `${selectedDate}T00:00:00`)
         .lte('created_at', `${selectedDate}T23:59:59`)
         .order('created_at', { ascending: false });
@@ -217,9 +210,52 @@ export default function DeliveriesPage() {
         return;
       }
 
-      const ordersData = orderData || [];
-      setDeliveredOrders(ordersData);
-      calculateProductTotals(ordersData);
+      if (!allOrders || allOrders.length === 0) {
+        setDeliveredOrders([]);
+        calculateProductTotals([]);
+        return;
+      }
+
+      // Get all product IDs from the orders
+      const productIds = new Set<string>();
+      allOrders.forEach(order => {
+        if (order.items && Array.isArray(order.items)) {
+          order.items.forEach((item: any) => {
+            if (item.id) productIds.add(item.id);
+          });
+        }
+      });
+
+      if (productIds.size === 0) {
+        setDeliveredOrders([]);
+        calculateProductTotals([]);
+        return;
+      }
+
+      // Get products that belong to this seller
+      const { data: sellerProducts, error: productError } = await supabase
+        .from('products')
+        .select('id')
+        .eq('seller_id', user?.id)
+        .in('id', Array.from(productIds));
+
+      if (productError) {
+        console.error('Error fetching seller products:', productError);
+        return;
+      }
+
+      const sellerProductIds = new Set(sellerProducts?.map(p => p.id) || []);
+
+      // Filter orders that contain products from this seller
+      const sellerOrders = allOrders.filter(order => {
+        if (!order.items || !Array.isArray(order.items)) return false;
+        
+        // Check if any item in the order belongs to this seller
+        return order.items.some((item: any) => sellerProductIds.has(item.id));
+      });
+
+      setDeliveredOrders(sellerOrders);
+      calculateProductTotals(sellerOrders);
     } catch (error) {
       console.error('Unexpected error:', error);
       toast({
@@ -241,7 +277,7 @@ export default function DeliveriesPage() {
       // Fetch today's deliveries
       const { data: todayData } = await supabase
         .from('orders')
-        .select('id')
+        .select('*')
         .eq('status', 'delivered')
         .gte('created_at', today.toISOString().split('T')[0] + 'T00:00:00')
         .lte('created_at', today.toISOString().split('T')[0] + 'T23:59:59');
@@ -249,21 +285,61 @@ export default function DeliveriesPage() {
       // Fetch this week's deliveries
       const { data: weekData } = await supabase
         .from('orders')
-        .select('id')
+        .select('*')
         .eq('status', 'delivered')
         .gte('created_at', weekAgo.toISOString());
 
       // Fetch this month's deliveries
       const { data: monthData } = await supabase
         .from('orders')
-        .select('id')
+        .select('*')
         .eq('status', 'delivered')
         .gte('created_at', monthAgo.toISOString());
 
+      // Get all unique product IDs from all orders
+      const allProductIds = new Set<string>();
+      [...(todayData || []), ...(weekData || []), ...(monthData || [])].forEach(order => {
+        if (order.items && Array.isArray(order.items)) {
+          order.items.forEach((item: any) => {
+            if (item.id) allProductIds.add(item.id);
+          });
+        }
+      });
+
+      if (allProductIds.size === 0) {
+        setStats({ today: 0, thisWeek: 0, thisMonth: 0 });
+        return;
+      }
+
+      // Get products that belong to this seller
+      const { data: sellerProducts } = await supabase
+        .from('products')
+        .select('id')
+        .eq('seller_id', user?.id)
+        .in('id', Array.from(allProductIds));
+
+      const sellerProductIds = new Set(sellerProducts?.map(p => p.id) || []);
+
+      // Filter orders that contain seller's products
+      const todaySellerOrders = (todayData || []).filter(order => {
+        if (!order.items || !Array.isArray(order.items)) return false;
+        return order.items.some((item: any) => sellerProductIds.has(item.id));
+      });
+
+      const weekSellerOrders = (weekData || []).filter(order => {
+        if (!order.items || !Array.isArray(order.items)) return false;
+        return order.items.some((item: any) => sellerProductIds.has(item.id));
+      });
+
+      const monthSellerOrders = (monthData || []).filter(order => {
+        if (!order.items || !Array.isArray(order.items)) return false;
+        return order.items.some((item: any) => sellerProductIds.has(item.id));
+      });
+
       setStats({
-        today: todayData?.length || 0,
-        thisWeek: weekData?.length || 0,
-        thisMonth: monthData?.length || 0,
+        today: todaySellerOrders.length,
+        thisWeek: weekSellerOrders.length,
+        thisMonth: monthSellerOrders.length,
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
