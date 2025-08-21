@@ -1,6 +1,8 @@
 'use client';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Package, PlusCircle, Truck, LogIn, Menu, User } from 'lucide-react';
+import { Package, PlusCircle, Truck, LogOut, Menu, User } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import {
   Sidebar as SidebarUI,
@@ -16,7 +18,6 @@ import {
 } from '@/components/ui/sidebar';
 
 const navigationLinks = [
-  { href: '/login', label: 'Login', icon: LogIn },
   { href: '/products', label: 'Products', icon: Package },
   { href: '/products/new', label: 'Add Product', icon: PlusCircle },
   { href: '/deliveries', label: 'Deliveries', icon: Truck },
@@ -25,9 +26,28 @@ const navigationLinks = [
 
 export default function Sidebar() {
   const { state } = useSidebar();
+  const { signOut } = useAuth();
+  const { toast } = useToast();
   const location = useLocation();
   const currentPath = location.pathname;
   const collapsed = state === 'collapsed';
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to log out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const isActive = (path: string) => {
     if (path === '/products' && currentPath.startsWith('/products')) {
@@ -55,7 +75,7 @@ export default function Sidebar() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
             >
-              Zaago Seller
+              Zaago Seller Dashboard
             </motion.h1>
           )}
           {collapsed && (
@@ -104,8 +124,17 @@ export default function Sidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Toggle button */}
-        <div className="p-4 border-t border-border">
+        {/* Logout and Toggle */}
+        <div className="p-4 border-t border-border space-y-2">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 p-3 rounded-2xl zaago-button-ghost hover:bg-red-500/10 hover:text-red-400 transition-colors"
+          >
+            <LogOut size={20} className="shrink-0" />
+            {!collapsed && (
+              <span className="font-medium">Sign Out</span>
+            )}
+          </button>
           <SidebarTrigger className="w-full flex items-center justify-center p-2 rounded-2xl zaago-button-ghost">
             <Menu size={20} />
           </SidebarTrigger>
