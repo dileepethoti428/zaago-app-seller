@@ -51,73 +51,49 @@ export default function ProfilePage() {
     
     setLoading(true);
     try {
-      // First check if seller profile exists
-      const { data: sellerData, error: sellerError } = await supabase
+      // Upsert seller profile to ensure it exists
+      const { data: sellerData, error: upsertError } = await supabase
         .from('sellers')
-        .select('*')
-        .eq('user_id', user.id)
+        .upsert({
+          user_id: user.id,
+          email: user.email || '',
+          name: user.email?.split('@')[0] || 'User',
+        }, {
+          onConflict: 'user_id'
+        })
+        .select()
         .single();
 
-      if (sellerError && sellerError.code !== 'PGRST116') {
-        console.error('Error fetching seller profile:', sellerError);
+      if (upsertError) {
+        console.error('Error upserting seller profile:', upsertError);
+        toast({
+          title: "Error",
+          description: "Failed to create/fetch seller profile",
+          variant: "destructive",
+        });
+        return;
       }
 
       // Also check regular profile for full_name
-      const { data: profileData, error: profileError } = await supabase
+      const { data: profileData } = await supabase
         .from('profiles')
         .select('full_name')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (sellerData) {
-        // Use seller data
-        setProfile(sellerData as any);
-        setFormData({
-          full_name: profileData?.full_name || sellerData.name || '',
-          business_name: sellerData.business_name || '',
-          phone: sellerData.phone || '',
-          address: typeof sellerData.address === 'string' ? sellerData.address : '',
-          city: '', // seller table doesn't have city
-          state: '', // seller table doesn't have state
-          pincode: '', // seller table doesn't have pincode
-          bio: '', // seller table doesn't have bio
-          business_type: 'grocery',
-          gst_number: '',
-        });
-      } else {
-        // Create new seller profile
-        const { data: newSeller, error: createError } = await supabase
-          .from('sellers')
-          .insert({
-            email: user.email || '',
-            name: user.email?.split('@')[0] || 'User',
-          })
-          .select()
-          .single();
-
-        if (createError) {
-          console.error('Error creating seller profile:', createError);
-          toast({
-            title: "Error",
-            description: "Failed to create seller profile",
-            variant: "destructive",
-          });
-        } else {
-          setProfile(newSeller as any);
-          setFormData({
-            full_name: profileData?.full_name || newSeller.name || '',
-            business_name: '',
-            phone: '',
-            address: '',
-            city: '',
-            state: '',
-            pincode: '',
-            bio: '',
-            business_type: 'grocery',
-            gst_number: '',
-          });
-        }
-      }
+      setProfile(sellerData as any);
+      setFormData({
+        full_name: profileData?.full_name || sellerData.name || '',
+        business_name: sellerData.business_name || '',
+        phone: sellerData.phone || '',
+        address: typeof sellerData.address === 'string' ? sellerData.address : '',
+        city: '',
+        state: '',
+        pincode: '',
+        bio: '',
+        business_type: 'grocery',
+        gst_number: '',
+      });
     } catch (error) {
       console.error('Unexpected error:', error);
       toast({
