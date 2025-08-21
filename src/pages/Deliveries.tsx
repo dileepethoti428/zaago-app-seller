@@ -221,10 +221,10 @@ export default function DeliveriesPage() {
         return;
       }
 
-      // Get seller's orders - prioritize delivered orders but show all for comprehensive view
+      // Get seller's orders - ONLY delivered orders (successfully completed by agents)
       const { data: allOrders, error } = await supabase.rpc('get_seller_orders', {
         seller_user_id: user.id,
-        status_filter: null // Get all orders, then filter locally for better control
+        status_filter: ['delivered'] // Only show orders that have been successfully delivered
       });
 
       if (error) {
@@ -273,37 +273,29 @@ export default function DeliveriesPage() {
 
       const sellerProductIds = new Set(sellerProducts?.map(p => p.id) || []);
 
-      // Filter orders that contain products from this seller AND match the selected date
+      // Filter orders that contain products from this seller AND are delivered
       const sellerOrders = allOrders.filter(order => {
         if (!order.items || !Array.isArray(order.items)) return false;
         
         // Check if any item in the order belongs to this seller
         const hasSellerProduct = order.items.some((item: any) => sellerProductIds.has(item.id));
         
+        // Only show delivered orders
+        const isDelivered = order.status === 'delivered' || order.delivered === true;
+        
         // Also filter by selected date
         const orderDate = new Date(order.created_at).toISOString().split('T')[0];
         const matchesDate = orderDate === selectedDate;
         
-        return hasSellerProduct && matchesDate;
+        return hasSellerProduct && isDelivered && matchesDate;
       });
 
-      // Sort orders to show delivered first, then by status priority
-      const statusPriority = {
-        'delivered': 1,
-        'out_for_delivery': 2,
-        'assigned': 3,
-        'confirmed': 4,
-        'placed': 5
-      };
-
+      // Sort by delivery completion time (most recent first)
       const sortedOrders = sellerOrders.sort((a, b) => {
-        const aPriority = statusPriority[a.status as keyof typeof statusPriority] || 999;
-        const bPriority = statusPriority[b.status as keyof typeof statusPriority] || 999;
-        if (aPriority !== bPriority) return aPriority - bPriority;
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        return new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime();
       });
 
-      // Map to the correct format with enhanced delivery detection
+      // Map to the correct format - all orders here are delivered
       const mappedOrders = sortedOrders.map(order => ({
         id: order.order_id,
         customer_name: order.customer_name || 'N/A',
@@ -311,11 +303,11 @@ export default function DeliveriesPage() {
         address: order.address,
         items: order.items,
         total: order.seller_total || 0,
-        status: order.status,
+        status: 'delivered', // All orders here are delivered
         created_at: order.created_at,
         updated_at: order.updated_at,
         agent_id: order.agent_id,
-        delivered: order.delivered || order.status === 'delivered', // Enhanced delivery detection
+        delivered: true, // All orders here are delivered
         delivery_date: order.delivery_date,
         delivery_time_slot: null,
         payment_id: '',
@@ -401,16 +393,14 @@ export default function DeliveriesPage() {
           console.log('Order updated:', payload);
           const updatedOrder = payload.new as any;
           
-          // Check if this order contains seller's products by refreshing data
-          // We refresh data to ensure we have the most up-to-date seller-specific information
-          fetchDeliveredOrders();
-          fetchStats();
-          
-          // Show notification for delivered orders
+          // Only refresh and notify for delivered orders
           if (updatedOrder.status === 'delivered' || updatedOrder.delivered === true) {
+            fetchDeliveredOrders();
+            fetchStats();
+            
             toast({
-              title: "Delivery Completed! 🎉",
-              description: `Order ${updatedOrder.id.slice(0, 8)} has been successfully delivered`,
+              title: "Product Delivered Successfully! 🎉",
+              description: `Your product in order ${updatedOrder.id.slice(0, 8)} has been delivered to the customer`,
             });
           }
         }
@@ -445,8 +435,8 @@ export default function DeliveriesPage() {
           fetchDeliveredOrders();
           fetchStats();
           toast({
-            title: "Delivery Confirmed! ✅",
-            description: "A delivery has been recorded in the system",
+            title: "Delivery Completed! ✅",
+            description: "Your product has been successfully delivered to a customer",
           });
         }
       )
@@ -584,8 +574,9 @@ export default function DeliveriesPage() {
           <div className="p-6">
             {productTotals.length === 0 ? (
               <div className="text-center py-8">
-                <Package className="w-12 h-12 text-secondary mx-auto mb-4" />
-                <p className="text-secondary">No product data available for this date</p>
+                <Truck className="w-12 h-12 text-secondary mx-auto mb-4" />
+                <p className="text-secondary">No deliveries completed for this date</p>
+                <p className="text-xs text-secondary mt-2">Delivered orders will appear here after agents complete delivery</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -712,19 +703,8 @@ export default function DeliveriesPage() {
                         {new Date(order.created_at).toLocaleDateString()}
                       </p>
                     </div>
-                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                       order.status === 'delivered' || order.delivered 
-                         ? 'bg-green-500/20 text-green-600' 
-                         : order.status === 'out_for_delivery' 
-                         ? 'bg-yellow-500/20 text-yellow-600'
-                         : order.status === 'assigned'
-                         ? 'bg-blue-500/20 text-blue-600'
-                         : 'bg-primary/20 text-primary'
-                     }`}>
-                       {order.status === 'delivered' || order.delivered ? 'Delivered' : 
-                        order.status === 'out_for_delivery' ? 'Out for Delivery' :
-                        order.status === 'assigned' ? 'Assigned' :
-                        order.status === 'confirmed' ? 'Confirmed' : 'Placed'}
+                     <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-500/20 text-green-600">
+                       ✅ Delivered
                      </span>
                   </div>
                 </div>
