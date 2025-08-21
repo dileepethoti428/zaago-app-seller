@@ -3,6 +3,7 @@ import { Truck, Clock, CheckCircle, Package, MapPin, Filter, Calendar, Download,
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 import Papa from 'papaparse';
 import { saveAs } from 'file-saver';
 import { format } from "date-fns";
@@ -48,6 +49,7 @@ interface ProductTotal {
 }
 
 export default function DeliveriesPage() {
+  const { user } = useAuth();
   const [deliveredOrders, setDeliveredOrders] = useState<DeliveredOrder[]>([]);
   const [stats, setStats] = useState<DeliveryStats>({ today: 0, thisWeek: 0, thisMonth: 0 });
   const [productTotals, setProductTotals] = useState<ProductTotal[]>([]);
@@ -189,10 +191,18 @@ export default function DeliveriesPage() {
   const fetchDeliveredOrders = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Get orders that contain products from this seller
+      const { data: orderData, error } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          *,
+          order_items!inner(
+            *,
+            products!inner(seller_id)
+          )
+        `)
         .eq('status', 'delivered')
+        .eq('order_items.products.seller_id', user?.id)
         .gte('created_at', `${selectedDate}T00:00:00`)
         .lte('created_at', `${selectedDate}T23:59:59`)
         .order('created_at', { ascending: false });
@@ -207,7 +217,7 @@ export default function DeliveriesPage() {
         return;
       }
 
-      const ordersData = data || [];
+      const ordersData = orderData || [];
       setDeliveredOrders(ordersData);
       calculateProductTotals(ordersData);
     } catch (error) {

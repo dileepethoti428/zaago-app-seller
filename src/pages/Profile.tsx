@@ -51,67 +51,70 @@ export default function ProfilePage() {
     
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('profiles')
+      // First check if seller profile exists
+      const { data: sellerData, error: sellerError } = await supabase
+        .from('sellers')
         .select('*')
         .eq('user_id', user.id)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching profile:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch profile",
-          variant: "destructive",
-        });
-        return;
+      if (sellerError && sellerError.code !== 'PGRST116') {
+        console.error('Error fetching seller profile:', sellerError);
       }
 
-      if (data) {
-        setProfile(data);
+      // Also check regular profile for full_name
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', user.id)
+        .single();
+
+      if (sellerData) {
+        // Use seller data
+        setProfile(sellerData as any);
         setFormData({
-          full_name: data.full_name || '',
-          business_name: (data as any).business_name || '',
-          phone: data.phone || '',
-          address: (data as any).address || '',
-          city: (data as any).city || '',
-          state: (data as any).state || '',
-          pincode: (data as any).pincode || '',
-          bio: (data as any).bio || '',
-          business_type: (data as any).business_type || 'grocery',
-          gst_number: (data as any).gst_number || '',
+          full_name: profileData?.full_name || sellerData.name || '',
+          business_name: sellerData.business_name || '',
+          phone: sellerData.phone || '',
+          address: typeof sellerData.address === 'string' ? sellerData.address : '',
+          city: '', // seller table doesn't have city
+          state: '', // seller table doesn't have state
+          pincode: '', // seller table doesn't have pincode
+          bio: '', // seller table doesn't have bio
+          business_type: 'grocery',
+          gst_number: '',
         });
       } else {
-        // Profile doesn't exist, create one
-        const { data: newProfile, error: createError } = await supabase
-          .from('profiles')
+        // Create new seller profile
+        const { data: newSeller, error: createError } = await supabase
+          .from('sellers')
           .insert({
-            user_id: user.id,
-            full_name: user.email?.split('@')[0] || 'User',
+            email: user.email || '',
+            name: user.email?.split('@')[0] || 'User',
           })
           .select()
           .single();
 
         if (createError) {
-          console.error('Error creating profile:', createError);
+          console.error('Error creating seller profile:', createError);
           toast({
             title: "Error",
-            description: "Failed to create profile",
+            description: "Failed to create seller profile",
             variant: "destructive",
           });
         } else {
-          setProfile(newProfile);
+          setProfile(newSeller as any);
           setFormData({
-            full_name: newProfile.full_name || '',
-            business_name: (newProfile as any).business_name || '',
-            phone: newProfile.phone || '',
-            address: (newProfile as any).address || '',
-            city: (newProfile as any).city || '',
-            state: (newProfile as any).state || '',
-            pincode: (newProfile as any).pincode || '',
-            bio: (newProfile as any).bio || '',
-            business_type: (newProfile as any).business_type || 'grocery',
-            gst_number: (newProfile as any).gst_number || '',
+            full_name: profileData?.full_name || newSeller.name || '',
+            business_name: '',
+            phone: '',
+            address: '',
+            city: '',
+            state: '',
+            pincode: '',
+            bio: '',
+            business_type: 'grocery',
+            gst_number: '',
           });
         }
       }
@@ -132,22 +135,40 @@ export default function ProfilePage() {
 
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
+      // Update seller profile
+      const { error: sellerError } = await supabase
+        .from('sellers')
         .update({
+          name: formData.full_name,
+          business_name: formData.business_name,
+          phone: formData.phone,
+          address: formData.address,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+
+      if (sellerError) {
+        console.error('Error updating seller profile:', sellerError);
+        toast({
+          title: "Error",
+          description: "Failed to update seller profile",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Also update regular profile for full_name
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          user_id: user.id,
           full_name: formData.full_name,
           phone: formData.phone,
         })
         .eq('user_id', user.id);
 
-      if (error) {
-        console.error('Error updating profile:', error);
-        toast({
-          title: "Error",
-          description: "Failed to update profile",
-          variant: "destructive",
-        });
-        return;
+      if (profileError) {
+        console.error('Error updating profile:', profileError);
       }
 
       toast({
