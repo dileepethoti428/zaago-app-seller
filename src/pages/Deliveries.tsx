@@ -191,20 +191,20 @@ export default function DeliveriesPage() {
   const fetchDeliveredOrders = async () => {
     setLoading(true);
     try {
-      // First, get all delivered orders for the selected date
+      // First, get all orders (including placed, delivered, etc.) for the selected date
       const { data: allOrders, error } = await supabase
         .from('orders')
         .select('*')
-        .eq('status', 'delivered')
+        .in('status', ['delivered', 'placed', 'confirmed', 'assigned', 'out_for_delivery'])
         .gte('created_at', `${selectedDate}T00:00:00`)
         .lte('created_at', `${selectedDate}T23:59:59`)
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching delivered orders:', error);
+        console.error('Error fetching orders:', error);
         toast({
           title: "Error",
-          description: "Failed to fetch delivered orders",
+          description: "Failed to fetch orders",
           variant: "destructive",
         });
         return;
@@ -274,26 +274,26 @@ export default function DeliveriesPage() {
       const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
       const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      // Fetch today's deliveries
+      // Fetch today's orders (all statuses)
       const { data: todayData } = await supabase
         .from('orders')
         .select('*')
-        .eq('status', 'delivered')
+        .in('status', ['delivered', 'placed', 'confirmed', 'assigned', 'out_for_delivery'])
         .gte('created_at', today.toISOString().split('T')[0] + 'T00:00:00')
         .lte('created_at', today.toISOString().split('T')[0] + 'T23:59:59');
 
-      // Fetch this week's deliveries
+      // Fetch this week's orders
       const { data: weekData } = await supabase
         .from('orders')
         .select('*')
-        .eq('status', 'delivered')
+        .in('status', ['delivered', 'placed', 'confirmed', 'assigned', 'out_for_delivery'])
         .gte('created_at', weekAgo.toISOString());
 
-      // Fetch this month's deliveries
+      // Fetch this month's orders
       const { data: monthData } = await supabase
         .from('orders')
         .select('*')
-        .eq('status', 'delivered')
+        .in('status', ['delivered', 'placed', 'confirmed', 'assigned', 'out_for_delivery'])
         .gte('created_at', monthAgo.toISOString());
 
       // Get all unique product IDs from all orders
@@ -354,6 +354,16 @@ export default function DeliveriesPage() {
     fetchStats();
   }, []);
 
+  // Auto-refresh data every 15 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchDeliveredOrders();
+      fetchStats();
+    }, 15000); // 15 seconds
+
+    return () => clearInterval(interval);
+  }, [selectedDate]);
+
   // Set up realtime subscription for delivered orders
   useEffect(() => {
     const channel = supabase
@@ -368,24 +378,28 @@ export default function DeliveriesPage() {
         },
         (payload) => {
           console.log('Order delivered:', payload);
-          const updatedOrder = payload.new as DeliveredOrder;
-          
-          // Add to list if it matches current date filter
-          const orderDate = new Date(updatedOrder.created_at).toISOString().split('T')[0];
-          if (orderDate === selectedDate) {
-            setDeliveredOrders((prev) => {
-              const updatedOrders = [updatedOrder, ...prev];
-              calculateProductTotals(updatedOrders);
-              return updatedOrders;
-            });
-            toast({
-              title: "New Delivery!",
-              description: `Order for ${updatedOrder.customer_name} was delivered`,
-            });
-          }
-          
-          // Refresh stats
-          fetchStats();
+          fetchDeliveredOrders(); // Refresh the full data
+          fetchStats(); // Refresh stats
+          toast({
+            title: "New Delivery!",
+            description: "A new delivery has been completed",
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'orders',
+        },
+        (payload) => {
+          console.log('New order created:', payload);
+          // Refresh data when new orders are created
+          setTimeout(() => {
+            fetchDeliveredOrders();
+            fetchStats();
+          }, 1000); // Small delay to ensure data is consistent
         }
       )
       .subscribe();
