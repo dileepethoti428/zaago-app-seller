@@ -69,14 +69,18 @@ export default function Sidebar() {
         {/* Header */}
         <div className="p-4 border-b border-border">
           {!collapsed && (
-            <motion.h1 
-              className="text-primary font-bold text-2xl"
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
             >
-              Zaago Seller Dashboard
-            </motion.h1>
+              <NavLink 
+                to="/"
+                className="text-primary font-bold text-2xl hover:text-primary-glow transition-colors cursor-pointer block"
+              >
+                Zaago Seller Dashboard
+              </NavLink>
+            </motion.div>
           )}
           {collapsed && (
             <motion.div 
@@ -85,7 +89,12 @@ export default function Sidebar() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
             >
-              Z
+              <NavLink 
+                to="/"
+                className="text-primary hover:text-primary-glow transition-colors cursor-pointer block"
+              >
+                Z
+              </NavLink>
             </motion.div>
           )}
         </div>
