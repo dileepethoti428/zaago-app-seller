@@ -52,17 +52,43 @@ export default function ProfilePage() {
     setLoading(true);
     try {
       // Upsert seller profile to ensure it exists
-      const { data: sellerData, error: upsertError } = await supabase
+      // Check if seller profile exists first
+      const { data: existingSeller } = await supabase
         .from('sellers')
-        .upsert({
-          user_id: user.id,
-          email: user.email || '',
-          name: user.email?.split('@')[0] || 'User',
-        }, {
-          onConflict: 'user_id'
-        })
-        .select()
-        .single();
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      let sellerData;
+      let upsertError;
+
+      if (existingSeller) {
+        // Update existing seller
+        const { data, error } = await supabase
+          .from('sellers')
+          .update({
+            email: user.email || '',
+            name: user.email?.split('@')[0] || 'User',
+          })
+          .eq('user_id', user.id)
+          .select()
+          .single();
+        sellerData = data;
+        upsertError = error;
+      } else {
+        // Insert new seller
+        const { data, error } = await supabase
+          .from('sellers')
+          .insert({
+            user_id: user.id,
+            email: user.email || '',
+            name: user.email?.split('@')[0] || 'User',
+          })
+          .select()
+          .single();
+        sellerData = data;
+        upsertError = error;
+      }
 
       if (upsertError) {
         console.error('Error upserting seller profile:', upsertError);
