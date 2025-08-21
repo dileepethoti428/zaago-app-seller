@@ -52,25 +52,25 @@ export default function ProfilePage() {
     setLoading(true);
     try {
       // Upsert seller profile to ensure it exists
-      // Check if seller profile exists first
+      // Check if seller profile exists first by email (unique constraint)
       const { data: existingSeller } = await supabase
         .from('sellers')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('email', user.email)
         .maybeSingle();
 
       let sellerData;
       let upsertError;
 
       if (existingSeller) {
-        // Update existing seller
+        // Update existing seller record
         const { data, error } = await supabase
           .from('sellers')
           .update({
-            email: user.email || '',
+            user_id: user.id, // Make sure user_id is set
             name: user.email?.split('@')[0] || 'User',
           })
-          .eq('user_id', user.id)
+          .eq('email', user.email)
           .select()
           .single();
         sellerData = data;
