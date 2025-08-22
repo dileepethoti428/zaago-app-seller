@@ -223,6 +223,54 @@ export type Database = {
         }
         Relationships: []
       }
+      birthday_coupons: {
+        Row: {
+          birth_date: string
+          coupon_id: string
+          created_at: string | null
+          expires_at: string
+          id: string
+          is_sent: boolean | null
+          user_id: string
+          year_created: number
+        }
+        Insert: {
+          birth_date: string
+          coupon_id: string
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          is_sent?: boolean | null
+          user_id: string
+          year_created: number
+        }
+        Update: {
+          birth_date?: string
+          coupon_id?: string
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          is_sent?: boolean | null
+          user_id?: string
+          year_created?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "birthday_coupons_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "birthday_coupons_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "user_eligible_coupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cart_items: {
         Row: {
           created_at: string
@@ -342,17 +390,24 @@ export type Database = {
       }
       coupons: {
         Row: {
+          birthday_month_target: boolean | null
           code: string
           created_at: string
           created_by: string | null
           description: string | null
           discount_type: string
           discount_value: number
+          high_spenders_only: boolean | null
           id: string
           is_active: boolean
+          low_spenders_only: boolean | null
           maximum_discount_amount: number | null
-          minimum_order_amount: number | null
+          maximum_user_spending: number | null
+          minimum_user_spending: number | null
           name: string
+          new_users_only: boolean | null
+          returning_users_only: boolean | null
+          target_audience: Json | null
           updated_at: string
           usage_limit: number | null
           used_count: number
@@ -360,17 +415,24 @@ export type Database = {
           valid_until: string
         }
         Insert: {
+          birthday_month_target?: boolean | null
           code: string
           created_at?: string
           created_by?: string | null
           description?: string | null
           discount_type: string
           discount_value: number
+          high_spenders_only?: boolean | null
           id?: string
           is_active?: boolean
+          low_spenders_only?: boolean | null
           maximum_discount_amount?: number | null
-          minimum_order_amount?: number | null
+          maximum_user_spending?: number | null
+          minimum_user_spending?: number | null
           name: string
+          new_users_only?: boolean | null
+          returning_users_only?: boolean | null
+          target_audience?: Json | null
           updated_at?: string
           usage_limit?: number | null
           used_count?: number
@@ -378,22 +440,62 @@ export type Database = {
           valid_until: string
         }
         Update: {
+          birthday_month_target?: boolean | null
           code?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
           discount_type?: string
           discount_value?: number
+          high_spenders_only?: boolean | null
           id?: string
           is_active?: boolean
+          low_spenders_only?: boolean | null
           maximum_discount_amount?: number | null
-          minimum_order_amount?: number | null
+          maximum_user_spending?: number | null
+          minimum_user_spending?: number | null
           name?: string
+          new_users_only?: boolean | null
+          returning_users_only?: boolean | null
+          target_audience?: Json | null
           updated_at?: string
           usage_limit?: number | null
           used_count?: number
           valid_from?: string
           valid_until?: string
+        }
+        Relationships: []
+      }
+      customer_spending: {
+        Row: {
+          created_at: string
+          first_purchase_date: string | null
+          id: string
+          last_purchase_date: string | null
+          total_orders: number
+          total_spent: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          first_purchase_date?: string | null
+          id?: string
+          last_purchase_date?: string | null
+          total_orders?: number
+          total_spent?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          first_purchase_date?: string | null
+          id?: string
+          last_purchase_date?: string | null
+          total_orders?: number
+          total_spent?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -899,8 +1001,10 @@ export type Database = {
           created_at: string
           id: string
           is_read: boolean
+          link: string | null
           message: string
           order_id: string | null
+          role: string
           title: string
           type: string
           user_id: string
@@ -909,8 +1013,10 @@ export type Database = {
           created_at?: string
           id?: string
           is_read?: boolean
+          link?: string | null
           message: string
           order_id?: string | null
+          role: string
           title: string
           type: string
           user_id: string
@@ -919,8 +1025,10 @@ export type Database = {
           created_at?: string
           id?: string
           is_read?: boolean
+          link?: string | null
           message?: string
           order_id?: string | null
+          role?: string
           title?: string
           type?: string
           user_id?: string
@@ -1147,6 +1255,7 @@ export type Database = {
           customer_phone: string | null
           delivered: boolean | null
           delivered_at: string | null
+          delivery_address_id: string | null
           delivery_date: string | null
           delivery_time_slot: string | null
           id: string
@@ -1168,6 +1277,7 @@ export type Database = {
           customer_phone?: string | null
           delivered?: boolean | null
           delivered_at?: string | null
+          delivery_address_id?: string | null
           delivery_date?: string | null
           delivery_time_slot?: string | null
           id?: string
@@ -1189,6 +1299,7 @@ export type Database = {
           customer_phone?: string | null
           delivered?: boolean | null
           delivered_at?: string | null
+          delivery_address_id?: string | null
           delivery_date?: string | null
           delivery_time_slot?: string | null
           id?: string
@@ -1208,6 +1319,13 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_delivery_address_id_fkey"
+            columns: ["delivery_address_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_addresses"
             referencedColumns: ["id"]
           },
         ]
@@ -1501,6 +1619,7 @@ export type Database = {
           otp: string
           phone: string
           updated_at: string | null
+          user_data: Json | null
           verified: boolean | null
         }
         Insert: {
@@ -1510,6 +1629,7 @@ export type Database = {
           otp: string
           phone: string
           updated_at?: string | null
+          user_data?: Json | null
           verified?: boolean | null
         }
         Update: {
@@ -1519,6 +1639,7 @@ export type Database = {
           otp?: string
           phone?: string
           updated_at?: string | null
+          user_data?: Json | null
           verified?: boolean | null
         }
         Relationships: []
@@ -1603,6 +1724,7 @@ export type Database = {
           avatar_url: string | null
           commission_rate: number | null
           created_at: string
+          date_of_birth: string | null
           default_address: Json | null
           full_name: string | null
           id: string
@@ -1623,6 +1745,7 @@ export type Database = {
           avatar_url?: string | null
           commission_rate?: number | null
           created_at?: string
+          date_of_birth?: string | null
           default_address?: Json | null
           full_name?: string | null
           id?: string
@@ -1643,6 +1766,7 @@ export type Database = {
           avatar_url?: string | null
           commission_rate?: number | null
           created_at?: string
+          date_of_birth?: string | null
           default_address?: Json | null
           full_name?: string | null
           id?: string
@@ -1925,11 +2049,69 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_vacations: {
+        Row: {
+          applied_to_cycle: string | null
+          created_at: string
+          credit_amount: number
+          credit_applied: boolean
+          end_date: string
+          id: string
+          reason: string | null
+          start_date: string
+          status: string
+          subscription_id: string
+          total_days: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          applied_to_cycle?: string | null
+          created_at?: string
+          credit_amount?: number
+          credit_applied?: boolean
+          end_date: string
+          id?: string
+          reason?: string | null
+          start_date: string
+          status?: string
+          subscription_id: string
+          total_days: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          applied_to_cycle?: string | null
+          created_at?: string
+          credit_amount?: number
+          credit_applied?: boolean
+          end_date?: string
+          id?: string
+          reason?: string | null
+          start_date?: string
+          status?: string
+          subscription_id?: string
+          total_days?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_vacations_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
+          available_credit: number | null
           created_at: string
           delivery_address: Json | null
           delivery_days: string[] | null
+          delivery_time_slot: string | null
           end_date: string | null
           id: string
           is_active: boolean
@@ -1939,13 +2121,16 @@ export type Database = {
           special_instructions: string | null
           start_date: string
           subscription_type: string
+          total_credit_earned: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          available_credit?: number | null
           created_at?: string
           delivery_address?: Json | null
           delivery_days?: string[] | null
+          delivery_time_slot?: string | null
           end_date?: string | null
           id?: string
           is_active?: boolean
@@ -1955,13 +2140,16 @@ export type Database = {
           special_instructions?: string | null
           start_date?: string
           subscription_type: string
+          total_credit_earned?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          available_credit?: number | null
           created_at?: string
           delivery_address?: Json | null
           delivery_days?: string[] | null
+          delivery_time_slot?: string | null
           end_date?: string | null
           id?: string
           is_active?: boolean
@@ -1971,6 +2159,7 @@ export type Database = {
           special_instructions?: string | null
           start_date?: string
           subscription_type?: string
+          total_credit_earned?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -2180,6 +2369,102 @@ export type Database = {
         }
         Relationships: []
       }
+      user_eligible_coupons: {
+        Row: {
+          birthday_month_target: boolean | null
+          code: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          discount_type: string | null
+          discount_value: number | null
+          high_spenders_only: boolean | null
+          id: string | null
+          is_active: boolean | null
+          is_eligible: boolean | null
+          low_spenders_only: boolean | null
+          maximum_discount_amount: number | null
+          maximum_user_spending: number | null
+          minimum_user_spending: number | null
+          name: string | null
+          new_users_only: boolean | null
+          returning_users_only: boolean | null
+          target_audience: Json | null
+          updated_at: string | null
+          usage_limit: number | null
+          used_count: number | null
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          birthday_month_target?: boolean | null
+          code?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
+          high_spenders_only?: boolean | null
+          id?: string | null
+          is_active?: boolean | null
+          is_eligible?: never
+          low_spenders_only?: boolean | null
+          maximum_discount_amount?: number | null
+          maximum_user_spending?: number | null
+          minimum_user_spending?: number | null
+          name?: string | null
+          new_users_only?: boolean | null
+          returning_users_only?: boolean | null
+          target_audience?: Json | null
+          updated_at?: string | null
+          usage_limit?: number | null
+          used_count?: number | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          birthday_month_target?: boolean | null
+          code?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
+          high_spenders_only?: boolean | null
+          id?: string | null
+          is_active?: boolean | null
+          is_eligible?: never
+          low_spenders_only?: boolean | null
+          maximum_discount_amount?: number | null
+          maximum_user_spending?: number | null
+          minimum_user_spending?: number | null
+          name?: string | null
+          new_users_only?: boolean | null
+          returning_users_only?: boolean | null
+          target_audience?: Json | null
+          updated_at?: string | null
+          usage_limit?: number | null
+          used_count?: number | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
+      user_spending_categories: {
+        Row: {
+          first_purchase_date: string | null
+          is_birthday_month: boolean | null
+          is_high_spender: boolean | null
+          is_low_spender: boolean | null
+          is_new_user: boolean | null
+          is_returning_user: boolean | null
+          last_purchase_date: string | null
+          total_orders: number | null
+          total_spent: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       accept_order: {
@@ -2191,7 +2476,13 @@ export type Database = {
         Returns: Json
       }
       apply_coupon: {
-        Args: { p_coupon_code: string; p_order_total: number }
+        Args:
+          | { p_coupon_code: string; p_order_total: number }
+          | { p_coupon_code: string; p_order_total: number; p_user_id?: string }
+        Returns: Json
+      }
+      apply_targeted_coupon: {
+        Args: { p_coupon_code: string; p_order_total?: number }
         Returns: Json
       }
       approve_user: {
@@ -2209,6 +2500,10 @@ export type Database = {
       assign_order_to_agent: {
         Args: { p_agent_id: string; p_order_id: string }
         Returns: Json
+      }
+      assign_rider: {
+        Args: { _agent_id: string; _order_id: string }
+        Returns: undefined
       }
       calculate_next_delivery_date: {
         Args: {
@@ -2228,6 +2523,14 @@ export type Database = {
           order_count: number
           seller_id: string
         }[]
+      }
+      calculate_vacation_credit: {
+        Args: {
+          p_end_date: string
+          p_start_date: string
+          p_subscription_id: string
+        }
+        Returns: number
       }
       can_register_admin: {
         Args: Record<PropertyKey, never>
@@ -2253,6 +2556,10 @@ export type Database = {
           p_payment_method?: string
         }
         Returns: Json
+      }
+      create_birthday_coupons: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       create_order_from_existing_subscription: {
         Args: { p_order_type?: string; p_subscription_id: string }
@@ -2283,12 +2590,14 @@ export type Database = {
         Returns: number
       }
       get_agent_performance: {
-        Args: Record<PropertyKey, never>
+        Args: Record<PropertyKey, never> | { limit_count?: number }
         Returns: {
-          avg_rating: number
-          deliveries_today: number
-          online_agents: number
-          total_agents: number
+          agent_id: string
+          agent_name: string
+          average_rating: number
+          success_rate: number
+          total_deliveries: number
+          total_earnings: number
         }[]
       }
       get_agent_profile_with_metrics: {
@@ -2298,6 +2607,19 @@ export type Database = {
       get_agent_work_stats: {
         Args: { agent_uuid: string }
         Returns: Json
+      }
+      get_all_user_categories: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          is_birthday_month: boolean
+          is_high_spender: boolean
+          is_low_spender: boolean
+          is_new_user: boolean
+          is_returning_user: boolean
+          total_orders: number
+          total_spent: number
+          user_id: string
+        }[]
       }
       get_available_orders_for_agents: {
         Args: Record<PropertyKey, never>
@@ -2318,6 +2640,10 @@ export type Database = {
         Args: { cart_user_id: string }
         Returns: number
       }
+      get_current_user_category: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
@@ -2330,9 +2656,12 @@ export type Database = {
         Args: { time_period?: string }
         Returns: {
           confirmed: number
-          date: string
           delivered: number
           pending: number
+          period_label: string
+          success_rate: number
+          successful_deliveries: number
+          total_deliveries: number
         }[]
       }
       get_seller_orders: {
@@ -2371,11 +2700,44 @@ export type Database = {
         Returns: Json
       }
       get_top_products: {
-        Args: Record<PropertyKey, never>
+        Args: Record<PropertyKey, never> | { limit_count?: number }
         Returns: {
+          image_url: string
+          product_id: string
+          product_name: string
+          seller_name: string
+          total_revenue: number
+          total_sold: number
+        }[]
+      }
+      get_user_category_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      get_user_eligible_coupons: {
+        Args: { p_user_id?: string }
+        Returns: {
+          birthday_month_target: boolean
+          code: string
+          description: string
+          discount_type: string
+          discount_value: number
+          high_spenders_only: boolean
+          id: string
+          is_active: boolean
+          is_eligible: boolean
+          low_spenders_only: boolean
+          maximum_discount_amount: number
+          maximum_user_spending: number
+          minimum_user_spending: number
           name: string
-          qty_sold: number
-          revenue: number
+          new_users_only: boolean
+          returning_users_only: boolean
+          targeting_reason: string
+          usage_limit: number
+          used_count: number
+          valid_from: string
+          valid_until: string
         }[]
       }
       get_users_by_role: {
@@ -2404,6 +2766,10 @@ export type Database = {
       }
       is_current_user_admin_v2: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_user_eligible_for_coupon: {
+        Args: { p_coupon_id: string; p_user_id: string }
         Returns: boolean
       }
       log_secret_code_usage: {
@@ -2468,6 +2834,14 @@ export type Database = {
       }
       scan_qr_and_deliver_order: {
         Args: { agent_id: string; order_id: string; qr_code_id: string }
+        Returns: boolean
+      }
+      send_birthday_messages: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      should_skip_delivery_for_vacation: {
+        Args: { p_delivery_date: string; p_subscription_id: string }
         Returns: boolean
       }
       trigger_subscription_processing: {
