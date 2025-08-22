@@ -80,6 +80,252 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_bank_details: {
+        Row: {
+          account_holder_name: string
+          account_number: string
+          account_type: string | null
+          agent_id: string
+          bank_name: string
+          created_at: string | null
+          id: string
+          ifsc_code: string
+          is_primary: boolean | null
+          is_verified: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_holder_name: string
+          account_number: string
+          account_type?: string | null
+          agent_id: string
+          bank_name: string
+          created_at?: string | null
+          id?: string
+          ifsc_code: string
+          is_primary?: boolean | null
+          is_verified?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_holder_name?: string
+          account_number?: string
+          account_type?: string | null
+          agent_id?: string
+          bank_name?: string
+          created_at?: string | null
+          id?: string
+          ifsc_code?: string
+          is_primary?: boolean | null
+          is_verified?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_bank_details_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_notifications: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          message: string
+          metadata: Json | null
+          read: boolean
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          read?: boolean
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          read?: boolean
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_agent_notifications_agent_id"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_settings: {
+        Row: {
+          agent_id: string
+          created_at: string | null
+          id: string
+          language: string | null
+          location_services: boolean | null
+          personal_info: Json | null
+          preferred_areas: Json | null
+          push_notifications: boolean | null
+          sound_alerts: boolean | null
+          updated_at: string | null
+          vehicle_info: Json | null
+          vibration: boolean | null
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string | null
+          id?: string
+          language?: string | null
+          location_services?: boolean | null
+          personal_info?: Json | null
+          preferred_areas?: Json | null
+          push_notifications?: boolean | null
+          sound_alerts?: boolean | null
+          updated_at?: string | null
+          vehicle_info?: Json | null
+          vibration?: boolean | null
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string | null
+          id?: string
+          language?: string | null
+          location_services?: boolean | null
+          personal_info?: Json | null
+          preferred_areas?: Json | null
+          push_notifications?: boolean | null
+          sound_alerts?: boolean | null
+          updated_at?: string | null
+          vehicle_info?: Json | null
+          vibration?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_settings_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: true
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_wallet: {
+        Row: {
+          agent_id: string
+          balance: number | null
+          created_at: string | null
+          id: string
+          last_settlement_date: string | null
+          pending_cod_amount: number | null
+          total_collected: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id: string
+          balance?: number | null
+          created_at?: string | null
+          id?: string
+          last_settlement_date?: string | null
+          pending_cod_amount?: number | null
+          total_collected?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string
+          balance?: number | null
+          created_at?: string | null
+          id?: string
+          last_settlement_date?: string | null
+          pending_cod_amount?: number | null
+          total_collected?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_wallet_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: true
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_wallet_transactions: {
+        Row: {
+          agent_id: string
+          amount: number
+          created_at: string | null
+          description: string | null
+          id: string
+          order_id: string | null
+          status: string | null
+          transaction_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id: string
+          amount: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          status?: string | null
+          transaction_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string
+          amount?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          status?: string | null
+          transaction_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_wallet_transactions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_wallet_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_wallet_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders_with_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_work_sessions: {
         Row: {
           agent_id: string
@@ -897,6 +1143,58 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      earnings: {
+        Row: {
+          agent_id: string
+          amount: number
+          created_at: string
+          id: string
+          order_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          amount?: number
+          created_at?: string
+          id?: string
+          order_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          amount?: number
+          created_at?: string
+          id?: string
+          order_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_earnings_agent_id"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_earnings_order_id"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_earnings_order_id"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders_with_agents"
             referencedColumns: ["id"]
           },
         ]
@@ -1741,6 +2039,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
           admin_verification_photo: string | null
           approval_status: string | null
           approved_at: string | null
@@ -1750,6 +2049,7 @@ export type Database = {
           created_at: string
           date_of_birth: string | null
           default_address: Json | null
+          emergency_contact: string | null
           full_name: string | null
           id: string
           notification_preferences: Json | null
@@ -1762,6 +2062,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          address?: string | null
           admin_verification_photo?: string | null
           approval_status?: string | null
           approved_at?: string | null
@@ -1771,6 +2072,7 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           default_address?: Json | null
+          emergency_contact?: string | null
           full_name?: string | null
           id?: string
           notification_preferences?: Json | null
@@ -1783,6 +2085,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          address?: string | null
           admin_verification_photo?: string | null
           approval_status?: string | null
           approved_at?: string | null
@@ -1792,6 +2095,7 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           default_address?: Json | null
+          emergency_contact?: string | null
           full_name?: string | null
           id?: string
           notification_preferences?: Json | null
@@ -2341,6 +2645,20 @@ export type Database = {
       }
     }
     Views: {
+      order_analytics_mv: {
+        Row: {
+          confirmed_count: number | null
+          day_bucket: string | null
+          delivered_count: number | null
+          hour_bucket: string | null
+          month_bucket: string | null
+          pending_count: number | null
+          revenue: number | null
+          total_orders: number | null
+          week_bucket: string | null
+        }
+        Relationships: []
+      }
       orders_with_agents: {
         Row: {
           address: Json | null
@@ -2645,6 +2963,22 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_available_orders_for_agent: {
+        Args: { p_agent_id: string }
+        Returns: {
+          address: Json
+          created_at: string
+          customer_name: string
+          customer_phone: string
+          delivery_date: string
+          delivery_time_slot: string
+          id: string
+          items: Json
+          payment_status: string
+          special_instructions: string
+          total: number
+        }[]
+      }
       get_available_orders_for_agents: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -2686,6 +3020,16 @@ export type Database = {
           success_rate: number
           successful_deliveries: number
           total_deliveries: number
+        }[]
+      }
+      get_order_analytics_series: {
+        Args: { p_period: string }
+        Returns: {
+          bucket_label: string
+          confirmed: number
+          delivered: number
+          pending: number
+          revenue: number
         }[]
       }
       get_seller_orders: {
@@ -2772,6 +3116,10 @@ export type Database = {
           phone: string
           user_id: string
         }[]
+      }
+      has_agent_rejected_order: {
+        Args: { p_agent_id: string; p_order_id: string }
+        Returns: boolean
       }
       has_role: {
         Args: {
