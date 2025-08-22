@@ -541,7 +541,11 @@ export default function DeliveriesPage() {
                   selected={selectedDate ? new Date(selectedDate) : undefined}
                   onSelect={(date) => {
                     if (date) {
-                      setSelectedDate(date.toISOString().split('T')[0]);
+                      // Fix timezone issue by using local date formatting
+                      const year = date.getFullYear();
+                      const month = String(date.getMonth() + 1).padStart(2, '0');
+                      const day = String(date.getDate()).padStart(2, '0');
+                      setSelectedDate(`${year}-${month}-${day}`);
                       setCalendarOpen(false);
                     }
                   }}
