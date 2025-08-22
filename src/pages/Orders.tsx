@@ -62,7 +62,7 @@ const Orders = () => {
           event: '*',
           schema: 'public',
           table: 'orders',
-          filter: `seller_id=eq.${user?.id}`
+          filter: `user_id=eq.${user?.id}`
         },
         (payload) => {
           console.log('Realtime update:', payload);
@@ -102,8 +102,8 @@ const Orders = () => {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .select('id, total, status, created_at, customer_name, customer_phone, delivery_date, items, address, payment_status, agent_id')
-        .eq('seller_id', user.id)
+        .select('id, total, status, created_at, customer_name, customer_phone, delivery_date, items, address, payment_status, agent_id, user_id')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -161,7 +161,7 @@ const Orders = () => {
         .from('orders')
         .update({ status: newStatus })
         .eq('id', orderId)
-        .eq('seller_id', user?.id);
+        .eq('user_id', user?.id);
 
       if (error) {
         throw error;
