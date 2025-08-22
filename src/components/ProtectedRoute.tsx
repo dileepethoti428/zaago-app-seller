@@ -13,7 +13,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation();
 
   useEffect(() => {
-    if (!loading && !user && location.pathname !== '/login') {
+    if (!loading && !user && location.pathname !== '/login' && location.pathname !== '/bank-details') {
       navigate('/login');
     } else if (!loading && user && location.pathname === '/login') {
       // Check if user has bank details, if not redirect to bank details page

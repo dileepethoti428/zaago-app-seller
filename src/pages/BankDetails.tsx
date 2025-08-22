@@ -6,10 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Building2, CreditCard, Shield } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
+import { CreditCard, Building, Shield } from 'lucide-react';
 
 interface BankDetails {
   bank_name: string;
@@ -18,96 +18,110 @@ interface BankDetails {
   account_holder_name: string;
   bank_branch: string;
   account_type: string;
+  business_name?: string;
+  phone?: string;
 }
 
-const BankDetails = () => {
+export default function BankDetails() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [bankDetails, setBankDetails] = useState<BankDetails>({
+  const [submitting, setSubmitting] = useState(false);
+  const [formData, setFormData] = useState<BankDetails>({
     bank_name: '',
     ifsc_code: '',
     account_number: '',
     account_holder_name: '',
     bank_branch: '',
-    account_type: 'savings'
+    account_type: 'savings',
+    business_name: '',
+    phone: ''
   });
 
   useEffect(() => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
+    if (!user) return;
+    
+    // Check if bank details already exist
+    const fetchBankDetails = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('sellers')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-    // Check if user already has bank details
-    checkExistingBankDetails();
+        if (error && error.code !== 'PGRST116') {
+          throw error;
+        }
+
+        if (data) {
+          setFormData({
+            bank_name: data.bank_name || '',
+            ifsc_code: data.ifsc_code || '',
+            account_number: data.account_number || '',
+            account_holder_name: data.account_holder_name || '',
+            bank_branch: data.bank_branch || '',
+            account_type: data.account_type || 'savings',
+            business_name: data.business_name || '',
+            phone: data.phone || ''
+          });
+
+          // If bank details are complete, redirect to products
+          if (data.bank_name && data.ifsc_code && data.account_number && data.account_holder_name) {
+            navigate('/products');
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching bank details:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBankDetails();
   }, [user, navigate]);
 
-  const checkExistingBankDetails = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('sellers')
-        .select('bank_name, ifsc_code, account_number, account_holder_name, bank_branch, account_type')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error checking bank details:', error);
-        return;
-      }
-
-      if (data && data.bank_name) {
-        // User already has bank details, redirect to dashboard
-        navigate('/products');
-      }
-    } catch (error) {
-      console.error('Error checking bank details:', error);
-    }
-  };
-
   const handleInputChange = (field: keyof BankDetails, value: string) => {
-    setBankDetails(prev => ({
-      ...prev,
-      [field]: value.toUpperCase()
-    }));
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const validateBankDetails = () => {
-    if (!bankDetails.bank_name || bankDetails.bank_name.length < 2) {
+  const validateForm = () => {
+    const { bank_name, ifsc_code, account_number, account_holder_name } = formData;
+    
+    if (!bank_name || bank_name.length < 2) {
       toast({
+        variant: "destructive",
         title: "Invalid Bank Name",
-        description: "Please enter a valid bank name",
-        variant: "destructive"
+        description: "Bank name must be at least 2 characters long."
       });
       return false;
     }
 
-    if (!bankDetails.ifsc_code || bankDetails.ifsc_code.length !== 11) {
+    if (!ifsc_code || ifsc_code.length !== 11) {
       toast({
+        variant: "destructive",
         title: "Invalid IFSC Code",
-        description: "IFSC code must be 11 characters long",
-        variant: "destructive"
+        description: "IFSC code must be exactly 11 characters long."
       });
       return false;
     }
 
-    if (!bankDetails.account_number || bankDetails.account_number.length < 8) {
+    if (!account_number || account_number.length < 8) {
       toast({
+        variant: "destructive",
         title: "Invalid Account Number",
-        description: "Account number must be at least 8 characters long",
-        variant: "destructive"
+        description: "Account number must be at least 8 characters long."
       });
       return false;
     }
 
-    if (!bankDetails.account_holder_name || bankDetails.account_holder_name.length < 2) {
+    if (!account_holder_name || account_holder_name.length < 2) {
       toast({
+        variant: "destructive",
         title: "Invalid Account Holder Name",
-        description: "Please enter a valid account holder name",
-        variant: "destructive"
+        description: "Account holder name must be at least 2 characters long."
       });
       return false;
     }
@@ -118,71 +132,65 @@ const BankDetails = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user || !validateBankDetails()) return;
+    if (!user) return;
+    if (!validateForm()) return;
 
-    setLoading(true);
-
+    setSubmitting(true);
     try {
-      // Try to update existing record first
-      const { data: existingSeller, error: fetchError } = await supabase
+      const { error } = await supabase
         .from('sellers')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
+        .upsert({
+          user_id: user.id,
+          name: formData.account_holder_name || user.email?.split('@')[0] || 'Unknown',
+          email: user.email || '',
+          bank_name: formData.bank_name,
+          ifsc_code: formData.ifsc_code,
+          account_number: formData.account_number,
+          account_holder_name: formData.account_holder_name,
+          bank_branch: formData.bank_branch,
+          account_type: formData.account_type,
+          business_name: formData.business_name,
+          phone: formData.phone
+        });
 
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        throw fetchError;
-      }
-
-      if (existingSeller) {
-        // Update existing record
-        const { error: updateError } = await supabase
-          .from('sellers')
-          .update({
-            ...bankDetails,
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', user.id);
-
-        if (updateError) throw updateError;
-      } else {
-        // Insert new record with required fields
-        const { error: insertError } = await supabase
-          .from('sellers')
-          .insert({
-            user_id: user.id,
-            email: user.email || '',
-            name: user.email?.split('@')[0] || 'Seller',
-            status: 'active',
-            ...bankDetails
-          });
-
-        if (insertError) throw insertError;
-      }
+      if (error) throw error;
 
       toast({
         title: "Bank Details Saved",
-        description: "Your bank details have been saved successfully!",
-        variant: "default"
+        description: "Your bank details have been saved successfully. You can now start selling!"
       });
 
-      // Redirect to products page
       navigate('/products');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving bank details:', error);
       toast({
+        variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to save bank details. Please try again.",
-        variant: "destructive"
+        description: "Failed to save bank details. Please try again."
       });
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
-  const skipForNow = () => {
+  const handleSkip = () => {
+    toast({
+      title: "Bank Details Skipped",
+      description: "You can add your bank details later in Settings to receive payouts."
+    });
     navigate('/products');
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -190,137 +198,146 @@ const BankDetails = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
+        className="w-full max-w-2xl"
       >
-        <Card className="border border-border bg-card">
-          <CardHeader className="text-center space-y-4">
-            <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-              <CreditCard className="w-6 h-6 text-primary" />
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardHeader className="text-center">
+            <div className="flex items-center justify-center space-x-2 mb-4">
+              <div className="p-3 rounded-full bg-primary/10">
+                <CreditCard className="h-6 w-6 text-primary" />
+              </div>
+              <div className="p-3 rounded-full bg-primary/10">
+                <Building className="h-6 w-6 text-primary" />
+              </div>
+              <div className="p-3 rounded-full bg-primary/10">
+                <Shield className="h-6 w-6 text-primary" />
+              </div>
             </div>
-            <div>
-              <CardTitle className="text-2xl font-bold text-foreground">Bank Details</CardTitle>
-              <CardDescription className="text-muted-foreground">
-                Add your bank details to receive payments for your sales
-              </CardDescription>
-            </div>
+            <CardTitle className="text-2xl text-foreground">Bank Details Setup</CardTitle>
+            <CardDescription className="text-muted-foreground">
+              Add your bank details to receive payouts from your sales. This information is encrypted and secure.
+            </CardDescription>
           </CardHeader>
-
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="bank_name" className="text-sm font-medium text-foreground">
-                  Bank Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="bank_name"
-                  type="text"
-                  placeholder="e.g., STATE BANK OF INDIA"
-                  value={bankDetails.bank_name}
-                  onChange={(e) => handleInputChange('bank_name', e.target.value)}
-                  required
-                  className="bg-background"
-                />
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Business Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Business Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="business_name">Business Name (Optional)</Label>
+                    <Input
+                      id="business_name"
+                      value={formData.business_name}
+                      onChange={(e) => handleInputChange('business_name', e.target.value)}
+                      placeholder="Your Business Name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone">Phone Number (Optional)</Label>
+                    <Input
+                      id="phone"
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      placeholder="+91 XXXXX XXXXX"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="ifsc_code" className="text-sm font-medium text-foreground">
-                  IFSC Code <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="ifsc_code"
-                  type="text"
-                  placeholder="e.g., SBIN0000123"
-                  value={bankDetails.ifsc_code}
-                  onChange={(e) => handleInputChange('ifsc_code', e.target.value)}
-                  maxLength={11}
-                  required
-                  className="bg-background"
-                />
+              {/* Bank Details */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Bank Account Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="account_holder_name">Account Holder Name *</Label>
+                    <Input
+                      id="account_holder_name"
+                      value={formData.account_holder_name}
+                      onChange={(e) => handleInputChange('account_holder_name', e.target.value)}
+                      placeholder="Full name as per bank records"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="account_number">Account Number *</Label>
+                    <Input
+                      id="account_number"
+                      value={formData.account_number}
+                      onChange={(e) => handleInputChange('account_number', e.target.value)}
+                      placeholder="Account number"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="ifsc_code">IFSC Code *</Label>
+                    <Input
+                      id="ifsc_code"
+                      value={formData.ifsc_code}
+                      onChange={(e) => handleInputChange('ifsc_code', e.target.value.toUpperCase())}
+                      placeholder="ABCD0123456"
+                      maxLength={11}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="account_type">Account Type *</Label>
+                    <Select
+                      value={formData.account_type}
+                      onValueChange={(value) => handleInputChange('account_type', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select account type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="savings">Savings</SelectItem>
+                        <SelectItem value="current">Current</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label htmlFor="bank_name">Bank Name *</Label>
+                    <Input
+                      id="bank_name"
+                      value={formData.bank_name}
+                      onChange={(e) => handleInputChange('bank_name', e.target.value)}
+                      placeholder="State Bank of India"
+                      required
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label htmlFor="bank_branch">Branch Name/Address</Label>
+                    <Input
+                      id="bank_branch"
+                      value={formData.bank_branch}
+                      onChange={(e) => handleInputChange('bank_branch', e.target.value)}
+                      placeholder="Branch location"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="account_number" className="text-sm font-medium text-foreground">
-                  Account Number <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="account_number"
-                  type="text"
-                  placeholder="Enter your account number"
-                  value={bankDetails.account_number}
-                  onChange={(e) => handleInputChange('account_number', e.target.value)}
-                  required
-                  className="bg-background"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="account_holder_name" className="text-sm font-medium text-foreground">
-                  Account Holder Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="account_holder_name"
-                  type="text"
-                  placeholder="Name as per bank account"
-                  value={bankDetails.account_holder_name}
-                  onChange={(e) => handleInputChange('account_holder_name', e.target.value)}
-                  required
-                  className="bg-background"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bank_branch" className="text-sm font-medium text-foreground">
-                  Bank Branch
-                </Label>
-                <Input
-                  id="bank_branch"
-                  type="text"
-                  placeholder="Branch name/location"
-                  value={bankDetails.bank_branch}
-                  onChange={(e) => handleInputChange('bank_branch', e.target.value)}
-                  className="bg-background"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="account_type" className="text-sm font-medium text-foreground">
-                  Account Type
-                </Label>
-                <Select value={bankDetails.account_type} onValueChange={(value) => handleInputChange('account_type', value)}>
-                  <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="Select account type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="savings">Savings</SelectItem>
-                    <SelectItem value="current">Current</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md">
-                <Shield className="w-4 h-4 text-primary" />
-                <p className="text-xs text-muted-foreground">
-                  Your bank details are encrypted and secure. They will only be used for processing payments.
-                </p>
-              </div>
-
-              <div className="space-y-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   type="submit"
-                  className="w-full"
-                  disabled={loading}
+                  disabled={submitting}
+                  className="flex-1"
                 >
-                  {loading ? "Saving..." : "Save Bank Details"}
+                  {submitting ? 'Saving...' : 'Save Bank Details'}
                 </Button>
-
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full"
-                  onClick={skipForNow}
+                  onClick={handleSkip}
+                  className="flex-1"
                 >
                   Skip for Now
                 </Button>
+              </div>
+
+              <div className="text-xs text-muted-foreground text-center">
+                <Shield className="h-4 w-4 inline mr-2" />
+                Your bank details are encrypted and stored securely. We use this information only for processing payouts.
               </div>
             </form>
           </CardContent>
@@ -328,6 +345,4 @@ const BankDetails = () => {
       </motion.div>
     </div>
   );
-};
-
-export default BankDetails;
+}

@@ -3238,12 +3238,12 @@ export type Database = {
         }
         Returns: string
       }
-      validate_bank_details: {
+      validate_bank_details_v2: {
         Args: {
-          p_account_holder_name: string
-          p_account_number: string
-          p_bank_name: string
-          p_ifsc_code: string
+          account_holder_name: string
+          account_number: string
+          bank_name: string
+          ifsc_code: string
         }
         Returns: boolean
       }
