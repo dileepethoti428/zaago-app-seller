@@ -20,6 +20,7 @@ import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
 import Deliveries from "./pages/Deliveries";
 import Profile from "./pages/Profile";
+import BankDetails from "./pages/BankDetails";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
           <ProtectedRoute>
             <Routes>
               <Route path="/login" element={<Login />} />
+              <Route path="/bank-details" element={<BankDetails />} />
               <Route path="/" element={<Layout />}>
                 <Route index element={<Index />} />
                 <Route path="dashboard" element={<Dashboard />} />

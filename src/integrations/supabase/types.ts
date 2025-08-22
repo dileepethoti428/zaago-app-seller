@@ -2327,7 +2327,9 @@ export type Database = {
         Row: {
           account_holder_name: string | null
           account_number: string | null
+          account_type: string | null
           address: Json | null
+          bank_branch: string | null
           bank_name: string | null
           business_license: string | null
           business_name: string | null
@@ -2335,6 +2337,7 @@ export type Database = {
           email: string
           id: string
           ifsc_code: string | null
+          is_bank_verified: boolean | null
           name: string
           phone: string | null
           status: string
@@ -2344,7 +2347,9 @@ export type Database = {
         Insert: {
           account_holder_name?: string | null
           account_number?: string | null
+          account_type?: string | null
           address?: Json | null
+          bank_branch?: string | null
           bank_name?: string | null
           business_license?: string | null
           business_name?: string | null
@@ -2352,6 +2357,7 @@ export type Database = {
           email: string
           id?: string
           ifsc_code?: string | null
+          is_bank_verified?: boolean | null
           name: string
           phone?: string | null
           status?: string
@@ -2361,7 +2367,9 @@ export type Database = {
         Update: {
           account_holder_name?: string | null
           account_number?: string | null
+          account_type?: string | null
           address?: Json | null
+          bank_branch?: string | null
           bank_name?: string | null
           business_license?: string | null
           business_name?: string | null
@@ -2369,6 +2377,7 @@ export type Database = {
           email?: string
           id?: string
           ifsc_code?: string | null
+          is_bank_verified?: boolean | null
           name?: string
           phone?: string | null
           status?: string
