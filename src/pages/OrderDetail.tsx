@@ -89,16 +89,9 @@ const OrderDetail = () => {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .select(`
-          *,
-          delivery_agents (
-            name,
-            phone,
-            email
-          )
-        `)
+        .select('*')
         .eq('id', id)
-        .eq('seller_id', user.id)
+        .eq('user_id', user.id)
         .maybeSingle();
 
       if (error) {
@@ -132,7 +125,7 @@ const OrderDetail = () => {
         .from('orders')
         .update({ status: newStatus })
         .eq('id', order.id)
-        .eq('seller_id', user?.id);
+        .eq('user_id', user?.id);
 
       if (error) {
         throw error;

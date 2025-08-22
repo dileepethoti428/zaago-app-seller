@@ -352,6 +352,30 @@ export type Database = {
         }
         Relationships: []
       }
+      commission_config: {
+        Row: {
+          commission_rate: number
+          created_at: string | null
+          effective_from: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          commission_rate: number
+          created_at?: string | null
+          effective_from?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          commission_rate?: number
+          created_at?: string | null
+          effective_from?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       contact_messages: {
         Row: {
           created_at: string
