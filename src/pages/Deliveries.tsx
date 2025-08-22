@@ -538,7 +538,7 @@ export default function DeliveriesPage() {
               <PopoverContent className="w-auto p-0" align="start">
                 <CalendarComponent
                   mode="single"
-                  selected={selectedDate ? new Date(selectedDate) : undefined}
+                  selected={selectedDate ? new Date(selectedDate + 'T00:00:00') : undefined}
                   onSelect={(date) => {
                     if (date) {
                       // Fix timezone issue by using local date formatting
@@ -550,6 +550,7 @@ export default function DeliveriesPage() {
                     }
                   }}
                   initialFocus
+                  defaultMonth={selectedDate ? new Date(selectedDate + 'T00:00:00') : new Date()}
                   className={cn("p-3 pointer-events-auto")}
                 />
               </PopoverContent>
