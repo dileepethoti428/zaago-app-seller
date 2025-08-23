@@ -7,7 +7,8 @@ import {
   Shield, 
   Store,
   Save,
-  Edit
+  Edit,
+  MessageCircle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -447,6 +448,22 @@ const Settings = () => {
           </Card>
         </motion.div>
       </div>
+
+      {/* Floating WhatsApp Button */}
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 0.5, type: "spring", stiffness: 260, damping: 20 }}
+        className="fixed bottom-6 right-6 z-50"
+      >
+        <Button
+          onClick={() => window.open('https://wa.me/917842343642', '_blank')}
+          className="w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#20BA5A] text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
+          size="icon"
+        >
+          <MessageCircle className="w-6 h-6" />
+        </Button>
+      </motion.div>
     </motion.div>
   );
 };
