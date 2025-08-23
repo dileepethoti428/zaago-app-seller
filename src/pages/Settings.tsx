@@ -81,8 +81,8 @@ const Settings = () => {
       setProfile({
         full_name: profileData?.full_name || '',
         phone: profileData?.phone || '',
-        business_name: sellerData?.business_name || '',
-        business_description: sellerData?.business_description || '',
+        business_name: (sellerData as any)?.business_name || '',
+        business_description: (sellerData as any)?.business_description || '',
         email: user.email || ''
       });
     } catch (error) {
