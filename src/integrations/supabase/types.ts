@@ -3668,6 +3668,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      update_order_status: {
+        Args: {
+          agent_id: string
+          new_payment_status: string
+          new_status: string
+          order_id: string
+        }
+        Returns: undefined
+      }
       upsert_delivery_agent: {
         Args: {
           p_agent_id: string
