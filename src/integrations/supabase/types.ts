@@ -80,6 +80,44 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_autopay_settings: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          is_enabled: boolean
+          minimum_balance: number
+          topup_amount: number
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          minimum_balance?: number
+          topup_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          minimum_balance?: number
+          topup_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_autopay_settings_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: true
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_bank_details: {
         Row: {
           account_holder_name: string
@@ -138,6 +176,8 @@ export type Database = {
           message: string
           metadata: Json | null
           read: boolean
+          source_id: string | null
+          source_type: string | null
           title: string
           type: string
           updated_at: string
@@ -149,6 +189,8 @@ export type Database = {
           message: string
           metadata?: Json | null
           read?: boolean
+          source_id?: string | null
+          source_type?: string | null
           title: string
           type: string
           updated_at?: string
@@ -160,6 +202,8 @@ export type Database = {
           message?: string
           metadata?: Json | null
           read?: boolean
+          source_id?: string | null
+          source_type?: string | null
           title?: string
           type?: string
           updated_at?: string
@@ -276,6 +320,8 @@ export type Database = {
           description: string | null
           id: string
           order_id: string | null
+          razorpay_transaction_id: string | null
+          settlement_reference: string | null
           status: string | null
           transaction_type: string
           updated_at: string | null
@@ -287,6 +333,8 @@ export type Database = {
           description?: string | null
           id?: string
           order_id?: string | null
+          razorpay_transaction_id?: string | null
+          settlement_reference?: string | null
           status?: string | null
           transaction_type: string
           updated_at?: string | null
@@ -298,6 +346,8 @@ export type Database = {
           description?: string | null
           id?: string
           order_id?: string | null
+          razorpay_transaction_id?: string | null
+          settlement_reference?: string | null
           status?: string | null
           transaction_type?: string
           updated_at?: string | null
@@ -322,6 +372,63 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders_with_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_withdrawal_requests: {
+        Row: {
+          admin_notes: string | null
+          agent_id: string
+          amount: number
+          bank_id: string
+          created_at: string
+          id: string
+          processed_at: string | null
+          processed_by: string | null
+          requested_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          agent_id: string
+          amount: number
+          bank_id: string
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          agent_id?: string
+          amount?: number
+          bank_id?: string
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_withdrawal_requests_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_withdrawal_requests_bank_id_fkey"
+            columns: ["bank_id"]
+            isOneToOne: false
+            referencedRelation: "agent_bank_details"
             referencedColumns: ["id"]
           },
         ]
@@ -874,6 +981,7 @@ export type Database = {
       delivery_history: {
         Row: {
           agent_id: string | null
+          agent_location: Json | null
           completed_at: string
           created_at: string
           customer_name: string
@@ -883,6 +991,7 @@ export type Database = {
           delivery_date: string
           delivery_duration: number | null
           delivery_notes: string | null
+          delivery_payout: number | null
           delivery_proof: Json | null
           delivery_time_slot: string | null
           distance_traveled: number | null
@@ -897,6 +1006,7 @@ export type Database = {
         }
         Insert: {
           agent_id?: string | null
+          agent_location?: Json | null
           completed_at?: string
           created_at?: string
           customer_name: string
@@ -906,6 +1016,7 @@ export type Database = {
           delivery_date: string
           delivery_duration?: number | null
           delivery_notes?: string | null
+          delivery_payout?: number | null
           delivery_proof?: Json | null
           delivery_time_slot?: string | null
           distance_traveled?: number | null
@@ -920,6 +1031,7 @@ export type Database = {
         }
         Update: {
           agent_id?: string | null
+          agent_location?: Json | null
           completed_at?: string
           created_at?: string
           customer_name?: string
@@ -929,6 +1041,7 @@ export type Database = {
           delivery_date?: string
           delivery_duration?: number | null
           delivery_notes?: string | null
+          delivery_payout?: number | null
           delivery_proof?: Json | null
           delivery_time_slot?: string | null
           distance_traveled?: number | null
@@ -1152,8 +1265,11 @@ export type Database = {
           agent_id: string
           amount: number
           created_at: string
+          description: string | null
+          distance_km: number | null
           id: string
           order_id: string
+          payment_method: string | null
           status: string
           updated_at: string
         }
@@ -1161,8 +1277,11 @@ export type Database = {
           agent_id: string
           amount?: number
           created_at?: string
+          description?: string | null
+          distance_km?: number | null
           id?: string
           order_id: string
+          payment_method?: string | null
           status?: string
           updated_at?: string
         }
@@ -1170,8 +1289,11 @@ export type Database = {
           agent_id?: string
           amount?: number
           created_at?: string
+          description?: string | null
+          distance_km?: number | null
           id?: string
           order_id?: string
+          payment_method?: string | null
           status?: string
           updated_at?: string
         }
@@ -1268,6 +1390,45 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          admin_notifications: boolean
+          created_at: string
+          email_notifications: boolean
+          id: string
+          marketing_notifications: boolean
+          order_notifications: boolean
+          push_notifications: boolean
+          sms_notifications: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notifications?: boolean
+          created_at?: string
+          email_notifications?: boolean
+          id?: string
+          marketing_notifications?: boolean
+          order_notifications?: boolean
+          push_notifications?: boolean
+          sms_notifications?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notifications?: boolean
+          created_at?: string
+          email_notifications?: boolean
+          id?: string
+          marketing_notifications?: boolean
+          order_notifications?: boolean
+          push_notifications?: boolean
+          sms_notifications?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_recipients: {
         Row: {
           created_at: string
@@ -1338,7 +1499,7 @@ export type Database = {
           link?: string | null
           message: string
           order_id?: string | null
-          role: string
+          role?: string
           title: string
           type: string
           user_id: string
@@ -1365,6 +1526,52 @@ export type Database = {
           },
           {
             foreignKeyName: "notifications_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders_with_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_exclusions: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          order_id: string
+          reason: string | null
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          order_id: string
+          reason?: string | null
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          order_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_exclusions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_exclusions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_exclusions_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders_with_agents"
@@ -1880,6 +2087,51 @@ export type Database = {
           },
         ]
       }
+      payout_config: {
+        Row: {
+          base_pay_amount: number | null
+          base_pay_distance_km: number | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          peak_hour_bonus_amount: number | null
+          peak_hour_end: string | null
+          peak_hour_order_threshold: number | null
+          peak_hour_start: string | null
+          per_km_max_rate: number | null
+          per_km_min_rate: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          base_pay_amount?: number | null
+          base_pay_distance_km?: number | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          peak_hour_bonus_amount?: number | null
+          peak_hour_end?: string | null
+          peak_hour_order_threshold?: number | null
+          peak_hour_start?: string | null
+          per_km_max_rate?: number | null
+          per_km_min_rate?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          base_pay_amount?: number | null
+          base_pay_distance_km?: number | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          peak_hour_bonus_amount?: number | null
+          peak_hour_end?: string | null
+          peak_hour_order_threshold?: number | null
+          peak_hour_start?: string | null
+          per_km_max_rate?: number | null
+          per_km_min_rate?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       payouts: {
         Row: {
           amount: number | null
@@ -1965,6 +2217,51 @@ export type Database = {
           verified?: boolean | null
         }
         Relationships: []
+      }
+      product_stock_notifications: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          is_notified: boolean
+          notified_at: string | null
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          is_notified?: boolean
+          notified_at?: string | null
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          is_notified?: boolean
+          notified_at?: string | null
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_stock_notifications_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_stock_notifications_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_sellers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
@@ -2652,6 +2949,66 @@ export type Database = {
         }
         Relationships: []
       }
+      withdrawal_requests: {
+        Row: {
+          admin_notes: string | null
+          agent_id: string
+          amount: number
+          bank_id: string
+          created_at: string | null
+          failure_reason: string | null
+          id: string
+          processed_at: string | null
+          razorpay_transaction_id: string | null
+          status: string
+          transfer_reference: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          agent_id: string
+          amount: number
+          bank_id: string
+          created_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          processed_at?: string | null
+          razorpay_transaction_id?: string | null
+          status?: string
+          transfer_reference?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          agent_id?: string
+          amount?: number
+          bank_id?: string
+          created_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          processed_at?: string | null
+          razorpay_transaction_id?: string | null
+          status?: string
+          transfer_reference?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "withdrawal_requests_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "withdrawal_requests_bank_id_fkey"
+            columns: ["bank_id"]
+            isOneToOne: false
+            referencedRelation: "agent_bank_details"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       order_analytics_mv: {
@@ -2856,6 +3213,14 @@ export type Database = {
         Args: { _agent_id: string; _order_id: string }
         Returns: undefined
       }
+      calculate_delivery_payout: {
+        Args: {
+          agent_id_param?: string
+          delivery_time?: string
+          distance_km: number
+        }
+        Returns: Json
+      }
       calculate_next_delivery_date: {
         Args: {
           p_current_date: string
@@ -2908,6 +3273,27 @@ export type Database = {
         }
         Returns: Json
       }
+      create_admin_notification_for_agent: {
+        Args: {
+          admin_id?: string
+          notification_message: string
+          notification_title: string
+          target_agent_id: string
+        }
+        Returns: string
+      }
+      create_agent_notification: {
+        Args: {
+          notification_message: string
+          notification_metadata?: Json
+          notification_title: string
+          notification_type: string
+          source_id?: string
+          source_type?: string
+          target_agent_id: string
+        }
+        Returns: string
+      }
       create_birthday_coupons: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -2924,6 +3310,15 @@ export type Database = {
         Args: { end_date: string; start_date: string; target_seller_id: string }
         Returns: string
       }
+      create_seller_notification_for_agent: {
+        Args: {
+          notification_message: string
+          notification_title: string
+          seller_id: string
+          target_agent_id: string
+        }
+        Returns: string
+      }
       create_validated_payout: {
         Args: { end_date: string; start_date: string; target_seller_id: string }
         Returns: string
@@ -2935,6 +3330,10 @@ export type Database = {
       generate_order_qr_code: {
         Args: { order_uuid: string }
         Returns: string
+      }
+      get_agent_distance_stats: {
+        Args: { agent_uuid: string }
+        Returns: Json
       }
       get_agent_hours_today: {
         Args: { agent_uuid: string }
@@ -3030,6 +3429,21 @@ export type Database = {
           successful_deliveries: number
           total_deliveries: number
         }[]
+      }
+      get_or_create_notification_preferences: {
+        Args: { target_user_id: string }
+        Returns: {
+          admin_notifications: boolean
+          created_at: string
+          email_notifications: boolean
+          id: string
+          marketing_notifications: boolean
+          order_notifications: boolean
+          push_notifications: boolean
+          sms_notifications: boolean
+          updated_at: string
+          user_id: string
+        }
       }
       get_order_analytics_series: {
         Args: { p_period: string }
@@ -3177,6 +3591,24 @@ export type Database = {
         Args: { payout_id: string }
         Returns: undefined
       }
+      process_delivery_payout: {
+        Args: {
+          p_agent_id: string
+          p_delivery_time?: string
+          p_distance_km: number
+          p_order_id: string
+        }
+        Returns: Json
+      }
+      process_delivery_payout_safe: {
+        Args: {
+          p_agent_id: string
+          p_delivery_time?: string
+          p_distance_km?: number
+          p_order_id: string
+        }
+        Returns: Json
+      }
       process_due_existing_subscriptions: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -3220,6 +3652,10 @@ export type Database = {
       send_birthday_messages: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      settle_cod_to_admin: {
+        Args: { p_agent_id: string; p_amount: number }
+        Returns: Json
       }
       should_skip_delivery_for_vacation: {
         Args: { p_delivery_date: string; p_subscription_id: string }

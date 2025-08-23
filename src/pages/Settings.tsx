@@ -55,28 +55,36 @@ const Settings = () => {
     if (!user?.id) return;
 
     try {
-      const { data, error } = await supabase
+      // Fetch profile data
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching profile:', error);
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error('Error fetching profile:', profileError);
         return;
       }
 
-      if (data) {
-        setProfile({
-          full_name: data.full_name || '',
-          phone: data.phone || '',
-          business_name: '', // Business info stored in sellers table
-          business_description: '', // Business info stored in sellers table
-          email: user.email || ''
-        });
-      } else {
-        setProfile(prev => ({ ...prev, email: user.email || '' }));
+      // Fetch seller business info
+      const { data: sellerData, error: sellerError } = await supabase
+        .from('sellers')
+        .select('business_name, business_description')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (sellerError && sellerError.code !== 'PGRST116') {
+        console.error('Error fetching seller data:', sellerError);
       }
+
+      setProfile({
+        full_name: profileData?.full_name || '',
+        phone: profileData?.phone || '',
+        business_name: sellerData?.business_name || '',
+        business_description: sellerData?.business_description || '',
+        email: user.email || ''
+      });
     } catch (error) {
       console.error('Error fetching profile:', error);
     }
@@ -156,6 +164,8 @@ const Settings = () => {
           user_id: user.id,
           email: user.email || '',
           name: profile.full_name || 'Seller',
+          business_name: profile.business_name,
+          business_description: profile.business_description,
           bank_name: bankDetails.bank_name,
           account_number: bankDetails.account_number,
           ifsc_code: bankDetails.ifsc_code,
@@ -168,15 +178,15 @@ const Settings = () => {
       }
 
       toast({
-        title: "Bank Details Updated",
-        description: "Your bank details have been updated successfully.",
+        title: "Details Updated",
+        description: "Your bank and business details have been updated successfully.",
         variant: "default"
       });
     } catch (error) {
-      console.error('Error updating bank details:', error);
+      console.error('Error updating details:', error);
       toast({
         title: "Error",
-        description: "Failed to update bank details. Please try again.",
+        description: "Failed to update details. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -196,13 +206,20 @@ const Settings = () => {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.1, duration: 0.3 }}
+        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
       >
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
-          Settings
-        </h1>
-        <p className="text-secondary text-sm sm:text-base">
-          Manage your account settings and preferences
-        </p>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+            Settings
+          </h1>
+          <p className="text-secondary text-sm sm:text-base">
+            Manage your account settings and preferences
+          </p>
+        </div>
+        <Button variant="outline" size="sm">
+          <Edit className="w-4 h-4 mr-2" />
+          Edit Profile
+        </Button>
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -289,7 +306,7 @@ const Settings = () => {
                 />
               </div>
               
-              <Button onClick={saveProfile} disabled={loading} className="w-full">
+              <Button onClick={saveBankDetails} disabled={loading} className="w-full">
                 <Save className="w-4 h-4 mr-2" />
                 {loading ? 'Saving...' : 'Save Business Info'}
               </Button>

@@ -29,8 +29,9 @@ const Notifications = () => {
 
   const notificationTypes = [
     { value: 'all', label: 'All Notifications' },
+    { value: 'delivery', label: 'Product Delivered' },
+    { value: 'stock_alert', label: 'Stock Alerts' },
     { value: 'order', label: 'Order Updates' },
-    { value: 'delivery', label: 'Delivery Updates' },
     { value: 'payment', label: 'Payment Updates' },
     { value: 'system', label: 'System Notifications' }
   ];
@@ -50,11 +51,25 @@ const Notifications = () => {
     
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Check if user is a seller and filter notifications accordingly
+      const { data: userRoles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+      
+      const isSeller = userRoles?.some(role => role.role === 'seller');
+      
+      let query = supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .eq('user_id', user.id);
+      
+      // If user is a seller, only show seller-relevant notifications
+      if (isSeller) {
+        query = query.in('type', ['delivery', 'stock_alert']);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching notifications:', error);
@@ -138,7 +153,9 @@ const Notifications = () => {
       case 'order':
         return <Package className="w-5 h-5 text-blue-500" />;
       case 'delivery':
-        return <Truck className="w-5 h-5 text-purple-500" />;
+        return <Truck className="w-5 h-5 text-green-500" />;
+      case 'stock_alert':
+        return <AlertCircle className="w-5 h-5 text-orange-500" />;
       case 'payment':
         return <DollarSign className="w-5 h-5 text-primary" />;
       case 'system':
@@ -151,9 +168,10 @@ const Notifications = () => {
   const getNotificationBadge = (type: string) => {
     const typeConfig = {
       order: { label: 'Order', variant: 'default' as const },
-      delivery: { label: 'Delivery', variant: 'outline' as const },
+      delivery: { label: 'Delivered', variant: 'default' as const },
+      stock_alert: { label: 'Stock Alert', variant: 'destructive' as const },
       payment: { label: 'Payment', variant: 'secondary' as const },
-      system: { label: 'System', variant: 'destructive' as const }
+      system: { label: 'System', variant: 'outline' as const }
     };
 
     const config = typeConfig[type as keyof typeof typeConfig] || 
