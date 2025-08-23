@@ -2628,6 +2628,7 @@ export type Database = {
           address: Json | null
           bank_branch: string | null
           bank_name: string | null
+          business_description: string | null
           business_license: string | null
           business_name: string | null
           created_at: string
@@ -2648,6 +2649,7 @@ export type Database = {
           address?: Json | null
           bank_branch?: string | null
           bank_name?: string | null
+          business_description?: string | null
           business_license?: string | null
           business_name?: string | null
           created_at?: string
@@ -2668,6 +2670,7 @@ export type Database = {
           address?: Json | null
           bank_branch?: string | null
           bank_name?: string | null
+          business_description?: string | null
           business_license?: string | null
           business_name?: string | null
           created_at?: string
