@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Truck, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { LogIn, UserPlus, Mail, Lock, Phone, Building } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -10,7 +10,6 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -136,179 +135,100 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/`
-        }
-      });
-      
-      if (error) {
-        throw error;
-      }
-    } catch (error: any) {
-      toast({
-        title: "Google Sign In Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleFacebookSignIn = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'facebook',
-        options: {
-          redirectTo: `${window.location.origin}/`
-        }
-      });
-      
-      if (error) {
-        throw error;
-      }
-    } catch (error: any) {
-      toast({
-        title: "Facebook Sign In Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full max-w-md"
-      >
-        {/* Logo and Branding */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="text-center mb-8"
-        >
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <div className="p-2 bg-zaago-green rounded-lg">
-              <Truck className="w-8 h-8 text-black" />
+      <div className="w-full max-w-md">
+        <div className="bg-card border border-border rounded-xl p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="flex justify-center mb-4">
+              {isSignUp ? (
+                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
+                  <UserPlus className="w-6 h-6 text-primary-foreground" />
+                </div>
+              ) : (
+                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
+                  <LogIn className="w-6 h-6 text-primary-foreground" />
+                </div>
+              )}
             </div>
-            <h1 className="text-2xl font-bold text-foreground">
-              <span className="text-zaago-green">Zaago</span> Agent
+            <h1 className="text-2xl font-semibold text-foreground mb-2">
+              {isSignUp ? 'Create Account' : 'Welcome Back'}
             </h1>
-          </div>
-          <p className="text-zaago-muted-foreground text-sm">
-            Delivery Partner Platform
-          </p>
-        </motion.div>
-
-        {/* Main Card */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="bg-zaago-card/50 border border-zaago-border rounded-2xl p-8 backdrop-blur-sm"
-        >
-          {/* Welcome Message */}
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-foreground mb-2">
-              Welcome Back
-            </h2>
-            <p className="text-zaago-muted-foreground">
-              Sign in to start delivering
+            <p className="text-muted-foreground text-sm">
+              {isSignUp ? 'Sign up for your Zaago Seller account' : 'Sign in to your Zaago Seller account'}
             </p>
           </div>
 
-          {/* Tabs */}
-          <div className="flex mb-6">
-            <button
-              onClick={() => setIsSignUp(false)}
-              className={`flex-1 py-3 px-4 rounded-l-lg font-medium transition-all ${
-                !isSignUp 
-                  ? 'bg-zaago-green text-black' 
-                  : 'bg-transparent text-zaago-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Login
-            </button>
-            <button
-              onClick={() => setIsSignUp(true)}
-              className={`flex-1 py-3 px-4 rounded-r-lg font-medium transition-all ${
-                isSignUp 
-                  ? 'bg-zaago-green text-black' 
-                  : 'bg-transparent text-zaago-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Sign Up
-            </button>
-          </div>
-
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Field */}
             <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zaago-muted-foreground w-5 h-5" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <input
                   type="email"
                   required
                   value={formData.email}
                   onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                  placeholder="Email address"
-                  className="w-full pl-12 pr-4 py-4 bg-zaago-card border border-zaago-border rounded-lg text-foreground placeholder:text-zaago-muted-foreground focus:border-zaago-green focus:ring-1 focus:ring-zaago-green transition-all"
+                  placeholder="Enter your email"
+                  className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 />
               </div>
             </div>
 
             {/* Password Field */}
             <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zaago-muted-foreground w-5 h-5" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <input
-                  type={showPassword ? "text" : "password"}
+                  type="password"
                   required
                   minLength={6}
                   value={formData.password}
                   onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                  placeholder="Password"
-                  className="w-full pl-12 pr-12 py-4 bg-zaago-card border border-zaago-border rounded-lg text-foreground placeholder:text-zaago-muted-foreground focus:border-zaago-green focus:ring-1 focus:ring-zaago-green transition-all"
+                  placeholder="Enter your password"
+                  className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-zaago-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
               </div>
+              {isSignUp && (
+                <p className="text-xs text-muted-foreground mt-1">Password must be at least 6 characters</p>
+              )}
             </div>
 
             {/* Additional signup fields */}
             {isSignUp && (
               <>
                 <div>
-                  <input
-                    type="tel"
-                    required
-                    value={formData.phone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="Phone number"
-                    className="w-full px-4 py-4 bg-zaago-card border border-zaago-border rounded-lg text-foreground placeholder:text-zaago-muted-foreground focus:border-zaago-green focus:ring-1 focus:ring-zaago-green transition-all"
-                  />
+                  <label className="text-sm font-medium text-foreground mb-2 block">Phone Number</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <input
+                      type="tel"
+                      required
+                      value={formData.phone}
+                      onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="Enter your phone number"
+                      className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    />
+                  </div>
                 </div>
+
                 <div>
-                  <input
-                    type="text"
-                    required
-                    value={formData.businessName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, businessName: e.target.value }))}
-                    placeholder="Business name"
-                    className="w-full px-4 py-4 bg-zaago-card border border-zaago-border rounded-lg text-foreground placeholder:text-zaago-muted-foreground focus:border-zaago-green focus:ring-1 focus:ring-zaago-green transition-all"
-                  />
+                  <label className="text-sm font-medium text-foreground mb-2 block">Business Name</label>
+                  <div className="relative">
+                    <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <input
+                      type="text"
+                      required
+                      value={formData.businessName}
+                      onChange={(e) => setFormData(prev => ({ ...prev, businessName: e.target.value }))}
+                      placeholder="Enter your business name"
+                      className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    />
+                  </div>
                 </div>
               </>
             )}
@@ -317,67 +237,36 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-zaago-green text-black py-4 rounded-lg font-semibold hover:bg-zaago-green-light transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-primary text-primary-foreground py-3 rounded-lg font-medium hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading 
                 ? (isSignUp ? 'Creating Account...' : 'Signing In...') 
-                : (isSignUp ? 'Sign Up' : 'Sign In')
+                : (isSignUp ? 'Create Account' : 'Sign In')
               }
             </button>
           </form>
 
-          {/* Forgot Password */}
-          {!isSignUp && (
-            <div className="text-center mt-4">
-              <button className="text-zaago-green hover:text-zaago-green-light text-sm">
-                Forgot Password?
-              </button>
-            </div>
-          )}
-
-          {/* Divider */}
-          <div className="flex items-center my-6">
-            <div className="flex-1 border-t border-zaago-border"></div>
-            <span className="px-4 text-zaago-muted-foreground text-sm">OR CONTINUE WITH</span>
-            <div className="flex-1 border-t border-zaago-border"></div>
-          </div>
-
-          {/* Social Login */}
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={handleGoogleSignIn}
-              className="flex items-center justify-center gap-2 py-3 px-4 border border-zaago-border rounded-lg text-foreground hover:bg-zaago-accent/50 transition-all"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              Google
-            </button>
-            <button
-              onClick={handleFacebookSignIn}
-              className="flex items-center justify-center gap-2 py-3 px-4 border border-zaago-border rounded-lg text-foreground hover:bg-zaago-accent/50 transition-all"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path fill="currentColor" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-              </svg>
-              Facebook
-            </button>
-          </div>
-
-          {/* Terms */}
+          {/* Toggle Link */}
           <div className="text-center mt-6">
-            <p className="text-xs text-zaago-muted-foreground">
-              By continuing, you agree to our{' '}
-              <button className="text-zaago-green hover:underline">Terms of Service</button>
-              {' '}and{' '}
-              <button className="text-zaago-green hover:underline">Privacy Policy</button>
-            </p>
+            <button
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-primary hover:text-primary/80 text-sm font-medium transition-colors"
+            >
+              {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+            </button>
+            {isSignUp && (
+              <p className="text-xs text-muted-foreground mt-2">
+                After signing up, check your email to verify your account
+              </p>
+            )}
+            {!isSignUp && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Use any email/password to create an account or sign in
+              </p>
+            )}
           </div>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </div>
   );
 }
