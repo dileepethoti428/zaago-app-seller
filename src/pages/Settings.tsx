@@ -382,15 +382,15 @@ const Settings = () => {
           <Card className="zaago-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Bell className="w-5 h-5" />
+                <Bell className="w-5 h-5 text-zaago-green" />
                 Notification Preferences
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">Email Notifications</p>
-                  <p className="text-sm text-secondary">Receive order updates via email</p>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                <div className="flex-1">
+                  <p className="font-semibold text-foreground mb-1">Email Notifications</p>
+                  <p className="text-sm text-muted-foreground">Receive order updates via email</p>
                 </div>
                 <Switch
                   checked={notifications.email_orders}
@@ -400,12 +400,10 @@ const Settings = () => {
                 />
               </div>
               
-              <Separator />
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">SMS Notifications</p>
-                  <p className="text-sm text-secondary">Receive order updates via SMS</p>
+              <div className="flex items-center justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                <div className="flex-1">
+                  <p className="font-semibold text-foreground mb-1">SMS Notifications</p>
+                  <p className="text-sm text-muted-foreground">Receive order updates via SMS</p>
                 </div>
                 <Switch
                   checked={notifications.sms_orders}
@@ -415,12 +413,10 @@ const Settings = () => {
                 />
               </div>
               
-              <Separator />
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">Push Notifications</p>
-                  <p className="text-sm text-secondary">Receive push notifications in the app</p>
+              <div className="flex items-center justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                <div className="flex-1">
+                  <p className="font-semibold text-foreground mb-1">Push Notifications</p>
+                  <p className="text-sm text-muted-foreground">Receive push notifications in the app</p>
                 </div>
                 <Switch
                   checked={notifications.push_orders}
@@ -430,12 +426,10 @@ const Settings = () => {
                 />
               </div>
               
-              <Separator />
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">Promotional Emails</p>
-                  <p className="text-sm text-secondary">Receive promotional offers and updates</p>
+              <div className="flex items-center justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                <div className="flex-1">
+                  <p className="font-semibold text-foreground mb-1">Promotional Emails</p>
+                  <p className="text-sm text-muted-foreground">Receive promotional offers and updates</p>
                 </div>
                 <Switch
                   checked={notifications.email_promotions}
@@ -443,6 +437,12 @@ const Settings = () => {
                     setNotifications(prev => ({ ...prev, email_promotions: checked }))
                   }
                 />
+              </div>
+              
+              <div className="mt-6 p-4 bg-zaago-green/5 border border-zaago-green/20 rounded-lg">
+                <p className="text-sm text-zaago-green-dark font-medium">
+                  💡 Tip: Enable notifications to stay updated on your orders and important updates
+                </p>
               </div>
             </CardContent>
           </Card>
