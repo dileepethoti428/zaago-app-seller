@@ -17,7 +17,8 @@ import {
   Package2,
   Camera,
   Upload,
-  X
+  X,
+  MoreVertical
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -684,46 +687,57 @@ const Products = () => {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => {/* View functionality */}}
-                      className="h-10 w-10 text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
+                      className="h-10 px-3 text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
+                      title="View product details"
                     >
-                      <Eye className="w-5 h-5" />
+                      <Eye className="w-4 h-4 mr-1" />
+                      <span className="hidden sm:inline text-sm">View</span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(product)}
-                      className="h-10 w-10 text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
+                      className="h-10 px-3 text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
+                      title="Edit this product"
                     >
-                      <Edit className="w-5 h-5" />
+                      <Edit className="w-4 h-4 mr-1" />
+                      <span className="hidden sm:inline text-sm">Edit</span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => toggleProductStatus(product)}
-                      className="h-10 w-10 text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
+                      className="h-10 px-3 text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
+                      title={product.is_active ? 'Deactivate product' : 'Activate product'}
                     >
-                      {product.is_active ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                      {product.is_active ? <ToggleLeft className="w-4 h-4 mr-1" /> : <ToggleRight className="w-4 h-4 mr-1" />}
+                      <span className="hidden sm:inline text-sm">{product.is_active ? 'Deactivate' : 'Activate'}</span>
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-10 w-10 text-red-400 hover:text-red-300 hover:bg-red-500/10 active:bg-red-500/20 active:text-red-300 focus-visible:ring-red-500/40"
+                          className="h-10 px-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 active:bg-red-500/20 active:text-red-300 focus-visible:ring-red-500/40"
+                          title="Delete this product permanently"
                         >
-                          <Trash2 className="w-5 h-5" />
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          <span className="hidden sm:inline text-sm">Delete</span>
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent className="bg-zaago-card border-zaago-border">
                         <AlertDialogHeader>
-                          <AlertDialogTitle className="text-foreground">Delete Product</AlertDialogTitle>
+                          <AlertDialogTitle className="text-foreground flex items-center gap-2">
+                            <AlertTriangle className="w-5 h-5 text-red-500" />
+                            Delete Product
+                          </AlertDialogTitle>
                           <AlertDialogDescription className="text-zaago-muted-foreground">
-                            Are you sure you want to delete "{product.name}"? This action cannot be undone.
+                            Are you sure you want to delete "<strong>{product.name}</strong>"? This action cannot be undone and will permanently remove the product from your catalog.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -734,7 +748,7 @@ const Products = () => {
                             onClick={() => handleDelete(product.id)}
                             className="bg-red-500 hover:bg-red-600 text-white"
                           >
-                            Delete
+                            Delete Permanently
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
