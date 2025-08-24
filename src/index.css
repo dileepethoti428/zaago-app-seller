@@ -242,7 +242,7 @@ body {
   }
   
   .zaago-nav-active {
-    @apply bg-zaago-green text-zaago-primary-foreground;
+    @apply bg-zaago-green text-white font-semibold shadow-md;
   }
   
   .zaago-nav-inactive {
