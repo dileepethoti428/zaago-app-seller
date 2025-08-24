@@ -187,163 +187,149 @@ const Notifications = () => {
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.1, duration: 0.3 }}
-        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
-      >
+      <div className="flex justify-between items-start mb-8">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-zaago-green">
-            Notifications
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-semibold text-foreground">Notifications</h1>
             {unreadCount > 0 && (
-              <Badge variant="destructive" className="ml-3">
-                {unreadCount} new
-              </Badge>
+              <span className="bg-destructive text-destructive-foreground px-2 py-1 rounded text-sm font-medium">
+                {unreadCount} New
+              </span>
             )}
-          </h1>
-          <p className="text-zaago-green-light text-sm sm:text-base">
+          </div>
+          <p className="text-muted-foreground text-sm mt-1">
             Stay updated with your business activities
           </p>
         </div>
         
         {unreadCount > 0 && (
-          <Button onClick={markAllAsRead} variant="outline">
-            <CheckCircle2 className="w-4 h-4 mr-2" />
+          <button 
+            onClick={markAllAsRead}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <CheckCircle2 className="w-4 h-4" />
             Mark All Read
-          </Button>
+          </button>
         )}
-      </motion.div>
+      </div>
 
-      {/* Filters */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.3 }}
-      >
-        <Card className="zaago-card">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary w-4 h-4" />
-                <Input
-                  placeholder="Search notifications..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <div className="flex items-center gap-2 min-w-[200px]">
-                <Filter className="w-4 h-4 text-secondary" />
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {notificationTypes.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+      {/* Search and Filter */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Search notifications..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4 text-muted-foreground" />
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all min-w-[180px]"
+          >
+            {notificationTypes.map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       {/* Notifications List */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.3 }}
-      >
-        <Card className="zaago-card">
-          <CardHeader>
-            <CardTitle className="text-zaago-green">All Notifications ({filteredNotifications.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="bg-card border border-border rounded-lg">
+        <div className="p-6 border-b border-border">
+          <h2 className="text-xl font-semibold text-foreground">
+            All Notifications ({filteredNotifications.length})
+          </h2>
+        </div>
+
+        <div className="divide-y divide-border">
+          {loading ? (
+            <div className="p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            </div>
+          ) : filteredNotifications.length > 0 ? (
+            filteredNotifications.map((notification) => (
+              <div
+                key={notification.id}
+                className={`p-6 flex items-start gap-4 hover:bg-muted/50 transition-colors ${
+                  !notification.is_read ? 'bg-primary/5' : ''
+                }`}
+              >
+                <Bell className="w-5 h-5 text-muted-foreground mt-1" />
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-foreground">
+                      {notification.title || 'System'}
+                    </span>
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      notification.type === 'delivery' ? 'bg-green-100 text-green-800' :
+                      notification.type === 'stock_alert' ? 'bg-orange-100 text-orange-800' :
+                      notification.type === 'order' ? 'bg-blue-100 text-blue-800' :
+                      notification.type === 'payment' ? 'bg-purple-100 text-purple-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {notification.type === 'delivery' ? 'Delivery_success' :
+                       notification.type === 'stock_alert' ? 'Assignment' :
+                       notification.type === 'order' ? 'Order_update' :
+                       notification.type === 'payment' ? 'Promotion' :
+                       'General'}
+                    </span>
+                    {!notification.is_read && (
+                      <div className="w-2 h-2 bg-primary rounded-full"></div>
+                    )}
+                  </div>
+                  
+                  <p className="text-muted-foreground text-sm mb-2">
+                    {notification.message}
+                  </p>
+                  
+                  <p className="text-muted-foreground text-xs">
+                    {new Date(notification.created_at).toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: '2-digit', 
+                      year: 'numeric'
+                    })}, {new Date(notification.created_at).toLocaleTimeString('en-GB', {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => markAsRead(notification.id)}
+                  className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <CheckCircle2 className="w-5 h-5" />
+                </button>
               </div>
-            ) : filteredNotifications.length > 0 ? (
-              <div className="space-y-4">
-                {filteredNotifications.map((notification) => (
-                  <motion.div
-                    key={notification.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className={`border border-border rounded-xl p-4 transition-colors ${
-                      !notification.is_read 
-                        ? 'bg-primary/5 border-primary/20' 
-                        : 'hover:bg-muted/30'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3 flex-1">
-                        {getNotificationIcon(notification.type)}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold text-foreground truncate">
-                              {notification.title}
-                            </h3>
-                            {getNotificationBadge(notification.type)}
-                            {!notification.is_read && (
-                              <div className="w-2 h-2 bg-primary rounded-full shrink-0"></div>
-                            )}
-                          </div>
-                          <p className="text-secondary text-sm mb-2">
-                            {notification.message}
-                          </p>
-                          <p className="text-secondary text-xs">
-                            {new Date(notification.created_at).toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        {!notification.is_read && (
-                          <Button
-                            onClick={() => markAsRead(notification.id)}
-                            variant="ghost"
-                            size="sm"
-                          >
-                            <CheckCircle2 className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <Bell className="w-12 h-12 text-secondary mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  No notifications found
-                </h3>
-                <p className="text-secondary text-sm">
-                  {searchTerm || typeFilter !== 'all' 
-                    ? 'Try adjusting your filters' 
-                    : 'Your notifications will appear here'
-                  }
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </motion.div>
-    </motion.div>
+            ))
+          ) : (
+            <div className="p-8 text-center">
+              <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                No notifications found
+              </h3>
+              <p className="text-muted-foreground text-sm">
+                {searchTerm || typeFilter !== 'all' 
+                  ? 'Try adjusting your filters' 
+                  : 'Your notifications will appear here'
+                }
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 
