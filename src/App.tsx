@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Orders from "./pages/Orders";
 import OrderDetail from "./pages/OrderDetail";
 import Products from "./pages/Products";
+import ProductDetail from "./pages/ProductDetail";
 import AddProduct from "./pages/AddProduct";
 import EditProduct from "./pages/EditProduct";
 import Payments from "./pages/Payments";
@@ -42,6 +43,7 @@ const App = () => (
                 <Route path="orders" element={<Orders />} />
                 <Route path="orders/:id" element={<OrderDetail />} />
                 <Route path="products" element={<Products />} />
+                <Route path="products/:id" element={<ProductDetail />} />
                 <Route path="products/new" element={<AddProduct />} />
                 <Route path="products/:id/edit" element={<EditProduct />} />
                 <Route path="deliveries" element={<Deliveries />} />

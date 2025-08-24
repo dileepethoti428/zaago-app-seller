@@ -1,16 +1,11 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Package, 
   Plus, 
   Search, 
   Filter, 
-  Edit, 
-  Trash2, 
-  Eye, 
-  ToggleLeft, 
-  ToggleRight,
   AlertTriangle,
   TrendingUp,
   DollarSign,
@@ -18,7 +13,7 @@ import {
   Camera,
   Upload,
   X,
-  MoreVertical
+  ChevronRight
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -29,9 +24,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -51,13 +43,13 @@ interface Product {
 const Products = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
   // Form state
@@ -182,7 +174,6 @@ const Products = () => {
       image_url: '',
       is_active: true
     });
-    setEditingProduct(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -208,35 +199,19 @@ const Products = () => {
     };
 
     try {
-      if (editingProduct) {
-        // Update existing product
-        const { error } = await supabase
-          .from('products')
-          .update(productData)
-          .eq('id', editingProduct.id)
-          .eq('seller_id', user.id);
+      // Create new product only
+      const { data, error } = await supabase
+        .from('products')
+        .insert([productData])
+        .select()
+        .single();
 
-        if (error) throw error;
+      if (error) throw error;
 
-        toast({
-          title: "Success",
-          description: "Product updated successfully!",
-        });
-      } else {
-        // Create new product
-        const { data, error } = await supabase
-          .from('products')
-          .insert([productData])
-          .select()
-          .single();
-
-        if (error) throw error;
-
-        toast({
-          title: "Success",
-          description: "Product created successfully!",
-        });
-      }
+      toast({
+        title: "Success",
+        description: "Product created successfully!",
+      });
 
       resetForm();
       setIsAddDialogOpen(false);
@@ -250,70 +225,7 @@ const Products = () => {
     }
   };
 
-  const handleEdit = (product: Product) => {
-    setEditingProduct(product);
-    setFormData({
-      name: product.name,
-      description: product.description || '',
-      price: product.price.toString(),
-      stock_quantity: product.stock_quantity.toString(),
-      image_url: product.image_url || '',
-      is_active: product.is_active
-    });
-    setIsAddDialogOpen(true);
-  };
-
-  const handleDelete = async (productId: string) => {
-    if (!user?.id) return;
-
-    try {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', productId)
-        .eq('seller_id', user.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Product deleted successfully!",
-      });
-    } catch (error: any) {
-      console.error('Error deleting product:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete product. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const toggleProductStatus = async (product: Product) => {
-    if (!user?.id) return;
-
-    try {
-      const { error } = await supabase
-        .from('products')
-        .update({ is_active: !product.is_active })
-        .eq('id', product.id)
-        .eq('seller_id', user.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: `Product ${!product.is_active ? 'activated' : 'deactivated'} successfully!`,
-      });
-    } catch (error: any) {
-      console.error('Error updating product status:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update product status. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
+  // Note: handleEdit, handleDelete, and toggleProductStatus have been moved to ProductDetail.tsx
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -401,7 +313,7 @@ const Products = () => {
             <DialogContent className="bg-zaago-card border-zaago-border max-w-2xl">
               <DialogHeader>
                 <DialogTitle className="text-foreground">
-                  {editingProduct ? 'Edit Product' : 'Quick Add Product'}
+                  Quick Add Product
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -509,7 +421,7 @@ const Products = () => {
                     type="submit"
                     className="bg-zaago-green hover:bg-zaago-green-light text-black"
                   >
-                    {editingProduct ? 'Update Product' : 'Add Product'}
+                    Add Product
                   </Button>
                 </div>
               </form>
@@ -638,7 +550,8 @@ const Products = () => {
                   key={product.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-6 p-6 rounded-xl border border-zaago-border bg-zaago-card/30 hover:bg-zaago-accent/20 transition-all"
+                  onClick={() => navigate(`/products/${product.id}`)}
+                  className="flex items-center gap-6 p-6 rounded-xl border border-zaago-border bg-zaago-card/30 hover:bg-zaago-accent/20 transition-all cursor-pointer group"
                 >
                   {/* Product Image */}
                   <div className="w-20 h-20 rounded-xl overflow-hidden bg-zaago-muted/10 flex-shrink-0 border border-zaago-border">
@@ -658,7 +571,7 @@ const Products = () => {
                   {/* Product Details */}
                   <div className="flex-1 min-w-0 space-y-2">
                     <div className="flex items-start justify-between">
-                      <h3 className="font-semibold text-foreground text-xl leading-tight">{product.name}</h3>
+                      <h3 className="font-semibold text-foreground text-xl leading-tight group-hover:text-zaago-green transition-colors">{product.name}</h3>
                       <span className="font-bold text-zaago-green text-xl">₹{product.price}</span>
                     </div>
                     <p className="text-zaago-muted-foreground text-base leading-relaxed">
@@ -686,73 +599,9 @@ const Products = () => {
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {/* View functionality */}}
-                      className="h-10 w-10 sm:px-3 sm:w-auto text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
-                      title="View product details"
-                    >
-                      <Eye className="w-4 h-4" />
-                      <span className="hidden sm:inline text-sm ml-1">View</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(product)}
-                      className="h-10 w-10 sm:px-3 sm:w-auto text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
-                      title="Edit this product"
-                    >
-                      <Edit className="w-4 h-4" />
-                      <span className="hidden sm:inline text-sm ml-1">Edit</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleProductStatus(product)}
-                      className="h-10 w-10 sm:px-3 sm:w-auto text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
-                      title={product.is_active ? 'Deactivate product' : 'Activate product'}
-                    >
-                      {product.is_active ? <ToggleLeft className="w-4 h-4" /> : <ToggleRight className="w-4 h-4" />}
-                      <span className="hidden sm:inline text-sm ml-1">{product.is_active ? 'Deactivate' : 'Activate'}</span>
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-10 w-10 sm:px-3 sm:w-auto text-red-400 hover:text-red-300 hover:bg-red-500/10 active:bg-red-500/20 active:text-red-300 focus-visible:ring-red-500/40"
-                          title="Delete this product permanently"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          <span className="hidden sm:inline text-sm ml-1">Delete</span>
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-zaago-card border-zaago-border">
-                        <AlertDialogHeader>
-                          <AlertDialogTitle className="text-foreground flex items-center gap-2">
-                            <AlertTriangle className="w-5 h-5 text-red-500" />
-                            Delete Product
-                          </AlertDialogTitle>
-                          <AlertDialogDescription className="text-zaago-muted-foreground">
-                            Are you sure you want to delete "<strong>{product.name}</strong>"? This action cannot be undone and will permanently remove the product from your catalog.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel className="border-zaago-border text-foreground hover:bg-zaago-accent">
-                            Cancel
-                          </AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDelete(product.id)}
-                            className="bg-red-500 hover:bg-red-600 text-white"
-                          >
-                            Delete Permanently
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                  {/* Click Indicator */}
+                  <div className="flex items-center flex-shrink-0">
+                    <ChevronRight className="w-5 h-5 text-zaago-muted-foreground group-hover:text-zaago-green transition-colors" />
                   </div>
                 </motion.div>
               ))}
