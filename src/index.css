@@ -328,9 +328,21 @@ body {
     border-radius: 3px;
   }
   
-  /* Focus styles for accessibility */
+  /* Focus styles for accessibility - prevent white color on click */
   .focus-ring {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zaago-ring focus-visible:ring-offset-2;
+  }
+  
+  /* Prevent white background on link/button focus/active states */
+  a:focus, button:focus, a:active, button:active {
+    background-color: inherit !important;
+    color: inherit !important;
+  }
+  
+  /* Specific prevention for Link components */
+  a[class*="Link"]:focus, a[class*="Link"]:active {
+    background-color: inherit !important;
+    color: inherit !important;
   }
   
   /* Safe area support for mobile */

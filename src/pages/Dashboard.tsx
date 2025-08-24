@@ -232,7 +232,7 @@ const Dashboard = () => {
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Link 
                 to="/products/new" 
-                className="p-6 text-left group flex flex-col items-center text-center hover:bg-zaago-accent/50 rounded-lg transition-colors"
+                className="p-6 text-left group flex flex-col items-center text-center hover:bg-zaago-accent/50 rounded-lg transition-colors focus:outline-none focus:bg-zaago-accent/50 active:bg-zaago-accent/70"
               >
                 <Package className="w-12 h-12 text-zaago-green mb-3 group-hover:scale-110 transition-transform" />
                 <h3 className="font-semibold text-foreground mb-1">Add Product</h3>
@@ -241,7 +241,7 @@ const Dashboard = () => {
               
               <Link 
                 to="/orders" 
-                className="p-6 text-left group flex flex-col items-center text-center hover:bg-zaago-accent/50 rounded-lg transition-colors"
+                className="p-6 text-left group flex flex-col items-center text-center hover:bg-zaago-accent/50 rounded-lg transition-colors focus:outline-none focus:bg-zaago-accent/50 active:bg-zaago-accent/70"
               >
                 <ShoppingCart className="w-12 h-12 text-zaago-green mb-3 group-hover:scale-110 transition-transform" />
                 <h3 className="font-semibold text-foreground mb-1">View Orders</h3>

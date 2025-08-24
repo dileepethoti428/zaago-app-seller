@@ -395,7 +395,7 @@ export default function EditProductPage() {
         className="flex items-center justify-between"
       >
         <div className="flex items-center gap-4">
-          <Link to="/products" className="zaago-button-ghost p-2">
+          <Link to="/products" className="zaago-button-ghost p-2 focus:outline-none focus:bg-zaago-accent/50 active:bg-zaago-accent/70">
             ←
           </Link>
           <div>
