@@ -687,7 +687,7 @@ const Products = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => {/* View functionality */}}
-                      className="text-zaago-muted-foreground hover:text-foreground hover:bg-zaago-accent"
+                      className="text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
@@ -695,7 +695,7 @@ const Products = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(product)}
-                      className="text-zaago-muted-foreground hover:text-foreground hover:bg-zaago-accent"
+                      className="text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -703,7 +703,7 @@ const Products = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => toggleProductStatus(product)}
-                      className="text-zaago-muted-foreground hover:text-foreground hover:bg-zaago-accent"
+                      className="text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
                     >
                       {product.is_active ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
                     </Button>
@@ -712,7 +712,7 @@ const Products = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10 active:bg-red-500/20 active:text-red-300 focus-visible:ring-red-500/40"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
