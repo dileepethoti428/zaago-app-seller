@@ -74,10 +74,10 @@ export default function Sidebar() {
   };
 
   const getNavClassName = (path: string) => {
-    const base = "flex items-center gap-3 p-3 rounded-2xl transition-all duration-200 w-full";
+    const base = "flex items-center gap-3 p-3 rounded-2xl w-full";
     return isActive(path) 
       ? `${base} zaago-nav-active`
-      : `${base} zaago-nav-inactive`;
+      : `${base} zaago-nav-inactive transition-colors duration-200`;
   };
 
   return (
