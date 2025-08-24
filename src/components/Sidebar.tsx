@@ -93,7 +93,7 @@ export default function Sidebar() {
             >
               <NavLink 
                 to="/"
-                className="text-white font-bold text-lg sm:text-xl lg:text-2xl hover:text-zaago-green transition-colors cursor-pointer block leading-tight"
+                className="text-zaago-green font-bold text-lg sm:text-xl lg:text-2xl hover:text-zaago-green-light transition-colors cursor-pointer block leading-tight"
               >
                 Zaago Seller Dashboard
               </NavLink>
@@ -108,7 +108,7 @@ export default function Sidebar() {
             >
               <NavLink 
                 to="/"
-                className="text-white hover:text-zaago-green transition-colors cursor-pointer block"
+                className="text-zaago-green hover:text-zaago-green-light transition-colors cursor-pointer block"
               >
                 Z
               </NavLink>
