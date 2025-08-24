@@ -20,6 +20,8 @@ export default function AddProductPage() {
     price: '',
     stock_quantity: '',
     type: '',
+    category: '',
+    customCategory: '',
     unit: 'per litre',
     image_url: '',
     discount_percentage: '',
@@ -171,6 +173,7 @@ export default function AddProductPage() {
         price: parseFloat(formData.price),
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         type: formData.type || null,
+        category: formData.category === 'other' ? formData.customCategory : formData.category,
         unit: formData.unit,
         image_url: allImages.length > 0 ? allImages[0] : null, // Keep backward compatibility
         images: allImages,
@@ -293,6 +296,41 @@ export default function AddProductPage() {
                   />
                 </div>
               </div>
+
+              {/* Category Selection */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Category</label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => handleInputChange('category', e.target.value)}
+                  className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                >
+                  <option value="">Select a category</option>
+                  <option value="food">Food</option>
+                  <option value="grocery">Grocery</option>
+                  <option value="frequently-bought">Frequently Bought</option>
+                  <option value="previously-bought">Previously Bought</option>
+                  <option value="fresh-milk-dairy">Fresh Milk and Dairy</option>
+                  <option value="grocery-kitchen">Grocery and Kitchen</option>
+                  <option value="beauty-personal-care">Beauty and Personal Care</option>
+                  <option value="household-essentials">Household Essentials</option>
+                  <option value="other">Other (Custom)</option>
+                </select>
+              </div>
+
+              {/* Custom Category Input */}
+              {formData.category === 'other' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Custom Category</label>
+                  <input
+                    type="text"
+                    value={formData.customCategory}
+                    onChange={(e) => handleInputChange('customCategory', e.target.value)}
+                    placeholder="Enter custom category"
+                    className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  />
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
