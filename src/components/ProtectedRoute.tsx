@@ -59,14 +59,14 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         return;
       }
 
-      if (data.approval_status === 'approved' && data.bank_name) {
-        // User is approved and has bank details, can access the app
-        if (location.pathname === '/login') {
+      if (data.approval_status === 'approved') {
+        // User is approved, can access the app
+        // Show bank details page only if they haven't seen it and don't have bank details
+        if (!data.bank_name && location.pathname !== '/bank-details' && location.pathname === '/login') {
+          navigate('/bank-details');
+        } else if (location.pathname === '/login') {
           navigate('/products');
         }
-      } else if (data.approval_status === 'approved') {
-        // User is approved but doesn't have bank details, show bank details page
-        navigate('/bank-details');
       }
     } catch (error) {
       console.error('Error checking seller details:', error);
