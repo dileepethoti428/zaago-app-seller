@@ -692,42 +692,42 @@ const Products = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => {/* View functionality */}}
-                      className="h-10 px-3 text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
+                      className="h-10 w-10 sm:px-3 sm:w-auto text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
                       title="View product details"
                     >
-                      <Eye className="w-4 h-4 mr-1" />
-                      <span className="hidden sm:inline text-sm">View</span>
+                      <Eye className="w-4 h-4" />
+                      <span className="hidden sm:inline text-sm ml-1">View</span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(product)}
-                      className="h-10 px-3 text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
+                      className="h-10 w-10 sm:px-3 sm:w-auto text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
                       title="Edit this product"
                     >
-                      <Edit className="w-4 h-4 mr-1" />
-                      <span className="hidden sm:inline text-sm">Edit</span>
+                      <Edit className="w-4 h-4" />
+                      <span className="hidden sm:inline text-sm ml-1">Edit</span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => toggleProductStatus(product)}
-                      className="h-10 px-3 text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
+                      className="h-10 w-10 sm:px-3 sm:w-auto text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
                       title={product.is_active ? 'Deactivate product' : 'Activate product'}
                     >
-                      {product.is_active ? <ToggleLeft className="w-4 h-4 mr-1" /> : <ToggleRight className="w-4 h-4 mr-1" />}
-                      <span className="hidden sm:inline text-sm">{product.is_active ? 'Deactivate' : 'Activate'}</span>
+                      {product.is_active ? <ToggleLeft className="w-4 h-4" /> : <ToggleRight className="w-4 h-4" />}
+                      <span className="hidden sm:inline text-sm ml-1">{product.is_active ? 'Deactivate' : 'Activate'}</span>
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-10 px-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 active:bg-red-500/20 active:text-red-300 focus-visible:ring-red-500/40"
+                          className="h-10 w-10 sm:px-3 sm:w-auto text-red-400 hover:text-red-300 hover:bg-red-500/10 active:bg-red-500/20 active:text-red-300 focus-visible:ring-red-500/40"
                           title="Delete this product permanently"
                         >
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          <span className="hidden sm:inline text-sm">Delete</span>
+                          <Trash2 className="w-4 h-4" />
+                          <span className="hidden sm:inline text-sm ml-1">Delete</span>
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent className="bg-zaago-card border-zaago-border">
