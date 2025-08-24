@@ -28,7 +28,13 @@ export const MapSelector = ({ onLocationSelect, onClose, initialLocation }: MapS
     const fetchMapboxToken = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+        console.log('Fetching Mapbox token...');
+        
+        const { data, error } = await supabase.functions.invoke('get-mapbox-token', {
+          method: 'POST'
+        });
+        
+        console.log('Response:', { data, error });
         
         if (error) {
           console.error('Error fetching Mapbox token:', error);
@@ -37,9 +43,11 @@ export const MapSelector = ({ onLocationSelect, onClose, initialLocation }: MapS
         }
         
         if (data?.token) {
+          console.log('Token received, initializing map...');
           setMapboxToken(data.token);
           initializeMap(data.token);
         } else {
+          console.error('No token in response:', data);
           setError('Mapbox token not configured. Please contact your administrator.');
         }
       } catch (error) {
