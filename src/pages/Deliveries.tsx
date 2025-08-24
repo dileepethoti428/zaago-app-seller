@@ -471,11 +471,11 @@ export default function DeliveriesPage() {
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.1, duration: 0.3 }}
       >
-        <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-          <Truck className="w-8 h-8 text-primary" />
+        <h1 className="text-3xl font-bold text-zaago-green flex items-center gap-3">
+          <Truck className="w-8 h-8 text-zaago-green" />
           Delivered Orders
         </h1>
-        <p className="text-secondary mt-1">Track completed deliveries and manage inventory</p>
+        <p className="text-zaago-green-light mt-1">Track completed deliveries and manage inventory</p>
       </motion.div>
 
       {/* Stats Cards */}

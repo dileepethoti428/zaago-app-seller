@@ -201,7 +201,7 @@ const Notifications = () => {
         className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
       >
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold text-zaago-green">
             Notifications
             {unreadCount > 0 && (
               <Badge variant="destructive" className="ml-3">
@@ -209,7 +209,7 @@ const Notifications = () => {
               </Badge>
             )}
           </h1>
-          <p className="text-secondary text-sm sm:text-base">
+          <p className="text-zaago-green-light text-sm sm:text-base">
             Stay updated with your business activities
           </p>
         </div>
@@ -268,7 +268,7 @@ const Notifications = () => {
       >
         <Card className="zaago-card">
           <CardHeader>
-            <CardTitle>All Notifications ({filteredNotifications.length})</CardTitle>
+            <CardTitle className="text-zaago-green">All Notifications ({filteredNotifications.length})</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (

@@ -194,8 +194,8 @@ export default function Payments() {
       <div className="container mx-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Payments Dashboard</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-3xl font-bold tracking-tight text-zaago-green">Payments Dashboard</h1>
+            <p className="text-zaago-green-light">
               Current commission rate: <span className="font-semibold">{commissionRate}%</span>
             </p>
           </div>

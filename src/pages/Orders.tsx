@@ -254,10 +254,10 @@ const Orders = () => {
         className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
       >
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-zaago-green mb-2">
             Orders Management
           </h1>
-          <p className="text-secondary text-sm sm:text-base">
+          <p className="text-zaago-green-light text-sm sm:text-base">
             Manage orders with real-time updates and status tracking
           </p>
         </div>
