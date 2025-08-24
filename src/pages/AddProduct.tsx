@@ -233,11 +233,11 @@ export default function AddProductPage() {
           ←
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <PlusCircle className="w-8 h-8 text-primary" />
+          <h1 className="text-3xl font-bold text-green-500 flex items-center gap-3">
+            <PlusCircle className="w-8 h-8 text-green-500" />
             Add New Product
           </h1>
-          <p className="text-secondary mt-1">Create a new product listing for the customer app</p>
+          <p className="text-green-400 mt-1">Create a new product listing for the customer app</p>
         </div>
       </motion.div>
 
@@ -253,8 +253,8 @@ export default function AddProductPage() {
             {/* Left Column */}
             <div className="space-y-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <Tag className="w-4 h-4" />
+                <label className="text-sm font-medium text-green-500 flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-green-500" />
                   Product Name *
                 </label>
                 <input
@@ -263,25 +263,25 @@ export default function AddProductPage() {
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
                   placeholder="Enter product name"
-                  className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder:text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-green-500 placeholder:text-green-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Description</label>
+                <label className="text-sm font-medium text-green-500">Description</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   placeholder="Describe your product..."
                   rows={4}
-                  className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder:text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
+                  className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-green-500 placeholder:text-green-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                    <DollarSign className="w-4 h-4" />
+                  <label className="text-sm font-medium text-green-500 flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-green-500" />
                     Price *
                   </label>
                   <input
@@ -292,13 +292,13 @@ export default function AddProductPage() {
                     value={formData.price}
                     onChange={(e) => handleInputChange('price', e.target.value)}
                     placeholder="0.00"
-                    className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder:text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-green-500 placeholder:text-green-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                    <Package className="w-4 h-4" />
+                  <label className="text-sm font-medium text-green-500 flex items-center gap-2">
+                    <Package className="w-4 h-4 text-green-500" />
                     Stock Quantity
                   </label>
                   <input
@@ -307,29 +307,29 @@ export default function AddProductPage() {
                     value={formData.stock_quantity}
                     onChange={(e) => handleInputChange('stock_quantity', e.target.value)}
                     placeholder="0"
-                    className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder:text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-green-500 placeholder:text-green-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Product Type</label>
+                  <label className="text-sm font-medium text-green-500">Product Type</label>
                   <input
                     type="text"
                     value={formData.type}
                     onChange={(e) => handleInputChange('type', e.target.value)}
                     placeholder="e.g. Dairy, Organic"
-                    className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder:text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-green-500 placeholder:text-green-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Unit</label>
+                  <label className="text-sm font-medium text-green-500">Unit</label>
                   <select
                     value={formData.unit}
                     onChange={(e) => handleInputChange('unit', e.target.value)}
-                    className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-green-500 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                   >
                     <option value="per litre">Per Litre</option>
                     <option value="per kg">Per Kg</option>
@@ -344,15 +344,15 @@ export default function AddProductPage() {
           <div className="space-y-6">
             {/* Image Upload */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Camera className="w-4 h-4" />
+              <label className="text-sm font-medium text-green-500 flex items-center gap-2">
+                <Camera className="w-4 h-4 text-green-500" />
                 Product Image
               </label>
               
               {/* Image Previews */}
               {imagePreviews.length > 0 && (
                 <div className="space-y-4">
-                  <p className="text-sm font-medium text-foreground">Selected Images ({imagePreviews.length})</p>
+                  <p className="text-sm font-medium text-green-500">Selected Images ({imagePreviews.length})</p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {imagePreviews.map((preview, index) => (
                       <div key={index} className="relative group">
@@ -394,19 +394,19 @@ export default function AddProductPage() {
 
             {/* Alternative: Image URL Input */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Or paste image URL</label>
+              <label className="text-sm font-medium text-green-500">Or paste image URL</label>
               <input
                 type="url"
                 value={formData.image_url}
                 onChange={(e) => handleInputChange('image_url', e.target.value)}
                 placeholder="https://example.com/image.jpg"
-                className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder:text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-green-500 placeholder:text-green-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
               />
             </div>
 
             {/* Product Status */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Product Status</label>
+              <label className="text-sm font-medium text-green-500">Product Status</label>
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -438,7 +438,7 @@ export default function AddProductPage() {
             </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Discount %</label>
+                <label className="text-sm font-medium text-green-500">Discount %</label>
                 <input
                   type="number"
                   min="0"
@@ -447,13 +447,13 @@ export default function AddProductPage() {
                   value={formData.discount_percentage}
                   onChange={(e) => handleInputChange('discount_percentage', e.target.value)}
                   placeholder="0"
-                  className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder:text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-green-500 placeholder:text-green-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                 />
               </div>
 
               {/* Benefits */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Benefits</label>
+                <label className="text-sm font-medium text-green-500">Benefits</label>
                 {formData.benefits.map((benefit, index) => (
                   <div key={index} className="flex gap-2">
                     <input
@@ -461,7 +461,7 @@ export default function AddProductPage() {
                       value={benefit}
                       onChange={(e) => handleArrayChange('benefits', index, e.target.value)}
                       placeholder="Enter benefit"
-                      className="flex-1 px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder:text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      className="flex-1 px-4 py-3 bg-input border border-border rounded-2xl text-green-500 placeholder:text-green-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                     />
                     {formData.benefits.length > 1 && (
                       <button
@@ -486,7 +486,7 @@ export default function AddProductPage() {
 
               {/* Ingredients */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Ingredients</label>
+                <label className="text-sm font-medium text-green-500">Ingredients</label>
                 {formData.ingredients.map((ingredient, index) => (
                   <div key={index} className="flex gap-2">
                     <input
@@ -494,7 +494,7 @@ export default function AddProductPage() {
                       value={ingredient}
                       onChange={(e) => handleArrayChange('ingredients', index, e.target.value)}
                       placeholder="Enter ingredient"
-                      className="flex-1 px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder:text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      className="flex-1 px-4 py-3 bg-input border border-border rounded-2xl text-green-500 placeholder:text-green-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                     />
                     {formData.ingredients.length > 1 && (
                       <button
