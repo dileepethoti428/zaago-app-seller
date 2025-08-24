@@ -70,8 +70,9 @@ export const MapSelector = ({ onLocationSelect, onClose, initialLocation }: MapS
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/streets-v12',
-        center: initialLocation ? [initialLocation.longitude, initialLocation.latitude] : [77.5946, 12.9716], // Default to Bangalore
+        center: initialLocation ? [initialLocation.longitude, initialLocation.latitude] : [75.7006, 31.2509], // Default to Phagwara, Punjab
         zoom: 12,
+        attributionControl: false,
       });
 
       // Add navigation controls
@@ -80,28 +81,45 @@ export const MapSelector = ({ onLocationSelect, onClose, initialLocation }: MapS
         'top-right'
       );
 
-      // Add click handler
-      map.current.on('click', (e) => {
-        const { lng, lat } = e.lngLat;
-        setSelectedLocation({ latitude: lat, longitude: lng });
+      // Wait for map to load before adding interactions
+      map.current.on('load', () => {
+        console.log('Map loaded successfully');
         
-        // Remove existing marker
-        if (marker.current) {
-          marker.current.remove();
+        // Add click handler
+        map.current!.on('click', (e) => {
+          const { lng, lat } = e.lngLat;
+          console.log('Map clicked:', { lat, lng });
+          setSelectedLocation({ latitude: lat, longitude: lng });
+          
+          // Remove existing marker
+          if (marker.current) {
+            marker.current.remove();
+          }
+          
+          // Add new marker
+          marker.current = new mapboxgl.Marker({ 
+            color: '#00e676',
+            scale: 1.2
+          })
+            .setLngLat([lng, lat])
+            .addTo(map.current!);
+        });
+
+        // Add initial marker if location provided
+        if (initialLocation) {
+          marker.current = new mapboxgl.Marker({ 
+            color: '#00e676',
+            scale: 1.2
+          })
+            .setLngLat([initialLocation.longitude, initialLocation.latitude])
+            .addTo(map.current!);
         }
-        
-        // Add new marker
-        marker.current = new mapboxgl.Marker({ color: '#00e676' })
-          .setLngLat([lng, lat])
-          .addTo(map.current!);
       });
 
-      // Add initial marker if location provided
-      if (initialLocation) {
-        marker.current = new mapboxgl.Marker({ color: '#00e676' })
-          .setLngLat([initialLocation.longitude, initialLocation.latitude])
-          .addTo(map.current);
-      }
+      map.current.on('error', (e) => {
+        console.error('Map error:', e);
+        setError('Failed to load map. Please check your internet connection.');
+      });
 
       setError(null);
     } catch (error) {
@@ -178,7 +196,11 @@ export const MapSelector = ({ onLocationSelect, onClose, initialLocation }: MapS
     <div className="space-y-4">
       <div 
         ref={mapContainer} 
-        className="w-full h-80 rounded-lg border border-zaago-border" 
+        className="w-full h-80 rounded-lg border border-zaago-border bg-gray-100"
+        style={{ 
+          minHeight: '320px',
+          position: 'relative'
+        }}
       />
       
       <div className="flex items-center justify-between gap-2">
