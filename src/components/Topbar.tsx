@@ -40,11 +40,42 @@ export default function Topbar() {
     >
       <div className="flex items-center gap-2 sm:gap-4">
         <SidebarTrigger className="md:hidden p-1.5 sm:p-2 rounded-xl sm:rounded-2xl zaago-button-ghost text-zaago-card-foreground" />
-        <div className="flex flex-col gap-0.5">
-          <h2 className="text-base sm:text-lg font-semibold text-zaago-card-foreground hidden sm:block">
+        
+        {/* Mobile Layout - Horizontal */}
+        <div className="flex items-center gap-2 sm:hidden">
+          <h2 className="text-sm font-semibold text-zaago-card-foreground">
             Seller
           </h2>
-          <h2 className="text-sm font-semibold text-zaago-card-foreground sm:hidden">
+          <span className="text-zaago-muted-foreground">•</span>
+          {locationLoading ? (
+            <div className="flex items-center gap-1 text-xs text-zaago-muted-foreground">
+              <Navigation className="h-3 w-3 animate-spin" />
+              <span className="text-xs">Getting location...</span>
+            </div>
+          ) : location ? (
+            <button
+              onClick={() => setShowLocationSelector(true)}
+              className="flex items-center gap-1 text-xs text-zaago-muted-foreground hover:text-zaago-card-foreground transition-colors cursor-pointer"
+            >
+              <MapPin className="h-3 w-3 text-green-500" />
+              <span className="truncate max-w-[120px] text-xs">
+                {location.address || (location.city && location.state ? `${location.city}, ${location.state}` : 'Unknown location')}
+              </span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowLocationSelector(true)}
+              className="flex items-center gap-1 text-xs text-zaago-muted-foreground hover:text-zaago-card-foreground transition-colors"
+            >
+              <MapPin className="h-3 w-3" />
+              <span className="text-xs">Enable location</span>
+            </button>
+          )}
+        </div>
+
+        {/* Desktop Layout - Vertical */}
+        <div className="hidden sm:flex flex-col gap-0.5">
+          <h2 className="text-base sm:text-lg font-semibold text-zaago-card-foreground">
             Seller
           </h2>
           
@@ -61,7 +92,7 @@ export default function Topbar() {
                 className="flex items-center gap-1 text-xs text-zaago-muted-foreground hover:text-zaago-card-foreground transition-colors cursor-pointer"
               >
                 <MapPin className="h-3 w-3 text-green-500" />
-                <span className="truncate max-w-[150px] sm:max-w-[200px] text-xs">
+                <span className="truncate max-w-[200px] text-xs">
                   {location.address || (location.city && location.state ? `${location.city}, ${location.state}` : 'Unknown location')}
                 </span>
               </button>
