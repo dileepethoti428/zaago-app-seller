@@ -172,7 +172,7 @@ const Settings = () => {
           ifsc_code: bankDetails.ifsc_code,
           account_holder_name: bankDetails.account_holder_name,
           updated_at: new Date().toISOString()
-        });
+        }, { onConflict: 'user_id' });
 
       if (error) {
         throw error;
