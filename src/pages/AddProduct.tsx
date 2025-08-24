@@ -321,12 +321,12 @@ export default function AddProductPage() {
               {/* Custom Category Input */}
               {formData.category === 'other' && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Custom Category</label>
+                  <label className="text-sm font-medium text-foreground">Category Name/Type</label>
                   <input
                     type="text"
                     value={formData.customCategory}
                     onChange={(e) => handleInputChange('customCategory', e.target.value)}
-                    placeholder="Enter custom category"
+                    placeholder="Enter category name or type (e.g., Electronics, Books, etc.)"
                     className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   />
                 </div>
