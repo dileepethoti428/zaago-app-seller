@@ -233,11 +233,11 @@ export default function AddProductPage() {
           ←
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-green-500 flex items-center gap-3">
-            <PlusCircle className="w-8 h-8 text-green-500" />
+          <h1 className="text-3xl font-bold text-zaago-green flex items-center gap-3">
+            <PlusCircle className="w-8 h-8 text-zaago-green" />
             Add New Product
           </h1>
-          <p className="text-green-400 mt-1">Create a new product listing for the customer app</p>
+          <p className="text-zaago-green-light mt-1">Create a new product listing for the customer app</p>
         </div>
       </motion.div>
 
@@ -253,8 +253,8 @@ export default function AddProductPage() {
             {/* Left Column */}
             <div className="space-y-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-green-500 flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-green-500" />
+                <label className="text-sm font-medium text-zaago-green flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-zaago-green" />
                   Product Name *
                 </label>
                 <input
@@ -263,25 +263,25 @@ export default function AddProductPage() {
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
                   placeholder="Enter product name"
-                  className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-green-500 placeholder:text-green-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-zaago-green placeholder:text-zaago-green/60 focus:ring-2 focus:ring-zaago-green focus:border-transparent transition-all"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-green-500">Description</label>
+                <label className="text-sm font-medium text-zaago-green">Description</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   placeholder="Describe your product..."
                   rows={4}
-                  className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-green-500 placeholder:text-green-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
+                  className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-zaago-green placeholder:text-zaago-green/60 focus:ring-2 focus:ring-zaago-green focus:border-transparent transition-all resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-green-500 flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-green-500" />
+                  <label className="text-sm font-medium text-zaago-green flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-zaago-green" />
                     Price *
                   </label>
                   <input
@@ -292,13 +292,13 @@ export default function AddProductPage() {
                     value={formData.price}
                     onChange={(e) => handleInputChange('price', e.target.value)}
                     placeholder="0.00"
-                    className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-green-500 placeholder:text-green-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-zaago-green placeholder:text-zaago-green/60 focus:ring-2 focus:ring-zaago-green focus:border-transparent transition-all"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-green-500 flex items-center gap-2">
-                    <Package className="w-4 h-4 text-green-500" />
+                  <label className="text-sm font-medium text-zaago-green flex items-center gap-2">
+                    <Package className="w-4 h-4 text-zaago-green" />
                     Stock Quantity
                   </label>
                   <input
@@ -307,7 +307,7 @@ export default function AddProductPage() {
                     value={formData.stock_quantity}
                     onChange={(e) => handleInputChange('stock_quantity', e.target.value)}
                     placeholder="0"
-                    className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-green-500 placeholder:text-green-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-zaago-green placeholder:text-zaago-green/60 focus:ring-2 focus:ring-zaago-green focus:border-transparent transition-all"
                   />
                 </div>
               </div>

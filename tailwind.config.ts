@@ -100,7 +100,10 @@ export default {
 				'zaago-ring': 'hsl(var(--zaago-ring))',
 				'zaago-dark': 'hsl(var(--zaago-dark))',
 				'zaago-light': 'hsl(var(--zaago-light))',
-				'zaago-hover': 'hsl(var(--zaago-hover))'
+				'zaago-hover': 'hsl(var(--zaago-hover))',
+				'zaago-green': 'hsl(var(--zaago-green))',
+				'zaago-green-light': 'hsl(var(--zaago-green-light))',
+				'zaago-green-dark': 'hsl(var(--zaago-green-dark))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

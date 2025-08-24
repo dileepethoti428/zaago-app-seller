@@ -77,27 +77,32 @@ body {
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
     
-    /* Zaago specific colors */
-    --zaago-primary: 263 70% 50%;
-    --zaago-primary-foreground: 0 0% 100%;
+    /* Zaago specific colors - Bright Green Theme */
+    --zaago-primary: 160 100% 45%;
+    --zaago-primary-foreground: 0 0% 0%;
     --zaago-secondary: 240 4% 16%;
-    --zaago-secondary-foreground: 0 0% 100%;
-    --zaago-accent: 263 70% 95%;
-    --zaago-accent-foreground: 263 70% 15%;
+    --zaago-secondary-foreground: 160 100% 45%;
+    --zaago-accent: 160 100% 95%;
+    --zaago-accent-foreground: 160 100% 15%;
     --zaago-muted: 240 4% 46%;
-    --zaago-muted-foreground: 240 5% 84%;
+    --zaago-muted-foreground: 160 50% 70%;
     --zaago-card: 240 4% 9%;
-    --zaago-card-foreground: 0 0% 100%;
+    --zaago-card-foreground: 160 100% 45%;
     --zaago-border: 240 4% 16%;
     --zaago-input: 240 4% 16%;
-    --zaago-ring: 263 70% 50%;
+    --zaago-ring: 160 100% 45%;
     --zaago-dark: 240 4% 9%;
-    --zaago-light: 0 0% 100%;
+    --zaago-light: 160 100% 45%;
     
-    /* Beautiful gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--zaago-primary)), hsl(var(--zaago-accent)));
+    /* Bright green variations */
+    --zaago-green: 160 100% 45%;
+    --zaago-green-light: 160 100% 55%;
+    --zaago-green-dark: 160 100% 35%;
+    
+    /* Beautiful gradients with bright green */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--zaago-green)), hsl(var(--zaago-green-light)));
     --gradient-secondary: linear-gradient(135deg, hsl(var(--zaago-secondary)), hsl(var(--zaago-muted)));
-    --gradient-accent: linear-gradient(135deg, hsl(var(--zaago-accent)), hsl(var(--zaago-primary)));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--zaago-green-light)), hsl(var(--zaago-green)));
     
     /* Enhanced shadows */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -106,8 +111,8 @@ body {
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-    --shadow-card: 0 4px 12px 0 rgba(99, 102, 241, 0.15);
-    --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.3);
+    --shadow-card: 0 4px 12px 0 rgba(0, 230, 118, 0.15);
+    --shadow-glow: 0 0 20px rgba(0, 230, 118, 0.3);
     
     /* Smooth transitions */
     --transition-all: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -154,21 +159,26 @@ body {
     --chart-5: 27 87% 67%;
     
     /* Zaago light mode colors */
-    --zaago-primary: 263 70% 50%;
+    --zaago-primary: 160 100% 45%;
     --zaago-primary-foreground: 0 0% 100%;
     --zaago-secondary: 0 0% 96%;
-    --zaago-secondary-foreground: 222.2 84% 4.9%;
-    --zaago-accent: 263 70% 95%;
-    --zaago-accent-foreground: 263 70% 15%;
+    --zaago-secondary-foreground: 160 100% 35%;
+    --zaago-accent: 160 100% 95%;
+    --zaago-accent-foreground: 160 100% 25%;
     --zaago-muted: 220 13% 91%;
-    --zaago-muted-foreground: 220 9% 46%;
+    --zaago-muted-foreground: 160 50% 40%;
     --zaago-card: 0 0% 100%;
-    --zaago-card-foreground: 222.2 84% 4.9%;
+    --zaago-card-foreground: 160 100% 35%;
     --zaago-border: 220 13% 91%;
     --zaago-input: 220 13% 91%;
-    --zaago-ring: 263 70% 50%;
+    --zaago-ring: 160 100% 45%;
     --zaago-dark: 222.2 84% 4.9%;
     --zaago-light: 0 0% 100%;
+    
+    /* Bright green variations for light mode */
+    --zaago-green: 160 100% 45%;
+    --zaago-green-light: 160 100% 55%;
+    --zaago-green-dark: 160 100% 35%;
   }
 }
 
@@ -212,7 +222,7 @@ body {
   }
   
   .zaago-button-primary {
-    @apply zaago-button bg-gradient-to-r from-zaago-primary to-purple-600 text-zaago-primary-foreground hover:shadow-lg hover:scale-105 active:scale-95;
+    @apply zaago-button bg-zaago-green text-zaago-primary-foreground hover:shadow-lg hover:scale-105 active:scale-95 hover:bg-zaago-green-light;
   }
   
   .zaago-button-secondary {
