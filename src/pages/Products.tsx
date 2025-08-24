@@ -349,12 +349,6 @@ const Products = () => {
     }
   };
 
-  const getStockStatus = (stock: number) => {
-    if (stock === 0) return { label: 'Out of Stock', color: 'bg-red-500/20 text-red-400 border-red-500/30' };
-    if (stock <= 10) return { label: 'Low Stock', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' };
-    return { label: 'In Stock', color: 'bg-primary/20 text-primary border-primary/30' };
-  };
-
   // Calculate stats
   const totalProducts = products.length;
   const activeProducts = products.filter(p => p.is_active).length;
@@ -368,411 +362,403 @@ const Products = () => {
       transition={{ duration: 0.5 }}
       className="space-y-6"
     >
-      {/* Header with Stats */}
+      {/* Header */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.1, duration: 0.3 }}
-        className="space-y-6"
+        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
       >
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-zaago-green mb-2">
-              Product Inventory
-            </h1>
-            <p className="text-zaago-green-light text-sm sm:text-base">
-              Manage your product catalog and inventory levels
-            </p>
-          </div>
-          
-          <div className="flex gap-2">
-            <Link to="/products/new">
-              <Button className="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30">
-                <Plus className="w-4 h-4 mr-2" />
-                Add via Form
-              </Button>
-            </Link>
-            <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
-              setIsAddDialogOpen(open);
-              if (!open) resetForm();
-            }}>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Quick Add
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="zaago-card max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle className="text-foreground">
-                    {editingProduct ? 'Edit Product' : 'Quick Add Product'}
-                  </DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name" className="text-foreground">Product Name *</Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                        placeholder="Enter product name"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="price" className="text-foreground">Price (₹) *</Label>
-                      <Input
-                        id="price"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={formData.price}
-                        onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                        placeholder="0.00"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description" className="text-foreground">Description</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Describe your product..."
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="stock" className="text-foreground">Stock Quantity</Label>
-                      <Input
-                        id="stock"
-                        type="number"
-                        min="0"
-                        value={formData.stock_quantity}
-                        onChange={(e) => setFormData(prev => ({ ...prev, stock_quantity: e.target.value }))}
-                        placeholder="0"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="image" className="text-foreground">Product Image</Label>
-                      <Input
-                        id="image"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        disabled={uploadingImage}
-                      />
-                      {uploadingImage && (
-                        <p className="text-xs text-secondary">Uploading image...</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {formData.image_url && (
-                    <div className="space-y-2">
-                      <Label className="text-foreground">Image Preview</Label>
-                      <div className="relative w-32 h-32 rounded-xl overflow-hidden border border-border">
-                        <img
-                          src={formData.image_url}
-                          alt="Product preview"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="active"
-                      checked={formData.is_active}
-                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
-                    />
-                    <Label htmlFor="active" className="text-foreground">Product is active</Label>
-                  </div>
-
-                  <div className="flex gap-2 pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        resetForm();
-                        setIsAddDialogOpen(false);
-                      }}
-                      className="flex-1"
-                    >
-                      Cancel
-                    </Button>
-                    <Button type="submit" className="flex-1 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30">
-                      {editingProduct ? 'Update Product' : 'Create Product'}
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+            Product Inventory
+          </h1>
+          <p className="text-zaago-muted-foreground text-sm sm:text-base">
+            Manage your product catalog and inventory levels
+          </p>
         </div>
+        
+        <div className="flex gap-3">
+          <Link to="/products/new">
+            <Button className="bg-zaago-green hover:bg-zaago-green-light text-black font-medium">
+              <Plus className="w-4 h-4 mr-2" />
+              Add via Form
+            </Button>
+          </Link>
+          <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+            setIsAddDialogOpen(open);
+            if (!open) resetForm();
+          }}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="border-zaago-border text-foreground hover:bg-zaago-accent">
+                <Plus className="w-4 h-4 mr-2" />
+                Quick Add
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-zaago-card border-zaago-border max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className="text-foreground">
+                  {editingProduct ? 'Edit Product' : 'Quick Add Product'}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-foreground">Product Name *</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Enter product name"
+                      required
+                      className="bg-zaago-card border-zaago-border text-foreground"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="price" className="text-foreground">Price (₹) *</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.price}
+                      onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                      placeholder="0.00"
+                      required
+                      className="bg-zaago-card border-zaago-border text-foreground"
+                    />
+                  </div>
+                </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="zaago-card">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-secondary text-sm">Total Products</p>
-                  <p className="text-2xl font-bold text-foreground">{totalProducts}</p>
+                <div className="space-y-2">
+                  <Label htmlFor="description" className="text-foreground">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Describe your product..."
+                    rows={3}
+                    className="bg-zaago-card border-zaago-border text-foreground"
+                  />
                 </div>
-                <Package className="w-8 h-8 text-primary" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="zaago-card">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-secondary text-sm">Active Products</p>
-                  <p className="text-2xl font-bold text-foreground">{activeProducts}</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="stock" className="text-foreground">Stock Quantity</Label>
+                    <Input
+                      id="stock"
+                      type="number"
+                      min="0"
+                      value={formData.stock_quantity}
+                      onChange={(e) => setFormData(prev => ({ ...prev, stock_quantity: e.target.value }))}
+                      placeholder="0"
+                      className="bg-zaago-card border-zaago-border text-foreground"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="image" className="text-foreground">Product Image</Label>
+                    <Input
+                      id="image"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage}
+                      className="bg-zaago-card border-zaago-border text-foreground"
+                    />
+                    {uploadingImage && (
+                      <p className="text-xs text-zaago-muted-foreground">Uploading image...</p>
+                    )}
+                  </div>
                 </div>
-                <Package2 className="w-8 h-8 text-primary" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="zaago-card">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-secondary text-sm">Low Stock Alert</p>
-                  <p className="text-2xl font-bold text-yellow-400">{lowStockProducts}</p>
+
+                {formData.image_url && (
+                  <div className="space-y-2">
+                    <Label className="text-foreground">Image Preview</Label>
+                    <div className="relative w-32 h-32 rounded-xl overflow-hidden border border-zaago-border">
+                      <img
+                        src={formData.image_url}
+                        alt="Product preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="active"
+                    checked={formData.is_active}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
+                  />
+                  <Label htmlFor="active" className="text-foreground">Product is active</Label>
                 </div>
-                <AlertTriangle className="w-8 h-8 text-yellow-400" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="zaago-card">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-secondary text-sm">Total Value</p>
-                  <p className="text-2xl font-bold text-foreground">₹{totalValue.toLocaleString()}</p>
+
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsAddDialogOpen(false)}
+                    className="border-zaago-border text-foreground hover:bg-zaago-accent"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="bg-zaago-green hover:bg-zaago-green-light text-black"
+                  >
+                    {editingProduct ? 'Update Product' : 'Add Product'}
+                  </Button>
                 </div>
-                <DollarSign className="w-8 h-8 text-primary" />
-              </div>
-            </CardContent>
-          </Card>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </motion.div>
 
-      {/* Search and Filters */}
+      {/* Stats Cards */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.3 }}
+        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
       >
-        <Card className="zaago-card">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary w-4 h-4" />
-                <Input
-                  placeholder="Search products by name or description..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+        <Card className="bg-zaago-card/50 border-zaago-border">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-zaago-muted-foreground text-sm">Total Products</p>
+                <p className="text-2xl font-bold text-foreground">{totalProducts}</p>
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Products</SelectItem>
-                  <SelectItem value="active">Active Only</SelectItem>
-                  <SelectItem value="inactive">Inactive Only</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="p-3 bg-zaago-green/20 rounded-lg">
+                <Package className="w-6 h-6 text-zaago-green" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-zaago-card/50 border-zaago-border">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-zaago-muted-foreground text-sm">Active Products</p>
+                <p className="text-2xl font-bold text-foreground">{activeProducts}</p>
+              </div>
+              <div className="p-3 bg-zaago-green/20 rounded-lg">
+                <Package2 className="w-6 h-6 text-zaago-green" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-zaago-card/50 border-zaago-border">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-zaago-muted-foreground text-sm">Low Stock Alert</p>
+                <p className="text-2xl font-bold text-yellow-400">{lowStockProducts}</p>
+              </div>
+              <div className="p-3 bg-yellow-500/20 rounded-lg">
+                <AlertTriangle className="w-6 h-6 text-yellow-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-zaago-card/50 border-zaago-border">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-zaago-muted-foreground text-sm">Total Value</p>
+                <p className="text-2xl font-bold text-foreground">₹{totalValue.toFixed(2)}</p>
+              </div>
+              <div className="p-3 bg-zaago-green/20 rounded-lg">
+                <DollarSign className="w-6 h-6 text-zaago-green" />
+              </div>
             </div>
           </CardContent>
         </Card>
       </motion.div>
 
-      {/* Products Table */}
+      {/* Search and Filter */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.3 }}
+        className="bg-zaago-card/50 border border-zaago-border rounded-xl p-6"
       >
-        <Card className="zaago-card">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Products ({filteredProducts.length})</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            ) : filteredProducts.length > 0 ? (
-              <div className="overflow-x-auto">
-                <div className="min-w-full space-y-4">
-                  {filteredProducts.map((product) => {
-                    const stockStatus = getStockStatus(product.stock_quantity);
-                    return (
-                      <motion.div
-                        key={product.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="border border-border rounded-xl p-4 hover:bg-muted/30 transition-colors"
-                      >
-                        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                          <div className="flex items-center gap-4 flex-1">
-                            {product.image_url ? (
-                              <div className="w-16 h-16 rounded-lg overflow-hidden border border-border flex-shrink-0">
-                                <img
-                                  src={product.image_url}
-                                  alt={product.name}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                            ) : (
-                              <div className="w-16 h-16 rounded-lg bg-muted/30 border border-border flex items-center justify-center flex-shrink-0">
-                                <Package className="w-6 h-6 text-secondary" />
-                              </div>
-                            )}
-                            
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-foreground truncate">
-                                {product.name}
-                              </h3>
-                              {product.description && (
-                                <p className="text-sm text-secondary line-clamp-2 mt-1">
-                                  {product.description}
-                                </p>
-                              )}
-                              <div className="flex items-center gap-4 mt-2 text-sm">
-                                <span className="text-foreground font-medium">
-                                  ₹{product.price}
-                                </span>
-                                <Badge className={stockStatus.color}>
-                                  {stockStatus.label} ({product.stock_quantity})
-                                </Badge>
-                                <Badge className={product.is_active 
-                                  ? 'bg-primary/20 text-primary border-primary/30' 
-                                  : 'bg-red-500/20 text-red-400 border-red-500/30'
-                                }>
-                                  {product.is_active ? 'Active' : 'Inactive'}
-                                </Badge>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toggleProductStatus(product)}
-                              className="text-secondary hover:text-foreground"
-                            >
-                              {product.is_active ? (
-                                <ToggleRight className="w-4 h-4" />
-                              ) : (
-                                <ToggleLeft className="w-4 h-4" />
-                              )}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEdit(product)}
-                              className="text-secondary hover:text-foreground"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              asChild
-                              className="text-secondary hover:text-foreground"
-                            >
-                              <Link to={`/products/${product.id}/edit`}>
-                                <Eye className="w-4 h-4" />
-                              </Link>
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-red-400 hover:text-red-300"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent className="zaago-card">
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle className="text-foreground">
-                                    Delete Product
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete "{product.name}"? This action cannot be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDelete(product.id)}
-                                    className="bg-red-500 hover:bg-red-600"
-                                  >
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <Package className="w-12 h-12 text-secondary mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  No products found
-                </h3>
-                <p className="text-secondary text-sm mb-4">
-                  {searchTerm || statusFilter !== 'all' 
-                    ? 'Try adjusting your search or filters' 
-                    : 'Start building your product catalog by adding your first product'
-                  }
-                </p>
-                {!searchTerm && statusFilter === 'all' && (
-                  <div className="flex gap-2 justify-center">
-                    <Button 
-                      onClick={() => setIsAddDialogOpen(true)}
-                      className="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Quick Add Product
-                    </Button>
-                    <Button asChild variant="outline">
-                      <Link to="/products/new">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add via Form
-                      </Link>
-                    </Button>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zaago-muted-foreground w-5 h-5" />
+            <Input
+              placeholder="Search products by name or description..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-zaago-card border-zaago-border text-foreground placeholder:text-zaago-muted-foreground"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter className="w-5 h-5 text-zaago-muted-foreground" />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px] bg-zaago-card border-zaago-border text-foreground">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-zaago-card border-zaago-border">
+                <SelectItem value="all" className="text-foreground hover:bg-zaago-accent">All Products</SelectItem>
+                <SelectItem value="active" className="text-foreground hover:bg-zaago-accent">Active Only</SelectItem>
+                <SelectItem value="inactive" className="text-foreground hover:bg-zaago-accent">Inactive Only</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Products List */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.3 }}
+        className="bg-zaago-card/50 border border-zaago-border rounded-xl overflow-hidden"
+      >
+        <div className="p-6 border-b border-zaago-border">
+          <h2 className="text-xl font-bold text-foreground">Products ({filteredProducts.length})</h2>
+        </div>
+
+        <div className="p-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zaago-green"></div>
+            </div>
+          ) : filteredProducts.length > 0 ? (
+            <div className="space-y-4">
+              {filteredProducts.map((product) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-4 p-4 rounded-lg hover:bg-zaago-accent/30 transition-colors"
+                >
+                  {/* Product Image */}
+                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-zaago-muted/20 flex-shrink-0">
+                    {product.image_url ? (
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="w-6 h-6 text-zaago-muted-foreground" />
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+
+                  {/* Product Details */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-foreground text-lg">{product.name}</h3>
+                    <p className="text-zaago-muted-foreground text-sm">
+                      {product.description || 'No description'}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="font-bold text-foreground">₹{product.price}</span>
+                      {product.stock_quantity <= 10 && product.stock_quantity > 0 && (
+                        <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs">
+                          Low Stock ({product.stock_quantity})
+                        </Badge>
+                      )}
+                      {product.stock_quantity === 0 && (
+                        <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">
+                          Inactive
+                        </Badge>
+                      )}
+                      {product.stock_quantity > 10 && (
+                        <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30 text-xs">
+                          In Stock ({product.stock_quantity})
+                        </Badge>
+                      )}
+                      <Badge className={`text-xs ${product.is_active ? 'bg-zaago-green/20 text-zaago-green border-zaago-green/30' : 'bg-zaago-muted/20 text-zaago-muted-foreground border-zaago-muted/30'}`}>
+                        {product.is_active ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {/* View functionality */}}
+                      className="text-zaago-muted-foreground hover:text-foreground hover:bg-zaago-accent"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(product)}
+                      className="text-zaago-muted-foreground hover:text-foreground hover:bg-zaago-accent"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleProductStatus(product)}
+                      className="text-zaago-muted-foreground hover:text-foreground hover:bg-zaago-accent"
+                    >
+                      {product.is_active ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="bg-zaago-card border-zaago-border">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="text-foreground">Delete Product</AlertDialogTitle>
+                          <AlertDialogDescription className="text-zaago-muted-foreground">
+                            Are you sure you want to delete "{product.name}"? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel className="border-zaago-border text-foreground hover:bg-zaago-accent">
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDelete(product.id)}
+                            className="bg-red-500 hover:bg-red-600 text-white"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Package className="w-16 h-16 text-zaago-muted mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-zaago-muted-foreground mb-2">No products found</h3>
+              <p className="text-zaago-muted-foreground mb-6">
+                {searchTerm || statusFilter !== 'all'
+                  ? "No products match your search criteria."
+                  : "Start by adding your first product to your inventory."}
+              </p>
+              <Link to="/products/new">
+                <Button className="bg-zaago-green hover:bg-zaago-green-light text-black">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Your First Product
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
       </motion.div>
     </motion.div>
   );
