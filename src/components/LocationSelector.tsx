@@ -2,10 +2,9 @@ import { useState } from "react";
 import { MapPin, Navigation, Map } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useLocation } from "@/hooks/useLocation";
 import { useToast } from "@/hooks/use-toast";
+import { MapSelector } from "./MapSelector";
 
 interface LocationSelectorProps {
   open: boolean;
@@ -14,11 +13,7 @@ interface LocationSelectorProps {
 
 export const LocationSelector = ({ open, onOpenChange }: LocationSelectorProps) => {
   const [isDetecting, setIsDetecting] = useState(false);
-  const [manualLocation, setManualLocation] = useState({
-    address: "",
-    latitude: "",
-    longitude: "",
-  });
+  const [showMap, setShowMap] = useState(false);
   const { getCurrentLocation, location } = useLocation();
   const { toast } = useToast();
 
@@ -42,37 +37,35 @@ export const LocationSelector = ({ open, onOpenChange }: LocationSelectorProps) 
     }
   };
 
-  const handleManualSet = async () => {
-    if (!manualLocation.address || !manualLocation.latitude || !manualLocation.longitude) {
-      toast({
-        title: "Invalid Location",
-        description: "Please fill in all location fields.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      // Here you would typically update the location in your database
-      // For now, we'll just show a success message
-      toast({
-        title: "Location Updated",
-        description: "Your location has been manually set.",
-      });
-      onOpenChange(false);
-    } catch (error) {
-      toast({
-        title: "Update Error",
-        description: "Failed to update location. Please try again.",
-        variant: "destructive",
-      });
-    }
+  const handleMapLocationSelect = (selectedLocation: { latitude: number; longitude: number; address: string }) => {
+    toast({
+      title: "Location Updated",
+      description: "Your location has been selected from the map.",
+    });
+    setShowMap(false);
+    onOpenChange(false);
   };
 
-  const openInMaps = () => {
-    const url = `https://www.google.com/maps/@${location?.latitude || 0},${location?.longitude || 0},15z`;
-    window.open(url, '_blank');
-  };
+  if (showMap) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-2xl bg-zaago-card border-zaago-border">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg text-foreground">
+              <Map className="h-5 w-5 text-zaago-green" />
+              Select Location on Map
+            </DialogTitle>
+          </DialogHeader>
+          
+          <MapSelector
+            onLocationSelect={handleMapLocationSelect}
+            onClose={() => setShowMap(false)}
+            initialLocation={location ? { latitude: location.latitude!, longitude: location.longitude! } : undefined}
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -119,10 +112,7 @@ export const LocationSelector = ({ open, onOpenChange }: LocationSelectorProps) 
 
             {/* Option 2: Select on Map */}
             <Button 
-              onClick={() => {
-                // For now, open Google Maps to allow manual selection
-                window.open('https://www.google.com/maps', '_blank');
-              }}
+              onClick={() => setShowMap(true)}
               variant="outline"
               className="h-16 border-zaago-border text-foreground hover:bg-zaago-accent flex flex-col items-center justify-center gap-2"
               size="lg"
