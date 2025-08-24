@@ -629,16 +629,16 @@ const Products = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zaago-green"></div>
             </div>
           ) : filteredProducts.length > 0 ? (
-            <div className="space-y-4">
+            <div className="grid gap-4">
               {filteredProducts.map((product) => (
                 <motion.div
                   key={product.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-4 p-4 rounded-lg hover:bg-zaago-accent/30 transition-colors"
+                  className="flex items-center gap-6 p-6 rounded-xl border border-zaago-border bg-zaago-card/30 hover:bg-zaago-accent/20 transition-all"
                 >
                   {/* Product Image */}
-                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-zaago-muted/20 flex-shrink-0">
+                  <div className="w-20 h-20 rounded-xl overflow-hidden bg-zaago-muted/10 flex-shrink-0 border border-zaago-border">
                     {product.image_url ? (
                       <img
                         src={product.image_url}
@@ -647,74 +647,76 @@ const Products = () => {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Package className="w-6 h-6 text-zaago-muted-foreground" />
+                        <Package className="w-8 h-8 text-zaago-muted-foreground" />
                       </div>
                     )}
                   </div>
 
                   {/* Product Details */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground text-lg">{product.name}</h3>
-                    <p className="text-zaago-muted-foreground text-sm">
-                      {product.description || 'No description'}
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="flex items-start justify-between">
+                      <h3 className="font-semibold text-foreground text-xl leading-tight">{product.name}</h3>
+                      <span className="font-bold text-zaago-green text-xl">₹{product.price}</span>
+                    </div>
+                    <p className="text-zaago-muted-foreground text-base leading-relaxed">
+                      {product.description || 'No description available'}
                     </p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="font-bold text-foreground">₹{product.price}</span>
+                    <div className="flex items-center gap-3 flex-wrap">
                       {product.stock_quantity <= 10 && product.stock_quantity > 0 && (
-                        <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs">
+                        <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-sm px-3 py-1">
                           Low Stock ({product.stock_quantity})
                         </Badge>
                       )}
                       {product.stock_quantity === 0 && (
-                        <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">
-                          Inactive
+                        <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-sm px-3 py-1">
+                          Out of Stock
                         </Badge>
                       )}
                       {product.stock_quantity > 10 && (
-                        <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30 text-xs">
+                        <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30 text-sm px-3 py-1">
                           In Stock ({product.stock_quantity})
                         </Badge>
                       )}
-                      <Badge className={`text-xs ${product.is_active ? 'bg-zaago-green/20 text-zaago-green border-zaago-green/30' : 'bg-zaago-muted/20 text-zaago-muted-foreground border-zaago-muted/30'}`}>
+                      <Badge className={`text-sm px-3 py-1 ${product.is_active ? 'bg-zaago-green/20 text-zaago-green border-zaago-green/30' : 'bg-zaago-muted/20 text-zaago-muted-foreground border-zaago-muted/30'}`}>
                         {product.is_active ? 'Active' : 'Inactive'}
                       </Badge>
                     </div>
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 flex-shrink-0">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => {/* View functionality */}}
-                      className="text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
+                      className="h-10 w-10 text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
                     >
-                      <Eye className="w-4 h-4" />
+                      <Eye className="w-5 h-5" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(product)}
-                      className="text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
+                      className="h-10 w-10 text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="w-5 h-5" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => toggleProductStatus(product)}
-                      className="text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
+                      className="h-10 w-10 text-zaago-muted-foreground hover:bg-zaago-accent hover:text-zaago-green-dark active:bg-zaago-accent/70 active:text-zaago-green-dark focus-visible:ring-zaago-ring"
                     >
-                      {product.is_active ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                      {product.is_active ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10 active:bg-red-500/20 active:text-red-300 focus-visible:ring-red-500/40"
+                          className="h-10 w-10 text-red-400 hover:text-red-300 hover:bg-red-500/10 active:bg-red-500/20 active:text-red-300 focus-visible:ring-red-500/40"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-5 h-5" />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent className="bg-zaago-card border-zaago-border">
