@@ -3,10 +3,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-
-// For this demo, we'll use a placeholder token
-// In a real app, you'd get this from environment variables or Supabase secrets
-const MAPBOX_TOKEN = 'pk.eyJ1IjoidGVzdCIsImEiOiJjazY4ZzJiMTQwNGcwM29xbHV6NTAwam9jIn0.test';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MapSelectorProps {
   onLocationSelect: (location: { latitude: number; longitude: number; address: string }) => void;
@@ -22,14 +19,45 @@ export const MapSelector = ({ onLocationSelect, onClose, initialLocation }: MapS
     initialLocation || null
   );
   const [mapboxToken, setMapboxToken] = useState('');
-  const [showTokenInput, setShowTokenInput] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const initializeMap = () => {
-    if (!mapContainer.current || !mapboxToken) return;
+  // Fetch Mapbox token from Supabase secrets
+  useEffect(() => {
+    const fetchMapboxToken = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+        
+        if (error) {
+          console.error('Error fetching Mapbox token:', error);
+          setError('Failed to load map. Please check your Mapbox token configuration.');
+          return;
+        }
+        
+        if (data?.token) {
+          setMapboxToken(data.token);
+          initializeMap(data.token);
+        } else {
+          setError('Mapbox token not configured. Please contact your administrator.');
+        }
+      } catch (error) {
+        console.error('Error fetching Mapbox token:', error);
+        setError('Failed to load map configuration.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMapboxToken();
+  }, []);
+
+  const initializeMap = (token: string) => {
+    if (!mapContainer.current || !token) return;
 
     try {
-      mapboxgl.accessToken = mapboxToken;
+      mapboxgl.accessToken = token;
       
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
@@ -67,14 +95,10 @@ export const MapSelector = ({ onLocationSelect, onClose, initialLocation }: MapS
           .addTo(map.current);
       }
 
-      setShowTokenInput(false);
+      setError(null);
     } catch (error) {
       console.error('Error initializing map:', error);
-      toast({
-        title: "Map Error",
-        description: "Failed to initialize map. Please check your Mapbox token.",
-        variant: "destructive",
-      });
+      setError('Failed to initialize map. Please check your Mapbox token.');
     }
   };
 
@@ -112,50 +136,32 @@ export const MapSelector = ({ onLocationSelect, onClose, initialLocation }: MapS
     };
   }, []);
 
-  if (showTokenInput) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-80 bg-zaago-card/50 rounded-lg border border-zaago-border">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zaago-green mx-auto mb-2"></div>
+          <p className="text-sm text-zaago-muted-foreground">Loading map...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
     return (
       <div className="space-y-4 p-4">
-        <div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">Mapbox Setup Required</h3>
-          <p className="text-sm text-zaago-muted-foreground mb-4">
-            To use the map feature, please enter your Mapbox public token. You can get one from{' '}
-            <a 
-              href="https://mapbox.com/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-zaago-green hover:underline"
-            >
-              mapbox.com
-            </a>
-          </p>
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-foreground mb-2">Map Unavailable</h3>
+          <p className="text-sm text-zaago-muted-foreground mb-4">{error}</p>
         </div>
         
-        <div>
-          <input
-            type="text"
-            placeholder="Enter your Mapbox public token (pk.xxx...)"
-            value={mapboxToken}
-            onChange={(e) => setMapboxToken(e.target.value)}
-            className="w-full p-3 border border-zaago-border rounded-lg bg-zaago-card text-foreground placeholder:text-zaago-muted-foreground"
-          />
-        </div>
-        
-        <div className="flex gap-2">
-          <Button
-            onClick={initializeMap}
-            disabled={!mapboxToken.trim()}
-            className="flex-1 bg-zaago-green hover:bg-zaago-green-light text-black"
-          >
-            Initialize Map
-          </Button>
-          <Button
-            onClick={onClose}
-            variant="outline"
-            className="border-zaago-border text-foreground hover:bg-zaago-accent"
-          >
-            Cancel
-          </Button>
-        </div>
+        <Button
+          onClick={onClose}
+          variant="outline"
+          className="w-full border-zaago-border text-foreground hover:bg-zaago-accent"
+        >
+          Close
+        </Button>
       </div>
     );
   }
