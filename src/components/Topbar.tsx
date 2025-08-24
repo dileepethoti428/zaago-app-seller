@@ -41,13 +41,13 @@ export default function Topbar() {
       <div className="flex items-center gap-2 sm:gap-4">
         <SidebarTrigger className="md:hidden p-1.5 sm:p-2 rounded-xl sm:rounded-2xl zaago-button-ghost text-zaago-card-foreground" />
         
-        <div className="flex flex-col gap-0.5">
-          <h2 className="text-sm font-semibold text-zaago-card-foreground sm:text-base sm:text-lg">
+        <div className="flex flex-col">
+          <h2 className="text-sm font-semibold text-zaago-card-foreground sm:text-base lg:text-lg leading-tight">
             Seller
           </h2>
           
           {/* Location Display */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             {locationLoading ? (
               <div className="flex items-center gap-1 text-xs text-zaago-muted-foreground">
                 <Navigation className="h-3 w-3 animate-spin" />
@@ -58,7 +58,7 @@ export default function Topbar() {
                 onClick={() => setShowLocationSelector(true)}
                 className="flex items-center gap-1 text-xs text-zaago-muted-foreground hover:text-zaago-card-foreground transition-colors cursor-pointer"
               >
-                <MapPin className="h-3 w-3 text-green-500" />
+                <MapPin className="h-3 w-3 text-green-500 flex-shrink-0" />
                 <span className="truncate max-w-[150px] sm:max-w-[200px] text-xs">
                   {location.address || (location.city && location.state ? `${location.city}, ${location.state}` : 'Unknown location')}
                 </span>
@@ -68,7 +68,7 @@ export default function Topbar() {
                 onClick={() => setShowLocationSelector(true)}
                 className="flex items-center gap-1 text-xs text-zaago-muted-foreground hover:text-zaago-card-foreground transition-colors"
               >
-                <MapPin className="h-3 w-3" />
+                <MapPin className="h-3 w-3 flex-shrink-0" />
                 <span className="text-xs">Enable location</span>
               </button>
             )}
