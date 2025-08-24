@@ -233,6 +233,14 @@ body {
     @apply zaago-button hover:bg-zaago-accent hover:text-zaago-accent-foreground;
   }
   
+  .zaago-nav-active {
+    @apply bg-zaago-green text-zaago-primary-foreground;
+  }
+  
+  .zaago-nav-inactive {
+    @apply text-zaago-green hover:bg-zaago-green/10 hover:text-zaago-green-light;
+  }
+  
   .zaago-button-outline {
     @apply zaago-button border border-zaago-border bg-transparent hover:bg-zaago-accent hover:text-zaago-accent-foreground;
   }

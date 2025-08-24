@@ -93,7 +93,7 @@ export default function Sidebar() {
             >
               <NavLink 
                 to="/"
-                className="text-primary font-bold text-lg sm:text-xl lg:text-2xl hover:text-primary-glow transition-colors cursor-pointer block leading-tight"
+                className="text-zaago-green font-bold text-lg sm:text-xl lg:text-2xl hover:text-zaago-green-light transition-colors cursor-pointer block leading-tight"
               >
                 Zaago Seller Dashboard
               </NavLink>
@@ -108,7 +108,7 @@ export default function Sidebar() {
             >
               <NavLink 
                 to="/"
-                className="text-primary hover:text-primary-glow transition-colors cursor-pointer block"
+                className="text-zaago-green hover:text-zaago-green-light transition-colors cursor-pointer block"
               >
                 Z
               </NavLink>
@@ -118,7 +118,7 @@ export default function Sidebar() {
 
         {/* Navigation */}
         <SidebarGroup className="flex-1">
-          <SidebarGroupLabel className={collapsed ? "sr-only" : "text-secondary text-sm px-4 py-2"}>
+          <SidebarGroupLabel className={collapsed ? "sr-only" : "text-zaago-green text-sm px-4 py-2"}>
             Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -158,7 +158,7 @@ export default function Sidebar() {
           >
             <LogOut size={18} className="shrink-0 sm:w-5 sm:h-5" />
             {!collapsed && (
-              <span className="font-medium text-sm sm:text-base">Sign Out</span>
+              <span className="font-medium text-sm sm:text-base text-zaago-green">Sign Out</span>
             )}
           </button>
           <SidebarTrigger className="w-full flex items-center justify-center p-2 rounded-xl sm:rounded-2xl zaago-button-ghost">

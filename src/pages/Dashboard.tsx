@@ -140,10 +140,10 @@ const Dashboard = () => {
         className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
       >
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold text-zaago-green">
             Dashboard
           </h1>
-          <p className="text-secondary text-sm sm:text-base">
+          <p className="text-zaago-green-light text-sm sm:text-base">
             Welcome back! Here's what's happening with your store.
           </p>
         </div>
@@ -173,7 +173,7 @@ const Dashboard = () => {
             value: stats.totalProducts.toString(),
             icon: Package,
             trend: '+12%',
-            color: 'text-primary'
+            color: 'text-zaago-green'
           },
           {
             label: 'Active Orders',
@@ -187,14 +187,14 @@ const Dashboard = () => {
             value: stats.deliveredToday.toString(),
             icon: Truck,
             trend: '+18%',
-            color: 'text-primary'
+            color: 'text-zaago-green'
           },
           {
             label: selectedPeriod === 'today' ? 'Today Revenue' : selectedPeriod === 'week' ? 'Week Revenue' : 'Month Revenue',
             value: `₹${selectedPeriod === 'today' ? stats.todayRevenue.toFixed(2) : selectedPeriod === 'week' ? stats.weekRevenue.toFixed(2) : stats.monthRevenue.toFixed(2)}`,
             icon: DollarSign,
             trend: '+23%',
-            color: 'text-primary'
+            color: 'text-zaago-green'
           }
         ].map(({ label, value, icon: Icon, trend, color }, index) => (
           <motion.div
@@ -207,10 +207,10 @@ const Dashboard = () => {
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between mb-3 sm:mb-4">
                   <Icon className={`w-6 h-6 sm:w-7 sm:h-7 ${color}`} />
-                  <span className="text-xs sm:text-sm text-primary font-medium">{trend}</span>
+                  <span className="text-xs sm:text-sm text-zaago-green font-medium">{trend}</span>
                 </div>
-                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground mb-1">{value}</h3>
-                <p className="text-secondary text-xs sm:text-sm">{label}</p>
+                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-zaago-green mb-1">{value}</h3>
+                <p className="text-zaago-green-light text-xs sm:text-sm">{label}</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -227,25 +227,25 @@ const Dashboard = () => {
         >
           <Card className="zaago-card h-full">
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-foreground">Quick Actions</CardTitle>
+              <CardTitle className="text-xl font-bold text-zaago-green">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Link 
                 to="/products/new" 
                 className="zaago-button-ghost p-4 text-left group flex flex-col items-center text-center"
               >
-                <Package className="w-10 h-10 text-primary mb-3 group-hover:scale-110 transition-transform" />
-                <h3 className="font-semibold text-foreground mb-1">Add Product</h3>
-                <p className="text-secondary text-sm">Create new listing</p>
+                <Package className="w-10 h-10 text-zaago-green mb-3 group-hover:scale-110 transition-transform" />
+                <h3 className="font-semibold text-zaago-green mb-1">Add Product</h3>
+                <p className="text-zaago-green-light text-sm">Create new listing</p>
               </Link>
               
               <Link 
                 to="/orders" 
                 className="zaago-button-ghost p-4 text-left group flex flex-col items-center text-center"
               >
-                <ShoppingCart className="w-10 h-10 text-primary mb-3 group-hover:scale-110 transition-transform" />
-                <h3 className="font-semibold text-foreground mb-1">View Orders</h3>
-                <p className="text-secondary text-sm">Manage your orders</p>
+                <ShoppingCart className="w-10 h-10 text-zaago-green mb-3 group-hover:scale-110 transition-transform" />
+                <h3 className="font-semibold text-zaago-green mb-1">View Orders</h3>
+                <p className="text-zaago-green-light text-sm">Manage your orders</p>
               </Link>
             </CardContent>
           </Card>
@@ -259,7 +259,7 @@ const Dashboard = () => {
         >
           <Card className="zaago-card h-full">
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-foreground">Recent Orders</CardTitle>
+              <CardTitle className="text-xl font-bold text-zaago-green">Recent Orders</CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -273,23 +273,23 @@ const Dashboard = () => {
                       <div className="flex items-center gap-3">
                         {getStatusIcon(order.status)}
                         <div>
-                          <p className="font-medium text-foreground text-sm">
+                          <p className="font-medium text-zaago-green text-sm">
                             Order #{order.id.toString().slice(0, 8)}
                           </p>
-                          <p className="text-secondary text-xs">
+                          <p className="text-zaago-green-light text-xs">
                             {order.customer_name || 'Customer'}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-foreground text-sm">₹{order.total}</p>
+                        <p className="font-semibold text-zaago-green text-sm">₹{order.total}</p>
                         <p className={`text-xs capitalize ${getStatusColor(order.status)}`}>
                           {order.status.replace('_', ' ')}
                         </p>
                       </div>
                     </div>
                   )) : (
-                    <div className="text-center py-8 text-secondary">
+                    <div className="text-center py-8 text-zaago-green-light">
                       No recent orders found
                     </div>
                   )}
