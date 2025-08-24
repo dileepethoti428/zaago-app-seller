@@ -216,45 +216,27 @@ export default function AddProductPage() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6"
-    >
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.1, duration: 0.3 }}
-        className="flex items-center gap-4"
-      >
-        <Link to="/products" className="zaago-button-ghost p-2">
-          ←
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold text-zaago-green flex items-center gap-3">
-            <PlusCircle className="w-8 h-8 text-zaago-green" />
+    <div className="min-h-screen bg-background">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-foreground flex items-center gap-3 mb-2">
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+              <PlusCircle className="w-5 h-5 text-primary-foreground" />
+            </div>
             Add New Product
           </h1>
-          <p className="text-zaago-green-light mt-1">Create a new product listing for the customer app</p>
+          <p className="text-muted-foreground">Create a new product listing for the customer app</p>
         </div>
-      </motion.div>
 
-      {/* Form */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.3 }}
-        className="zaago-card p-8"
-      >
+        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Column */}
             <div className="space-y-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-zaago-green flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-zaago-green" />
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Tag className="w-4 h-4" />
                   Product Name *
                 </label>
                 <input
@@ -263,25 +245,25 @@ export default function AddProductPage() {
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
                   placeholder="Enter product name"
-                  className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-zaago-green placeholder:text-zaago-green/60 focus:ring-2 focus:ring-zaago-green focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-zaago-green">Description</label>
+                <label className="text-sm font-medium text-foreground">Description</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   placeholder="Describe your product..."
                   rows={4}
-                  className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-zaago-green placeholder:text-zaago-green/60 focus:ring-2 focus:ring-zaago-green focus:border-transparent transition-all resize-none"
+                  className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-zaago-green flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-zaago-green" />
+                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <DollarSign className="w-4 h-4" />
                     Price *
                   </label>
                   <input
@@ -292,13 +274,13 @@ export default function AddProductPage() {
                     value={formData.price}
                     onChange={(e) => handleInputChange('price', e.target.value)}
                     placeholder="0.00"
-                    className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-zaago-green placeholder:text-zaago-green/60 focus:ring-2 focus:ring-zaago-green focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-zaago-green flex items-center gap-2">
-                    <Package className="w-4 h-4 text-zaago-green" />
+                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <Package className="w-4 h-4" />
                     Stock Quantity
                   </label>
                   <input
@@ -307,29 +289,29 @@ export default function AddProductPage() {
                     value={formData.stock_quantity}
                     onChange={(e) => handleInputChange('stock_quantity', e.target.value)}
                     placeholder="0"
-                    className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-zaago-green placeholder:text-zaago-green/60 focus:ring-2 focus:ring-zaago-green focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-green-500">Product Type</label>
+                  <label className="text-sm font-medium text-foreground">Product Type</label>
                   <input
                     type="text"
                     value={formData.type}
                     onChange={(e) => handleInputChange('type', e.target.value)}
                     placeholder="e.g. Dairy, Organic"
-                    className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-green-500 placeholder:text-green-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-green-500">Unit</label>
+                  <label className="text-sm font-medium text-foreground">Unit</label>
                   <select
                     value={formData.unit}
                     onChange={(e) => handleInputChange('unit', e.target.value)}
-                    className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-green-500 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   >
                     <option value="per litre">Per Litre</option>
                     <option value="per kg">Per Kg</option>
@@ -340,26 +322,41 @@ export default function AddProductPage() {
               </div>
             </div>
 
-          {/* Right Column */}
-          <div className="space-y-6">
-            {/* Image Upload */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-green-500 flex items-center gap-2">
-                <Camera className="w-4 h-4 text-green-500" />
-                Product Image
-              </label>
-              
-              {/* Image Previews */}
-              {imagePreviews.length > 0 && (
-                <div className="space-y-4">
-                  <p className="text-sm font-medium text-green-500">Selected Images ({imagePreviews.length})</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {/* Right Column */}
+            <div className="space-y-6">
+              {/* Image Upload */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Camera className="w-4 h-4" />
+                  Product Image
+                </label>
+                
+                {/* Image Upload Area */}
+                <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageSelect}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label htmlFor="image-upload" className="cursor-pointer block">
+                    <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-foreground mb-2">Drop images here or click to upload</p>
+                    <p className="text-sm text-muted-foreground">Multiple PNG, JPG files up to 5MB each</p>
+                  </label>
+                </div>
+
+                {/* Image Previews */}
+                {imagePreviews.length > 0 && (
+                  <div className="grid grid-cols-3 gap-3 mt-4">
                     {imagePreviews.map((preview, index) => (
                       <div key={index} className="relative group">
                         <img
                           src={preview}
                           alt={`Product preview ${index + 1}`}
-                          className="w-full h-24 object-cover rounded-xl border border-border"
+                          className="w-full h-20 object-cover rounded-lg border border-border"
                         />
                         <button
                           type="button"
@@ -371,74 +368,60 @@ export default function AddProductPage() {
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
-              {/* Image Upload Area */}
-              <div className="border-2 border-dashed border-border rounded-2xl p-6 text-center hover:border-primary/50 transition-colors">
+              {/* Image URL Input */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Or paste image URL</label>
                 <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageSelect}
-                  className="hidden"
-                  id="image-upload"
+                  type="url"
+                  value={formData.image_url}
+                  onChange={(e) => handleInputChange('image_url', e.target.value)}
+                  placeholder="https://example.com/image.jpg"
+                  className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 />
-                <label htmlFor="image-upload" className="cursor-pointer block">
-                  <Upload className="w-8 h-8 text-secondary mx-auto mb-3" />
-                  <p className="text-secondary mb-1">Drop images here or click to upload</p>
-                  <p className="text-xs text-secondary">Multiple PNG, JPG files up to 5MB each</p>
-                </label>
               </div>
-            </div>
 
-            {/* Alternative: Image URL Input */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-green-500">Or paste image URL</label>
-              <input
-                type="url"
-                value={formData.image_url}
-                onChange={(e) => handleInputChange('image_url', e.target.value)}
-                placeholder="https://example.com/image.jpg"
-                className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-green-500 placeholder:text-green-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-              />
-            </div>
-
-            {/* Product Status */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-green-500">Product Status</label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="status"
-                    checked={formData.is_active === true}
-                    onChange={() => handleInputChange('is_active', true)}
-                    className="text-primary focus:ring-primary"
-                  />
-                  <span className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-primary" />
-                    Active
-                  </span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="status"
-                    checked={formData.is_active === false}
-                    onChange={() => handleInputChange('is_active', false)}
-                    className="text-secondary focus:ring-secondary"
-                  />
-                  <span className="flex items-center gap-2 text-sm">
-                    <X className="w-4 h-4 text-secondary" />
-                    Inactive
-                  </span>
-                </label>
+              {/* Product Status */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-foreground">Product Status</label>
+                <div className="flex gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div className="relative">
+                      <input
+                        type="radio"
+                        name="status"
+                        checked={formData.is_active === true}
+                        onChange={() => handleInputChange('is_active', true)}
+                        className="w-4 h-4 text-primary border-border focus:ring-primary focus:ring-2"
+                      />
+                      {formData.is_active === true && (
+                        <Check className="w-3 h-3 text-primary absolute top-0.5 left-0.5 pointer-events-none" />
+                      )}
+                    </div>
+                    <span className="text-sm text-foreground">Active</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div className="relative">
+                      <input
+                        type="radio"
+                        name="status"
+                        checked={formData.is_active === false}
+                        onChange={() => handleInputChange('is_active', false)}
+                        className="w-4 h-4 text-muted-foreground border-border focus:ring-primary focus:ring-2"
+                      />
+                      {formData.is_active === false && (
+                        <X className="w-3 h-3 text-muted-foreground absolute top-0.5 left-0.5 pointer-events-none" />
+                      )}
+                    </div>
+                    <span className="text-sm text-foreground">Inactive</span>
+                  </label>
+                </div>
               </div>
-            </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-green-500">Discount %</label>
+                <label className="text-sm font-medium text-foreground">Discount %</label>
                 <input
                   type="number"
                   min="0"
@@ -447,13 +430,13 @@ export default function AddProductPage() {
                   value={formData.discount_percentage}
                   onChange={(e) => handleInputChange('discount_percentage', e.target.value)}
                   placeholder="0"
-                  className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-green-500 placeholder:text-green-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 />
               </div>
 
               {/* Benefits */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-green-500">Benefits</label>
+                <label className="text-sm font-medium text-foreground">Benefits</label>
                 {formData.benefits.map((benefit, index) => (
                   <div key={index} className="flex gap-2">
                     <input
@@ -461,13 +444,13 @@ export default function AddProductPage() {
                       value={benefit}
                       onChange={(e) => handleArrayChange('benefits', index, e.target.value)}
                       placeholder="Enter benefit"
-                      className="flex-1 px-4 py-3 bg-input border border-border rounded-2xl text-green-500 placeholder:text-green-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                      className="flex-1 px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     />
                     {formData.benefits.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeArrayItem('benefits', index)}
-                        className="p-3 text-red-400 hover:text-red-300 transition-colors"
+                        className="p-3 text-destructive hover:text-destructive/80 transition-colors"
                       >
                         <Minus className="w-4 h-4" />
                       </button>
@@ -486,7 +469,7 @@ export default function AddProductPage() {
 
               {/* Ingredients */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-green-500">Ingredients</label>
+                <label className="text-sm font-medium text-foreground">Ingredients</label>
                 {formData.ingredients.map((ingredient, index) => (
                   <div key={index} className="flex gap-2">
                     <input
@@ -494,13 +477,13 @@ export default function AddProductPage() {
                       value={ingredient}
                       onChange={(e) => handleArrayChange('ingredients', index, e.target.value)}
                       placeholder="Enter ingredient"
-                      className="flex-1 px-4 py-3 bg-input border border-border rounded-2xl text-green-500 placeholder:text-green-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                      className="flex-1 px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     />
                     {formData.ingredients.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeArrayItem('ingredients', index)}
-                        className="p-3 text-red-400 hover:text-red-300 transition-colors"
+                        className="p-3 text-destructive hover:text-destructive/80 transition-colors"
                       >
                         <Minus className="w-4 h-4" />
                       </button>
@@ -520,15 +503,15 @@ export default function AddProductPage() {
           </div>
 
           {/* Form Actions */}
-          <div className="flex flex-col sm:flex-row gap-4 pt-8 border-t border-border">
+          <div className="flex gap-4 pt-8">
             <button
               type="submit"
               disabled={loading || imageUploading}
-              className="zaago-button-primary px-8 py-3 font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+              className="bg-primary text-primary-foreground px-8 py-3 rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
             >
-                {loading || imageUploading ? (
+              {loading || imageUploading ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground"></div>
                   {imageUploading ? 'Uploading Images...' : 'Creating Product...'}
                 </>
               ) : (
@@ -539,14 +522,14 @@ export default function AddProductPage() {
               <button
                 type="button"
                 disabled={loading || imageUploading}
-                className="zaago-button-ghost px-8 py-3 font-semibold w-full sm:w-auto disabled:opacity-50"
+                className="bg-secondary text-secondary-foreground px-8 py-3 rounded-lg font-medium hover:bg-secondary/90 disabled:opacity-50 transition-colors"
               >
                 Cancel
               </button>
             </Link>
           </div>
         </form>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }
