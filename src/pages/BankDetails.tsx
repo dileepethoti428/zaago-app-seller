@@ -151,7 +151,7 @@ export default function BankDetails() {
           account_type: formData.account_type,
           business_name: formData.business_name,
           phone: formData.phone
-        });
+        }, { onConflict: 'user_id' });
 
       if (error) throw error;
 
