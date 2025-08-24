@@ -23,6 +23,10 @@ import Deliveries from "./pages/Deliveries";
 import Profile from "./pages/Profile";
 import BankDetails from "./pages/BankDetails";
 import NotFound from "./pages/NotFound";
+import PendingApproval from "./pages/PendingApproval";
+import ApplicationRejected from "./pages/ApplicationRejected";
+import SellerApprovals from "./pages/SellerApprovals";
+import ProductsCustomer from "./pages/ProductsCustomer";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +41,8 @@ const App = () => (
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/bank-details" element={<BankDetails />} />
+              <Route path="/pending-approval" element={<PendingApproval />} />
+              <Route path="/application-rejected" element={<ApplicationRejected />} />
               <Route path="/" element={<Layout />}>
                 <Route index element={<Index />} />
                 <Route path="dashboard" element={<Dashboard />} />
@@ -52,6 +58,8 @@ const App = () => (
                 <Route path="settings" element={<Settings />} />
                 <Route path="notifications" element={<Notifications />} />
                 <Route path="profile" element={<Profile />} />
+                <Route path="seller-approvals" element={<SellerApprovals />} />
+                <Route path="products-customer" element={<ProductsCustomer />} />
               </Route>
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

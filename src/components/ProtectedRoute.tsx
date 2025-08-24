@@ -27,25 +27,42 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     try {
       const { data, error } = await supabase
         .from('sellers')
-        .select('bank_name')
+        .select('bank_name, approval_status')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error checking bank details:', error);
+        console.error('Error checking seller details:', error);
         navigate('/products');
         return;
       }
 
-      if (data && data.bank_name) {
-        // User has bank details, go to products
+      if (!data) {
+        // User doesn't have seller record, show bank details page
+        navigate('/bank-details');
+        return;
+      }
+
+      // Check approval status
+      if (data.approval_status === 'pending') {
+        navigate('/pending-approval');
+        return;
+      }
+
+      if (data.approval_status === 'rejected') {
+        navigate('/application-rejected');
+        return;
+      }
+
+      if (data.approval_status === 'approved' && data.bank_name) {
+        // User is approved and has bank details, go to products
         navigate('/products');
       } else {
-        // User doesn't have bank details, show bank details page
+        // User is approved but doesn't have bank details, show bank details page
         navigate('/bank-details');
       }
     } catch (error) {
-      console.error('Error checking bank details:', error);
+      console.error('Error checking seller details:', error);
       navigate('/products');
     }
   };

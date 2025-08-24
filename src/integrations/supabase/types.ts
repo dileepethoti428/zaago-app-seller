@@ -2784,6 +2784,9 @@ export type Database = {
           account_number: string | null
           account_type: string | null
           address: Json | null
+          approval_status: string | null
+          approved_at: string | null
+          approved_by: string | null
           bank_branch: string | null
           bank_name: string | null
           business_description: string | null
@@ -2796,6 +2799,7 @@ export type Database = {
           is_bank_verified: boolean | null
           name: string
           phone: string | null
+          rejection_reason: string | null
           status: string
           updated_at: string
           user_id: string | null
@@ -2805,6 +2809,9 @@ export type Database = {
           account_number?: string | null
           account_type?: string | null
           address?: Json | null
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           bank_branch?: string | null
           bank_name?: string | null
           business_description?: string | null
@@ -2817,6 +2824,7 @@ export type Database = {
           is_bank_verified?: boolean | null
           name: string
           phone?: string | null
+          rejection_reason?: string | null
           status?: string
           updated_at?: string
           user_id?: string | null
@@ -2826,6 +2834,9 @@ export type Database = {
           account_number?: string | null
           account_type?: string | null
           address?: Json | null
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           bank_branch?: string | null
           bank_name?: string | null
           business_description?: string | null
@@ -2838,6 +2849,7 @@ export type Database = {
           is_bank_verified?: boolean | null
           name?: string
           phone?: string | null
+          rejection_reason?: string | null
           status?: string
           updated_at?: string
           user_id?: string | null
