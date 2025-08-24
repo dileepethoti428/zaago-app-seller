@@ -336,34 +336,34 @@ const Orders = () => {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zaago-green"></div>
                 </div>
               ) : filteredOrders.length > 0 ? (
-                <div className="space-y-3">
+                <div className="grid gap-4">
                   {filteredOrders.map((order) => (
                     <motion.div
                       key={order.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="bg-zaago-card/50 border border-zaago-border rounded-lg p-4 hover:bg-zaago-accent/50 transition-colors"
+                      className="bg-zaago-card/50 border border-zaago-border rounded-xl p-6 hover:bg-zaago-accent/30 transition-all duration-200"
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 flex-1">
-                          {/* Status Icon and Order Info */}
-                          <div className="flex items-center gap-2">
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                        {/* Order Header */}
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-3">
                             {getStatusIcon(order.status)}
                             <div className="flex flex-col">
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-medium text-foreground">
+                              <div className="flex items-center gap-3 mb-1">
+                                <h3 className="font-semibold text-foreground text-lg">
                                   Order #{order.id.toString().slice(0, 8)}
                                 </h3>
                                 <Badge 
                                   className={`${
                                     order.status === 'delivered' 
-                                      ? 'bg-zaago-green text-black' 
+                                      ? 'bg-zaago-green/20 text-zaago-green border-zaago-green/30' 
                                       : order.status === 'new' || order.status === 'accepted'
-                                      ? 'bg-yellow-500 text-black'
+                                      ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
                                       : order.status === 'in_transit'
-                                      ? 'bg-blue-500 text-white'
-                                      : 'bg-zaago-muted text-zaago-muted-foreground'
-                                  } text-xs font-medium px-2 py-1`}
+                                      ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                                      : 'bg-zaago-muted/20 text-zaago-muted-foreground border-zaago-muted/30'
+                                  } text-sm font-medium px-3 py-1`}
                                 >
                                   {order.status === 'in_transit' ? 'In Transit' : 
                                    order.status === 'new' ? 'New' :
@@ -371,47 +371,54 @@ const Orders = () => {
                                    order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                                 </Badge>
                               </div>
-                            </div>
-                          </div>
-
-                          {/* Order Details Grid */}
-                          <div className="grid grid-cols-4 gap-8 flex-1">
-                            <div>
-                              <p className="text-zaago-muted-foreground text-sm">Customer</p>
-                              <p className="text-foreground font-medium">
-                                {order.customer_name || 'Customer'}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-zaago-muted-foreground text-sm">Items</p>
-                              <p className="text-foreground font-medium">
-                                {getItemsCount(order.items)} items
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-zaago-muted-foreground text-sm">Total</p>
-                              <p className="text-foreground font-medium">₹{order.total}</p>
-                            </div>
-                            <div>
-                              <p className="text-zaago-muted-foreground text-sm">Date</p>
-                              <p className="text-foreground font-medium">
-                                {new Date(order.created_at).toLocaleDateString('en-GB')}
+                              <p className="text-zaago-muted-foreground text-sm">
+                                {new Date(order.created_at).toLocaleDateString('en-GB', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
                               </p>
                             </div>
                           </div>
                         </div>
 
-                        {/* View Details Button */}
-                        <Link to={`/orders/${order.id}`}>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-zaago-border text-zaago-muted-foreground hover:bg-zaago-accent hover:text-foreground flex items-center gap-2"
-                          >
-                            <Eye className="w-4 h-4" />
-                            View Details
-                          </Button>
-                        </Link>
+                        {/* Order Details */}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-6 lg:gap-8">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 lg:gap-8">
+                            <div className="text-center sm:text-left">
+                              <p className="text-zaago-muted-foreground text-sm mb-1">Customer</p>
+                              <p className="text-foreground font-semibold text-base">
+                                {order.customer_name || 'Customer'}
+                              </p>
+                            </div>
+                            <div className="text-center sm:text-left">
+                              <p className="text-zaago-muted-foreground text-sm mb-1">Items</p>
+                              <p className="text-foreground font-semibold text-base">
+                                {getItemsCount(order.items)} items
+                              </p>
+                            </div>
+                            <div className="text-center sm:text-left">
+                              <p className="text-zaago-muted-foreground text-sm mb-1">Total</p>
+                              <p className="text-zaago-green font-bold text-lg">₹{order.total}</p>
+                            </div>
+                          </div>
+
+                          {/* Action Button */}
+                          <div className="flex justify-center sm:justify-end">
+                            <Link to={`/orders/${order.id}`}>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full sm:w-auto border-zaago-border text-zaago-muted-foreground hover:bg-zaago-accent hover:text-foreground hover:border-zaago-green transition-all duration-200 flex items-center gap-2 px-4 py-2"
+                              >
+                                <Eye className="w-4 h-4" />
+                                View Details
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
                       </div>
                     </motion.div>
                   ))}
