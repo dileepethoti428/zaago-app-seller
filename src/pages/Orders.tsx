@@ -257,7 +257,7 @@ const Orders = () => {
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
             Orders Management
           </h1>
-          <p className="text-gray-400 text-sm sm:text-base">
+          <p className="text-zaago-muted-foreground text-sm sm:text-base">
             Manage orders with real-time updates and status tracking
           </p>
         </div>
@@ -265,7 +265,7 @@ const Orders = () => {
         <Button 
           onClick={fetchOrders} 
           disabled={loading}
-          className="bg-transparent border border-gray-600 text-white hover:bg-gray-700 flex items-center gap-2"
+          className="bg-transparent border border-zaago-border text-foreground hover:bg-zaago-accent flex items-center gap-2"
           size="sm"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -280,12 +280,12 @@ const Orders = () => {
         transition={{ delay: 0.2, duration: 0.3 }}
         className="relative"
       >
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zaago-muted-foreground w-5 h-5" />
         <Input
           placeholder="Search by customer name, phone, or order ID..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 py-3 bg-gray-800/50 border-gray-600 text-white placeholder:text-gray-400 focus:border-zaago-green focus:ring-zaago-green"
+          className="pl-10 py-3 bg-zaago-card/50 border-zaago-border text-foreground placeholder:text-zaago-muted-foreground focus:border-zaago-green focus:ring-zaago-green"
         />
       </motion.div>
 
@@ -304,7 +304,7 @@ const Orders = () => {
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                   activeTab === tab.value
                     ? 'bg-zaago-green text-black font-medium'
-                    : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
+                    : 'bg-zaago-card/50 text-zaago-muted-foreground hover:bg-zaago-accent/50'
                 }`}
               >
                 <span className="font-medium text-sm">
@@ -317,7 +317,7 @@ const Orders = () => {
                 <span className={`px-2 py-0.5 rounded-full text-xs ${
                   activeTab === tab.value
                     ? 'bg-black/20 text-black'
-                    : 'bg-gray-600 text-gray-300'
+                    : 'bg-zaago-muted text-zaago-muted-foreground'
                 }`}>
                   {tab.count}
                 </span>
@@ -327,7 +327,7 @@ const Orders = () => {
 
           <TabsContent value={activeTab} className="mt-6">
             <div className="space-y-4">
-              <h2 className="text-xl font-bold text-white">
+              <h2 className="text-xl font-bold text-foreground">
                 All Orders ({filteredOrders.length})
               </h2>
 
@@ -342,7 +342,7 @@ const Orders = () => {
                       key={order.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 hover:bg-gray-700/50 transition-colors"
+                      className="bg-zaago-card/50 border border-zaago-border rounded-lg p-4 hover:bg-zaago-accent/50 transition-colors"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4 flex-1">
@@ -351,7 +351,7 @@ const Orders = () => {
                             {getStatusIcon(order.status)}
                             <div className="flex flex-col">
                               <div className="flex items-center gap-2">
-                                <h3 className="font-medium text-white">
+                                <h3 className="font-medium text-foreground">
                                   Order #{order.id.toString().slice(0, 8)}
                                 </h3>
                                 <Badge 
@@ -362,7 +362,7 @@ const Orders = () => {
                                       ? 'bg-yellow-500 text-black'
                                       : order.status === 'in_transit'
                                       ? 'bg-blue-500 text-white'
-                                      : 'bg-gray-500 text-white'
+                                      : 'bg-zaago-muted text-zaago-muted-foreground'
                                   } text-xs font-medium px-2 py-1`}
                                 >
                                   {order.status === 'in_transit' ? 'In Transit' : 
@@ -377,24 +377,24 @@ const Orders = () => {
                           {/* Order Details Grid */}
                           <div className="grid grid-cols-4 gap-8 flex-1">
                             <div>
-                              <p className="text-gray-400 text-sm">Customer</p>
-                              <p className="text-white font-medium">
+                              <p className="text-zaago-muted-foreground text-sm">Customer</p>
+                              <p className="text-foreground font-medium">
                                 {order.customer_name || 'Customer'}
                               </p>
                             </div>
                             <div>
-                              <p className="text-gray-400 text-sm">Items</p>
-                              <p className="text-white font-medium">
+                              <p className="text-zaago-muted-foreground text-sm">Items</p>
+                              <p className="text-foreground font-medium">
                                 {getItemsCount(order.items)} items
                               </p>
                             </div>
                             <div>
-                              <p className="text-gray-400 text-sm">Total</p>
-                              <p className="text-white font-medium">₹{order.total}</p>
+                              <p className="text-zaago-muted-foreground text-sm">Total</p>
+                              <p className="text-foreground font-medium">₹{order.total}</p>
                             </div>
                             <div>
-                              <p className="text-gray-400 text-sm">Date</p>
-                              <p className="text-white font-medium">
+                              <p className="text-zaago-muted-foreground text-sm">Date</p>
+                              <p className="text-foreground font-medium">
                                 {new Date(order.created_at).toLocaleDateString('en-GB')}
                               </p>
                             </div>
@@ -406,7 +406,7 @@ const Orders = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white flex items-center gap-2"
+                            className="border-zaago-border text-zaago-muted-foreground hover:bg-zaago-accent hover:text-foreground flex items-center gap-2"
                           >
                             <Eye className="w-4 h-4" />
                             View Details
@@ -418,9 +418,9 @@ const Orders = () => {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <Package className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-400 mb-2">No orders found</h3>
-                  <p className="text-gray-500">
+                  <Package className="w-16 h-16 text-zaago-muted mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-zaago-muted-foreground mb-2">No orders found</h3>
+                  <p className="text-zaago-muted-foreground">
                     {activeTab === 'all' 
                       ? "You don't have any orders yet." 
                       : `No ${activeTab} orders found.`}

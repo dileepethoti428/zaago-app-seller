@@ -140,10 +140,10 @@ const Dashboard = () => {
         className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
       >
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
             Dashboard
           </h1>
-          <p className="text-gray-400 text-sm sm:text-base">
+          <p className="text-zaago-muted-foreground text-sm sm:text-base">
             Welcome back! Here's what's happening with your store.
           </p>
         </div>
@@ -151,12 +151,12 @@ const Dashboard = () => {
         <div className="flex items-center gap-2">
           <Calendar className="w-5 h-5 text-zaago-green" />
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger className="w-[140px] bg-transparent border-gray-600 text-white">
+            <SelectTrigger className="w-[140px] bg-transparent border-zaago-border text-foreground">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-600">
+            <SelectContent className="bg-zaago-card border-zaago-border">
               {timePeriods.map((period) => (
-                <SelectItem key={period.value} value={period.value} className="text-white hover:bg-gray-700">
+                <SelectItem key={period.value} value={period.value} className="text-foreground hover:bg-zaago-accent">
                   {period.label}
                 </SelectItem>
               ))}
@@ -203,14 +203,14 @@ const Dashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 + index * 0.1, duration: 0.3 }}
           >
-            <Card className="bg-gray-800/50 border-gray-700">
+            <Card className="bg-zaago-card/50 border-zaago-border">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between mb-3 sm:mb-4">
                   <Icon className={`w-6 h-6 sm:w-7 sm:h-7 ${color}`} />
                   <span className="text-xs sm:text-sm text-zaago-green font-medium">{trend}</span>
                 </div>
-                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white mb-1">{value}</h3>
-                <p className="text-gray-400 text-xs sm:text-sm">{label}</p>
+                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground mb-1">{value}</h3>
+                <p className="text-zaago-muted-foreground text-xs sm:text-sm">{label}</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -225,27 +225,27 @@ const Dashboard = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.6, duration: 0.3 }}
         >
-          <Card className="bg-gray-800/50 border-gray-700 h-full">
+          <Card className="bg-zaago-card/50 border-zaago-border h-full">
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-white">Quick Actions</CardTitle>
+              <CardTitle className="text-xl font-bold text-foreground">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Link 
                 to="/products/new" 
-                className="p-6 text-left group flex flex-col items-center text-center hover:bg-gray-700/50 rounded-lg transition-colors"
+                className="p-6 text-left group flex flex-col items-center text-center hover:bg-zaago-accent/50 rounded-lg transition-colors"
               >
                 <Package className="w-12 h-12 text-zaago-green mb-3 group-hover:scale-110 transition-transform" />
-                <h3 className="font-semibold text-white mb-1">Add Product</h3>
-                <p className="text-gray-400 text-sm">Create new listing</p>
+                <h3 className="font-semibold text-foreground mb-1">Add Product</h3>
+                <p className="text-zaago-muted-foreground text-sm">Create new listing</p>
               </Link>
               
               <Link 
                 to="/orders" 
-                className="p-6 text-left group flex flex-col items-center text-center hover:bg-gray-700/50 rounded-lg transition-colors"
+                className="p-6 text-left group flex flex-col items-center text-center hover:bg-zaago-accent/50 rounded-lg transition-colors"
               >
                 <ShoppingCart className="w-12 h-12 text-zaago-green mb-3 group-hover:scale-110 transition-transform" />
-                <h3 className="font-semibold text-white mb-1">View Orders</h3>
-                <p className="text-gray-400 text-sm">Manage your orders</p>
+                <h3 className="font-semibold text-foreground mb-1">View Orders</h3>
+                <p className="text-zaago-muted-foreground text-sm">Manage your orders</p>
               </Link>
             </CardContent>
           </Card>
@@ -257,9 +257,9 @@ const Dashboard = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.8, duration: 0.3 }}
         >
-          <Card className="bg-gray-800/50 border-gray-700 h-full">
+          <Card className="bg-zaago-card/50 border-zaago-border h-full">
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-white">Recent Orders</CardTitle>
+              <CardTitle className="text-xl font-bold text-foreground">Recent Orders</CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -269,27 +269,27 @@ const Dashboard = () => {
               ) : (
                 <div className="space-y-3">
                   {recentOrders.length > 0 ? recentOrders.map((order) => (
-                    <div key={order.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-700/50 transition-colors">
+                    <div key={order.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-zaago-accent/50 transition-colors">
                       <div className="flex items-center gap-3">
                         {getStatusIcon(order.status)}
                         <div>
-                          <p className="font-medium text-white text-sm">
+                          <p className="font-medium text-foreground text-sm">
                             Order #{order.id.toString().slice(0, 8)}
                           </p>
-                          <p className="text-gray-400 text-xs">
+                          <p className="text-zaago-muted-foreground text-xs">
                             {order.customer_name || 'Customer'}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-white text-sm">₹{order.total}</p>
+                        <p className="font-semibold text-foreground text-sm">₹{order.total}</p>
                         <p className={`text-xs capitalize ${getStatusColor(order.status)}`}>
                           {order.status.replace('_', ' ')}
                         </p>
                       </div>
                     </div>
                   )) : (
-                    <div className="text-center py-8 text-gray-400">
+                    <div className="text-center py-8 text-zaago-muted-foreground">
                       No recent orders found
                     </div>
                   )}
