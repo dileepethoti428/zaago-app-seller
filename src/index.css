@@ -333,14 +333,9 @@ body {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zaago-ring focus-visible:ring-offset-2;
   }
   
-  /* Prevent white background on link/button focus/active states */
-  a:focus, button:focus, a:active, button:active {
-    background-color: inherit !important;
-    color: inherit !important;
-  }
-  
-  /* Specific prevention for Link components */
-  a[class*="Link"]:focus, a[class*="Link"]:active {
+  /* Prevent white background on link/button focus/active states in main content (do not affect sidebar nav) */
+  main a:focus, main a:active,
+  button:focus, button:active {
     background-color: inherit !important;
     color: inherit !important;
   }
