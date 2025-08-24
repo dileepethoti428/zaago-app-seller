@@ -85,7 +85,21 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
+				'zaago-primary': 'hsl(var(--zaago-primary))',
+				'zaago-primary-foreground': 'hsl(var(--zaago-primary-foreground))',
+				'zaago-secondary': 'hsl(var(--zaago-secondary))',
+				'zaago-secondary-foreground': 'hsl(var(--zaago-secondary-foreground))',
+				'zaago-accent': 'hsl(var(--zaago-accent))',
+				'zaago-accent-foreground': 'hsl(var(--zaago-accent-foreground))',
+				'zaago-muted': 'hsl(var(--zaago-muted))',
+				'zaago-muted-foreground': 'hsl(var(--zaago-muted-foreground))',
+				'zaago-card': 'hsl(var(--zaago-card))',
+				'zaago-card-foreground': 'hsl(var(--zaago-card-foreground))',
+				'zaago-border': 'hsl(var(--zaago-border))',
+				'zaago-input': 'hsl(var(--zaago-input))',
+				'zaago-ring': 'hsl(var(--zaago-ring))',
 				'zaago-dark': 'hsl(var(--zaago-dark))',
+				'zaago-light': 'hsl(var(--zaago-light))',
 				'zaago-hover': 'hsl(var(--zaago-hover))'
 			},
 			borderRadius: {
