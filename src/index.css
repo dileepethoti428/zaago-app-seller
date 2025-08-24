@@ -234,11 +234,11 @@ body {
   }
   
   .zaago-nav-active {
-    @apply bg-zaago-green text-zaago-primary-foreground;
+    @apply bg-white text-zaago-dark;
   }
   
   .zaago-nav-inactive {
-    @apply text-zaago-green hover:bg-zaago-green/10 hover:text-zaago-green-light;
+    @apply text-white hover:bg-white/10 hover:text-white;
   }
   
   .zaago-button-outline {
