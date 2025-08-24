@@ -3159,6 +3159,60 @@ export type Database = {
         }
         Relationships: []
       }
+      todays_best_deals: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          deal_date: string
+          deal_description: string | null
+          deal_title: string | null
+          id: string
+          is_active: boolean | null
+          priority: number | null
+          product_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          deal_date?: string
+          deal_description?: string | null
+          deal_title?: string | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          product_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          deal_date?: string
+          deal_description?: string | null
+          deal_title?: string | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          product_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "todays_best_deals_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "todays_best_deals_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_locations: {
         Row: {
           address: string | null
@@ -3239,6 +3293,72 @@ export type Database = {
           razorpay_customer_id?: string
           razorpay_token_id?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_product_frequency: {
+        Row: {
+          created_at: string
+          first_purchased_at: string
+          id: string
+          last_purchased_at: string
+          product_id: string
+          purchase_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          first_purchased_at?: string
+          id?: string
+          last_purchased_at?: string
+          product_id: string
+          purchase_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          first_purchased_at?: string
+          id?: string
+          last_purchased_at?: string
+          product_id?: string
+          purchase_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_purchase_history: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          product_id: string
+          purchased_at: string
+          quantity: number
+          unit_price: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          product_id: string
+          purchased_at?: string
+          quantity?: number
+          unit_price: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          product_id?: string
+          purchased_at?: string
+          quantity?: number
+          unit_price?: number
           user_id?: string
         }
         Relationships: []
@@ -3847,6 +3967,17 @@ export type Database = {
           total_deliveries: number
         }[]
       }
+      get_frequently_bought_products: {
+        Args: { limit_count?: number; target_user_id: string }
+        Returns: {
+          last_purchased_at: string
+          product_id: string
+          product_image_url: string
+          product_name: string
+          product_price: number
+          purchase_count: number
+        }[]
+      }
       get_or_create_notification_preferences: {
         Args: { target_user_id: string }
         Returns: {
@@ -3870,6 +4001,17 @@ export type Database = {
           delivered: number
           pending: number
           revenue: number
+        }[]
+      }
+      get_previously_bought_products: {
+        Args: { limit_count?: number; target_user_id: string }
+        Returns: {
+          last_purchased_at: string
+          product_id: string
+          product_image_url: string
+          product_name: string
+          product_price: number
+          total_quantity: number
         }[]
       }
       get_products_within_range: {
@@ -3930,6 +4072,16 @@ export type Database = {
           seller_name: string
           total_revenue: number
           total_sold: number
+        }[]
+      }
+      get_trending_products_for_new_users: {
+        Args: { limit_count?: number }
+        Returns: {
+          product_id: string
+          product_image_url: string
+          product_name: string
+          product_price: number
+          total_purchases: number
         }[]
       }
       get_user_category_stats: {
@@ -4056,6 +4208,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      refresh_todays_best_deals: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       reject_order: {
         Args: { p_agent_id: string; p_order_id: string; p_reason?: string }
         Returns: Json
@@ -4091,6 +4247,10 @@ export type Database = {
       send_birthday_messages: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      settle_cod_automatically: {
+        Args: { p_agent_id: string; p_cod_amount: number; p_order_id: string }
+        Returns: Json
       }
       settle_cod_to_admin: {
         Args: { p_agent_id: string; p_amount: number }
