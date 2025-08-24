@@ -459,105 +459,84 @@ export default function DeliveriesPage() {
   ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.1, duration: 0.3 }}
-      >
-        <h1 className="text-3xl font-bold text-zaago-green flex items-center gap-3">
-          <Truck className="w-8 h-8 text-zaago-green" />
-          Delivered Orders
-        </h1>
-        <p className="text-zaago-green-light mt-1">Track completed deliveries and manage inventory</p>
-      </motion.div>
+      <div className="flex items-center gap-3 mb-8">
+        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+          <Truck className="w-5 h-5 text-primary-foreground" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Delivered Orders</h1>
+          <p className="text-muted-foreground text-sm">Track completed deliveries and manage inventory</p>
+        </div>
+      </div>
 
       {/* Stats Cards */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.3 }}
-        className="grid grid-cols-1 md:grid-cols-3 gap-6"
-      >
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {deliveryStatuses.map(({ label, count, color, icon: Icon }, index) => (
-          <motion.div
+          <div
             key={label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 + index * 0.1, duration: 0.3 }}
-            className="zaago-card p-6"
+            className="bg-card border border-border rounded-lg p-6 flex items-center justify-between"
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-secondary text-sm">{label}</p>
-                <p className="text-3xl font-bold text-foreground mt-1">{count}</p>
-              </div>
-              <Icon className={`w-12 h-12 ${color}`} />
+            <div>
+              <p className="text-muted-foreground text-sm">{label}</p>
+              <p className="text-2xl font-semibold text-foreground mt-1">{count}</p>
             </div>
-          </motion.div>
+            <Icon className={`w-8 h-8 ${
+              label === 'Today' ? 'text-primary' : 
+              label === 'This Week' ? 'text-blue-400' : 
+              'text-primary'
+            }`} />
+          </div>
         ))}
-      </motion.div>
+      </div>
 
-      {/* Filters */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.3 }}
-        className="zaago-card p-6"
-      >
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Search by customer name or order ID..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder:text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-            />
-          </div>
-          <div className="flex gap-2">
-            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-[240px] justify-start text-left font-normal px-4 py-3 bg-input border border-border rounded-2xl text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all",
-                    !selectedDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? format(new Date(selectedDate), "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={selectedDate ? new Date(selectedDate + 'T00:00:00') : undefined}
-                  onSelect={(date) => {
-                    if (date) {
-                      // Fix timezone issue by using local date formatting
-                      const year = date.getFullYear();
-                      const month = String(date.getMonth() + 1).padStart(2, '0');
-                      const day = String(date.getDate()).padStart(2, '0');
-                      setSelectedDate(`${year}-${month}-${day}`);
-                      setCalendarOpen(false);
-                    }
-                  }}
-                  initialFocus
-                  defaultMonth={selectedDate ? new Date(selectedDate + 'T00:00:00') : new Date()}
-                  className={cn("p-3 pointer-events-auto")}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+      {/* Search and Filter */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">
+          <input
+            type="text"
+            placeholder="Search by customer name or order ID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+          />
         </div>
-      </motion.div>
+        <div>
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant={"outline"}
+                className={cn(
+                  "w-[240px] justify-start text-left font-normal px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all",
+                  !selectedDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {selectedDate ? format(new Date(selectedDate), "PPP") : <span>Pick a date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <CalendarComponent
+                mode="single"
+                selected={selectedDate ? new Date(selectedDate + 'T00:00:00') : undefined}
+                onSelect={(date) => {
+                  if (date) {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    setSelectedDate(`${year}-${month}-${day}`);
+                    setCalendarOpen(false);
+                  }
+                }}
+                initialFocus
+                defaultMonth={selectedDate ? new Date(selectedDate + 'T00:00:00') : new Date()}
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
 
       {/* Product Totals Analytics */}
       {!loading && deliveredOrders.length > 0 && (
@@ -631,12 +610,7 @@ export default function DeliveriesPage() {
       )}
 
       {/* Deliveries List */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.5 }}
-        className="zaago-card"
-      >
+      <div className="bg-card border border-border rounded-lg">
         <div className="p-6 border-b border-border">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-foreground">
@@ -645,7 +619,7 @@ export default function DeliveriesPage() {
             {filteredOrders.length > 0 && (
               <button
                 onClick={exportDeliveryReport}
-                className="zaago-button-ghost px-4 py-2 text-sm flex items-center gap-2 hover:bg-primary/10 transition-colors"
+                className="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-secondary/90 transition-colors"
               >
                 <Download className="w-4 h-4" />
                 Export CSV
@@ -657,33 +631,30 @@ export default function DeliveriesPage() {
         <div className="divide-y divide-border">
           {loading ? (
             <div className="p-8 text-center">
-              <p className="text-secondary">Loading deliveries...</p>
+              <p className="text-muted-foreground">Loading deliveries...</p>
             </div>
           ) : filteredOrders.length === 0 ? (
             <div className="p-8 text-center">
-              <Package className="w-12 h-12 text-secondary mx-auto mb-4" />
-              <p className="text-secondary">
+              <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">
                 {searchTerm ? 'No deliveries match your search' : 'No deliveries for this date'}
               </p>
             </div>
           ) : (
             filteredOrders.map((order, index) => (
-              <motion.div
+              <div
                 key={order.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 + index * 0.1, duration: 0.3 }}
                 className="p-6 hover:bg-muted/50 transition-colors"
               >
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    <div className="p-3 bg-primary/10 rounded-2xl">
+                    <div className="p-3 bg-primary/10 rounded-lg">
                       <CheckCircle className="w-6 h-6 text-primary" />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-foreground">Order #{order.id.slice(0, 8)}</h3>
-                      <p className="text-secondary text-sm mt-1">{order.customer_name}</p>
-                      <p className="text-secondary text-sm">{order.customer_phone}</p>
+                      <p className="text-muted-foreground text-sm mt-1">{order.customer_name}</p>
+                      <p className="text-muted-foreground text-sm">{order.customer_phone}</p>
                       
                       {/* Order Items */}
                       <div className="mt-2 space-y-1">
@@ -694,7 +665,7 @@ export default function DeliveriesPage() {
                         ))}
                       </div>
                       
-                      <div className="flex items-center gap-2 mt-2 text-sm text-secondary">
+                      <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                         <MapPin className="w-4 h-4" />
                         {order.address?.full_address}, {order.address?.city}
                       </div>
@@ -704,20 +675,20 @@ export default function DeliveriesPage() {
                   <div className="flex items-center gap-4">
                     <div className="text-right">
                       <p className="font-semibold text-foreground">₹{order.total}</p>
-                      <p className="text-sm text-secondary">
+                      <p className="text-sm text-muted-foreground">
                         {new Date(order.created_at).toLocaleDateString()}
                       </p>
                     </div>
-                     <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-500/20 text-green-600">
+                     <span className="px-3 py-1 rounded-full text-sm font-medium bg-primary/20 text-primary">
                        ✅ Delivered
                      </span>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))
           )}
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }
