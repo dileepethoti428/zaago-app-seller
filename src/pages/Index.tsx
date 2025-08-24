@@ -193,11 +193,6 @@ const Index = () => {
             <p className="text-zaago-muted-foreground text-sm">View and edit your inventory</p>
           </Link>
           
-          <Link to="/deliveries" className="p-6 text-center group hover:bg-zaago-accent/50 rounded-lg transition-colors focus:outline-none active:bg-zaago-accent/70">
-            <Truck className="w-12 h-12 text-zaago-green mb-4 mx-auto group-hover:scale-110 transition-transform" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">Track Deliveries</h3>
-            <p className="text-zaago-muted-foreground text-sm">Monitor shipment status</p>
-          </Link>
         </div>
       </motion.div>
 
