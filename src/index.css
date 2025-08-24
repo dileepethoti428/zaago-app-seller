@@ -230,15 +230,15 @@ body {
   }
   
   .zaago-button-primary {
-    @apply zaago-button bg-zaago-green text-zaago-primary-foreground hover:shadow-lg hover:scale-105 active:scale-95 hover:bg-zaago-green-light;
+    @apply zaago-button bg-zaago-green text-zaago-primary-foreground hover:shadow-lg hover:scale-105 active:scale-95 hover:bg-zaago-green-light active:bg-zaago-green-dark;
   }
   
   .zaago-button-secondary {
-    @apply zaago-button bg-zaago-secondary text-zaago-secondary-foreground hover:bg-zaago-secondary/80;
+    @apply zaago-button bg-zaago-secondary text-zaago-secondary-foreground hover:bg-zaago-secondary/80 active:bg-zaago-secondary/70 active:scale-95;
   }
   
   .zaago-button-ghost {
-    @apply zaago-button hover:bg-zaago-accent hover:text-zaago-accent-foreground;
+    @apply zaago-button hover:bg-zaago-accent hover:text-zaago-accent-foreground active:bg-zaago-accent/70 active:scale-95;
   }
   
   .zaago-nav-active {
@@ -246,11 +246,11 @@ body {
   }
   
   .zaago-nav-inactive {
-    @apply text-white hover:bg-zaago-green/10 hover:text-zaago-green;
+    @apply text-white hover:bg-zaago-green/10 hover:text-zaago-green active:bg-zaago-green/15;
   }
   
   .zaago-button-outline {
-    @apply zaago-button border border-zaago-border bg-transparent hover:bg-zaago-accent hover:text-zaago-accent-foreground;
+    @apply zaago-button border border-zaago-border bg-transparent hover:bg-zaago-accent hover:text-zaago-accent-foreground active:bg-zaago-accent/70 active:scale-95;
   }
   
   /* Enhanced card styles */
@@ -333,12 +333,7 @@ body {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zaago-ring focus-visible:ring-offset-2;
   }
   
-  /* Prevent white background on link/button focus/active states in main content (do not affect sidebar nav) */
-  main a:focus, main a:active,
-  button:focus, button:active {
-    background-color: inherit !important;
-    color: inherit !important;
-  }
+  /* Removed overbroad focus/active reset to allow visible pressed states */
   
   /* Safe area support for mobile */
   .safe-area-inset {

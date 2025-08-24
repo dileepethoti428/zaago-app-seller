@@ -181,19 +181,19 @@ const Index = () => {
       >
         <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-6">Quick Actions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <Link to="/products/new" className="p-6 text-center group hover:bg-zaago-accent/50 rounded-lg transition-colors focus:outline-none focus:bg-zaago-accent/50 active:bg-zaago-accent/70">
+          <Link to="/products/new" className="p-6 text-center group hover:bg-zaago-accent/50 rounded-lg transition-colors focus:outline-none active:bg-zaago-accent/70">
             <Package className="w-12 h-12 text-zaago-green mb-4 mx-auto group-hover:scale-110 transition-transform" />
             <h3 className="text-lg font-semibold text-foreground mb-2">Add Product</h3>
             <p className="text-zaago-muted-foreground text-sm">Create a new product listing</p>
           </Link>
           
-          <Link to="/products" className="p-6 text-center group hover:bg-zaago-accent/50 rounded-lg transition-colors focus:outline-none focus:bg-zaago-accent/50 active:bg-zaago-accent/70">
+          <Link to="/products" className="p-6 text-center group hover:bg-zaago-accent/50 rounded-lg transition-colors focus:outline-none active:bg-zaago-accent/70">
             <ShoppingCart className="w-12 h-12 text-zaago-green mb-4 mx-auto group-hover:scale-110 transition-transform" />
             <h3 className="text-lg font-semibold text-foreground mb-2">Manage Products</h3>
             <p className="text-zaago-muted-foreground text-sm">View and edit your inventory</p>
           </Link>
           
-          <Link to="/deliveries" className="p-6 text-center group hover:bg-zaago-accent/50 rounded-lg transition-colors focus:outline-none focus:bg-zaago-accent/50 active:bg-zaago-accent/70">
+          <Link to="/deliveries" className="p-6 text-center group hover:bg-zaago-accent/50 rounded-lg transition-colors focus:outline-none active:bg-zaago-accent/70">
             <Truck className="w-12 h-12 text-zaago-green mb-4 mx-auto group-hover:scale-110 transition-transform" />
             <h3 className="text-lg font-semibold text-foreground mb-2">Track Deliveries</h3>
             <p className="text-zaago-muted-foreground text-sm">Monitor shipment status</p>
