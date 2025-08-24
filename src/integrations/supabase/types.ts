@@ -576,6 +576,122 @@ export type Database = {
         }
         Relationships: []
       }
+      autopay_processing_queue: {
+        Row: {
+          amount: number
+          created_at: string
+          error_message: string | null
+          id: string
+          processed_at: string | null
+          retry_attempt: number | null
+          scheduled_for: string
+          status: string | null
+          subscription_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          processed_at?: string | null
+          retry_attempt?: number | null
+          scheduled_for: string
+          status?: string | null
+          subscription_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          processed_at?: string | null
+          retry_attempt?: number | null
+          scheduled_for?: string
+          status?: string | null
+          subscription_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopay_processing_queue_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autopay_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string | null
+          failure_reason: string | null
+          id: string
+          metadata: Json | null
+          payment_method_id: string | null
+          processed_at: string | null
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          retry_attempt: number | null
+          status: string
+          subscription_id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string | null
+          failure_reason?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_method_id?: string | null
+          processed_at?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          retry_attempt?: number | null
+          status: string
+          subscription_id: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string | null
+          failure_reason?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_method_id?: string | null
+          processed_at?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          retry_attempt?: number | null
+          status?: string
+          subscription_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopay_transactions_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "user_payment_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopay_transactions_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       birthday_coupons: {
         Row: {
           birth_date: string
@@ -873,6 +989,45 @@ export type Database = {
           total_spent?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      daily_subscription_processing: {
+        Row: {
+          completed_at: string | null
+          error_details: Json | null
+          errors_count: number
+          id: string
+          notifications_sent: number
+          orders_created: number
+          processing_date: string
+          processing_status: string
+          started_at: string
+          subscriptions_processed: number
+        }
+        Insert: {
+          completed_at?: string | null
+          error_details?: Json | null
+          errors_count?: number
+          id?: string
+          notifications_sent?: number
+          orders_created?: number
+          processing_date?: string
+          processing_status?: string
+          started_at?: string
+          subscriptions_processed?: number
+        }
+        Update: {
+          completed_at?: string | null
+          error_details?: Json | null
+          errors_count?: number
+          id?: string
+          notifications_sent?: number
+          orders_created?: number
+          processing_date?: string
+          processing_status?: string
+          started_at?: string
+          subscriptions_processed?: number
         }
         Relationships: []
       }
@@ -2686,6 +2841,154 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_autopay_settings: {
+        Row: {
+          consecutive_failures: number | null
+          created_at: string
+          failure_reason: string | null
+          id: string
+          is_enabled: boolean | null
+          last_payment_attempt: string | null
+          max_amount_per_cycle: number | null
+          next_payment_date: string | null
+          payment_method_id: string | null
+          retry_attempts: number | null
+          retry_delay_hours: number | null
+          status: string | null
+          subscription_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          consecutive_failures?: number | null
+          created_at?: string
+          failure_reason?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_payment_attempt?: string | null
+          max_amount_per_cycle?: number | null
+          next_payment_date?: string | null
+          payment_method_id?: string | null
+          retry_attempts?: number | null
+          retry_delay_hours?: number | null
+          status?: string | null
+          subscription_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          consecutive_failures?: number | null
+          created_at?: string
+          failure_reason?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_payment_attempt?: string | null
+          max_amount_per_cycle?: number | null
+          next_payment_date?: string | null
+          payment_method_id?: string | null
+          retry_attempts?: number | null
+          retry_delay_hours?: number | null
+          status?: string | null
+          subscription_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_autopay_settings_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "user_payment_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_autopay_settings_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: true
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_delivery_schedules: {
+        Row: {
+          created_at: string
+          id: string
+          notification_advance_hours: number
+          scheduled_delivery_time: string
+          subscription_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notification_advance_hours?: number
+          scheduled_delivery_time?: string
+          subscription_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notification_advance_hours?: number
+          scheduled_delivery_time?: string
+          subscription_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_delivery_schedules_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_vacation_periods: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          start_date: string
+          status: string
+          subscription_id: string
+          total_days: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          start_date: string
+          status?: string
+          subscription_id: string
+          total_days?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          start_date?: string
+          status?: string
+          subscription_id?: string
+          total_days?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_vacation_periods_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_vacations: {
         Row: {
           applied_to_cycle: string | null
@@ -2748,11 +3051,13 @@ export type Database = {
           created_at: string
           delivery_address: Json | null
           delivery_days: string[] | null
+          delivery_time: string | null
           delivery_time_slot: string | null
           end_date: string | null
           id: string
           is_active: boolean
           next_delivery_date: string
+          notification_advance_hours: number | null
           product_id: string
           quantity: number
           special_instructions: string | null
@@ -2761,17 +3066,21 @@ export type Database = {
           total_credit_earned: number | null
           updated_at: string
           user_id: string
+          vacation_days_used: number | null
+          vacation_extension_days: number | null
         }
         Insert: {
           available_credit?: number | null
           created_at?: string
           delivery_address?: Json | null
           delivery_days?: string[] | null
+          delivery_time?: string | null
           delivery_time_slot?: string | null
           end_date?: string | null
           id?: string
           is_active?: boolean
           next_delivery_date: string
+          notification_advance_hours?: number | null
           product_id: string
           quantity?: number
           special_instructions?: string | null
@@ -2780,17 +3089,21 @@ export type Database = {
           total_credit_earned?: number | null
           updated_at?: string
           user_id: string
+          vacation_days_used?: number | null
+          vacation_extension_days?: number | null
         }
         Update: {
           available_credit?: number | null
           created_at?: string
           delivery_address?: Json | null
           delivery_days?: string[] | null
+          delivery_time?: string | null
           delivery_time_slot?: string | null
           end_date?: string | null
           id?: string
           is_active?: boolean
           next_delivery_date?: string
+          notification_advance_hours?: number | null
           product_id?: string
           quantity?: number
           special_instructions?: string | null
@@ -2799,6 +3112,8 @@ export type Database = {
           total_credit_earned?: number | null
           updated_at?: string
           user_id?: string
+          vacation_days_used?: number | null
+          vacation_extension_days?: number | null
         }
         Relationships: []
       }
@@ -2836,6 +3151,90 @@ export type Database = {
           priority?: string
           status?: string
           subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_locations: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          id: string
+          latitude: number
+          longitude: number
+          pincode: string | null
+          state: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          latitude: number
+          longitude: number
+          pincode?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          latitude?: number
+          longitude?: number
+          pincode?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_payment_methods: {
+        Row: {
+          card_brand: string | null
+          card_last_four: string | null
+          card_network: string | null
+          card_type: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          razorpay_customer_id: string
+          razorpay_token_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_brand?: string | null
+          card_last_four?: string | null
+          card_network?: string | null
+          card_type?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          razorpay_customer_id: string
+          razorpay_token_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_brand?: string | null
+          card_last_four?: string | null
+          card_network?: string | null
+          card_type?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          razorpay_customer_id?: string
+          razorpay_token_id?: string
           updated_at?: string
           user_id?: string
         }
@@ -3224,6 +3623,10 @@ export type Database = {
         }
         Returns: Json
       }
+      calculate_distance: {
+        Args: { lat1: number; lat2: number; lon1: number; lon2: number }
+        Returns: number
+      }
       calculate_next_delivery_date: {
         Args: {
           p_current_date: string
@@ -3321,6 +3724,14 @@ export type Database = {
           target_agent_id: string
         }
         Returns: string
+      }
+      create_vacation_period: {
+        Args: {
+          p_end_date: string
+          p_start_date: string
+          p_subscription_id: string
+        }
+        Returns: Json
       }
       create_validated_payout: {
         Args: { end_date: string; start_date: string; target_seller_id: string }
@@ -3458,6 +3869,20 @@ export type Database = {
           revenue: number
         }[]
       }
+      get_products_within_range: {
+        Args: { customer_lat: number; customer_lon: number; range_km?: number }
+        Returns: {
+          distance_km: number
+          product_description: string
+          product_id: string
+          product_image_url: string
+          product_name: string
+          product_price: number
+          seller_id: string
+          seller_location: Json
+          stock_quantity: number
+        }[]
+      }
       get_seller_orders: {
         Args:
           | { seller_user_id: string }
@@ -3590,9 +4015,17 @@ export type Database = {
         }
         Returns: undefined
       }
+      manual_trigger_subscription_processing: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       mark_payout_paid: {
         Args: { payout_id: string }
         Returns: undefined
+      }
+      process_daily_subscriptions_with_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       process_delivery_payout: {
         Args: {
@@ -3664,16 +4097,20 @@ export type Database = {
         Args: { p_delivery_date: string; p_subscription_id: string }
         Returns: boolean
       }
+      should_skip_delivery_for_vacation_v2: {
+        Args: { p_delivery_date: string; p_subscription_id: string }
+        Returns: boolean
+      }
       trigger_subscription_processing: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
       update_order_status: {
         Args: {
-          agent_id: string
-          new_payment_status: string
-          new_status: string
-          order_id: string
+          p_agent_id: string
+          p_new_payment_status: string
+          p_new_status: string
+          p_order_id: string
         }
         Returns: undefined
       }
