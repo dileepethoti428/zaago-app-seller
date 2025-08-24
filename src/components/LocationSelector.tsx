@@ -76,129 +76,65 @@ export const LocationSelector = ({ open, onOpenChange }: LocationSelectorProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-zaago-card border-zaago-border">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <MapPin className="h-5 w-5" />
-            Update Location
+          <DialogTitle className="flex items-center gap-2 text-lg text-foreground">
+            <MapPin className="h-5 w-5 text-zaago-green" />
+            Select Location
           </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6 py-4">
           {/* Current Location Display */}
           {location && (
-            <div className="p-3 bg-muted rounded-lg">
-              <p className="text-sm font-medium text-zaago-card-foreground mb-1">Current Location:</p>
+            <div className="p-3 bg-zaago-accent/20 rounded-lg border border-zaago-border">
+              <p className="text-sm font-medium text-foreground mb-1">Current Location:</p>
               <p className="text-sm text-zaago-muted-foreground">
                 {location.address || (location.city && location.state ? `${location.city}, ${location.state}` : 'Unknown location')}
               </p>
-              {location.city && location.state && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {location.city}, {location.state}
-                </p>
-              )}
             </div>
           )}
 
-          {/* Auto Detect Option */}
-          <div className="space-y-3">
-            <h3 className="font-medium text-base">Option 1: Auto Detect</h3>
+          {/* Two Main Options */}
+          <div className="grid grid-cols-1 gap-4">
+            {/* Option 1: Select Automatically */}
             <Button 
               onClick={handleAutoDetect} 
               disabled={isDetecting}
-              className="w-full"
+              className="h-16 bg-zaago-green hover:bg-zaago-green-light text-black font-medium flex flex-col items-center justify-center gap-2"
               size="lg"
             >
               {isDetecting ? (
                 <>
-                  <Navigation className="mr-2 h-4 w-4 animate-spin" />
-                  Detecting Location...
+                  <Navigation className="h-5 w-5 animate-spin" />
+                  <span>Detecting Location...</span>
                 </>
               ) : (
                 <>
-                  <Navigation className="mr-2 h-4 w-4" />
-                  Detect My Location
+                  <Navigation className="h-5 w-5" />
+                  <span>Select Automatically</span>
                 </>
               )}
             </Button>
-          </div>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or</span>
-            </div>
-          </div>
-
-          {/* Manual Selection Option */}
-          <div className="space-y-4">
-            <h3 className="font-medium text-base">Option 2: Select Manually</h3>
-            
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="address" className="text-sm">Address</Label>
-                <Input
-                  id="address"
-                  placeholder="Enter your address"
-                  value={manualLocation.address}
-                  onChange={(e) => setManualLocation(prev => ({ ...prev, address: e.target.value }))}
-                  className="mt-1"
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="latitude" className="text-sm">Latitude</Label>
-                  <Input
-                    id="latitude"
-                    type="number"
-                    step="any"
-                    placeholder="31.2682"
-                    value={manualLocation.latitude}
-                    onChange={(e) => setManualLocation(prev => ({ ...prev, latitude: e.target.value }))}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="longitude" className="text-sm">Longitude</Label>
-                  <Input
-                    id="longitude"
-                    type="number"
-                    step="any"
-                    placeholder="75.6942"
-                    value={manualLocation.longitude}
-                    onChange={(e) => setManualLocation(prev => ({ ...prev, longitude: e.target.value }))}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Button 
-                onClick={handleManualSet}
-                className="flex-1"
-                variant="outline"
-              >
-                Set Location
-              </Button>
-              
-              <Button 
-                onClick={openInMaps}
-                variant="outline"
-                size="default"
-                className="px-3"
-              >
-                <Map className="h-4 w-4" />
-              </Button>
-            </div>
+            {/* Option 2: Select on Map */}
+            <Button 
+              onClick={() => {
+                // For now, open Google Maps to allow manual selection
+                window.open('https://www.google.com/maps', '_blank');
+              }}
+              variant="outline"
+              className="h-16 border-zaago-border text-foreground hover:bg-zaago-accent flex flex-col items-center justify-center gap-2"
+              size="lg"
+            >
+              <Map className="h-5 w-5" />
+              <span>Select on Map</span>
+            </Button>
           </div>
 
           {/* Helper Text */}
-          <p className="text-xs text-muted-foreground text-center">
-            You can also tap the map icon to open Google Maps and find coordinates
+          <p className="text-xs text-zaago-muted-foreground text-center">
+            Choose automatic detection for quick setup, or use the map for precise location selection
           </p>
         </div>
       </DialogContent>

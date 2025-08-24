@@ -95,7 +95,7 @@ export default function Sidebar() {
                 to="/"
                 className="text-zaago-green font-bold text-lg sm:text-xl lg:text-2xl hover:text-zaago-green-light transition-colors cursor-pointer block leading-tight"
               >
-                Zaago Seller Dashboard
+                Seller
               </NavLink>
             </motion.div>
           )}
@@ -110,7 +110,7 @@ export default function Sidebar() {
                 to="/"
                 className="text-zaago-green hover:text-zaago-green-light transition-colors cursor-pointer block"
               >
-                Z
+                S
               </NavLink>
             </motion.div>
           )}

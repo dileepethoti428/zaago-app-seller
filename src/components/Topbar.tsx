@@ -42,10 +42,10 @@ export default function Topbar() {
         <SidebarTrigger className="md:hidden p-1.5 sm:p-2 rounded-xl sm:rounded-2xl zaago-button-ghost text-zaago-card-foreground" />
         <div className="flex flex-col gap-0.5">
           <h2 className="text-base sm:text-lg font-semibold text-zaago-card-foreground hidden sm:block">
-            Zaago Seller Dashboard
+            Seller
           </h2>
           <h2 className="text-sm font-semibold text-zaago-card-foreground sm:hidden">
-            Dashboard
+            Seller
           </h2>
           
           {/* Location Display */}
@@ -90,7 +90,7 @@ export default function Topbar() {
               to="/" 
               className="text-zaago-primary font-semibold text-xs sm:text-sm hover:text-zaago-primary/80 transition-colors cursor-pointer"
             >
-              Seller Dashboard
+              Seller
             </Link>
           </>
         ) : (
@@ -98,7 +98,7 @@ export default function Topbar() {
             to="/" 
             className="text-zaago-primary font-semibold text-xs sm:text-sm hover:text-zaago-primary/80 transition-colors cursor-pointer"
           >
-            Seller Dashboard
+            Seller
           </Link>
         )}
       </div>
