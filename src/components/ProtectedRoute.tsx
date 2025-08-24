@@ -13,16 +13,22 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation();
 
   useEffect(() => {
-    if (!loading && !user && location.pathname !== '/login' && location.pathname !== '/bank-details') {
+    if (!loading && !user && location.pathname !== '/login') {
       navigate('/login');
-    } else if (!loading && user && location.pathname === '/login') {
-      // Check if user has bank details, if not redirect to bank details page
+    } else if (!loading && user) {
+      // Always check approval status for authenticated users
       checkBankDetailsAndRedirect();
     }
   }, [user, loading, navigate, location.pathname]);
 
   const checkBankDetailsAndRedirect = async () => {
     if (!user) return;
+
+    // Don't redirect if already on special approval pages
+    const approvalPages = ['/bank-details', '/pending-approval', '/application-rejected'];
+    if (approvalPages.includes(location.pathname)) {
+      return;
+    }
 
     try {
       const { data, error } = await supabase
@@ -33,7 +39,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error checking seller details:', error);
-        navigate('/products');
         return;
       }
 
@@ -55,15 +60,16 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       }
 
       if (data.approval_status === 'approved' && data.bank_name) {
-        // User is approved and has bank details, go to products
-        navigate('/products');
-      } else {
+        // User is approved and has bank details, can access the app
+        if (location.pathname === '/login') {
+          navigate('/products');
+        }
+      } else if (data.approval_status === 'approved') {
         // User is approved but doesn't have bank details, show bank details page
         navigate('/bank-details');
       }
     } catch (error) {
       console.error('Error checking seller details:', error);
-      navigate('/products');
     }
   };
 
