@@ -1,5 +1,4 @@
-import { motion } from 'framer-motion';
-import { LogIn, UserPlus, Mail, Lock, Phone, Building } from 'lucide-react';
+import { ArrowRight, UserPlus, Mail, Lock, Phone, Building } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -136,26 +135,26 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+    <div className="min-h-screen bg-black flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <div className="bg-card border border-border rounded-xl p-8">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="flex justify-center mb-4">
+            <div className="flex justify-center mb-6">
               {isSignUp ? (
-                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
-                  <UserPlus className="w-6 h-6 text-primary-foreground" />
+                <div className="text-green-500">
+                  <UserPlus className="w-12 h-12" />
                 </div>
               ) : (
-                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
-                  <LogIn className="w-6 h-6 text-primary-foreground" />
+                <div className="text-green-500">
+                  <ArrowRight className="w-12 h-12" />
                 </div>
               )}
             </div>
-            <h1 className="text-2xl font-semibold text-foreground mb-2">
+            <h1 className="text-3xl font-bold text-white mb-2">
               {isSignUp ? 'Create Account' : 'Welcome Back'}
             </h1>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-zinc-400 text-base">
               {isSignUp ? 'Sign up for your Zaago Seller account' : 'Sign in to your Zaago Seller account'}
             </p>
           </div>
@@ -164,25 +163,25 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Field */}
             <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">Email</label>
+              <label className="text-white text-base font-medium mb-3 block">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-zinc-500 w-5 h-5" />
                 <input
                   type="email"
                   required
                   value={formData.email}
                   onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                   placeholder="Enter your email"
-                  className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  className="w-full pl-12 pr-4 py-4 bg-zinc-800 border border-zinc-700 rounded-xl text-white placeholder:text-zinc-500 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-base"
                 />
               </div>
             </div>
 
             {/* Password Field */}
             <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">Password</label>
+              <label className="text-white text-base font-medium mb-3 block">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-zinc-500 w-5 h-5" />
                 <input
                   type="password"
                   required
@@ -190,11 +189,11 @@ export default function LoginPage() {
                   value={formData.password}
                   onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                   placeholder="Enter your password"
-                  className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  className="w-full pl-12 pr-4 py-4 bg-zinc-800 border border-zinc-700 rounded-xl text-white placeholder:text-zinc-500 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-base"
                 />
               </div>
               {isSignUp && (
-                <p className="text-xs text-muted-foreground mt-1">Password must be at least 6 characters</p>
+                <p className="text-sm text-zinc-500 mt-2">Password must be at least 6 characters</p>
               )}
             </div>
 
@@ -202,31 +201,31 @@ export default function LoginPage() {
             {isSignUp && (
               <>
                 <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">Phone Number</label>
+                  <label className="text-white text-base font-medium mb-3 block">Phone Number</label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 text-zinc-500 w-5 h-5" />
                     <input
                       type="tel"
                       required
                       value={formData.phone}
                       onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                       placeholder="Enter your phone number"
-                      className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      className="w-full pl-12 pr-4 py-4 bg-zinc-800 border border-zinc-700 rounded-xl text-white placeholder:text-zinc-500 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-base"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">Business Name</label>
+                  <label className="text-white text-base font-medium mb-3 block">Business Name</label>
                   <div className="relative">
-                    <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <Building className="absolute left-4 top-1/2 transform -translate-y-1/2 text-zinc-500 w-5 h-5" />
                     <input
                       type="text"
                       required
                       value={formData.businessName}
                       onChange={(e) => setFormData(prev => ({ ...prev, businessName: e.target.value }))}
                       placeholder="Enter your business name"
-                      className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      className="w-full pl-12 pr-4 py-4 bg-zinc-800 border border-zinc-700 rounded-xl text-white placeholder:text-zinc-500 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-base"
                     />
                   </div>
                 </div>
@@ -237,7 +236,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary text-primary-foreground py-3 rounded-lg font-medium hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-green-500 text-white py-4 rounded-xl font-semibold text-base hover:bg-green-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-8"
             >
               {loading 
                 ? (isSignUp ? 'Creating Account...' : 'Signing In...') 
@@ -247,20 +246,20 @@ export default function LoginPage() {
           </form>
 
           {/* Toggle Link */}
-          <div className="text-center mt-6">
+          <div className="text-center mt-8">
             <button
               onClick={() => setIsSignUp(!isSignUp)}
-              className="text-primary hover:text-primary/80 text-sm font-medium transition-colors"
+              className="text-green-500 hover:text-green-400 text-base font-medium transition-colors"
             >
               {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
             </button>
             {isSignUp && (
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-sm text-zinc-500 mt-3">
                 After signing up, check your email to verify your account
               </p>
             )}
             {!isSignUp && (
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-sm text-zinc-500 mt-3">
                 Use any email/password to create an account or sign in
               </p>
             )}
