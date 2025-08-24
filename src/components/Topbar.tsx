@@ -5,11 +5,14 @@ import { LogOut, User, MapPin, Navigation } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 import { useLocation } from '@/hooks/useLocation';
+import { LocationSelector } from './LocationSelector';
+import { useState } from 'react';
 
 export default function Topbar() {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const { location, loading: locationLoading, getCurrentLocation } = useLocation();
+  const [showLocationSelector, setShowLocationSelector] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -50,22 +53,25 @@ export default function Topbar() {
             {locationLoading ? (
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Navigation className="h-3 w-3 animate-spin" />
-                <span>Getting location...</span>
+                <span className="text-xs">Getting location...</span>
               </div>
             ) : location ? (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <button
+                onClick={() => setShowLocationSelector(true)}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
                 <MapPin className="h-3 w-3 text-green-500" />
-                <span className="truncate max-w-[150px] sm:max-w-[200px]">
+                <span className="truncate max-w-[150px] sm:max-w-[200px] text-xs">
                   {location.address || `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`}
                 </span>
-              </div>
+              </button>
             ) : (
               <button
-                onClick={getCurrentLocation}
+                onClick={() => setShowLocationSelector(true)}
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 <MapPin className="h-3 w-3" />
-                <span>Enable location</span>
+                <span className="text-xs">Enable location</span>
               </button>
             )}
           </div>
@@ -96,6 +102,11 @@ export default function Topbar() {
           </Link>
         )}
       </div>
+
+      <LocationSelector 
+        open={showLocationSelector} 
+        onOpenChange={setShowLocationSelector} 
+      />
     </motion.header>
   );
 }

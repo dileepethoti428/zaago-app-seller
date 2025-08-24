@@ -1,52 +1,123 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Zaago Seller App - Futuristic Dark Theme Design System */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  font-size: 14px; /* Base font size optimized for mobile */
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Mobile-first typography scale */
+@media (max-width: 640px) {
+  html {
+    font-size: 14px; /* Smaller base for mobile */
+  }
+  
+  body {
+    font-size: 14px;
+  }
+  
+  h1 { font-size: 1.5rem; } /* 24px */
+  h2 { font-size: 1.25rem; } /* 20px */
+  h3 { font-size: 1.125rem; } /* 18px */
+  h4 { font-size: 1rem; } /* 16px */
+  
+  .text-xs { font-size: 0.75rem; } /* 12px */
+  .text-sm { font-size: 0.875rem; } /* 14px */
+  .text-base { font-size: 1rem; } /* 16px */
+  .text-lg { font-size: 1.125rem; } /* 18px */
+  .text-xl { font-size: 1.25rem; } /* 20px */
+}
+
+@media (min-width: 641px) {
+  html {
+    font-size: 16px; /* Standard for tablet/desktop */
+  }
+}
 
 @layer base {
   :root {
-    /* Dark futuristic theme */
-    --background: 0 0% 4%; /* #0A0A0A */
-    --foreground: 0 0% 100%; /* White text */
-
-    --card: 0 0% 8%; /* Slightly lighter dark */
-    --card-foreground: 0 0% 100%;
-
-    --popover: 0 0% 6%;
-    --popover-foreground: 0 0% 100%;
-
-    --primary: 142 76% 58%; /* #4ADE80 - Green accent */
-    --primary-foreground: 0 0% 0%; /* Black text on green */
-
-    --secondary: 240 5% 64%; /* #A1A1AA - Gray text */
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 0 0% 12%;
-    --muted-foreground: 240 5% 64%;
-
-    --accent: 142 76% 58%; /* Green accent */
-    --accent-foreground: 0 0% 0%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 0 0% 15%;
-    --input: 0 0% 8%;
-    --ring: 142 76% 58%;
-
-    --radius: 1rem; /* Rounded 2xl by default */
-
-    /* Zaago custom colors */
-    --zaago-dark: 0 0% 0%; /* Pure black for sidebar */
-    --zaago-hover: 0 0% 12%; /* Hover state */
-    --zaago-gradient: linear-gradient(135deg, hsl(142 76% 58%), hsl(142 76% 68%));
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
     
-    /* Shadow system */
-    --shadow-card: 0 4px 14px 0 rgba(0, 0, 0, 0.7);
-    --shadow-glow: 0 0 20px hsl(142 76% 58% / 0.3);
+    /* Zaago specific colors */
+    --zaago-primary: 263 70% 50%;
+    --zaago-primary-foreground: 0 0% 100%;
+    --zaago-secondary: 240 4% 16%;
+    --zaago-secondary-foreground: 0 0% 100%;
+    --zaago-accent: 263 70% 95%;
+    --zaago-accent-foreground: 263 70% 15%;
+    --zaago-muted: 240 4% 46%;
+    --zaago-muted-foreground: 240 5% 84%;
+    --zaago-card: 240 4% 9%;
+    --zaago-card-foreground: 0 0% 100%;
+    --zaago-border: 240 4% 16%;
+    --zaago-input: 240 4% 16%;
+    --zaago-ring: 263 70% 50%;
+    --zaago-dark: 240 4% 9%;
+    --zaago-light: 0 0% 100%;
+    
+    /* Beautiful gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--zaago-primary)), hsl(var(--zaago-accent)));
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--zaago-secondary)), hsl(var(--zaago-muted)));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--zaago-accent)), hsl(var(--zaago-primary)));
+    
+    /* Enhanced shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    --shadow-card: 0 4px 12px 0 rgba(99, 102, 241, 0.15);
+    --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.3);
+    
+    /* Smooth transitions */
+    --transition-all: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-colors: color 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Border radius */
+    --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 0%; /* Pure black */
+    /* Sidebar variables */
+    --sidebar-background: 0 0% 0%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 142 76% 58%;
     --sidebar-primary-foreground: 0 0% 0%;
@@ -55,60 +126,195 @@
     --sidebar-border: 0 0% 15%;
     --sidebar-ring: 142 76% 58%;
   }
+  
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    
+    /* Zaago light mode colors */
+    --zaago-primary: 263 70% 50%;
+    --zaago-primary-foreground: 0 0% 100%;
+    --zaago-secondary: 0 0% 96%;
+    --zaago-secondary-foreground: 222.2 84% 4.9%;
+    --zaago-accent: 263 70% 95%;
+    --zaago-accent-foreground: 263 70% 15%;
+    --zaago-muted: 220 13% 91%;
+    --zaago-muted-foreground: 220 9% 46%;
+    --zaago-card: 0 0% 100%;
+    --zaago-card-foreground: 222.2 84% 4.9%;
+    --zaago-border: 220 13% 91%;
+    --zaago-input: 220 13% 91%;
+    --zaago-ring: 263 70% 50%;
+    --zaago-dark: 222.2 84% 4.9%;
+    --zaago-light: 0 0% 100%;
+  }
 }
 
 @layer base {
   * {
     @apply border-border;
   }
-
+  
   body {
-    @apply bg-background text-foreground font-sans antialiased text-sm sm:text-base;
-    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
-
-  html {
-    @apply scroll-smooth;
+  
+  /* Mobile-optimized button and input sizes */
+  @media (max-width: 640px) {
+    button, .btn {
+      min-height: 44px; /* Touch-friendly minimum */
+      font-size: 14px;
+    }
+    
+    input, textarea, select {
+      min-height: 44px;
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    /* Improve touch targets */
+    a, button, [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
   }
 }
 
 @layer components {
-  /* Zaago component utilities */
-  .zaago-card {
-    @apply bg-card border border-border rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6;
+  /* Enhanced button styles */
+  .zaago-button {
+    @apply inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
   }
   
   .zaago-button-primary {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl sm:rounded-2xl transition-all duration-200 px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base;
+    @apply zaago-button bg-gradient-to-r from-zaago-primary to-purple-600 text-zaago-primary-foreground hover:shadow-lg hover:scale-105 active:scale-95;
+  }
+  
+  .zaago-button-secondary {
+    @apply zaago-button bg-zaago-secondary text-zaago-secondary-foreground hover:bg-zaago-secondary/80;
   }
   
   .zaago-button-ghost {
-    @apply hover:bg-zaago-hover rounded-xl sm:rounded-2xl transition-all duration-200 px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base;
+    @apply zaago-button hover:bg-zaago-accent hover:text-zaago-accent-foreground;
   }
   
-  .zaago-nav-active {
-    @apply bg-primary text-primary-foreground shadow-glow;
+  .zaago-button-outline {
+    @apply zaago-button border border-zaago-border bg-transparent hover:bg-zaago-accent hover:text-zaago-accent-foreground;
   }
   
-  .zaago-nav-inactive {
-    @apply hover:bg-zaago-hover text-secondary;
+  /* Enhanced card styles */
+  .zaago-card {
+    @apply rounded-xl border border-zaago-border bg-zaago-card text-zaago-card-foreground shadow-card transition-all;
   }
-
-  /* Mobile responsive utilities */
-  .zaago-mobile-container {
-    @apply px-4 sm:px-6 lg:px-8 max-w-full;
+  
+  .zaago-card-hover {
+    @apply zaago-card hover:shadow-lg hover:scale-[1.02] hover:border-zaago-primary/20;
   }
-
-  .zaago-mobile-text {
-    @apply text-sm sm:text-base leading-relaxed;
+  
+  /* Gradient backgrounds */
+  .gradient-primary {
+    background: var(--gradient-primary);
   }
-
-  .zaago-mobile-heading {
-    @apply text-xl sm:text-2xl lg:text-3xl font-bold leading-tight;
+  
+  .gradient-secondary {
+    background: var(--gradient-secondary);
+  }
+  
+  .gradient-accent {
+    background: var(--gradient-accent);
+  }
+  
+  /* Mobile-first responsive text */
+  .text-mobile-xs { @apply text-xs; }
+  .text-mobile-sm { @apply text-sm; }
+  .text-mobile-base { @apply text-sm sm:text-base; }
+  .text-mobile-lg { @apply text-base sm:text-lg; }
+  .text-mobile-xl { @apply text-lg sm:text-xl; }
+  .text-mobile-2xl { @apply text-xl sm:text-2xl; }
+  .text-mobile-3xl { @apply text-2xl sm:text-3xl; }
+  
+  /* Mobile-optimized spacing */
+  .mobile-padding { @apply px-4 py-3 sm:px-6 sm:py-4; }
+  .mobile-margin { @apply mx-4 my-3 sm:mx-6 sm:my-4; }
+  .mobile-gap { @apply gap-3 sm:gap-4; }
+  
+  /* Touch-friendly components */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
   }
 }
 
 @layer utilities {
+  /* Custom animations */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .animate-bounce-in {
+    animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+  
+  /* Custom scrollbars */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--zaago-muted)) transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--zaago-muted));
+    border-radius: 3px;
+  }
+  
+  /* Focus styles for accessibility */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zaago-ring focus-visible:ring-offset-2;
+  }
+  
+  /* Safe area support for mobile */
+  .safe-area-inset {
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+  }
+
   .shadow-glow {
     box-shadow: var(--shadow-glow);
   }
@@ -122,6 +328,67 @@
   }
   
   .bg-zaago-hover {
-    background-color: hsl(var(--zaago-hover));
+    background-color: hsl(var(--zaago-accent));
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounceIn {
+  from { 
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  to { 
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Print styles */
+@media print {
+  * {
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .zaago-card {
+    @apply border-2;
+  }
+  
+  button, .btn {
+    @apply border-2;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
