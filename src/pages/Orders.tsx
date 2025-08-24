@@ -254,39 +254,39 @@ const Orders = () => {
         className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
       >
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-zaago-green mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
             Orders Management
           </h1>
-          <p className="text-zaago-green-light text-sm sm:text-base">
+          <p className="text-gray-400 text-sm sm:text-base">
             Manage orders with real-time updates and status tracking
           </p>
         </div>
         
-        <Button onClick={fetchOrders} variant="outline" size="sm">
-          <RefreshCw className="w-4 h-4 mr-2" />
+        <Button 
+          onClick={fetchOrders} 
+          disabled={loading}
+          className="bg-transparent border border-gray-600 text-white hover:bg-gray-700 flex items-center gap-2"
+          size="sm"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
       </motion.div>
 
-      {/* Search */}
+      {/* Search Bar */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2, duration: 0.3 }}
+        className="relative"
       >
-        <Card className="zaago-card">
-          <CardContent className="p-4 sm:p-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary w-4 h-4" />
-              <Input
-                placeholder="Search by customer name, phone, or order ID..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <Input
+          placeholder="Search by customer name, phone, or order ID..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10 py-3 bg-gray-800/50 border-gray-600 text-white placeholder:text-gray-400 focus:border-zaago-green focus:ring-zaago-green"
+        />
       </motion.div>
 
       {/* Status Tabs */}
@@ -296,159 +296,138 @@ const Orders = () => {
         transition={{ delay: 0.3, duration: 0.3 }}
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-2 lg:grid-cols-5 h-auto p-1 bg-card border border-border">
+          <TabsList className="grid grid-cols-5 bg-transparent gap-1">
             {tabCounts.map((tab) => (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                  activeTab === tab.value
+                    ? 'bg-zaago-green text-black font-medium'
+                    : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
+                }`}
               >
-                <span className="font-medium text-xs sm:text-sm">{tab.label}</span>
-                <Badge variant="secondary" className="text-xs">
+                <span className="font-medium text-sm">
+                  {tab.value === 'all' ? 'All Orders' : 
+                   tab.value === 'new' ? 'New' :
+                   tab.value === 'accepted' ? 'Accepted' :
+                   tab.value === 'in_transit' ? 'In Transit' :
+                   'Delivered'}
+                </span>
+                <span className={`px-2 py-0.5 rounded-full text-xs ${
+                  activeTab === tab.value
+                    ? 'bg-black/20 text-black'
+                    : 'bg-gray-600 text-gray-300'
+                }`}>
                   {tab.count}
-                </Badge>
+                </span>
               </TabsTrigger>
             ))}
           </TabsList>
 
           <TabsContent value={activeTab} className="mt-6">
-            <Card className="zaago-card">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>
-                    {activeTab === 'all' ? 'All' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1).replace('_', ' ')} Orders ({filteredOrders.length})
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                  </div>
-                ) : filteredOrders.length > 0 ? (
-                  <div className="space-y-4">
-                    {filteredOrders.map((order) => (
-                      <motion.div
-                        key={order.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="border border-border rounded-xl p-4 hover:bg-muted/30 transition-colors"
-                      >
-                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                          <div className="flex-1 space-y-3">
-                            <div className="flex items-center gap-3">
-                              {getStatusIcon(order.status)}
-                              <h3 className="font-semibold text-foreground">
-                                Order #{order.id.toString().slice(0, 8)}
-                              </h3>
-                              {getStatusBadge(order.status)}
-                            </div>
-                            
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
-                              <div>
-                                <p className="text-secondary">Customer</p>
-                                <p className="text-foreground font-medium">
-                                  {order.customer_name || 'N/A'}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-secondary">Items</p>
-                                <p className="text-foreground font-medium">
-                                  {getItemsCount(order.items)} items
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-secondary">Total</p>
-                                <p className="text-foreground font-medium">
-                                  ₹{order.total}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-secondary">Date</p>
-                                <p className="text-foreground font-medium">
-                                  {new Date(order.created_at).toLocaleDateString()}
-                                </p>
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-white">
+                All Orders ({filteredOrders.length})
+              </h2>
+
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zaago-green"></div>
+                </div>
+              ) : filteredOrders.length > 0 ? (
+                <div className="space-y-3">
+                  {filteredOrders.map((order) => (
+                    <motion.div
+                      key={order.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 hover:bg-gray-700/50 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 flex-1">
+                          {/* Status Icon and Order Info */}
+                          <div className="flex items-center gap-2">
+                            {getStatusIcon(order.status)}
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-medium text-white">
+                                  Order #{order.id.toString().slice(0, 8)}
+                                </h3>
+                                <Badge 
+                                  className={`${
+                                    order.status === 'delivered' 
+                                      ? 'bg-zaago-green text-black' 
+                                      : order.status === 'new' || order.status === 'accepted'
+                                      ? 'bg-yellow-500 text-black'
+                                      : order.status === 'in_transit'
+                                      ? 'bg-blue-500 text-white'
+                                      : 'bg-gray-500 text-white'
+                                  } text-xs font-medium px-2 py-1`}
+                                >
+                                  {order.status === 'in_transit' ? 'In Transit' : 
+                                   order.status === 'new' ? 'New' :
+                                   order.status === 'accepted' ? 'Accepted' :
+                                   order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                                </Badge>
                               </div>
                             </div>
                           </div>
-                          
-                          <div className="flex flex-col sm:flex-row gap-2">
-                            {order.status === 'new' && (
-                              <>
-                                <Button
-                                  onClick={() => updateOrderStatus(order.id, 'accepted')}
-                                  disabled={processingOrder === order.id}
-                                  size="sm"
-                                  className="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30"
-                                >
-                                  <CheckSquare className="w-4 h-4 mr-2" />
-                                  Accept
-                                </Button>
-                                <Button
-                                  onClick={() => updateOrderStatus(order.id, 'rejected')}
-                                  disabled={processingOrder === order.id}
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-red-400 border-red-400/30 hover:bg-red-500/10"
-                                >
-                                  <XSquare className="w-4 h-4 mr-2" />
-                                  Reject
-                                </Button>
-                              </>
-                            )}
-                            
-                            {order.status === 'accepted' && (
-                              <Button
-                                onClick={() => updateOrderStatus(order.id, 'in_transit')}
-                                disabled={processingOrder === order.id}
-                                size="sm"
-                                className="bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-500/30"
-                              >
-                                <Truck className="w-4 h-4 mr-2" />
-                                Mark In Transit
-                              </Button>
-                            )}
-                            
-                            {order.status === 'in_transit' && (
-                              <Button
-                                onClick={() => updateOrderStatus(order.id, 'delivered')}
-                                disabled={processingOrder === order.id}
-                                size="sm"
-                                className="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30"
-                              >
-                                <CheckCircle2 className="w-4 h-4 mr-2" />
-                                Mark Delivered
-                              </Button>
-                            )}
-                            
-                            <Button asChild variant="outline" size="sm">
-                              <Link to={`/orders/${order.id}`}>
-                                <Eye className="w-4 h-4 mr-2" />
-                                View Details
-                              </Link>
-                            </Button>
+
+                          {/* Order Details Grid */}
+                          <div className="grid grid-cols-4 gap-8 flex-1">
+                            <div>
+                              <p className="text-gray-400 text-sm">Customer</p>
+                              <p className="text-white font-medium">
+                                {order.customer_name || 'Customer'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-gray-400 text-sm">Items</p>
+                              <p className="text-white font-medium">
+                                {getItemsCount(order.items)} items
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-gray-400 text-sm">Total</p>
+                              <p className="text-white font-medium">₹{order.total}</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-400 text-sm">Date</p>
+                              <p className="text-white font-medium">
+                                {new Date(order.created_at).toLocaleDateString('en-GB')}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <Package className="w-12 h-12 text-secondary mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-foreground mb-2">
-                      No orders found
-                    </h3>
-                    <p className="text-secondary text-sm">
-                      {searchTerm || activeTab !== 'all' 
-                        ? 'Try adjusting your filters' 
-                        : 'Orders will appear here when customers place them'
-                      }
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+
+                        {/* View Details Button */}
+                        <Link to={`/orders/${order.id}`}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white flex items-center gap-2"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View Details
+                          </Button>
+                        </Link>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Package className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-400 mb-2">No orders found</h3>
+                  <p className="text-gray-500">
+                    {activeTab === 'all' 
+                      ? "You don't have any orders yet." 
+                      : `No ${activeTab} orders found.`}
+                  </p>
+                </div>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </motion.div>
