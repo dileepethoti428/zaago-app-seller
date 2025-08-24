@@ -116,13 +116,13 @@ const Index = () => {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.1, duration: 0.3 }}
-        className="zaago-card text-center"
+        className="text-center bg-zaago-card/50 border border-zaago-border rounded-xl p-8"
       >
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-3 sm:mb-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
-          <span className="text-primary">Zaago</span> 
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
+          <span className="text-zaago-green">Zaago</span> 
           <span>Seller Dashboard</span>
         </h1>
-        <p className="text-secondary text-sm sm:text-base lg:text-lg leading-relaxed">
+        <p className="text-zaago-muted-foreground text-base sm:text-lg lg:text-xl leading-relaxed">
           Manage your products, track deliveries, and grow your business
         </p>
       </motion.div>
@@ -132,44 +132,42 @@ const Index = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.15, duration: 0.3 }}
-        className="zaago-card"
+        className="flex items-center justify-between bg-zaago-card/50 border border-zaago-border rounded-xl p-6"
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold text-foreground">Revenue Period</h2>
-          </div>
-          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger className="w-full sm:w-[200px]">
-              <SelectValue placeholder="Select time period" />
-            </SelectTrigger>
-            <SelectContent>
-              {timePeriods.map((period) => (
-                <SelectItem key={period.value} value={period.value}>
-                  {period.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-3">
+          <Calendar className="w-5 h-5 text-zaago-green" />
+          <h2 className="text-lg font-semibold text-foreground">Revenue Period</h2>
         </div>
+        <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+          <SelectTrigger className="w-[140px] bg-transparent border-zaago-border text-foreground">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-zaago-card border-zaago-border">
+            {timePeriods.map((period) => (
+              <SelectItem key={period.value} value={period.value} className="text-foreground hover:bg-zaago-accent">
+                {period.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         {stats.map(({ label, value, icon: Icon, trend }, index) => (
           <motion.div
             key={label}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 + index * 0.1, duration: 0.3 }}
-            className="zaago-card"
+            className="bg-zaago-card/50 border border-zaago-border rounded-xl p-6"
           >
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <Icon className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />
-              <span className="text-xs sm:text-sm text-primary font-medium">{trend}</span>
+            <div className="flex items-center justify-between mb-4">
+              <Icon className="w-8 h-8 text-zaago-green" />
+              <span className="text-sm text-zaago-green font-medium">{trend}</span>
             </div>
-            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground mb-1">{value}</h3>
-            <p className="text-secondary text-xs sm:text-sm">{label}</p>
+            <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">{value}</h3>
+            <p className="text-zaago-muted-foreground text-sm">{label}</p>
           </motion.div>
         ))}
       </div>
@@ -179,26 +177,26 @@ const Index = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6, duration: 0.3 }}
-        className="zaago-card"
+        className="bg-zaago-card/50 border border-zaago-border rounded-xl p-6"
       >
-        <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4 sm:mb-6">Quick Actions</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-          <Link to="/products/new" className="zaago-button-ghost p-4 sm:p-6 text-left group">
-            <Package className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-primary mb-3 sm:mb-4 group-hover:scale-110 transition-transform" />
-            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1 sm:mb-2">Add Product</h3>
-            <p className="text-secondary text-sm">Create a new product listing</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-6">Quick Actions</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <Link to="/products/new" className="p-6 text-center group hover:bg-zaago-accent/50 rounded-lg transition-colors">
+            <Package className="w-12 h-12 text-zaago-green mb-4 mx-auto group-hover:scale-110 transition-transform" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">Add Product</h3>
+            <p className="text-zaago-muted-foreground text-sm">Create a new product listing</p>
           </Link>
           
-          <Link to="/products" className="zaago-button-ghost p-4 sm:p-6 text-left group">
-            <ShoppingCart className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-primary mb-3 sm:mb-4 group-hover:scale-110 transition-transform" />
-            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1 sm:mb-2">Manage Products</h3>
-            <p className="text-secondary text-sm">View and edit your inventory</p>
+          <Link to="/products" className="p-6 text-center group hover:bg-zaago-accent/50 rounded-lg transition-colors">
+            <ShoppingCart className="w-12 h-12 text-zaago-green mb-4 mx-auto group-hover:scale-110 transition-transform" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">Manage Products</h3>
+            <p className="text-zaago-muted-foreground text-sm">View and edit your inventory</p>
           </Link>
           
-          <Link to="/deliveries" className="zaago-button-ghost p-4 sm:p-6 text-left group">
-            <Truck className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-primary mb-3 sm:mb-4 group-hover:scale-110 transition-transform" />
-            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1 sm:mb-2">Track Deliveries</h3>
-            <p className="text-secondary text-sm">Monitor shipment status</p>
+          <Link to="/deliveries" className="p-6 text-center group hover:bg-zaago-accent/50 rounded-lg transition-colors">
+            <Truck className="w-12 h-12 text-zaago-green mb-4 mx-auto group-hover:scale-110 transition-transform" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">Track Deliveries</h3>
+            <p className="text-zaago-muted-foreground text-sm">Monitor shipment status</p>
           </Link>
         </div>
       </motion.div>
@@ -208,29 +206,29 @@ const Index = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8, duration: 0.3 }}
-        className="zaago-card"
+        className="bg-zaago-card/50 border border-zaago-border rounded-xl overflow-hidden"
       >
-        <div className="p-4 sm:p-6 border-b border-border">
-          <h2 className="text-lg sm:text-xl font-semibold text-foreground">Recent Activity</h2>
+        <div className="p-6 border-b border-zaago-border">
+          <h2 className="text-xl font-semibold text-foreground">Recent Activity</h2>
         </div>
-        <div className="p-4 sm:p-6">
+        <div className="p-6">
           {loading ? (
-            <div className="flex items-center justify-center py-6 sm:py-8">
-              <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zaago-green"></div>
             </div>
           ) : (
-            <div className="space-y-3 sm:space-y-4">
+            <div className="space-y-4">
               {recentActivity.length > 0 ? recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-center gap-3 sm:gap-4 p-2 sm:p-3 rounded-xl sm:rounded-2xl hover:bg-muted/50 transition-colors">
-                  <div className="w-2 h-2 bg-primary rounded-full shrink-0"></div>
+                <div key={index} className="flex items-center gap-4 p-3 hover:bg-zaago-accent/50 rounded-lg transition-colors">
+                  <div className="w-2 h-2 bg-zaago-green rounded-full shrink-0"></div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-foreground font-medium text-sm sm:text-base">{activity.action}</p>
-                    <p className="text-secondary text-xs sm:text-sm truncate">{activity.item}</p>
+                    <p className="text-foreground font-medium">{activity.action}</p>
+                    <p className="text-zaago-muted-foreground text-sm">{activity.item}</p>
                   </div>
-                  <span className="text-secondary text-xs sm:text-sm shrink-0">{activity.time}</span>
+                  <span className="text-zaago-muted-foreground text-sm shrink-0">{activity.time}</span>
                 </div>
               )) : (
-                <div className="text-center py-6 sm:py-8 text-secondary text-sm sm:text-base">
+                <div className="text-center py-8 text-zaago-muted-foreground">
                   No recent activity found
                 </div>
               )}
