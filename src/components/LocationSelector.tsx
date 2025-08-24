@@ -88,9 +88,9 @@ export const LocationSelector = ({ open, onOpenChange }: LocationSelectorProps) 
           {/* Current Location Display */}
           {location && (
             <div className="p-3 bg-muted rounded-lg">
-              <p className="text-sm font-medium text-foreground mb-1">Current Location:</p>
-              <p className="text-sm text-muted-foreground">
-                {location.address || `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`}
+              <p className="text-sm font-medium text-zaago-card-foreground mb-1">Current Location:</p>
+              <p className="text-sm text-zaago-muted-foreground">
+                {location.address || (location.city && location.state ? `${location.city}, ${location.state}` : 'Unknown location')}
               </p>
               {location.city && location.state && (
                 <p className="text-xs text-muted-foreground mt-1">
