@@ -305,16 +305,17 @@ export default function AddProductPage() {
                   onChange={(e) => handleInputChange('category', e.target.value)}
                   className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 >
-                  <option value="">Select a category</option>
-                  <option value="food">Food</option>
-                  <option value="grocery">Grocery</option>
-                  <option value="frequently-bought">Frequently Bought</option>
-                  <option value="previously-bought">Previously Bought</option>
-                  <option value="fresh-milk-dairy">Fresh Milk and Dairy</option>
-                  <option value="grocery-kitchen">Grocery and Kitchen</option>
-                  <option value="beauty-personal-care">Beauty and Personal Care</option>
-                  <option value="household-essentials">Household Essentials</option>
-                  <option value="other">Other (Custom)</option>
+                   <option value="">Select a category</option>
+                   <option value="food">Food</option>
+                   <option value="grocery">Grocery</option>
+                   <option value="frequently-bought">Frequently Bought</option>
+                   <option value="previously-bought">Previously Bought</option>
+                   <option value="fresh-milk-dairy">Fresh Milk and Dairy</option>
+                   <option value="grocery-kitchen">Grocery and Kitchen</option>
+                   <option value="beauty-personal-care">Beauty and Personal Care</option>
+                   <option value="household-essentials">Household Essentials</option>
+                   <option value="special-offers-deals">Special Offers and Deals</option>
+                   <option value="other">Other (Custom)</option>
                 </select>
               </div>
 
