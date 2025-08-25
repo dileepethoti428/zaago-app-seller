@@ -352,7 +352,9 @@ export default function AddProductPage() {
                     className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   >
                     <option value="per litre">Per Litre</option>
+                    <option value="500ml">500ml (Half Litre)</option>
                     <option value="per kg">Per Kg</option>
+                    <option value="500g">500g (1/2 Kg)</option>
                     <option value="per piece">Per Piece</option>
                     <option value="per bottle">Per Bottle</option>
                   </select>
