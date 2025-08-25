@@ -64,9 +64,14 @@ const Notifications = () => {
         .select('*')
         .eq('user_id', user.id);
       
-      // If user is a seller, only show seller-relevant notifications
+      // If user is a seller, only show seller-relevant notifications and filter by role
       if (isSeller) {
-        query = query.in('type', ['delivery', 'stock_alert']);
+        query = query
+          .eq('role', 'seller')
+          .in('type', ['delivery', 'stock_alert']);
+      } else {
+        // For non-sellers, exclude agent-specific notifications
+        query = query.neq('role', 'agent');
       }
       
       const { data, error } = await query.order('created_at', { ascending: false });
