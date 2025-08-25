@@ -36,8 +36,14 @@ interface Product {
   price: number;
   stock_quantity: number;
   image_url: string | null;
+  images?: string[];
   is_active: boolean;
   category: string | null;
+  type?: string;
+  unit?: string;
+  discount_percentage?: number;
+  benefits?: string[];
+  ingredients?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -50,6 +56,11 @@ interface FormData {
   image_url: string;
   is_active: boolean;
   category: string;
+  type: string;
+  unit: string;
+  discount_percentage: string;
+  benefits: string[];
+  ingredients: string[];
 }
 
 const ProductDetail = () => {
@@ -68,7 +79,12 @@ const ProductDetail = () => {
     stock_quantity: '',
     image_url: '',
     is_active: true,
-    category: 'food'
+    category: 'food',
+    type: '',
+    unit: 'per litre',
+    discount_percentage: '',
+    benefits: [''],
+    ingredients: ['']
   });
 
   useEffect(() => {
@@ -119,7 +135,12 @@ const ProductDetail = () => {
       stock_quantity: product.stock_quantity.toString(),
       image_url: product.image_url || '',
       is_active: product.is_active,
-      category: product.category || 'food'
+      category: product.category || 'food',
+      type: product.type || '',
+      unit: product.unit || 'per litre',
+      discount_percentage: product.discount_percentage?.toString() || '',
+      benefits: product.benefits && product.benefits.length > 0 ? product.benefits : [''],
+      ingredients: product.ingredients && product.ingredients.length > 0 ? product.ingredients : ['']
     });
     setIsEditDialogOpen(true);
   };
@@ -136,6 +157,10 @@ const ProductDetail = () => {
       return;
     }
 
+    // Filter out empty strings from arrays
+    const benefits = formData.benefits.filter(b => b.trim() !== '');
+    const ingredients = formData.ingredients.filter(i => i.trim() !== '');
+
     const productData = {
       seller_id: user.id,
       name: formData.name,
@@ -144,7 +169,12 @@ const ProductDetail = () => {
       stock_quantity: parseInt(formData.stock_quantity) || 0,
       image_url: formData.image_url || null,
       is_active: formData.is_active,
-      category: formData.category
+      category: formData.category,
+      type: formData.type || null,
+      unit: formData.unit,
+      discount_percentage: formData.discount_percentage ? parseFloat(formData.discount_percentage) : 0,
+      benefits: benefits.length > 0 ? benefits : null,
+      ingredients: ingredients.length > 0 ? ingredients : null
     };
 
     try {
@@ -449,113 +479,253 @@ const ProductDetail = () => {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="bg-zaago-card border-zaago-border max-w-md mx-auto">
+        <DialogContent className="bg-zaago-card border-zaago-border max-w-4xl mx-auto max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-foreground">Edit Product</DialogTitle>
           </DialogHeader>
           
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="name" className="text-foreground">Product Name</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="bg-zaago-input border-zaago-border text-foreground"
-                required
-              />
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left Column */}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="name" className="text-foreground">Product Name *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    className="bg-zaago-input border-zaago-border text-foreground"
+                    required
+                  />
+                </div>
 
-            <div>
-              <Label htmlFor="description" className="text-foreground">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                className="bg-zaago-input border-zaago-border text-foreground"
-                rows={3}
-              />
-            </div>
+                <div>
+                  <Label htmlFor="description" className="text-foreground">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    className="bg-zaago-input border-zaago-border text-foreground"
+                    rows={3}
+                  />
+                </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="price" className="text-foreground">Price (₹)</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                  className="bg-zaago-input border-zaago-border text-foreground"
-                  required
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="price" className="text-foreground">Price (₹) *</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      step="0.01"
+                      value={formData.price}
+                      onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                      className="bg-zaago-input border-zaago-border text-foreground"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="stock_quantity" className="text-foreground">Stock Quantity</Label>
+                    <Input
+                      id="stock_quantity"
+                      type="number"
+                      value={formData.stock_quantity}
+                      onChange={(e) => setFormData(prev => ({ ...prev, stock_quantity: e.target.value }))}
+                      className="bg-zaago-input border-zaago-border text-foreground"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="type" className="text-foreground">Product Type</Label>
+                    <Input
+                      id="type"
+                      value={formData.type}
+                      onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
+                      className="bg-zaago-input border-zaago-border text-foreground"
+                      placeholder="e.g. Dairy, Organic"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="unit" className="text-foreground">Unit</Label>
+                    <select
+                      id="unit"
+                      value={formData.unit}
+                      onChange={(e) => setFormData(prev => ({ ...prev, unit: e.target.value }))}
+                      className="w-full px-3 py-2 bg-zaago-input border-zaago-border rounded-md text-foreground"
+                    >
+                      <option value="per litre">Per Litre</option>
+                      <option value="500ml (Half Litre)">500ml (Half Litre)</option>
+                      <option value="per kg">Per Kg</option>
+                      <option value="500g (1/2 Kg)">500g (1/2 Kg)</option>
+                      <option value="per piece">Per Piece</option>
+                      <option value="per bottle">Per Bottle</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="discount_percentage" className="text-foreground">Discount %</Label>
+                  <Input
+                    id="discount_percentage"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={formData.discount_percentage}
+                    onChange={(e) => setFormData(prev => ({ ...prev, discount_percentage: e.target.value }))}
+                    className="bg-zaago-input border-zaago-border text-foreground"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="category" className="text-foreground">Category</Label>
+                  <select
+                    id="category"
+                    value={formData.category}
+                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                    className="w-full px-3 py-2 bg-zaago-input border-zaago-border rounded-md text-foreground"
+                  >
+                    <option value="">Select a category</option>
+                    <option value="food">Food</option>
+                    <option value="grocery">Grocery</option>
+                    <option value="frequently-bought">Frequently Bought</option>
+                    <option value="previously-bought">Previously Bought</option>
+                    <option value="fresh-milk-dairy">Fresh Milk and Dairy</option>
+                    <option value="grocery-kitchen">Grocery and Kitchen</option>
+                    <option value="beauty-personal-care">Beauty and Personal Care</option>
+                    <option value="household-essentials">Household Essentials</option>
+                    <option value="special-offers-deals">Special Offers and Deals</option>
+                    <option value="other">Other (Custom)</option>
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="stock_quantity" className="text-foreground">Stock Quantity</Label>
-                <Input
-                  id="stock_quantity"
-                  type="number"
-                  value={formData.stock_quantity}
-                  onChange={(e) => setFormData(prev => ({ ...prev, stock_quantity: e.target.value }))}
-                  className="bg-zaago-input border-zaago-border text-foreground"
-                  required
-                />
+              {/* Right Column */}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="image_url" className="text-foreground">Image URL</Label>
+                  <Input
+                    id="image_url"
+                    type="url"
+                    value={formData.image_url}
+                    onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
+                    className="bg-zaago-input border-zaago-border text-foreground"
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
+
+                {/* Benefits */}
+                <div>
+                  <Label className="text-foreground">Benefits</Label>
+                  {formData.benefits.map((benefit, index) => (
+                    <div key={index} className="flex gap-2 mt-2">
+                      <Input
+                        value={benefit}
+                        onChange={(e) => {
+                          const newBenefits = [...formData.benefits];
+                          newBenefits[index] = e.target.value;
+                          setFormData(prev => ({ ...prev, benefits: newBenefits }));
+                        }}
+                        placeholder="Enter benefit"
+                        className="bg-zaago-input border-zaago-border text-foreground"
+                      />
+                      {formData.benefits.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const newBenefits = formData.benefits.filter((_, i) => i !== index);
+                            setFormData(prev => ({ ...prev, benefits: newBenefits }));
+                          }}
+                          className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                        >
+                          ×
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFormData(prev => ({ ...prev, benefits: [...prev.benefits, ''] }))}
+                    className="mt-2 text-zaago-green border-zaago-green/30 hover:bg-zaago-green/10"
+                  >
+                    + Add Benefit
+                  </Button>
+                </div>
+
+                {/* Ingredients */}
+                <div>
+                  <Label className="text-foreground">Ingredients</Label>
+                  {formData.ingredients.map((ingredient, index) => (
+                    <div key={index} className="flex gap-2 mt-2">
+                      <Input
+                        value={ingredient}
+                        onChange={(e) => {
+                          const newIngredients = [...formData.ingredients];
+                          newIngredients[index] = e.target.value;
+                          setFormData(prev => ({ ...prev, ingredients: newIngredients }));
+                        }}
+                        placeholder="Enter ingredient"
+                        className="bg-zaago-input border-zaago-border text-foreground"
+                      />
+                      {formData.ingredients.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const newIngredients = formData.ingredients.filter((_, i) => i !== index);
+                            setFormData(prev => ({ ...prev, ingredients: newIngredients }));
+                          }}
+                          className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                        >
+                          ×
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFormData(prev => ({ ...prev, ingredients: [...prev.ingredients, ''] }))}
+                    className="mt-2 text-zaago-green border-zaago-green/30 hover:bg-zaago-green/10"
+                  >
+                    + Add Ingredient
+                  </Button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="is_active"
+                    checked={formData.is_active}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
+                  />
+                  <Label htmlFor="is_active" className="text-foreground">
+                    {formData.is_active ? 'Product is Active' : 'Product is Inactive'}
+                  </Label>
+                </div>
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="category" className="text-foreground">Category</Label>
-              <select
-                id="category"
-                value={formData.category}
-                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                className="w-full h-10 px-3 py-2 bg-zaago-input border border-zaago-border rounded-md text-foreground focus:ring-2 focus:ring-zaago-green focus:border-zaago-green"
-                required
-              >
-                <option value="food">Food</option>
-                <option value="grocery">Grocery</option>
-                <option value="frequently_bought">Frequently Bought</option>
-                <option value="previously_bought">Previously Bought</option>
-                <option value="fresh_milk_dairy">Fresh Milk & Dairy</option>
-                <option value="grocery_kitchen">Grocery & Kitchen</option>
-                <option value="beauty_personal_care">Beauty & Personal Care</option>
-                <option value="household_essentials">Household Essentials</option>
-              </select>
-            </div>
-
-            <div>
-              <Label htmlFor="image_url" className="text-foreground">Image URL</Label>
-              <Input
-                id="image_url"
-                value={formData.image_url}
-                onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
-                className="bg-zaago-input border-zaago-border text-foreground"
-                placeholder="https://example.com/image.jpg"
-              />
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="is_active"
-                checked={formData.is_active}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
-              />
-              <Label htmlFor="is_active" className="text-foreground">Product is active</Label>
-            </div>
-
-            <div className="flex gap-2 pt-4">
+            <div className="flex justify-end gap-2 pt-4 border-t border-zaago-border">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setIsEditDialogOpen(false)}
-                className="flex-1 border-zaago-border text-foreground hover:bg-zaago-accent"
+                className="border-zaago-border text-foreground hover:bg-zaago-accent"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="flex-1 bg-zaago-green text-black hover:bg-zaago-green-light"
+                className="bg-zaago-green hover:bg-zaago-green/90 text-white"
               >
                 Save Changes
               </Button>
