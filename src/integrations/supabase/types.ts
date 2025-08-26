@@ -2484,6 +2484,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_products_category"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "products_category_id_fkey"
             columns: ["category_id"]
             isOneToOne: false
@@ -2797,6 +2804,9 @@ export type Database = {
           id: string
           ifsc_code: string | null
           is_bank_verified: boolean | null
+          latitude: number | null
+          location_verified: boolean | null
+          longitude: number | null
           name: string
           phone: string | null
           rejection_reason: string | null
@@ -2822,6 +2832,9 @@ export type Database = {
           id?: string
           ifsc_code?: string | null
           is_bank_verified?: boolean | null
+          latitude?: number | null
+          location_verified?: boolean | null
+          longitude?: number | null
           name: string
           phone?: string | null
           rejection_reason?: string | null
@@ -2847,6 +2860,9 @@ export type Database = {
           id?: string
           ifsc_code?: string | null
           is_bank_verified?: boolean | null
+          latitude?: number | null
+          location_verified?: boolean | null
+          longitude?: number | null
           name?: string
           phone?: string | null
           rejection_reason?: string | null
@@ -2855,6 +2871,84 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      special_offers: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          discount_percentage: number
+          id: string
+          is_active: boolean
+          max_quantity_per_user: number | null
+          offer_description: string | null
+          offer_price: number
+          offer_title: string
+          offer_type: string
+          original_price: number
+          priority_rank: number | null
+          product_id: string
+          quantity_sold: number
+          total_quantity_available: number | null
+          updated_at: string
+          valid_from: string
+          valid_until: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          discount_percentage?: number
+          id?: string
+          is_active?: boolean
+          max_quantity_per_user?: number | null
+          offer_description?: string | null
+          offer_price: number
+          offer_title: string
+          offer_type?: string
+          original_price: number
+          priority_rank?: number | null
+          product_id: string
+          quantity_sold?: number
+          total_quantity_available?: number | null
+          updated_at?: string
+          valid_from?: string
+          valid_until: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          discount_percentage?: number
+          id?: string
+          is_active?: boolean
+          max_quantity_per_user?: number | null
+          offer_description?: string | null
+          offer_price?: number
+          offer_title?: string
+          offer_type?: string
+          original_price?: number
+          priority_rank?: number | null
+          product_id?: string
+          quantity_sold?: number
+          total_quantity_available?: number | null
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "special_offers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "special_offers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_sellers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscription_autopay_settings: {
         Row: {
@@ -3218,6 +3312,63 @@ export type Database = {
           },
           {
             foreignKeyName: "todays_best_deals_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trending_products: {
+        Row: {
+          average_rating: number | null
+          created_at: string
+          id: string
+          last_order_date: string | null
+          popularity_score: number
+          product_id: string
+          revenue_generated: number
+          total_orders: number
+          total_quantity_sold: number
+          trending_rank: number | null
+          updated_at: string
+        }
+        Insert: {
+          average_rating?: number | null
+          created_at?: string
+          id?: string
+          last_order_date?: string | null
+          popularity_score?: number
+          product_id: string
+          revenue_generated?: number
+          total_orders?: number
+          total_quantity_sold?: number
+          trending_rank?: number | null
+          updated_at?: string
+        }
+        Update: {
+          average_rating?: number | null
+          created_at?: string
+          id?: string
+          last_order_date?: string | null
+          popularity_score?: number
+          product_id?: string
+          revenue_generated?: number
+          total_orders?: number
+          total_quantity_sold?: number
+          trending_rank?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trending_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trending_products_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products_with_sellers"
@@ -3802,6 +3953,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      cleanup_expired_otps: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       clear_user_cart: {
         Args: { cart_user_id: string }
         Returns: undefined
@@ -3875,6 +4030,10 @@ export type Database = {
       ensure_delivery_data_consistency: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      fix_uncategorized_products: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       generate_order_qr_code: {
         Args: { order_uuid: string }
@@ -4027,7 +4186,9 @@ export type Database = {
         }[]
       }
       get_products_within_range: {
-        Args: { customer_lat: number; customer_lon: number; range_km?: number }
+        Args:
+          | { customer_lat: number; customer_lon: number; range_km?: number }
+          | { customer_lat: number; customer_lon: number; range_km?: number }
         Returns: {
           distance_km: number
           product_description: string
@@ -4280,6 +4441,10 @@ export type Database = {
         Args: { p_delivery_date: string; p_subscription_id: string }
         Returns: boolean
       }
+      sync_special_offers_from_products: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       trigger_subscription_processing: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -4291,6 +4456,10 @@ export type Database = {
           p_new_status: string
           p_order_id: string
         }
+        Returns: undefined
+      }
+      update_trending_products: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       upsert_delivery_agent: {
