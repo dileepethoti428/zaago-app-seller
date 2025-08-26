@@ -245,8 +245,8 @@ export default function ProfilePage() {
                 <h2 className="text-xl font-semibold text-foreground">
                   {formData.full_name || 'Your Name'}
                 </h2>
-                <p className="text-secondary">{user?.email}</p>
-                <p className="text-sm text-secondary">
+                <p className="text-foreground/80 font-medium">{user?.email}</p>
+                <p className="text-sm text-foreground/70 font-medium">
                   {formData.business_name || 'Business Name'}
                 </p>
               </div>
