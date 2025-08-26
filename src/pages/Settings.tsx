@@ -8,7 +8,9 @@ import {
   Store,
   Save,
   Edit,
-  MessageCircle
+  MessageCircle,
+  Mail,
+  Smartphone
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -387,62 +389,86 @@ const Settings = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex items-center justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                <div className="flex-1">
-                  <p className="font-semibold text-foreground mb-1">Email Notifications</p>
-                  <p className="text-sm text-muted-foreground">Receive order updates via email</p>
+              {/* Email Notifications Section */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 mb-4">
+                  <Mail className="w-4 h-4 text-zaago-green" />
+                  <h4 className="font-semibold text-foreground">Email Notifications</h4>
                 </div>
-                <Switch
-                  checked={notifications.email_orders}
-                  onCheckedChange={(checked) => 
-                    setNotifications(prev => ({ ...prev, email_orders: checked }))
-                  }
-                />
+                
+                <div className="space-y-3 pl-6 border-l-2 border-zaago-green/20">
+                  <div className="flex items-center justify-between gap-4 p-3 rounded-md border bg-card hover:bg-accent/50 transition-colors">
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground text-sm">Order Updates</p>
+                      <p className="text-xs text-muted-foreground">Get notified when your orders are processed, shipped, or delivered</p>
+                    </div>
+                    <Switch
+                      checked={notifications.email_orders}
+                      onCheckedChange={(checked) => 
+                        setNotifications(prev => ({ ...prev, email_orders: checked }))
+                      }
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between gap-4 p-3 rounded-md border bg-card hover:bg-accent/50 transition-colors">
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground text-sm">Promotional Offers</p>
+                      <p className="text-xs text-muted-foreground">Receive special deals, discounts, and new product announcements</p>
+                    </div>
+                    <Switch
+                      checked={notifications.email_promotions}
+                      onCheckedChange={(checked) => 
+                        setNotifications(prev => ({ ...prev, email_promotions: checked }))
+                      }
+                    />
+                  </div>
+                </div>
               </div>
               
-              <div className="flex items-center justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                <div className="flex-1">
-                  <p className="font-semibold text-foreground mb-1">SMS Notifications</p>
-                  <p className="text-sm text-muted-foreground">Receive order updates via SMS</p>
+              {/* Mobile Notifications Section */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 mb-4">
+                  <Smartphone className="w-4 h-4 text-zaago-green" />
+                  <h4 className="font-semibold text-foreground">Mobile Notifications</h4>
                 </div>
-                <Switch
-                  checked={notifications.sms_orders}
-                  onCheckedChange={(checked) => 
-                    setNotifications(prev => ({ ...prev, sms_orders: checked }))
-                  }
-                />
+                
+                <div className="space-y-3 pl-6 border-l-2 border-zaago-green/20">
+                  <div className="flex items-center justify-between gap-4 p-3 rounded-md border bg-card hover:bg-accent/50 transition-colors">
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground text-sm">SMS Alerts</p>
+                      <p className="text-xs text-muted-foreground">Instant SMS updates for critical order status changes</p>
+                    </div>
+                    <Switch
+                      checked={notifications.sms_orders}
+                      onCheckedChange={(checked) => 
+                        setNotifications(prev => ({ ...prev, sms_orders: checked }))
+                      }
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between gap-4 p-3 rounded-md border bg-card hover:bg-accent/50 transition-colors">
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground text-sm">Push Notifications</p>
+                      <p className="text-xs text-muted-foreground">Real-time app notifications for orders and updates</p>
+                    </div>
+                    <Switch
+                      checked={notifications.push_orders}
+                      onCheckedChange={(checked) => 
+                        setNotifications(prev => ({ ...prev, push_orders: checked }))
+                      }
+                    />
+                  </div>
+                </div>
               </div>
               
-              <div className="flex items-center justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                <div className="flex-1">
-                  <p className="font-semibold text-foreground mb-1">Push Notifications</p>
-                  <p className="text-sm text-muted-foreground">Receive push notifications in the app</p>
+              <div className="mt-6 p-4 bg-gradient-to-r from-zaago-green/5 to-zaago-green/10 border border-zaago-green/20 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 rounded-full bg-zaago-green mt-1.5 flex-shrink-0"></div>
+                  <div>
+                    <p className="text-sm font-medium text-zaago-green-dark mb-1">Stay Connected</p>
+                    <p className="text-xs text-muted-foreground">Configure your notification preferences to never miss important updates about your orders and account.</p>
+                  </div>
                 </div>
-                <Switch
-                  checked={notifications.push_orders}
-                  onCheckedChange={(checked) => 
-                    setNotifications(prev => ({ ...prev, push_orders: checked }))
-                  }
-                />
-              </div>
-              
-              <div className="flex items-center justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                <div className="flex-1">
-                  <p className="font-semibold text-foreground mb-1">Promotional Emails</p>
-                  <p className="text-sm text-muted-foreground">Receive promotional offers and updates</p>
-                </div>
-                <Switch
-                  checked={notifications.email_promotions}
-                  onCheckedChange={(checked) => 
-                    setNotifications(prev => ({ ...prev, email_promotions: checked }))
-                  }
-                />
-              </div>
-              
-              <div className="mt-6 p-4 bg-zaago-green/5 border border-zaago-green/20 rounded-lg">
-                <p className="text-sm text-zaago-green-dark font-medium">
-                  💡 Tip: Enable notifications to stay updated on your orders and important updates
-                </p>
               </div>
             </CardContent>
           </Card>
