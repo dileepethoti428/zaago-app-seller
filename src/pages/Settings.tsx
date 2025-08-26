@@ -10,7 +10,11 @@ import {
   Edit,
   MessageCircle,
   Mail,
-  Smartphone
+  Smartphone,
+  Palette,
+  Monitor,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -19,13 +23,16 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from 'next-themes';
 
 const Settings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState({
     full_name: '',
@@ -467,6 +474,72 @@ const Settings = () => {
                   <div>
                     <p className="text-sm font-medium text-zaago-green-dark mb-1">Stay Connected</p>
                     <p className="text-xs text-muted-foreground">Configure your notification preferences to never miss important updates about your orders and account.</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Theme Preferences */}
+          <Card className="zaago-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="w-5 h-5 text-zaago-green" />
+                Theme Preferences
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Choose your preferred color scheme for the app
+                </p>
+                
+                <RadioGroup 
+                  value={theme} 
+                  onValueChange={setTheme}
+                  className="space-y-3"
+                >
+                  <div className="flex items-center justify-between p-3 rounded-md border bg-card hover:bg-accent/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <Monitor className="w-5 h-5 text-muted-foreground" />
+                      <div>
+                        <p className="font-medium text-foreground text-sm">System</p>
+                        <p className="text-xs text-muted-foreground">Follow your device's theme setting</p>
+                      </div>
+                    </div>
+                    <RadioGroupItem value="system" id="system" />
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 rounded-md border bg-card hover:bg-accent/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <Sun className="w-5 h-5 text-amber-500" />
+                      <div>
+                        <p className="font-medium text-foreground text-sm">Light</p>
+                        <p className="text-xs text-muted-foreground">Bright and clean interface</p>
+                      </div>
+                    </div>
+                    <RadioGroupItem value="light" id="light" />
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 rounded-md border bg-card hover:bg-accent/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <Moon className="w-5 h-5 text-blue-400" />
+                      <div>
+                        <p className="font-medium text-foreground text-sm">Dark</p>
+                        <p className="text-xs text-muted-foreground">Easy on the eyes in low light</p>
+                      </div>
+                    </div>
+                    <RadioGroupItem value="dark" id="dark" />
+                  </div>
+                </RadioGroup>
+              </div>
+              
+              <div className="mt-6 p-4 bg-gradient-to-r from-zaago-green/5 to-zaago-green/10 border border-zaago-green/20 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 rounded-full bg-zaago-green mt-1.5 flex-shrink-0"></div>
+                  <div>
+                    <p className="text-sm font-medium text-zaago-green-dark mb-1">Theme Changes</p>
+                    <p className="text-xs text-muted-foreground">Your theme preference will be saved automatically and applied across the entire app.</p>
                   </div>
                 </div>
               </div>
