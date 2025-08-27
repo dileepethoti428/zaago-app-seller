@@ -29,30 +29,65 @@ export const useLocation = () => {
     setError(null);
 
     try {
+      // Check permissions first
+      const permission = await navigator.permissions.query({ name: 'geolocation' });
+      if (permission.state === 'denied') {
+        throw new Error('Location access denied. Please enable location permissions in your browser settings.');
+      }
+
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 300000, // 5 minutes
-        });
+        navigator.geolocation.getCurrentPosition(
+          resolve, 
+          (error) => {
+            let errorMessage = 'Failed to get location';
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                errorMessage = 'Location access denied. Please enable location permissions.';
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorMessage = 'Location information unavailable. Please check your GPS or internet connection.';
+                break;
+              case error.TIMEOUT:
+                errorMessage = 'Location request timed out. Please try again.';
+                break;
+            }
+            reject(new Error(errorMessage));
+          }, 
+          {
+            enableHighAccuracy: true,
+            timeout: 30000, // Increased to 30 seconds
+            maximumAge: 600000, // 10 minutes cache
+          }
+        );
       });
 
       const { latitude, longitude } = position.coords;
       
-      // Reverse geocoding to get address
-      const response = await fetch(
-        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
-      );
-      
+      // Reverse geocoding to get address with timeout
       let addressData = {};
-      if (response.ok) {
-        const data = await response.json();
-        addressData = {
-          address: data.locality || data.city || 'Unknown location',
-          city: data.city || data.locality,
-          state: data.principalSubdivision,
-          pincode: data.postcode,
-        };
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout for API call
+        
+        const response = await fetch(
+          `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`,
+          { signal: controller.signal }
+        );
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+          const data = await response.json();
+          addressData = {
+            address: data.locality || data.city || 'Unknown location',
+            city: data.city || data.locality,
+            state: data.principalSubdivision,
+            pincode: data.postcode,
+          };
+        }
+      } catch (addressError) {
+        console.warn('Failed to get address from coordinates:', addressError);
+        // Continue without address data
       }
 
       const locationData: LocationData = {
@@ -65,12 +100,17 @@ export const useLocation = () => {
 
       // Save to database if user is logged in
       if (user) {
-        await supabase
-          .from('user_locations')
-          .upsert({
-            user_id: user.id,
-            ...locationData,
-          });
+        try {
+          await supabase
+            .from('user_locations')
+            .upsert({
+              user_id: user.id,
+              ...locationData,
+            });
+        } catch (dbError) {
+          console.warn('Failed to save location to database:', dbError);
+          // Don't show error to user as location was still obtained
+        }
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to get location';
@@ -88,17 +128,15 @@ export const useLocation = () => {
   const startLocationUpdates = useCallback(() => {
     getCurrentLocation();
     
-    // Update location every 10 seconds
-    const interval = setInterval(getCurrentLocation, 10000);
+    // Update location every 5 minutes instead of 10 seconds (less aggressive)
+    const interval = setInterval(getCurrentLocation, 300000);
     
     return () => clearInterval(interval);
   }, [getCurrentLocation]);
 
   useEffect(() => {
-    if (user) {
-      const cleanup = startLocationUpdates();
-      return cleanup;
-    }
+    // Only auto-start location updates in critical scenarios
+    // For better UX, let components manually trigger location requests
   }, [user, startLocationUpdates]);
 
   return {
