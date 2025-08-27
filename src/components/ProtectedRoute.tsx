@@ -65,7 +65,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         if (!data.bank_name && location.pathname !== '/bank-details' && location.pathname === '/login') {
           navigate('/bank-details');
         } else if (location.pathname === '/login') {
-          navigate('/products');
+          navigate('/');
         }
       }
     } catch (error) {
