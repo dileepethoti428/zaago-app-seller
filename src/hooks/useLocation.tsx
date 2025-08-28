@@ -135,9 +135,11 @@ export const useLocation = () => {
   }, [getCurrentLocation]);
 
   useEffect(() => {
-    // Only auto-start location updates in critical scenarios
-    // For better UX, let components manually trigger location requests
-  }, [user, startLocationUpdates]);
+    // Auto-start location detection when user is available
+    if (user) {
+      getCurrentLocation();
+    }
+  }, [user, getCurrentLocation]);
 
   return {
     location,
