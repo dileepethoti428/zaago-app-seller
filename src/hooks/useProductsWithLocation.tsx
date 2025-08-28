@@ -11,12 +11,7 @@ interface ProductWithDistance {
   product_image_url: string;
   stock_quantity: number;
   seller_id: string;
-  seller_location: {
-    latitude: number;
-    longitude: number;
-    address?: string;
-    city?: string;
-  };
+  seller_location: any;
   distance_km: number;
 }
 
@@ -43,13 +38,13 @@ export const useProductsWithLocation = (maxDistance: number = 15) => {
 
         if (error) throw error;
 
-        setProducts((data || []).map(item => ({
+        setProducts((data || []).map((item: any) => ({
           ...item,
-          seller_location: item.seller_location as {
-            latitude: number;
-            longitude: number;
-            address?: string;
-            city?: string;
+          seller_location: item.seller_location || {
+            latitude: 0,
+            longitude: 0,
+            address: '',
+            city: ''
           }
         })));
       } catch (err) {

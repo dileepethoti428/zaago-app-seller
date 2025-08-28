@@ -1041,10 +1041,12 @@ export type Database = {
           is_default: boolean | null
           label: string
           landmark: string | null
+          phone: string | null
           pincode: string
           state: string
           updated_at: string
           user_id: string
+          user_name: string | null
         }
         Insert: {
           city: string
@@ -1055,10 +1057,12 @@ export type Database = {
           is_default?: boolean | null
           label: string
           landmark?: string | null
+          phone?: string | null
           pincode: string
           state: string
           updated_at?: string
           user_id: string
+          user_name?: string | null
         }
         Update: {
           city?: string
@@ -1069,10 +1073,12 @@ export type Database = {
           is_default?: boolean | null
           label?: string
           landmark?: string | null
+          phone?: string | null
           pincode?: string
           state?: string
           updated_at?: string
           user_id?: string
+          user_name?: string | null
         }
         Relationships: []
       }
@@ -3765,6 +3771,39 @@ export type Database = {
         }
         Relationships: []
       }
+      seller_analytics_view: {
+        Row: {
+          business_name: string | null
+          month_stats: Json | null
+          seller_email: string | null
+          seller_id: string | null
+          seller_name: string | null
+          six_month_stats: Json | null
+          week_stats: Json | null
+          year_stats: Json | null
+        }
+        Insert: {
+          business_name?: string | null
+          month_stats?: never
+          seller_email?: string | null
+          seller_id?: string | null
+          seller_name?: string | null
+          six_month_stats?: never
+          week_stats?: never
+          year_stats?: never
+        }
+        Update: {
+          business_name?: string | null
+          month_stats?: never
+          seller_email?: string | null
+          seller_id?: string | null
+          seller_name?: string | null
+          six_month_stats?: never
+          week_stats?: never
+          year_stats?: never
+        }
+        Relationships: []
+      }
       user_eligible_coupons: {
         Row: {
           birthday_month_target: boolean | null
@@ -3994,6 +4033,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      create_delivery_agent: {
+        Args: {
+          agent_email: string
+          agent_name: string
+          agent_phone?: string
+          custom_agent_id?: string
+        }
+        Returns: string
+      }
       create_order_from_existing_subscription: {
         Args: { p_order_type?: string; p_subscription_id: string }
         Returns: string
@@ -4126,6 +4174,26 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      get_delivery_agent_analytics: {
+        Args: { time_period?: string }
+        Returns: {
+          agent_email: string
+          agent_id: string
+          agent_name: string
+          average_rating: number
+          completion_rate: number
+          deliveries_today: number
+          is_active: boolean
+          is_online: boolean
+          last_delivery_at: string
+          period_label: string
+          phone: string
+          successful_deliveries: number
+          total_deliveries: number
+          total_distance: number
+          total_earnings: number
+        }[]
+      }
       get_delivery_performance: {
         Args: { time_period?: string }
         Returns: {
@@ -4197,7 +4265,9 @@ export type Database = {
           product_name: string
           product_price: number
           seller_id: string
-          seller_location: Json
+          seller_lat: number
+          seller_lng: number
+          seller_name: string
           stock_quantity: number
         }[]
       }
@@ -4228,6 +4298,10 @@ export type Database = {
         Args: { target_seller_id: string }
         Returns: Json
       }
+      get_seller_sales_analytics: {
+        Args: { target_seller_id: string; time_period?: string }
+        Returns: Json
+      }
       get_seller_stats: {
         Args: { seller_user_id: string }
         Returns: Json
@@ -4245,6 +4319,20 @@ export type Database = {
           seller_name: string
           total_revenue: number
           total_sold: number
+        }[]
+      }
+      get_top_products_analytics: {
+        Args: { limit_count?: number; time_period?: string }
+        Returns: {
+          period_label: string
+          product_id: string
+          product_image_url: string
+          product_name: string
+          seller_id: string
+          seller_name: string
+          total_orders: number
+          total_quantity: number
+          total_revenue: number
         }[]
       }
       get_trending_products_for_new_users: {
@@ -4321,6 +4409,14 @@ export type Database = {
       }
       is_current_user_admin_v2: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_location_serviceable: {
+        Args: {
+          customer_lat: number
+          customer_lon: number
+          max_distance_km?: number
+        }
         Returns: boolean
       }
       is_user_eligible_for_coupon: {
