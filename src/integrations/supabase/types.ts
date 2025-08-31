@@ -2424,6 +2424,60 @@ export type Database = {
           },
         ]
       }
+      product_variants: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          price_adjustment: number | null
+          product_id: string
+          stock_quantity: number | null
+          updated_at: string
+          variant_name: string
+          variant_value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          price_adjustment?: number | null
+          product_id: string
+          stock_quantity?: number | null
+          updated_at?: string
+          variant_name: string
+          variant_value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          price_adjustment?: number | null
+          product_id?: string
+          stock_quantity?: number | null
+          updated_at?: string
+          variant_name?: string
+          variant_value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           benefits: string[] | null
@@ -3601,6 +3655,36 @@ export type Database = {
           timezone?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      variant_templates: {
+        Row: {
+          category_name: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          sort_order: number | null
+          template_name: string
+          template_value: string
+        }
+        Insert: {
+          category_name: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          sort_order?: number | null
+          template_name: string
+          template_value: string
+        }
+        Update: {
+          category_name?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          sort_order?: number | null
+          template_name?: string
+          template_value?: string
         }
         Relationships: []
       }

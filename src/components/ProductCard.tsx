@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import { Package, DollarSign, Calendar, Edit, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useProductVariants } from '@/hooks/useProductVariants';
+import ProductVariantSelector from './ProductVariantSelector';
 
 interface Product {
   id: string;
@@ -19,6 +21,8 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, onDelete }: ProductCardProps) {
+  const { variants } = useProductVariants(product.id);
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -84,18 +88,35 @@ export default function ProductCard({ product, onDelete }: ProductCardProps) {
           </p>
         )}
 
-        <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-2 text-primary">
-            <span className="font-semibold">{formatPrice(product.price)}</span>
-          </div>
-          
-          {product.stock_quantity !== undefined && (
-            <div className="flex items-center gap-2 text-secondary">
-              <Package className="w-4 h-4" />
-              <span>{product.stock_quantity} in stock</span>
+        {/* Variant Selector or Basic Price */}
+        {variants.length > 0 ? (
+          <ProductVariantSelector
+            productId={product.id}
+            basePrice={product.price}
+            className="mb-2"
+          />
+        ) : (
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-2 text-primary">
+              <span className="font-semibold">{formatPrice(product.price)}</span>
             </div>
-          )}
-        </div>
+            
+            {product.stock_quantity !== undefined && (
+              <div className="flex items-center gap-2 text-secondary">
+                <Package className="w-4 h-4" />
+                <span>{product.stock_quantity} in stock</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Stock info for products with variants */}
+        {variants.length > 0 && product.stock_quantity !== undefined && (
+          <div className="flex items-center gap-2 text-xs text-secondary">
+            <Package className="w-3 h-3" />
+            <span>Base stock: {product.stock_quantity}</span>
+          </div>
+        )}
 
         <div className="flex items-center gap-2 text-xs text-secondary">
           <Calendar className="w-3 h-3" />

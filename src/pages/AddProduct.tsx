@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/context/AuthContext';
+import ProductVariants from '@/components/ProductVariants';
 
 export default function AddProductPage() {
   const { user } = useAuth();
@@ -29,6 +30,16 @@ export default function AddProductPage() {
     benefits: [''],
     ingredients: ['']
   });
+
+  const [productVariants, setProductVariants] = useState<Array<{
+    id?: string;
+    variant_name: string;
+    variant_value: string;
+    price_adjustment: number;
+    stock_quantity: number;
+    is_default: boolean;
+    is_active: boolean;
+  }>>([]);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -184,7 +195,7 @@ export default function AddProductPage() {
         seller_id: user?.id // Add seller_id to track ownership
       };
 
-      const { data, error } = await supabase
+      const { data: product, error } = await supabase
         .from('products')
         .insert([productData])
         .select()
@@ -198,6 +209,32 @@ export default function AddProductPage() {
           variant: "destructive",
         });
         return;
+      }
+
+      // Create product variants if any
+      if (productVariants.length > 0 && product) {
+        const variantData = productVariants.map(variant => ({
+          product_id: product.id,
+          variant_name: variant.variant_name,
+          variant_value: variant.variant_value,
+          price_adjustment: variant.price_adjustment,
+          stock_quantity: variant.stock_quantity,
+          is_default: variant.is_default,
+          is_active: variant.is_active
+        }));
+
+        const { error: variantError } = await supabase
+          .from('product_variants')
+          .insert(variantData);
+
+        if (variantError) {
+          console.error('Error creating variants:', variantError);
+          toast({
+            title: "Warning",
+            description: "Product created but some variants failed to save.",
+            variant: "destructive",
+          });
+        }
       }
 
       toast({
@@ -541,6 +578,15 @@ export default function AddProductPage() {
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Product Variants Section */}
+          <div className="space-y-6">
+            <ProductVariants
+              selectedCategory={formData.category}
+              variants={productVariants}
+              onVariantsChange={setProductVariants}
+            />
           </div>
 
           {/* Form Actions */}
