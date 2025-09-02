@@ -196,9 +196,10 @@ export const MapSelector = ({ onLocationSelect, onClose, initialLocation }: MapS
     <div className="space-y-4">
       <div 
         ref={mapContainer} 
-        className="w-full h-80 rounded-lg border border-zaago-border bg-gray-100"
+        className="w-full h-[450px] rounded-lg border border-zaago-border"
         style={{ 
-          minHeight: '320px',
+          minHeight: '450px',
+          width: '100%',
           position: 'relative'
         }}
       />

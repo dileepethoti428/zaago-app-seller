@@ -54,15 +54,15 @@ export const LocationSelector = ({ open, onOpenChange }: LocationSelectorProps) 
         }
         onOpenChange(open);
       }}>
-        <DialogContent className="sm:max-w-4xl bg-zaago-card border-zaago-border max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-5xl w-[95vw] bg-zaago-card border-zaago-border p-0">
+          <DialogHeader className="p-6 pb-0">
             <DialogTitle className="flex items-center gap-2 text-lg text-foreground">
               <Map className="h-5 w-5 text-zaago-green" />
               Select Location on Map
             </DialogTitle>
           </DialogHeader>
           
-          <div className="py-4">
+          <div className="p-6 pt-4">
             <MapSelector
               onLocationSelect={handleMapLocationSelect}
               onClose={() => setShowMap(false)}
