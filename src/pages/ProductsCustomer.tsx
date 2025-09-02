@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Search, ShoppingCart, Heart, MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useProductsWithLocation } from "@/hooks/useProductsWithLocation";
 import { useToast } from "@/hooks/use-toast";
+import ProductVariantSelector from "@/components/ProductVariantSelector";
 
 const ProductsCustomer = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -113,33 +115,39 @@ const ProductsCustomer = () => {
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.2 }}
             >
-              <Card className="h-full flex flex-col">
-                <div className="relative">
-                  {product.product_image_url ? (
-                    <img
-                      src={product.product_image_url}
-                      alt={product.product_name}
-                      className="w-full h-48 object-cover rounded-t-lg"
-                    />
-                  ) : (
-                    <div className="w-full h-48 bg-muted rounded-t-lg flex items-center justify-center">
-                      <span className="text-muted-foreground">No image</span>
-                    </div>
-                  )}
-                  <button
-                    onClick={() => toggleFavorite(product)}
-                    className="absolute top-2 right-2 p-2 bg-white/80 rounded-full hover:bg-white transition-colors"
-                  >
-                    <Heart className="h-4 w-4" />
-                  </button>
-                </div>
+              <Card className="h-full flex flex-col group hover:shadow-lg transition-all duration-300">
+                <Link to={`/customer-products/${product.product_id}`} className="block">
+                  <div className="relative">
+                    {product.product_image_url ? (
+                      <img
+                        src={product.product_image_url}
+                        alt={product.product_name}
+                        className="w-full h-48 object-cover rounded-t-lg group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-48 bg-muted rounded-t-lg flex items-center justify-center">
+                        <span className="text-muted-foreground">No image</span>
+                      </div>
+                    )}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toggleFavorite(product);
+                      }}
+                      className="absolute top-2 right-2 p-2 bg-white/80 rounded-full hover:bg-white transition-colors z-10"
+                    >
+                      <Heart className="h-4 w-4" />
+                    </button>
+                  </div>
+                </Link>
                 
                 <CardContent className="flex-1 flex flex-col p-4">
-                  <div className="flex-1 space-y-2">
-                    <h3 className="font-semibold text-lg line-clamp-2">{product.product_name}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {product.product_description}
-                    </p>
+                  <Link to={`/customer-products/${product.product_id}`} className="flex-1">
+                    <div className="flex-1 space-y-2">
+                      <h3 className="font-semibold text-lg line-clamp-2 group-hover:text-primary transition-colors">{product.product_name}</h3>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {product.product_description}
+                      </p>
                     
                     <div className="flex items-center gap-2">
                       <MapPin className="h-3 w-3 text-muted-foreground" />
@@ -153,18 +161,22 @@ const ProductsCustomer = () => {
                       )}
                     </div>
                     
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-primary">
-                        ₹{product.product_price}
-                      </span>
-                      <Badge variant={product.stock_quantity > 10 ? "default" : "secondary"}>
-                        {product.stock_quantity} in stock
-                      </Badge>
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl font-bold text-primary">
+                          ₹{product.product_price}
+                        </span>
+                        <Badge variant={product.stock_quantity > 10 ? "default" : "secondary"}>
+                          {product.stock_quantity} in stock
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
+                  </Link>
                   
                   <Button
-                    onClick={() => addToCart(product)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      addToCart(product);
+                    }}
                     className="w-full mt-4"
                     disabled={product.stock_quantity === 0}
                   >

@@ -27,6 +27,7 @@ import PendingApproval from "./pages/PendingApproval";
 import ApplicationRejected from "./pages/ApplicationRejected";
 import SellerApprovals from "./pages/SellerApprovals";
 import ProductsCustomer from "./pages/ProductsCustomer";
+import CustomerProductDetail from "./pages/CustomerProductDetail";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const App = () => (
                 <Route path="profile" element={<Profile />} />
                 <Route path="seller-approvals" element={<SellerApprovals />} />
                 <Route path="products-customer" element={<ProductsCustomer />} />
+                <Route path="customer-products/:id" element={<CustomerProductDetail />} />
               </Route>
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

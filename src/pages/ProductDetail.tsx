@@ -28,6 +28,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import ProductVariantSelector from '@/components/ProductVariantSelector';
 
 interface Product {
   id: string;
@@ -393,9 +394,16 @@ const ProductDetail = () => {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-zaago-muted-foreground">
                 <DollarSign className="w-4 h-4" />
-                <span className="text-sm">Price</span>
+                <span className="text-sm">Price & Variants</span>
               </div>
-              <p className="text-2xl font-bold text-zaago-green">₹{product.price}</p>
+              <div className="space-y-2">
+                <p className="text-lg font-medium text-zaago-muted-foreground">Base: ₹{product.price}</p>
+                <ProductVariantSelector
+                  productId={product.id}
+                  basePrice={product.price}
+                  className="mt-2"
+                />
+              </div>
             </div>
             
             <div className="space-y-2">
