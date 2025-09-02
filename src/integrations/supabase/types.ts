@@ -1082,6 +1082,45 @@ export type Database = {
         }
         Relationships: []
       }
+      delivery_agent_ratings: {
+        Row: {
+          agent_behavior_rating: number | null
+          agent_id: string
+          created_at: string
+          delivery_timeliness_rating: number | null
+          id: string
+          order_id: string
+          rating: number
+          review: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_behavior_rating?: number | null
+          agent_id: string
+          created_at?: string
+          delivery_timeliness_rating?: number | null
+          id?: string
+          order_id: string
+          rating: number
+          review?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_behavior_rating?: number | null
+          agent_id?: string
+          created_at?: string
+          delivery_timeliness_rating?: number | null
+          id?: string
+          order_id?: string
+          rating?: number
+          review?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       delivery_agents: {
         Row: {
           agent_id: string
@@ -2379,6 +2418,74 @@ export type Database = {
         }
         Relationships: []
       }
+      product_ratings: {
+        Row: {
+          created_at: string | null
+          helpful_count: number | null
+          id: string
+          is_verified_purchase: boolean | null
+          order_id: string | null
+          product_id: string
+          rating: number
+          review: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          helpful_count?: number | null
+          id?: string
+          is_verified_purchase?: boolean | null
+          order_id?: string | null
+          product_id: string
+          rating: number
+          review?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          helpful_count?: number | null
+          id?: string
+          is_verified_purchase?: boolean | null
+          order_id?: string | null
+          product_id?: string
+          rating?: number
+          review?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_ratings_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_ratings_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders_with_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_ratings_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_ratings_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_stock_notifications: {
         Row: {
           created_at: string
@@ -2430,7 +2537,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_default: boolean | null
-          price_adjustment: number | null
+          price: number | null
           product_id: string
           stock_quantity: number | null
           updated_at: string
@@ -2442,7 +2549,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
-          price_adjustment?: number | null
+          price?: number | null
           product_id: string
           stock_quantity?: number | null
           updated_at?: string
@@ -2454,7 +2561,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
-          price_adjustment?: number | null
+          price?: number | null
           product_id?: string
           stock_quantity?: number | null
           updated_at?: string
@@ -2480,6 +2587,7 @@ export type Database = {
       }
       products: {
         Row: {
+          average_rating: number | null
           benefits: string[] | null
           category: string | null
           category_id: string | null
@@ -2496,11 +2604,13 @@ export type Database = {
           price: number
           seller_id: string | null
           stock_quantity: number | null
+          total_reviews: number | null
           type: string | null
           unit: string | null
           updated_at: string
         }
         Insert: {
+          average_rating?: number | null
           benefits?: string[] | null
           category?: string | null
           category_id?: string | null
@@ -2517,11 +2627,13 @@ export type Database = {
           price: number
           seller_id?: string | null
           stock_quantity?: number | null
+          total_reviews?: number | null
           type?: string | null
           unit?: string | null
           updated_at?: string
         }
         Update: {
+          average_rating?: number | null
           benefits?: string[] | null
           category?: string | null
           category_id?: string | null
@@ -2538,6 +2650,7 @@ export type Database = {
           price?: number
           seller_id?: string | null
           stock_quantity?: number | null
+          total_reviews?: number | null
           type?: string | null
           unit?: string | null
           updated_at?: string
@@ -4496,11 +4609,17 @@ export type Database = {
         Returns: boolean
       }
       is_location_serviceable: {
-        Args: {
-          customer_lat: number
-          customer_lon: number
-          max_distance_km?: number
-        }
+        Args:
+          | {
+              customer_lat: number
+              customer_lon: number
+              max_distance_km?: number
+            }
+          | {
+              customer_lat: number
+              customer_lon: number
+              max_distance_km?: number
+            }
         Returns: boolean
       }
       is_user_eligible_for_coupon: {
@@ -4637,6 +4756,15 @@ export type Database = {
           p_order_id: string
         }
         Returns: undefined
+      }
+      update_seller_location_from_current: {
+        Args: {
+          current_address?: Json
+          current_lat: number
+          current_lng: number
+          seller_user_id: string
+        }
+        Returns: boolean
       }
       update_trending_products: {
         Args: Record<PropertyKey, never>

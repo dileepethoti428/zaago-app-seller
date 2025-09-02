@@ -6,12 +6,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import ProductVariants from '@/components/ProductVariants';
+import { useSellerLocation } from '@/hooks/useSellerLocation';
+import { MapPin, Navigation } from 'lucide-react';
 
 export default function AddProductPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const { sellerLocation, updateLocationFromCurrent, loading: locationLoading } = useSellerLocation();
   const [imageUploading, setImageUploading] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -162,6 +165,20 @@ export default function AddProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if seller location is verified, if not, prompt for location update
+    if (!sellerLocation?.location_verified) {
+      const updateSuccess = await updateLocationFromCurrent();
+      if (!updateSuccess) {
+        toast({
+          title: "Location Required",
+          description: "Please update your business location to continue adding products.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     setLoading(true);
 
     try {
@@ -257,7 +274,7 @@ export default function AddProductPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-foreground flex items-center gap-3 mb-2">
@@ -267,6 +284,46 @@ export default function AddProductPage() {
             Add New Product
           </h1>
           <p className="text-muted-foreground">Create a new product listing for the customer app</p>
+          
+          {/* Location Status */}
+          {sellerLocation && (
+            <div className="mt-4 p-3 bg-card border border-border rounded-lg">
+              <div className="flex items-center gap-2 text-sm">
+                <MapPin className="w-4 h-4" />
+                <span className="font-medium">Business Location:</span>
+                {sellerLocation.location_verified ? (
+                  <span className="text-green-600">✓ Verified</span>
+                ) : (
+                  <span className="text-orange-600">⚠ Not verified</span>
+                )}
+              </div>
+              {!sellerLocation.location_verified && (
+                <div className="mt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={updateLocationFromCurrent}
+                    disabled={locationLoading}
+                    className="text-sm bg-primary text-primary-foreground px-3 py-1 rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  >
+                    {locationLoading ? (
+                      <>
+                        <Navigation className="w-3 h-3 animate-spin inline mr-1" />
+                        Updating...
+                      </>
+                    ) : (
+                      <>
+                        <Navigation className="w-3 h-3 inline mr-1" />
+                        Update Location
+                      </>
+                    )}
+                  </button>
+                  <span className="text-xs text-muted-foreground">
+                    Location is required to show your products to nearby customers
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Form */}

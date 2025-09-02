@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useSellerLocation } from '@/hooks/useSellerLocation';
+import { MapPin, Navigation } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -28,6 +30,7 @@ export default function EditProductPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { sellerLocation, updateLocationFromCurrent, loading: locationLoading } = useSellerLocation();
   
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -237,6 +240,19 @@ export default function EditProductPage() {
     e.preventDefault();
     if (!product || !user) return;
 
+    // Check if seller location is verified, if not, prompt for location update
+    if (!sellerLocation?.location_verified) {
+      const updateSuccess = await updateLocationFromCurrent();
+      if (!updateSuccess) {
+        toast({
+          title: "Location Required",
+          description: "Please update your business location to continue editing products.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setSaving(true);
 
     try {
@@ -404,6 +420,46 @@ export default function EditProductPage() {
               Edit Product
             </h1>
             <p className="text-secondary mt-1">Update your product information</p>
+            
+            {/* Location Status */}
+            {sellerLocation && (
+              <div className="mt-4 p-3 bg-card border border-border rounded-lg">
+                <div className="flex items-center gap-2 text-sm">
+                  <MapPin className="w-4 h-4" />
+                  <span className="font-medium">Business Location:</span>
+                  {sellerLocation.location_verified ? (
+                    <span className="text-green-600">✓ Verified</span>
+                  ) : (
+                    <span className="text-orange-600">⚠ Not verified</span>
+                  )}
+                </div>
+                {!sellerLocation.location_verified && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={updateLocationFromCurrent}
+                      disabled={locationLoading}
+                      className="text-sm bg-primary text-primary-foreground px-3 py-1 rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50"
+                    >
+                      {locationLoading ? (
+                        <>
+                          <Navigation className="w-3 h-3 animate-spin inline mr-1" />
+                          Updating...
+                        </>
+                      ) : (
+                        <>
+                          <Navigation className="w-3 h-3 inline mr-1" />
+                          Update Location
+                        </>
+                      )}
+                    </button>
+                    <span className="text-xs text-muted-foreground">
+                      Location is required to show your products to nearby customers
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

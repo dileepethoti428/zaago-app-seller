@@ -103,11 +103,11 @@ export default function ProductVariantSelector({
                 </div>
                 <div className="flex flex-col items-end">
                   <span className="font-medium">₹{variantPrice.toFixed(2)}</span>
-                  {variant.price_adjustment !== 0 && (
+                  {variantPrice !== basePrice && (
                     <span className={`text-xs ${
-                      variant.price_adjustment > 0 ? 'text-red-500' : 'text-green-500'
+                      variantPrice > basePrice ? 'text-red-500' : 'text-green-500'
                     }`}>
-                      {variant.price_adjustment > 0 ? '+' : ''}₹{variant.price_adjustment.toFixed(2)}
+                      {variantPrice > basePrice ? '+' : ''}₹{(variantPrice - basePrice).toFixed(2)}
                     </span>
                   )}
                 </div>
