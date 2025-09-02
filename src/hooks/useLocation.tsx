@@ -63,26 +63,38 @@ export const useLocation = () => {
 
       const { latitude, longitude } = position.coords;
       
-      // Reverse geocoding to get address with timeout
+      // Use Google Places API for reverse geocoding
       let addressData = {};
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout for API call
-        
-        const response = await fetch(
-          `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`,
-          { signal: controller.signal }
-        );
-        
-        clearTimeout(timeoutId);
-        
-        if (response.ok) {
-          const data = await response.json();
+        const { data, error } = await supabase.functions.invoke('google-places', {
+          body: {
+            type: 'reverse_geocode',
+            lat: latitude,
+            lng: longitude,
+          },
+        });
+
+        if (error) {
+          throw new Error(`Failed to fetch location details: ${error.message}`);
+        }
+
+        if (data.status === 'OK' && data.results && data.results.length > 0) {
+          const result = data.results[0];
+          const addressComponents = result.address_components || [];
+          
+          // Extract address components
+          const getComponent = (type: string) => {
+            const component = addressComponents.find((comp: any) => 
+              comp.types.includes(type)
+            );
+            return component?.long_name || '';
+          };
+
           addressData = {
-            address: data.locality || data.city || 'Unknown location',
-            city: data.city || data.locality,
-            state: data.principalSubdivision,
-            pincode: data.postcode,
+            address: result.formatted_address || 'Unknown location',
+            city: getComponent('locality') || getComponent('administrative_area_level_2'),
+            state: getComponent('administrative_area_level_1'),
+            pincode: getComponent('postal_code'),
           };
         }
       } catch (addressError) {
