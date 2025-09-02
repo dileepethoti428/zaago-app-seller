@@ -4146,7 +4146,9 @@ export type Database = {
         Returns: Json
       }
       calculate_distance: {
-        Args: { lat1: number; lat2: number; lon1: number; lon2: number }
+        Args:
+          | { lat1: number; lat2: number; lon1: number; lon2: number }
+          | { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
       }
       calculate_next_delivery_date: {
@@ -4609,17 +4611,11 @@ export type Database = {
         Returns: boolean
       }
       is_location_serviceable: {
-        Args:
-          | {
-              customer_lat: number
-              customer_lon: number
-              max_distance_km?: number
-            }
-          | {
-              customer_lat: number
-              customer_lon: number
-              max_distance_km?: number
-            }
+        Args: {
+          customer_lat: number
+          customer_lon: number
+          max_distance_km?: number
+        }
         Returns: boolean
       }
       is_user_eligible_for_coupon: {
