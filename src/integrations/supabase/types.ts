@@ -4474,7 +4474,10 @@ export type Database = {
           | { customer_lat: number; customer_lon: number; range_km?: number }
           | { customer_lat: number; customer_lon: number; range_km?: number }
         Returns: {
+          discount_percentage: number
+          discounted_price: number
           distance_km: number
+          original_price: number
           product_description: string
           product_id: string
           product_image_url: string

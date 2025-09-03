@@ -21,6 +21,7 @@ interface ProductWithSeller {
   name: string;
   description: string | null;
   price: number;
+  discount_percentage?: number;
   stock_quantity: number;
   image_url: string | null;
   is_active: boolean;
@@ -68,7 +69,11 @@ const CustomerProductDetail = () => {
       }
 
       setProduct(data);
-      setFinalPrice(data.price); // Set initial price
+      // Calculate discounted price if discount exists
+      const discountedPrice = data.discount_percentage > 0 
+        ? data.price * (1 - data.discount_percentage / 100)
+        : data.price;
+      setFinalPrice(discountedPrice);
       
       // Fetch seller info separately
       if (data.seller_id) {
@@ -261,12 +266,23 @@ const CustomerProductDetail = () => {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-muted-foreground">Base Price:</span>
-                  <p className="font-medium">₹{product.price}</p>
+                  <span className="text-muted-foreground">
+                    {product.discount_percentage > 0 ? "Original Price:" : "Price:"}
+                  </span>
+                  <p className={`font-medium ${product.discount_percentage > 0 ? 'line-through text-muted-foreground' : ''}`}>
+                    ₹{product.price}
+                  </p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Current Price:</span>
-                  <p className="font-bold text-lg text-primary">₹{finalPrice.toFixed(2)}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-lg text-primary">₹{finalPrice.toFixed(2)}</p>
+                    {product.discount_percentage > 0 && (
+                      <span className="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded">
+                        {product.discount_percentage}% off
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
               

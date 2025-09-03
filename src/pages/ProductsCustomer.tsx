@@ -161,14 +161,32 @@ const ProductsCustomer = () => {
                       )}
                     </div>
                     
-                      <div className="flex items-center justify-between">
-                        <span className="text-2xl font-bold text-primary">
-                          ₹{product.product_price}
-                        </span>
-                        <Badge variant={product.stock_quantity > 10 ? "default" : "secondary"}>
-                          {product.stock_quantity} in stock
-                        </Badge>
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col">
+                        {product.discount_percentage > 0 ? (
+                          <>
+                            <div className="flex items-center gap-2">
+                              <span className="text-2xl font-bold text-primary">
+                                ₹{product.discounted_price}
+                              </span>
+                              <span className="text-sm text-muted-foreground line-through">
+                                ₹{product.original_price}
+                              </span>
+                            </div>
+                            <span className="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded w-fit">
+                              {product.discount_percentage}% off
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-2xl font-bold text-primary">
+                            ₹{product.product_price}
+                          </span>
+                        )}
                       </div>
+                      <Badge variant={product.stock_quantity > 10 ? "default" : "secondary"}>
+                        {product.stock_quantity} in stock
+                      </Badge>
+                    </div>
                     </div>
                   </Link>
                   
