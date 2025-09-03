@@ -4458,6 +4458,17 @@ export type Database = {
           total_quantity: number
         }[]
       }
+      get_product_special_offer: {
+        Args: { p_product_id: string }
+        Returns: {
+          discount_percentage: number
+          offer_description: string
+          offer_id: string
+          offer_price: number
+          offer_title: string
+          original_price: number
+        }[]
+      }
       get_products_within_range: {
         Args:
           | { customer_lat: number; customer_lon: number; range_km?: number }
