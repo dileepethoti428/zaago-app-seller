@@ -4470,9 +4470,7 @@ export type Database = {
           product_name: string
           product_price: number
           seller_id: string
-          seller_lat: number
-          seller_lng: number
-          seller_name: string
+          seller_location: Json
           stock_quantity: number
         }[]
       }
