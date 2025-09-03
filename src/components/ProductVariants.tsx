@@ -14,7 +14,7 @@ interface ProductVariant {
   id?: string;
   variant_name: string;
   variant_value: string;
-  price_adjustment: number;
+  price: number;
   stock_quantity: number;
   is_default: boolean;
   is_active: boolean;
@@ -78,7 +78,7 @@ export default function ProductVariants({ selectedCategory, variants, onVariants
     const newVariant: ProductVariant = {
       variant_name: template.template_name,
       variant_value: template.template_value,
-      price_adjustment: 0,
+      price: 0,
       stock_quantity: 0,
       is_default: variants.length === 0,
       is_active: true
@@ -91,7 +91,7 @@ export default function ProductVariants({ selectedCategory, variants, onVariants
     const newVariant: ProductVariant = {
       variant_name: '',
       variant_value: '',
-      price_adjustment: 0,
+      price: 0,
       stock_quantity: 0,
       is_default: variants.length === 0,
       is_active: true
@@ -202,12 +202,12 @@ export default function ProductVariants({ selectedCategory, variants, onVariants
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">Price Adjustment (₹)</label>
+              <label className="text-xs text-muted-foreground">Price (₹)</label>
               <input
                 type="number"
                 step="0.01"
-                value={variant.price_adjustment}
-                onChange={(e) => updateVariant(index, 'price_adjustment', parseFloat(e.target.value) || 0)}
+                value={variant.price}
+                onChange={(e) => updateVariant(index, 'price', parseFloat(e.target.value) || 0)}
                 placeholder="0.00"
                 className="w-full px-3 py-2 text-sm bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
@@ -262,7 +262,7 @@ export default function ProductVariants({ selectedCategory, variants, onVariants
 
       {variants.length > 0 && (
         <p className="text-xs text-muted-foreground">
-          Tip: Price adjustments are added to the base product price. Use negative values for discounts.
+          Tip: Set the actual price for each variant. This will be the final price customers pay.
         </p>
       )}
     </div>

@@ -38,7 +38,7 @@ export default function AddProductPage() {
     id?: string;
     variant_name: string;
     variant_value: string;
-    price_adjustment: number;
+    price: number;
     stock_quantity: number;
     is_default: boolean;
     is_active: boolean;
@@ -234,7 +234,7 @@ export default function AddProductPage() {
           product_id: product.id,
           variant_name: variant.variant_name,
           variant_value: variant.variant_value,
-          price_adjustment: variant.price_adjustment,
+          price: variant.price,
           stock_quantity: variant.stock_quantity,
           is_default: variant.is_default,
           is_active: variant.is_active

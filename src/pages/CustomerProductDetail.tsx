@@ -270,13 +270,13 @@ const CustomerProductDetail = () => {
                 </div>
               </div>
               
-              {selectedVariant && selectedVariant.price_adjustment !== 0 && (
+              {selectedVariant && selectedVariant.price !== product.price && (
                 <div className="text-sm">
-                  <span className="text-muted-foreground">Price adjustment:</span>
+                  <span className="text-muted-foreground">Price difference:</span>
                   <p className={`font-medium ${
-                    selectedVariant.price_adjustment > 0 ? 'text-red-500' : 'text-green-500'
+                    selectedVariant.price > product.price ? 'text-red-500' : 'text-green-500'
                   }`}>
-                    {selectedVariant.price_adjustment > 0 ? '+' : ''}₹{selectedVariant.price_adjustment.toFixed(2)}
+                    {selectedVariant.price > product.price ? '+' : ''}₹{(selectedVariant.price - product.price).toFixed(2)}
                   </p>
                 </div>
               )}
