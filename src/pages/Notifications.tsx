@@ -51,27 +51,26 @@ const Notifications = () => {
     
     setLoading(true);
     try {
-      // Check if user is a seller and filter notifications accordingly
-      const { data: userRoles } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id);
+      // Check if user is a seller by checking the sellers table
+      const { data: sellerData } = await supabase
+        .from('sellers')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
       
-      const isSeller = userRoles?.some(role => role.role === 'seller');
+      const isSeller = !!sellerData;
       
       let query = supabase
         .from('notifications')
         .select('*')
         .eq('user_id', user.id);
       
-      // If user is a seller, only show seller-relevant notifications and filter by role
+      // If user is a seller, only show seller-specific notifications
       if (isSeller) {
-        query = query
-          .eq('role', 'seller')
-          .in('type', ['delivery', 'stock_alert']);
+        query = query.eq('role', 'seller');
       } else {
-        // For non-sellers, exclude agent-specific notifications
-        query = query.neq('role', 'agent');
+        // For non-sellers (regular customers), exclude agent and seller-specific notifications
+        query = query.in('role', ['user', 'customer']);
       }
       
       const { data, error } = await query.order('created_at', { ascending: false });
