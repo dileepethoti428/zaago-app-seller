@@ -6,6 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useSellerLocation } from '@/hooks/useSellerLocation';
+import { useProductVariants } from '@/hooks/useProductVariants';
+import ProductVariants from '@/components/ProductVariants';
 import { MapPin, Navigation } from 'lucide-react';
 
 interface Product {
@@ -23,6 +25,18 @@ interface Product {
   ingredients?: string[];
   is_active: boolean;
   seller_id: string;
+  category_id?: string;
+}
+
+interface ProductVariant {
+  id?: string;
+  variant_name: string;
+  variant_value: string;
+  price: number;
+  discount_percentage: number;
+  stock_quantity: number;
+  is_default: boolean;
+  is_active: boolean;
 }
 
 export default function EditProductPage() {
@@ -31,6 +45,7 @@ export default function EditProductPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { sellerLocation, updateLocationFromCurrent, loading: locationLoading } = useSellerLocation();
+  const { variants: existingVariants, loading: variantsLoading } = useProductVariants(id);
   
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,6 +54,7 @@ export default function EditProductPage() {
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
   const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -98,6 +114,20 @@ export default function EditProductPage() {
           existingImagesList.unshift(data.image_url);
         }
         setExistingImages(existingImagesList);
+        
+        // Set variants when they're loaded
+        if (existingVariants.length > 0) {
+          setVariants(existingVariants.map(v => ({
+            id: v.id,
+            variant_name: v.variant_name,
+            variant_value: v.variant_value,
+            price: v.price,
+            discount_percentage: v.discount_percentage,
+            stock_quantity: v.stock_quantity,
+            is_default: v.is_default,
+            is_active: v.is_active
+          })));
+        }
       } catch (error) {
         console.error('Unexpected error:', error);
         toast({
@@ -113,6 +143,22 @@ export default function EditProductPage() {
 
     fetchProduct();
   }, [id, user, navigate, toast]);
+
+  // Update variants when existingVariants change
+  useEffect(() => {
+    if (existingVariants.length > 0 && variants.length === 0) {
+      setVariants(existingVariants.map(v => ({
+        id: v.id,
+        variant_name: v.variant_name,
+        variant_value: v.variant_value,
+        price: v.price,
+        discount_percentage: v.discount_percentage,
+        stock_quantity: v.stock_quantity,
+        is_default: v.is_default,
+        is_active: v.is_active
+      })));
+    }
+  }, [existingVariants, variants.length]);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -269,6 +315,7 @@ export default function EditProductPage() {
       const benefits = formData.benefits.filter(b => b.trim() !== '');
       const ingredients = formData.ingredients.filter(i => i.trim() !== '');
 
+      // Update product
       const updateData = {
         name: formData.name,
         description: formData.description || null,
@@ -298,6 +345,40 @@ export default function EditProductPage() {
           variant: "destructive",
         });
         return;
+      }
+
+      // Update variants if any exist
+      if (variants.length > 0) {
+        // Delete existing variants
+        await supabase
+          .from('product_variants')
+          .delete()
+          .eq('product_id', product.id);
+
+        // Insert new variants
+        const variantInserts = variants.map(variant => ({
+          product_id: product.id,
+          variant_name: variant.variant_name,
+          variant_value: variant.variant_value,
+          price: variant.price,
+          discount_percentage: variant.discount_percentage,
+          stock_quantity: variant.stock_quantity,
+          is_default: variant.is_default,
+          is_active: variant.is_active
+        }));
+
+        const { error: variantError } = await supabase
+          .from('product_variants')
+          .insert(variantInserts);
+
+        if (variantError) {
+          console.error('Error updating variants:', variantError);
+          toast({
+            title: "Warning",
+            description: "Product updated but variants failed to save.",
+            variant: "destructive",
+          });
+        }
       }
 
       toast({
@@ -768,6 +849,15 @@ export default function EditProductPage() {
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Product Variants */}
+          <div className="col-span-full">
+            <ProductVariants
+              selectedCategory={formData.type || ''}
+              variants={variants}
+              onVariantsChange={setVariants}
+            />
           </div>
 
           {/* Form Actions */}
