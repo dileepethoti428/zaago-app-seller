@@ -7,6 +7,7 @@ interface ProductVariant {
   variant_name: string;
   variant_value: string;
   price: number;
+  discount_percentage: number;
   stock_quantity: number;
   is_default: boolean;
   is_active: boolean;
@@ -55,7 +56,11 @@ export const useProductVariants = (productId?: string) => {
 
   const getVariantPrice = (basePrice: number, variant?: ProductVariant) => {
     if (!variant) return basePrice;
-    return variant.price; // Use the variant's actual price instead of adjustment
+    // Apply discount if available
+    const finalPrice = variant.discount_percentage > 0 
+      ? variant.price * (1 - variant.discount_percentage / 100)
+      : variant.price;
+    return finalPrice;
   };
 
   return {

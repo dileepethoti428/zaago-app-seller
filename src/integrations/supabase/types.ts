@@ -2534,6 +2534,8 @@ export type Database = {
       product_variants: {
         Row: {
           created_at: string
+          discount_percentage: number | null
+          discounted_price: number | null
           id: string
           is_active: boolean | null
           is_default: boolean | null
@@ -2546,6 +2548,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          discount_percentage?: number | null
+          discounted_price?: number | null
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
@@ -2558,6 +2562,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          discount_percentage?: number | null
+          discounted_price?: number | null
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null

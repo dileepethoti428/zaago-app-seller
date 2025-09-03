@@ -39,6 +39,7 @@ export default function AddProductPage() {
     variant_name: string;
     variant_value: string;
     price: number;
+    discount_percentage: number;
     stock_quantity: number;
     is_default: boolean;
     is_active: boolean;
@@ -235,6 +236,7 @@ export default function AddProductPage() {
           variant_name: variant.variant_name,
           variant_value: variant.variant_value,
           price: variant.price,
+          discount_percentage: variant.discount_percentage,
           stock_quantity: variant.stock_quantity,
           is_default: variant.is_default,
           is_active: variant.is_active

@@ -99,10 +99,22 @@ export default function ProductVariantSelector({
                       ? ` • ${variant.stock_quantity} in stock`
                       : ' • Out of stock'
                     }
+                    {variant.discount_percentage > 0 && (
+                      <span className="text-green-600 ml-1">• {variant.discount_percentage}% OFF</span>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-col items-end">
-                  <span className="font-medium">₹{variantPrice.toFixed(2)}</span>
+                  {variant.discount_percentage > 0 ? (
+                    <div className="text-right">
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-muted-foreground line-through">₹{variant.price.toFixed(2)}</span>
+                        <span className="font-medium text-green-600">₹{variantPrice.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="font-medium">₹{variantPrice.toFixed(2)}</span>
+                  )}
                   {variantPrice !== basePrice && (
                     <span className={`text-xs ${
                       variantPrice > basePrice ? 'text-red-500' : 'text-green-500'

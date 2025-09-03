@@ -15,6 +15,7 @@ interface ProductVariant {
   variant_name: string;
   variant_value: string;
   price: number;
+  discount_percentage: number;
   stock_quantity: number;
   is_default: boolean;
   is_active: boolean;
@@ -79,6 +80,7 @@ export default function ProductVariants({ selectedCategory, variants, onVariants
       variant_name: template.template_name,
       variant_value: template.template_value,
       price: 0,
+      discount_percentage: 0,
       stock_quantity: 0,
       is_default: variants.length === 0,
       is_active: true
@@ -92,6 +94,7 @@ export default function ProductVariants({ selectedCategory, variants, onVariants
       variant_name: '',
       variant_value: '',
       price: 0,
+      discount_percentage: 0,
       stock_quantity: 0,
       is_default: variants.length === 0,
       is_active: true
@@ -214,6 +217,20 @@ export default function ProductVariants({ selectedCategory, variants, onVariants
             </div>
 
             <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">Discount (%)</label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={variant.discount_percentage}
+                onChange={(e) => updateVariant(index, 'discount_percentage', parseFloat(e.target.value) || 0)}
+                placeholder="0"
+                className="w-full px-3 py-2 text-sm bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+            </div>
+
+            <div className="space-y-1">
               <label className="text-xs text-muted-foreground">Stock Quantity</label>
               <input
                 type="number"
@@ -225,6 +242,15 @@ export default function ProductVariants({ selectedCategory, variants, onVariants
               />
             </div>
           </div>
+
+          {variant.discount_percentage > 0 && (
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md p-2">
+              <div className="text-sm text-green-700 dark:text-green-400">
+                <span className="font-medium">Discounted Price: ₹{(variant.price * (1 - variant.discount_percentage / 100)).toFixed(2)}</span>
+                <span className="text-xs ml-2">({variant.discount_percentage}% off)</span>
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-2 text-sm text-foreground">
