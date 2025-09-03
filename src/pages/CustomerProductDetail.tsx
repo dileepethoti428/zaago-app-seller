@@ -21,7 +21,7 @@ interface ProductWithSeller {
   name: string;
   description: string | null;
   price: number;
-  discount_percentage?: number;
+  discount_percentage: number;
   stock_quantity: number;
   image_url: string | null;
   is_active: boolean;
@@ -52,7 +52,10 @@ const CustomerProductDetail = () => {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select(`
+          id, name, description, price, discount_percentage, stock_quantity, 
+          image_url, is_active, seller_id, unit, type
+        `)
         .eq('id', id)
         .eq('is_active', true)
         .single();
@@ -70,7 +73,7 @@ const CustomerProductDetail = () => {
 
       setProduct(data);
       // Calculate discounted price if discount exists
-      const discountedPrice = data.discount_percentage > 0 
+      const discountedPrice = (data.discount_percentage && data.discount_percentage > 0) 
         ? data.price * (1 - data.discount_percentage / 100)
         : data.price;
       setFinalPrice(discountedPrice);
