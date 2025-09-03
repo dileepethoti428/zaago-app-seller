@@ -569,6 +569,22 @@ export default function AddProductPage() {
                   placeholder="0"
                   className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 />
+                
+                {/* Show discounted price calculation */}
+                {formData.price && formData.discount_percentage && parseFloat(formData.discount_percentage) > 0 && (
+                  <div className="flex items-center justify-between text-sm bg-muted/50 px-3 py-2 rounded-md">
+                    <span className="text-muted-foreground">Final Price:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="line-through text-muted-foreground">₹{parseFloat(formData.price).toFixed(2)}</span>
+                      <span className="font-semibold text-green-600">
+                        ₹{(parseFloat(formData.price) * (1 - parseFloat(formData.discount_percentage) / 100)).toFixed(2)}
+                      </span>
+                      <span className="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded">
+                        {formData.discount_percentage}% off
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Benefits */}
