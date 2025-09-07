@@ -54,15 +54,25 @@ export default function Topbar() {
                 <span className="text-xs">Getting location...</span>
               </div>
             ) : location ? (
-              <button
-                onClick={() => setShowLocationSelector(true)}
-                className="flex items-center gap-1 text-xs text-zaago-muted-foreground hover:text-zaago-card-foreground transition-colors cursor-pointer"
-              >
-                <MapPin className="h-3 w-3 text-green-500 flex-shrink-0" />
-                <span className="truncate max-w-[150px] sm:max-w-[200px] text-xs">
-                  {location.address || (location.city && location.state ? `${location.city}, ${location.state}` : 'Unknown location')}
-                </span>
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setShowLocationSelector(true)}
+                  className="flex items-center gap-1 text-xs text-zaago-muted-foreground hover:text-zaago-card-foreground transition-colors cursor-pointer"
+                >
+                  <MapPin className="h-3 w-3 text-green-500 flex-shrink-0" />
+                  <span className="truncate max-w-[150px] sm:max-w-[200px] text-xs">
+                    {location.address || (location.city && location.state ? `${location.city}, ${location.state}` : 'Unknown location')}
+                  </span>
+                </button>
+                <button
+                  onClick={() => getCurrentLocation(true)}
+                  disabled={locationLoading}
+                  className="p-1 hover:bg-zaago-accent rounded text-zaago-muted-foreground hover:text-zaago-card-foreground transition-colors"
+                  title="Refresh location"
+                >
+                  <Navigation className={`h-3 w-3 ${locationLoading ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
             ) : (
               <button
                 onClick={() => setShowLocationSelector(true)}

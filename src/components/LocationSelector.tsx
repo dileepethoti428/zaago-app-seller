@@ -20,7 +20,7 @@ export const LocationSelector = ({ open, onOpenChange }: LocationSelectorProps) 
   const handleAutoDetect = async () => {
     setIsDetecting(true);
     try {
-      await getCurrentLocation();
+      await getCurrentLocation(true); // Force fresh location detection
       toast({
         title: "Location Updated",
         description: "Your location has been automatically detected and updated.",
@@ -28,7 +28,7 @@ export const LocationSelector = ({ open, onOpenChange }: LocationSelectorProps) 
       onOpenChange(false);
     } catch (error) {
       toast({
-        title: "Location Error",
+        title: "Location Error", 
         description: "Failed to detect location. Please try again or select manually.",
         variant: "destructive",
       });

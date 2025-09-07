@@ -19,7 +19,7 @@ export const useLocation = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const getCurrentLocation = useCallback(async () => {
+  const getCurrentLocation = useCallback(async (forceRefresh = false) => {
     if (!navigator.geolocation) {
       setError('Geolocation is not supported by this browser');
       return;
@@ -56,7 +56,7 @@ export const useLocation = () => {
           {
             enableHighAccuracy: true,
             timeout: 30000, // Increased to 30 seconds
-            maximumAge: 600000, // 10 minutes cache
+            maximumAge: forceRefresh ? 0 : 300000, // Force fresh location if requested, otherwise 5 minute cache
           }
         );
       });
@@ -138,10 +138,10 @@ export const useLocation = () => {
   }, [user, toast]);
 
   const startLocationUpdates = useCallback(() => {
-    getCurrentLocation();
+    getCurrentLocation(true); // Force refresh on manual request
     
     // Update location every 5 minutes instead of 10 seconds (less aggressive)
-    const interval = setInterval(getCurrentLocation, 300000);
+    const interval = setInterval(() => getCurrentLocation(true), 300000);
     
     return () => clearInterval(interval);
   }, [getCurrentLocation]);
@@ -149,7 +149,7 @@ export const useLocation = () => {
   useEffect(() => {
     // Auto-start location detection when user is available
     if (user) {
-      getCurrentLocation();
+      getCurrentLocation(false); // Use cache for initial load
     }
   }, [user, getCurrentLocation]);
 
