@@ -138,12 +138,10 @@ export const useLocation = () => {
   }, [user, toast]);
 
   const startLocationUpdates = useCallback(() => {
-    getCurrentLocation(true); // Force refresh on manual request
+    getCurrentLocation(true); // Force refresh on manual request only
     
-    // Update location every 5 minutes instead of 10 seconds (less aggressive)
-    const interval = setInterval(() => getCurrentLocation(true), 300000);
-    
-    return () => clearInterval(interval);
+    // Removed auto-refresh interval - location will only update on manual request
+    return () => {}; // No cleanup needed
   }, [getCurrentLocation]);
 
   useEffect(() => {
