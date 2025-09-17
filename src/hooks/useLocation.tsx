@@ -145,11 +145,11 @@ export const useLocation = () => {
   }, [getCurrentLocation]);
 
   useEffect(() => {
-    // Auto-start location detection when user is available
-    if (user) {
+    // Only get location once when user logs in
+    if (user && !location) {
       getCurrentLocation(false); // Use cache for initial load
     }
-  }, [user, getCurrentLocation]);
+  }, [user]); // Removed getCurrentLocation from dependencies to prevent re-runs
 
   return {
     location,
