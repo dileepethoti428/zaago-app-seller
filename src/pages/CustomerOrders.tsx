@@ -141,6 +141,9 @@ const CustomerOrders = () => {
   };
 
   const filterOrders = () => {
+    console.log('🔍 DEBUG: Current user from auth context:', user?.id);
+    console.log('🔍 DEBUG: All orders before filtering:', orders);
+    
     let filtered = orders;
 
     // Filter by tab with customer-friendly categories
@@ -163,6 +166,7 @@ const CustomerOrders = () => {
       );
     }
 
+    console.log('🔍 DEBUG: Filtered orders:', filtered);
     setFilteredOrders(filtered);
   };
 
@@ -414,24 +418,49 @@ const CustomerOrders = () => {
                             <p className="text-zaago-green font-bold text-xl">₹{order.total}</p>
                           </div>
                           
-                          {/* Order Items with Product Actions */}
-                          {order.items && Array.isArray(order.items) && (
-                            <div className="space-y-3">
-                              {order.items
-                                .filter((item: any) => item.seller_id === user?.id) // Only show seller's products
-                                .map((item: any, index: number) => (
-                                <div key={index} className="bg-zaago-card/30 rounded-lg p-4 border border-zaago-border/50">
-                                  <div className="flex justify-between items-start mb-3">
-                                    <div className="flex-1">
-                                      <h4 className="font-medium text-foreground">{item.name}</h4>
-                                      <p className="text-zaago-muted-foreground text-sm">
-                                        Quantity: {item.quantity} | Price: ₹{item.price}
-                                      </p>
-                                      <p className="text-zaago-green font-medium">₹{item.price * item.quantity}</p>
-                                    </div>
-                                    
-                                    {/* Product Accept/Reject Actions */}
-                                    {['new', 'pending'].includes(order.status) && item.id && (
+                           {/* Order Items with Product Actions */}
+                           {order.items && Array.isArray(order.items) && (
+                             <div className="space-y-3">
+                               {(() => {
+                                 console.log('🔍 DEBUG: Processing order items for order:', order.id);
+                                 console.log('🔍 DEBUG: Order status:', order.status);
+                                 console.log('🔍 DEBUG: All items in order:', order.items);
+                                 
+                                 const sellerItems = order.items.filter((item: any) => {
+                                   console.log('🔍 DEBUG: Checking item:', {
+                                     id: item.id,
+                                     name: item.name,
+                                     seller_id: item.seller_id,
+                                     current_user_id: user?.id,
+                                     matches: item.seller_id === user?.id
+                                   });
+                                   return item.seller_id === user?.id;
+                                 });
+                                 
+                                 console.log('🔍 DEBUG: Filtered seller items:', sellerItems);
+                                 return sellerItems;
+                               })().map((item: any, index: number) => (
+                                 <div key={index} className="bg-zaago-card/30 rounded-lg p-4 border border-zaago-border/50">
+                                   <div className="flex justify-between items-start mb-3">
+                                     <div className="flex-1">
+                                       <h4 className="font-medium text-foreground">{item.name}</h4>
+                                       <p className="text-zaago-muted-foreground text-sm">
+                                         Quantity: {item.quantity} | Price: ₹{item.price}
+                                       </p>
+                                       <p className="text-zaago-green font-medium">₹{item.price * item.quantity}</p>
+                                     </div>
+                                     
+                                     {/* Product Accept/Reject Actions */}
+                                     {(() => {
+                                       const shouldShowButtons = ['new', 'pending'].includes(order.status) && item.id;
+                                       console.log('🔍 DEBUG: Should show accept/reject buttons for item', item.name, ':', shouldShowButtons, {
+                                         order_status: order.status,
+                                         item_id: item.id,
+                                         status_check: ['new', 'pending'].includes(order.status),
+                                         has_item_id: !!item.id
+                                       });
+                                       return shouldShowButtons;
+                                     })() && (
                                       <div className="flex gap-2 ml-4">
                                         <Button
                                           onClick={() => acceptProduct(order.id, item.id, user?.id || '')}
