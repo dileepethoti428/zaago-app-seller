@@ -87,6 +87,26 @@ const OrderDetail = () => {
     
     setLoading(true);
     try {
+      // First try to get order using the seller RPC function
+      const { data: sellerOrder, error: sellerError } = await supabase.rpc('get_seller_orders', {
+        seller_user_id: user.id,
+        status_filter: null
+      });
+
+      if (sellerError) {
+        console.error('Error fetching seller order:', sellerError);
+      }
+
+      // Find the specific order from seller orders
+      const foundOrder = sellerOrder?.find((order: any) => order.id === id);
+      
+      if (foundOrder) {
+        setOrder(foundOrder);
+        setLoading(false);
+        return;
+      }
+
+      // If not found in seller orders, try as regular customer order
       const { data, error } = await supabase
         .from('orders')
         .select('*')
