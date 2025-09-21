@@ -23,10 +23,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useSellerOrderActions } from '@/hooks/useSellerOrderActions';
 
 const Orders = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { acceptOrder, rejectOrder, packOrder, isProcessing } = useSellerOrderActions();
   const [orders, setOrders] = useState<any[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,36 +57,31 @@ const Orders = () => {
 
   const setupRealtimeSubscription = () => {
     const channel = supabase
-      .channel('orders-realtime')
+      .channel('seller-orders-realtime')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'orders',
-          filter: `user_id=eq.${user?.id}`
+          table: 'orders'
         },
         (payload) => {
           console.log('Realtime update:', payload);
           
+          // Re-fetch orders when any order changes to get updated seller data
           if (payload.eventType === 'INSERT') {
-            const newOrder = payload.new;
-            setOrders(prev => [newOrder, ...prev]);
+            // For new orders, check if they contain this seller's products
+            fetchOrders();
             
+            // Show notification if this order contains seller's products
             toast({
-              title: "New Order Received! 🎉",
-              description: `Order #${newOrder.id.toString().slice(0, 8)} from ${newOrder.customer_name || 'Customer'}`,
+              title: "New Order Alert! 🔔",
+              description: "Check if this order contains your products",
               duration: 5000
             });
           } else if (payload.eventType === 'UPDATE') {
-            const updatedOrder = payload.new;
-            setOrders(prev => 
-              prev.map(order => 
-                order.id === updatedOrder.id ? updatedOrder : order
-              )
-            );
-          } else if (payload.eventType === 'DELETE') {
-            setOrders(prev => prev.filter(order => order.id !== payload.old.id));
+            // Re-fetch to get updated order status
+            fetchOrders();
           }
         }
       )
@@ -100,14 +97,13 @@ const Orders = () => {
     
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('id, total, status, created_at, customer_name, customer_phone, delivery_date, items, address, payment_status, agent_id, user_id')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      // Use the new seller-specific function to get orders containing this seller's products
+      const { data, error } = await supabase.rpc('get_seller_specific_orders', {
+        p_seller_user_id: user.id
+      });
 
       if (error) {
-        console.error('Error fetching orders:', error);
+        console.error('Error fetching seller orders:', error);
         toast({
           title: "Error",
           description: "Failed to fetch orders. Please try again.",
@@ -116,7 +112,24 @@ const Orders = () => {
         return;
       }
 
-      setOrders(data || []);
+      // Map the data to match the expected order structure
+      const mappedOrders = (data || []).map((order: any) => ({
+        id: order.order_id,
+        total: order.seller_total, // Show only seller's portion
+        status: order.order_status,
+        created_at: order.created_at,
+        updated_at: order.updated_at,
+        customer_name: order.customer_name,
+        customer_phone: order.customer_phone,
+        delivery_date: order.delivery_date,
+        items: order.seller_items, // Show only seller's items
+        address: order.address,
+        payment_status: order.payment_status,
+        agent_id: order.agent_id,
+        user_id: user.id // This is the seller's user_id
+      }));
+
+      setOrders(mappedOrders);
     } catch (error) {
       console.error('Error fetching orders:', error);
     } finally {
@@ -405,8 +418,46 @@ const Orders = () => {
                             </div>
                           </div>
 
-                          {/* Action Button */}
-                          <div className="flex justify-center sm:justify-end">
+                          {/* Action Buttons */}
+                          <div className="flex flex-col sm:flex-row gap-2 justify-center sm:justify-end">
+                            {/* Seller Action Buttons */}
+                            {order.status === 'new' && (
+                              <>
+                                <Button
+                                  onClick={() => acceptOrder(order.id, user?.id || '')}
+                                  disabled={isProcessing === order.id}
+                                  size="sm"
+                                  className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                                >
+                                  <CheckSquare className="w-4 h-4" />
+                                  Accept Order
+                                </Button>
+                                <Button
+                                  onClick={() => rejectOrder(order.id, user?.id || '')}
+                                  disabled={isProcessing === order.id}
+                                  variant="destructive"
+                                  size="sm"
+                                  className="flex items-center gap-2"
+                                >
+                                  <XSquare className="w-4 h-4" />
+                                  Reject
+                                </Button>
+                              </>
+                            )}
+                            
+                            {order.status === 'accepted' && (
+                              <Button
+                                onClick={() => packOrder(order.id, user?.id || '')}
+                                disabled={isProcessing === order.id}
+                                size="sm"
+                                className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+                              >
+                                <Package className="w-4 h-4" />
+                                Mark as Packed
+                              </Button>
+                            )}
+                            
+                            {/* View Details Button - Always available */}
                             <Link to={`/orders/${order.id}`}>
                               <Button
                                 variant="outline"

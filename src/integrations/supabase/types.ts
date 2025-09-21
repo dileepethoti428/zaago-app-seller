@@ -221,6 +221,7 @@ export type Database = {
       agent_settings: {
         Row: {
           agent_id: string
+          auto_logout: boolean | null
           created_at: string | null
           id: string
           language: string | null
@@ -235,6 +236,7 @@ export type Database = {
         }
         Insert: {
           agent_id: string
+          auto_logout?: boolean | null
           created_at?: string | null
           id?: string
           language?: string | null
@@ -249,6 +251,7 @@ export type Database = {
         }
         Update: {
           agent_id?: string
+          auto_logout?: boolean | null
           created_at?: string | null
           id?: string
           language?: string | null
@@ -1986,6 +1989,7 @@ export type Database = {
           delivered_at: string | null
           delivery_address_id: string | null
           delivery_date: string | null
+          delivery_time: string | null
           delivery_time_slot: string | null
           id: string
           items: Json
@@ -1994,6 +1998,7 @@ export type Database = {
           settlement_locked: boolean | null
           special_instructions: string | null
           status: string
+          subscription_id: string | null
           total: number
           updated_at: string
           user_id: string | null
@@ -2008,6 +2013,7 @@ export type Database = {
           delivered_at?: string | null
           delivery_address_id?: string | null
           delivery_date?: string | null
+          delivery_time?: string | null
           delivery_time_slot?: string | null
           id?: string
           items: Json
@@ -2016,6 +2022,7 @@ export type Database = {
           settlement_locked?: boolean | null
           special_instructions?: string | null
           status?: string
+          subscription_id?: string | null
           total: number
           updated_at?: string
           user_id?: string | null
@@ -2030,6 +2037,7 @@ export type Database = {
           delivered_at?: string | null
           delivery_address_id?: string | null
           delivery_date?: string | null
+          delivery_time?: string | null
           delivery_time_slot?: string | null
           id?: string
           items?: Json
@@ -2038,6 +2046,7 @@ export type Database = {
           settlement_locked?: boolean | null
           special_instructions?: string | null
           status?: string
+          subscription_id?: string | null
           total?: number
           updated_at?: string
           user_id?: string | null
@@ -2055,6 +2064,13 @@ export type Database = {
             columns: ["delivery_address_id"]
             isOneToOne: false
             referencedRelation: "delivery_addresses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
             referencedColumns: ["id"]
           },
         ]
@@ -4269,11 +4285,18 @@ export type Database = {
         Returns: string
       }
       create_vacation_period: {
-        Args: {
-          p_end_date: string
-          p_start_date: string
-          p_subscription_id: string
-        }
+        Args:
+          | {
+              p_end_date: string
+              p_start_date: string
+              p_subscription_id: string
+            }
+          | {
+              p_end_date: string
+              p_start_date: string
+              p_subscription_id: string
+              p_user_id: string
+            }
         Returns: Json
       }
       create_validated_payout: {
@@ -4283,6 +4306,10 @@ export type Database = {
       ensure_delivery_data_consistency: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      extract_seller_ids_from_order: {
+        Args: { order_items: Json }
+        Returns: string[]
       }
       fix_uncategorized_products: {
         Args: Record<PropertyKey, never>
@@ -4519,6 +4546,24 @@ export type Database = {
         Args: { target_seller_id: string; time_period?: string }
         Returns: Json
       }
+      get_seller_specific_orders: {
+        Args: { p_seller_user_id: string }
+        Returns: {
+          address: Json
+          agent_id: string
+          created_at: string
+          customer_name: string
+          customer_phone: string
+          delivery_date: string
+          order_id: string
+          order_status: string
+          payment_status: string
+          seller_items: Json
+          seller_total: number
+          total_amount: number
+          updated_at: string
+        }[]
+      }
       get_seller_stats: {
         Args: { seller_user_id: string }
         Returns: Json
@@ -4738,6 +4783,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      send_subscription_notification: {
+        Args: {
+          p_notification_type?: string
+          p_order_id: string
+          p_subscription_id: string
+        }
+        Returns: boolean
+      }
       settle_cod_automatically: {
         Args: { p_agent_id: string; p_cod_amount: number; p_order_id: string }
         Returns: Json
@@ -4779,6 +4832,10 @@ export type Database = {
           seller_user_id: string
         }
         Returns: boolean
+      }
+      update_seller_order_status: {
+        Args: { p_action: string; p_order_id: string; p_seller_user_id: string }
+        Returns: Json
       }
       update_trending_products: {
         Args: Record<PropertyKey, never>

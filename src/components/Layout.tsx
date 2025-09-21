@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { SellerNotifications } from './SellerNotifications';
 
 const Layout = () => {
   return (
@@ -16,6 +17,7 @@ const Layout = () => {
           </main>
         </div>
       </div>
+      <SellerNotifications />
     </SidebarProvider>
   );
 };
