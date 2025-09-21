@@ -274,10 +274,10 @@ const CustomerOrders = () => {
       >
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-            Orders Management
+            Seller Orders
           </h1>
           <p className="text-zaago-muted-foreground text-sm sm:text-base">
-            Manage customer orders and delivery assignments
+            Manage orders containing your products
           </p>
         </div>
         
