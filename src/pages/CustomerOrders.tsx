@@ -32,12 +32,8 @@ const CustomerOrders = () => {
   const [activeTab, setActiveTab] = useState('all');
 
   const orderTabs = [
-    { value: 'all', label: 'All Orders', count: 0 },
-    { value: 'pending', label: 'Pending', count: 0 },
-    { value: 'new', label: 'New', count: 0 },
-    { value: 'accepted', label: 'Accepted', count: 0 },
-    { value: 'packed', label: 'Packed', count: 0 },
-    { value: 'in_transit', label: 'In Transit', count: 0 },
+    { value: 'all', label: 'All', count: 0 },
+    { value: 'ongoing', label: 'Ongoing', count: 0 },
     { value: 'delivered', label: 'Delivered', count: 0 }
   ];
 
@@ -146,10 +142,16 @@ const CustomerOrders = () => {
   const filterOrders = () => {
     let filtered = orders;
 
-    // Filter by tab
-    if (activeTab !== 'all') {
-      filtered = filtered.filter(order => order.status === activeTab);
+    // Filter by tab with customer-friendly categories
+    if (activeTab === 'ongoing') {
+      // Ongoing orders: everything except delivered and rejected
+      filtered = filtered.filter(order => 
+        !['delivered', 'rejected', 'cancelled'].includes(order.status)
+      );
+    } else if (activeTab === 'delivered') {
+      filtered = filtered.filter(order => order.status === 'delivered');
     }
+    // 'all' shows everything
 
     // Filter by search term
     if (searchTerm) {
@@ -166,33 +168,62 @@ const CustomerOrders = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'delivered':
-        return <CheckCircle2 className="w-4 h-4 text-green-500" />;
+        return <CheckCircle2 className="w-5 h-5 text-green-500" />;
       case 'pending':
       case 'new':
-        return <Clock className="w-4 h-4 text-yellow-500" />;
+        return <Clock className="w-5 h-5 text-orange-500" />;
       case 'accepted':
-        return <Package className="w-4 h-4 text-blue-500" />;
+        return <CheckCircle2 className="w-5 h-5 text-blue-500" />;
       case 'packed':
-        return <Package className="w-4 h-4 text-purple-500" />;
+        return <Package className="w-5 h-5 text-purple-500" />;
       case 'in_transit':
       case 'assigned':
       case 'out_for_delivery':
-        return <Truck className="w-4 h-4 text-orange-500" />;
+        return <Truck className="w-5 h-5 text-blue-500" />;
+      case 'rejected':
+      case 'cancelled':
+        return <AlertCircle className="w-5 h-5 text-red-500" />;
       default:
-        return <AlertCircle className="w-4 h-4 text-secondary" />;
+        return <Clock className="w-5 h-5 text-gray-500" />;
+    }
+  };
+
+  const getCustomerFriendlyStatus = (status: string) => {
+    switch (status) {
+      case 'pending':
+      case 'new':
+        return 'Order Placed';
+      case 'accepted':
+        return 'Order Confirmed';
+      case 'packed':
+        return 'Preparing Your Order';
+      case 'assigned':
+        return 'Out for Delivery';
+      case 'in_transit':
+      case 'out_for_delivery':
+        return 'On the Way';
+      case 'delivered':
+        return 'Delivered';
+      case 'rejected':
+        return 'Order Cancelled';
+      case 'cancelled':
+        return 'Order Cancelled';
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1);
     }
   };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      pending: { label: 'Pending', className: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
-      new: { label: 'New', className: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
-      accepted: { label: 'Accepted', className: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
-      rejected: { label: 'Rejected', className: 'bg-red-500/20 text-red-400 border-red-500/30' },
-      packed: { label: 'Packed', className: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
-      assigned: { label: 'Assigned', className: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
-      out_for_delivery: { label: 'Out for Delivery', className: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
-      in_transit: { label: 'In Transit', className: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+      pending: { label: 'Order Placed', className: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+      new: { label: 'Order Placed', className: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+      accepted: { label: 'Confirmed', className: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+      rejected: { label: 'Cancelled', className: 'bg-red-500/20 text-red-400 border-red-500/30' },
+      cancelled: { label: 'Cancelled', className: 'bg-red-500/20 text-red-400 border-red-500/30' },
+      packed: { label: 'Preparing', className: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
+      assigned: { label: 'Out for Delivery', className: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+      out_for_delivery: { label: 'On the Way', className: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+      in_transit: { label: 'On the Way', className: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
       delivered: { label: 'Delivered', className: 'bg-green-500/20 text-green-400 border-green-500/30' }
     };
 
@@ -211,11 +242,20 @@ const CustomerOrders = () => {
     return items.reduce((total, item) => total + (item.quantity || 0), 0);
   };
 
-  // Calculate tab counts
-  const tabCounts = orderTabs.map(tab => ({
-    ...tab,
-    count: tab.value === 'all' ? orders.length : orders.filter(order => order.status === tab.value).length
-  }));
+  // Calculate tab counts with customer-friendly categories
+  const tabCounts = orderTabs.map(tab => {
+    if (tab.value === 'all') {
+      return { ...tab, count: orders.length };
+    } else if (tab.value === 'ongoing') {
+      return { 
+        ...tab, 
+        count: orders.filter(order => !['delivered', 'rejected', 'cancelled'].includes(order.status)).length 
+      };
+    } else if (tab.value === 'delivered') {
+      return { ...tab, count: orders.filter(order => order.status === 'delivered').length };
+    }
+    return tab;
+  });
 
   return (
     <motion.div
@@ -233,7 +273,7 @@ const CustomerOrders = () => {
       >
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-            Customer Orders
+            My Orders
           </h1>
           <p className="text-zaago-muted-foreground text-sm sm:text-base">
             Track your orders and view order history
@@ -260,7 +300,7 @@ const CustomerOrders = () => {
       >
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zaago-muted-foreground w-5 h-5" />
         <Input
-          placeholder="Search by order ID, customer name, or phone..."
+          placeholder="Search by order ID or items..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10 py-3 bg-zaago-card/50 border-zaago-border text-foreground placeholder:text-zaago-muted-foreground focus:border-zaago-green focus:ring-zaago-green"
@@ -274,25 +314,19 @@ const CustomerOrders = () => {
         transition={{ delay: 0.3, duration: 0.3 }}
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-4 md:grid-cols-7 bg-transparent gap-1">
+          <TabsList className="grid grid-cols-3 bg-transparent gap-1 w-full max-w-md mx-auto">
             {tabCounts.map((tab) => (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className={`flex flex-col items-center gap-1 px-2 py-2 rounded-lg transition-all text-xs ${
+                className={`flex flex-col items-center gap-1 px-4 py-3 rounded-lg transition-all ${
                   activeTab === tab.value
                     ? 'bg-zaago-green text-black font-medium'
                     : 'bg-zaago-card/50 text-zaago-muted-foreground hover:bg-zaago-accent/50'
                 }`}
               >
-                <span className="font-medium">
-                  {tab.value === 'all' ? 'All' : 
-                   tab.value === 'pending' ? 'Pending' :
-                   tab.value === 'new' ? 'New' :
-                   tab.value === 'accepted' ? 'Accepted' :
-                   tab.value === 'packed' ? 'Packed' :
-                   tab.value === 'in_transit' ? 'Transit' :
-                   'Delivered'}
+                <span className="font-medium text-sm">
+                  {tab.label}
                 </span>
                 <span className={`px-2 py-0.5 rounded-full text-xs ${
                   activeTab === tab.value
@@ -324,18 +358,15 @@ const CustomerOrders = () => {
                       animate={{ opacity: 1, y: 0 }}
                       className="bg-zaago-card/50 border border-zaago-border rounded-xl p-6 hover:bg-zaago-accent/30 transition-all duration-200"
                     >
-                      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                      <div className="flex flex-col gap-4">
                         {/* Order Header */}
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             {getStatusIcon(order.status)}
-                            <div className="flex flex-col">
-                              <div className="flex items-center gap-3 mb-1">
-                                <h3 className="font-semibold text-foreground text-lg">
-                                  Order #{order.id.toString().slice(0, 8)}
-                                </h3>
-                                {getStatusBadge(order.status)}
-                              </div>
+                            <div>
+                              <h3 className="font-semibold text-foreground text-lg">
+                                Order #{order.id.toString().slice(0, 8)}
+                              </h3>
                               <p className="text-zaago-muted-foreground text-sm">
                                 {new Date(order.created_at).toLocaleDateString('en-GB', {
                                   day: 'numeric',
@@ -347,42 +378,88 @@ const CustomerOrders = () => {
                               </p>
                             </div>
                           </div>
+                          {getStatusBadge(order.status)}
                         </div>
 
-                        {/* Order Details */}
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-6 lg:gap-8">
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 lg:gap-8">
-                            <div className="text-center sm:text-left">
-                              <p className="text-zaago-muted-foreground text-sm mb-1">Customer</p>
-                              <p className="text-foreground font-semibold text-base">
-                                {order.customer_name || 'You'}
+                        {/* Order Progress */}
+                        <div className="bg-zaago-card/30 rounded-lg p-4">
+                          <div className="flex items-center gap-3 mb-2">
+                            {getStatusIcon(order.status)}
+                            <div>
+                              <p className="font-medium text-foreground">
+                                {getCustomerFriendlyStatus(order.status)}
                               </p>
-                            </div>
-                            <div className="text-center sm:text-left">
-                              <p className="text-zaago-muted-foreground text-sm mb-1">Items</p>
-                              <p className="text-foreground font-semibold text-base">
-                                {getItemsCount(order.items)} items
+                              <p className="text-zaago-muted-foreground text-sm">
+                                {order.status === 'delivered' 
+                                  ? `Delivered at ${new Date(order.updated_at || order.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+                                  : order.status === 'packed'
+                                  ? 'Your order is being prepared'
+                                  : order.status === 'accepted'
+                                  ? 'Restaurant is preparing your order'
+                                  : order.status === 'in_transit' || order.status === 'assigned'
+                                  ? 'Your order is on the way'
+                                  : 'Your order has been placed'}
                               </p>
-                            </div>
-                            <div className="text-center sm:text-left">
-                              <p className="text-zaago-muted-foreground text-sm mb-1">Total</p>
-                              <p className="text-zaago-green font-bold text-lg">₹{order.total}</p>
                             </div>
                           </div>
+                        </div>
 
-                          {/* Action Button */}
-                          <div className="flex justify-center sm:justify-end">
-                            <Link to={`/orders/${order.id}`}>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full sm:w-auto border-zaago-border text-zaago-muted-foreground hover:bg-zaago-accent hover:text-foreground hover:border-zaago-green transition-all duration-200 flex items-center gap-2 px-4 py-2"
-                              >
-                                <Eye className="w-4 h-4" />
-                                View Details
-                              </Button>
-                            </Link>
+                        {/* Order Items Preview */}
+                        <div className="border-t border-zaago-border pt-4">
+                          <div className="flex justify-between items-center mb-2">
+                            <p className="text-zaago-muted-foreground text-sm">
+                              {getItemsCount(order.items)} item{getItemsCount(order.items) !== 1 ? 's' : ''}
+                            </p>
+                            <p className="text-zaago-green font-bold text-xl">₹{order.total}</p>
                           </div>
+                          
+                          {/* Show first few items */}
+                          {order.items && Array.isArray(order.items) && (
+                            <div className="space-y-1">
+                              {order.items.slice(0, 2).map((item: any, index: number) => (
+                                <div key={index} className="flex justify-between text-sm">
+                                  <span className="text-foreground">{item.name} x {item.quantity}</span>
+                                  <span className="text-zaago-muted-foreground">₹{item.price * item.quantity}</span>
+                                </div>
+                              ))}
+                              {order.items.length > 2 && (
+                                <p className="text-zaago-muted-foreground text-sm">
+                                  +{order.items.length - 2} more item{order.items.length - 2 !== 1 ? 's' : ''}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-3 pt-2">
+                          <Link to={`/orders/${order.id}`} className="flex-1">
+                            <Button
+                              variant="outline"
+                              className="w-full border-zaago-border text-zaago-muted-foreground hover:bg-zaago-accent hover:text-foreground hover:border-zaago-green transition-all duration-200 flex items-center gap-2"
+                            >
+                              <Eye className="w-4 h-4" />
+                              View Details
+                            </Button>
+                          </Link>
+                          
+                          {order.status === 'delivered' && (
+                            <Button
+                              variant="outline"
+                              className="border-zaago-green text-zaago-green hover:bg-zaago-green hover:text-black transition-all duration-200"
+                            >
+                              Rate Order
+                            </Button>
+                          )}
+                          
+                          {['new', 'pending', 'accepted'].includes(order.status) && (
+                            <Button
+                              variant="outline"
+                              className="border-orange-500 text-orange-400 hover:bg-orange-500/10 transition-all duration-200"
+                            >
+                              Track Order
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </motion.div>
@@ -390,12 +467,14 @@ const CustomerOrders = () => {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <User className="w-16 h-16 text-zaago-muted mx-auto mb-4" />
+                  <Package className="w-16 h-16 text-zaago-muted mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-zaago-muted-foreground mb-2">No orders found</h3>
                   <p className="text-zaago-muted-foreground">
                     {activeTab === 'all' 
                       ? "You haven't placed any orders yet." 
-                      : `No ${activeTab} orders found.`}
+                      : activeTab === 'ongoing'
+                      ? "No ongoing orders at the moment."
+                      : "No delivered orders found."}
                   </p>
                 </div>
               )}
