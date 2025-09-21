@@ -4560,7 +4560,7 @@ export type Database = {
       }
       get_seller_orders: {
         Args:
-          | { seller_user_id: string }
+          | { p_seller_id: string }
           | { seller_user_id: string; status_filter?: string[] }
         Returns: {
           address: Json
@@ -4568,12 +4568,11 @@ export type Database = {
           created_at: string
           customer_name: string
           customer_phone: string
-          delivered: boolean
-          delivery_date: string
+          delivered_at: string
+          delivery_time_slot: string
+          id: string
           items: Json
-          order_id: string
           payment_status: string
-          seller_total: number
           special_instructions: string
           status: string
           total: number

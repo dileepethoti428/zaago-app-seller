@@ -60,11 +60,10 @@ const CustomerOrders = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'orders',
-          filter: `user_id=eq.${user?.id}`
+          table: 'orders'
         },
         (payload) => {
-          console.log('Customer order realtime update:', payload);
+          console.log('Seller order realtime update:', payload);
           
           if (payload.eventType === 'INSERT') {
             const newOrder = payload.new;
@@ -118,14 +117,13 @@ const CustomerOrders = () => {
     
     setLoading(true);
     try {
-      // Fetch all orders for comprehensive order management
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Fetch orders containing this seller's products only
+      const { data, error } = await supabase.rpc('get_seller_orders', {
+        p_seller_id: user.id
+      });
 
       if (error) {
-        console.error('Error fetching orders:', error);
+        console.error('Error fetching seller orders:', error);
         toast({
           title: "Error",
           description: "Failed to fetch orders. Please try again.",
@@ -136,7 +134,7 @@ const CustomerOrders = () => {
 
       setOrders(data || []);
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      console.error('Error fetching seller orders:', error);
     } finally {
       setLoading(false);
     }
@@ -419,7 +417,9 @@ const CustomerOrders = () => {
                           {/* Order Items with Product Actions */}
                           {order.items && Array.isArray(order.items) && (
                             <div className="space-y-3">
-                              {order.items.map((item: any, index: number) => (
+                              {order.items
+                                .filter((item: any) => item.seller_id === user?.id) // Only show seller's products
+                                .map((item: any, index: number) => (
                                 <div key={index} className="bg-zaago-card/30 rounded-lg p-4 border border-zaago-border/50">
                                   <div className="flex justify-between items-start mb-3">
                                     <div className="flex-1">
@@ -454,6 +454,15 @@ const CustomerOrders = () => {
                                         </Button>
                                       </div>
                                     )}
+                                    
+                                    {/* Show accepted status */}
+                                    {['accepted', 'packed'].includes(order.status) && (
+                                      <div className="ml-4">
+                                        <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
+                                          ✅ Accepted
+                                        </Badge>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               ))}
@@ -461,17 +470,19 @@ const CustomerOrders = () => {
                           )}
                         </div>
 
-                        {/* Main Action Buttons */}
-                        <div className="flex gap-2 pt-2">
-                          <Link to={`/orders/${order.id}`} className="flex-1">
-                            <Button
-                              variant="outline"
-                              className="w-full border-zaago-border text-zaago-muted-foreground hover:bg-zaago-accent/50 hover:text-foreground hover:border-zaago-green transition-all duration-200 flex items-center gap-2"
-                            >
-                              <Eye className="w-4 h-4" />
-                              View Details
-                            </Button>
-                          </Link>
+                        {/* Order Actions - Show View Details only for accepted orders */}
+                        <div className="flex gap-2 pt-3 border-t border-zaago-border/30 mt-3">
+                          {['accepted', 'packed', 'delivered'].includes(order.status) && (
+                            <Link to={`/orders/${order.id}`} className="flex-1">
+                              <Button
+                                variant="outline"
+                                className="w-full border-zaago-border text-zaago-muted-foreground hover:bg-zaago-accent/50 hover:text-foreground hover:border-zaago-green transition-all duration-200 flex items-center gap-2"
+                              >
+                                <Eye className="w-4 h-4" />
+                                View Details
+                              </Button>
+                            </Link>
+                          )}
                         </div>
                       </div>
                     </motion.div>
@@ -483,7 +494,7 @@ const CustomerOrders = () => {
                   <h3 className="text-xl font-semibold text-zaago-muted-foreground mb-2">No orders found</h3>
                   <p className="text-zaago-muted-foreground">
                     {activeTab === 'all' 
-                      ? "You haven't placed any orders yet." 
+                      ? "No orders containing your products yet." 
                       : activeTab === 'ongoing'
                       ? "No ongoing orders at the moment."
                       : "No delivered orders found."}

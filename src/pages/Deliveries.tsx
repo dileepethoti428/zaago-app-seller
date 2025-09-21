@@ -281,7 +281,7 @@ export default function DeliveriesPage() {
         const hasSellerProduct = order.items.some((item: any) => sellerProductIds.has(item.id));
         
         // Only show delivered orders
-        const isDelivered = order.status === 'delivered' || order.delivered === true;
+        const isDelivered = order.status === 'delivered' || order.delivered_at !== null;
         
         // Also filter by selected date
         const orderDate = new Date(order.created_at).toISOString().split('T')[0];
@@ -297,19 +297,19 @@ export default function DeliveriesPage() {
 
       // Map to the correct format - all orders here are delivered
       const mappedOrders = sortedOrders.map(order => ({
-        id: order.order_id,
+        id: order.id,
         customer_name: order.customer_name || 'N/A',
         customer_phone: order.customer_phone || 'N/A',
         address: order.address,
         items: order.items,
-        total: order.seller_total || 0,
+        total: order.total || 0,
         status: 'delivered', // All orders here are delivered
         created_at: order.created_at,
         updated_at: order.updated_at,
         agent_id: order.agent_id,
         delivered: true, // All orders here are delivered
-        delivery_date: order.delivery_date,
-        delivery_time_slot: null,
+        delivery_date: order.delivered_at ? new Date(order.delivered_at).toISOString().split('T')[0] : null,
+        delivery_time_slot: order.delivery_time_slot,
         payment_id: '',
         payment_status: order.payment_status || 'Pending',
         special_instructions: order.special_instructions,
