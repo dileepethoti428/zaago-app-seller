@@ -24,11 +24,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useProductActions } from '@/hooks/useProductActions';
+import { useSellerOrderActions } from '@/hooks/useSellerOrderActions';
 
 const CustomerOrders = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { acceptProduct, rejectProduct, isProcessing: isProductProcessing } = useProductActions();
+  const { packOrder, isProcessing } = useSellerOrderActions();
   const [orders, setOrders] = useState<any[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -484,14 +486,38 @@ const CustomerOrders = () => {
                                       </div>
                                     )}
                                     
-                                    {/* Show accepted status */}
-                                    {['accepted', 'packed'].includes(order.status) && (
-                                      <div className="ml-4">
-                                        <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
-                                          ✅ Accepted
-                                        </Badge>
-                                      </div>
-                                    )}
+                                     {/* Pack button for accepted orders */}
+                                     {order.status === 'accepted' && (
+                                       <div className="flex gap-2 ml-4 mt-2">
+                                         <Button
+                                           onClick={() => packOrder(order.id, user?.id || "")}
+                                           disabled={isProcessing === order.id}
+                                           size="sm"
+                                           className="bg-blue-600 text-white hover:bg-blue-700"
+                                         >
+                                           {isProcessing === order.id ? (
+                                             <div className="flex items-center gap-2">
+                                               <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                                               Packing...
+                                             </div>
+                                           ) : (
+                                             <>
+                                               <Package className="w-3 h-3 mr-1" />
+                                               Mark as Packed
+                                             </>
+                                           )}
+                                         </Button>
+                                       </div>
+                                     )}
+                                     
+                                     {/* Show accepted status */}
+                                     {['accepted', 'packed'].includes(order.status) && (
+                                       <div className="ml-4">
+                                         <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
+                                           ✅ Accepted
+                                         </Badge>
+                                       </div>
+                                     )}
                                   </div>
                                 </div>
                               ))}
