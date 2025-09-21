@@ -525,19 +525,49 @@ const CustomerOrders = () => {
                           )}
                         </div>
 
-                        {/* Order Actions - Show View Details only for accepted orders */}
+                        {/* Order Actions */}
                         <div className="flex gap-2 pt-3 border-t border-zaago-border/30 mt-3">
-                          {['accepted', 'packed', 'delivered'].includes(order.status) && (
-                            <Link to={`/orders/${order.id}`} className="flex-1">
-                              <Button
-                                variant="outline"
-                                className="w-full border-zaago-border text-zaago-muted-foreground hover:bg-zaago-accent/50 hover:text-foreground hover:border-zaago-green transition-all duration-200 flex items-center gap-2"
-                              >
-                                <Eye className="w-4 h-4" />
-                                View Details
-                              </Button>
-                            </Link>
-                          )}
+                          {(() => {
+                            const sellerItems = order.items?.filter((item: any) => item.seller_id === user?.id) || [];
+                            
+                            return (
+                              <>
+                                {/* Mark as Packed button for accepted orders */}
+                                {order.status === 'accepted' && sellerItems.length > 0 && (
+                                  <Button
+                                    onClick={() => packOrder(order.id, user?.id || "")}
+                                    disabled={isProcessing === order.id}
+                                    className="bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
+                                  >
+                                    {isProcessing === order.id ? (
+                                      <>
+                                        <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
+                                        Packing...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Package className="w-4 h-4" />
+                                        Mark as Packed
+                                      </>
+                                    )}
+                                  </Button>
+                                )}
+                                
+                                {/* View Details button for accepted/packed/delivered orders */}
+                                {['accepted', 'packed', 'delivered'].includes(order.status) && (
+                                  <Link to={`/orders/${order.id}`} className="flex-1">
+                                    <Button
+                                      variant="outline"
+                                      className="w-full border-zaago-border text-zaago-muted-foreground hover:bg-zaago-accent/50 hover:text-foreground hover:border-zaago-green transition-all duration-200 flex items-center gap-2"
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                      View Details
+                                    </Button>
+                                  </Link>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                     </motion.div>
