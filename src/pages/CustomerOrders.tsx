@@ -121,7 +121,7 @@ const CustomerOrders = () => {
     try {
       // Fetch orders containing this seller's products only
       const { data, error } = await supabase.rpc('get_seller_orders', {
-        p_seller_id: user.id
+        seller_user_id: user.id
       });
 
       if (error) {
@@ -530,10 +530,15 @@ const CustomerOrders = () => {
                           {(() => {
                             const sellerItems = order.items?.filter((item: any) => item.seller_id === user?.id) || [];
                             
+                            // Check if any products from this seller are accepted
+                            const hasAcceptedProducts = sellerItems.some((item: any) => 
+                              order.product_statuses?.[item.id]?.status === 'accepted'
+                            );
+                            
                             return (
                               <>
-                                {/* Mark as Packed button for accepted orders */}
-                                {order.status === 'accepted' && sellerItems.length > 0 && (
+                                {/* Mark as Packed button for accepted products */}
+                                {hasAcceptedProducts && (
                                   <Button
                                     onClick={() => packOrder(order.id, user?.id || "")}
                                     disabled={isProcessing === order.id}

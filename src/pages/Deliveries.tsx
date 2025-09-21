@@ -281,7 +281,7 @@ export default function DeliveriesPage() {
         const hasSellerProduct = order.items.some((item: any) => sellerProductIds.has(item.id));
         
         // Only show delivered orders
-        const isDelivered = order.status === 'delivered' || order.delivered_at !== null;
+        const isDelivered = order.status === 'delivered';
         
         // Also filter by selected date
         const orderDate = new Date(order.created_at).toISOString().split('T')[0];
@@ -290,9 +290,9 @@ export default function DeliveriesPage() {
         return hasSellerProduct && isDelivered && matchesDate;
       });
 
-      // Sort by delivery completion time (most recent first)
+      // Sort by created_at (most recent first)
       const sortedOrders = sellerOrders.sort((a, b) => {
-        return new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime();
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
 
       // Map to the correct format - all orders here are delivered
@@ -305,15 +305,15 @@ export default function DeliveriesPage() {
         total: order.total || 0,
         status: 'delivered', // All orders here are delivered
         created_at: order.created_at,
-        updated_at: order.updated_at,
-        agent_id: order.agent_id,
+        updated_at: order.created_at, // Use created_at as fallback
+        agent_id: null, // Not available in new structure
         delivered: true, // All orders here are delivered
-        delivery_date: order.delivered_at ? new Date(order.delivered_at).toISOString().split('T')[0] : null,
+        delivery_date: new Date(order.created_at).toISOString().split('T')[0], // Use created_at as fallback
         delivery_time_slot: order.delivery_time_slot,
         payment_id: '',
-        payment_status: order.payment_status || 'Pending',
+        payment_status: 'Pending', // Default value
         special_instructions: order.special_instructions,
-        user_id: order.user_id,
+        user_id: null, // Not available in new structure
       }));
 
       setDeliveredOrders(mappedOrders);

@@ -4560,24 +4560,20 @@ export type Database = {
       }
       get_seller_orders: {
         Args:
-          | { p_seller_id: string }
+          | { seller_user_id: string }
           | { seller_user_id: string; status_filter?: string[] }
         Returns: {
           address: Json
-          agent_id: string
           created_at: string
           customer_name: string
           customer_phone: string
-          delivered_at: string
           delivery_time_slot: string
           id: string
           items: Json
-          payment_status: string
+          product_statuses: Json
           special_instructions: string
           status: string
           total: number
-          updated_at: string
-          user_id: string
         }[]
       }
       get_seller_payouts_summary_json: {
