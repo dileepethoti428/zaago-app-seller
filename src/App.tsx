@@ -28,6 +28,7 @@ import ApplicationRejected from "./pages/ApplicationRejected";
 import SellerApprovals from "./pages/SellerApprovals";
 import ProductsCustomer from "./pages/ProductsCustomer";
 import CustomerProductDetail from "./pages/CustomerProductDetail";
+import CustomerOrders from "./pages/CustomerOrders";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const App = () => (
               <Route path="/" element={<Layout />}>
                 <Route index element={<Index />} />
                 <Route path="dashboard" element={<Dashboard />} />
+                <Route path="customer-orders" element={<CustomerOrders />} />
                 <Route path="orders" element={<Orders />} />
                 <Route path="orders/:id" element={<OrderDetail />} />
                 <Route path="products" element={<Products />} />
