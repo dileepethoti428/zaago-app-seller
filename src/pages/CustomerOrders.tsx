@@ -455,11 +455,11 @@ const CustomerOrders = () => {
                                      
                                      {/* Product Accept/Reject Actions */}
                                      {(() => {
-                                       const shouldShowButtons = ['new', 'pending'].includes(order.status) && item.id;
+                                       const shouldShowButtons = ['new', 'pending', 'placed'].includes(order.status) && item.id;
                                        console.log('🔍 DEBUG: Should show accept/reject buttons for item', item.name, ':', shouldShowButtons, {
                                          order_status: order.status,
                                          item_id: item.id,
-                                         status_check: ['new', 'pending'].includes(order.status),
+                                         status_check: ['new', 'pending', 'placed'].includes(order.status),
                                          has_item_id: !!item.id
                                        });
                                        return shouldShowButtons;
