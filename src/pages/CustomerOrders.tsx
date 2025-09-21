@@ -11,7 +11,9 @@ import {
   Eye,
   RefreshCw,
   User,
-  MapPin
+  MapPin,
+  Check,
+  X
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -21,10 +23,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useSellerOrderActions } from '@/hooks/useSellerOrderActions';
 
 const CustomerOrders = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { acceptOrder, rejectOrder, packOrder, isProcessing } = useSellerOrderActions();
   const [orders, setOrders] = useState<any[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,15 +118,14 @@ const CustomerOrders = () => {
     
     setLoading(true);
     try {
-      // Fetch orders placed by this customer (user_id is the customer's ID)
+      // Fetch all orders for comprehensive order management
       const { data, error } = await supabase
         .from('orders')
         .select('*')
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching customer orders:', error);
+        console.error('Error fetching orders:', error);
         toast({
           title: "Error",
           description: "Failed to fetch orders. Please try again.",
@@ -133,7 +136,7 @@ const CustomerOrders = () => {
 
       setOrders(data || []);
     } catch (error) {
-      console.error('Error fetching customer orders:', error);
+      console.error('Error fetching orders:', error);
     } finally {
       setLoading(false);
     }
@@ -273,10 +276,10 @@ const CustomerOrders = () => {
       >
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-            My Orders
+            Orders Management
           </h1>
           <p className="text-zaago-muted-foreground text-sm sm:text-base">
-            Track your orders and view order history
+            Manage customer orders and delivery assignments
           </p>
         </div>
         
@@ -356,7 +359,7 @@ const CustomerOrders = () => {
                       key={order.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="bg-zaago-card/50 border border-zaago-border rounded-xl p-6 hover:bg-zaago-accent/30 transition-all duration-200"
+                      className="bg-zaago-card/50 border border-zaago-border rounded-xl p-6 hover:bg-zaago-accent/20 transition-all duration-200"
                     >
                       <div className="flex flex-col gap-4">
                         {/* Order Header */}
@@ -432,32 +435,48 @@ const CustomerOrders = () => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex gap-3 pt-2">
+                        <div className="flex gap-2 pt-2">
                           <Link to={`/orders/${order.id}`} className="flex-1">
                             <Button
                               variant="outline"
-                              className="w-full border-zaago-border text-zaago-muted-foreground hover:bg-zaago-accent hover:text-foreground hover:border-zaago-green transition-all duration-200 flex items-center gap-2"
+                              className="w-full border-zaago-border text-zaago-muted-foreground hover:bg-zaago-accent/50 hover:text-foreground hover:border-zaago-green transition-all duration-200 flex items-center gap-2"
                             >
                               <Eye className="w-4 h-4" />
-                              View Details
+                              View
                             </Button>
                           </Link>
                           
-                          {order.status === 'delivered' && (
-                            <Button
-                              variant="outline"
-                              className="border-zaago-green text-zaago-green hover:bg-zaago-green hover:text-black transition-all duration-200"
-                            >
-                              Rate Order
-                            </Button>
+                          {/* Seller Actions */}
+                          {['new', 'pending'].includes(order.status) && (
+                            <>
+                              <Button
+                                onClick={() => acceptOrder(order.id, user?.id || '')}
+                                disabled={isProcessing === order.id}
+                                className="bg-zaago-green text-black hover:bg-zaago-green/90 transition-all duration-200 flex items-center gap-2"
+                              >
+                                <Check className="w-4 h-4" />
+                                Accept
+                              </Button>
+                              <Button
+                                onClick={() => rejectOrder(order.id, user?.id || '')}
+                                disabled={isProcessing === order.id}
+                                variant="outline"
+                                className="border-red-500 text-red-400 hover:bg-red-500/10 transition-all duration-200 flex items-center gap-2"
+                              >
+                                <X className="w-4 h-4" />
+                                Reject
+                              </Button>
+                            </>
                           )}
                           
-                          {['new', 'pending', 'accepted'].includes(order.status) && (
+                          {order.status === 'accepted' && (
                             <Button
-                              variant="outline"
-                              className="border-orange-500 text-orange-400 hover:bg-orange-500/10 transition-all duration-200"
+                              onClick={() => packOrder(order.id, user?.id || '')}
+                              disabled={isProcessing === order.id}
+                              className="bg-purple-500 text-white hover:bg-purple-600 transition-all duration-200 flex items-center gap-2"
                             >
-                              Track Order
+                              <Package className="w-4 h-4" />
+                              Pack Order
                             </Button>
                           )}
                         </div>

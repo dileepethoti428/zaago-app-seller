@@ -49,7 +49,6 @@ const App = () => (
                 <Route index element={<Index />} />
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="customer-orders" element={<CustomerOrders />} />
-                <Route path="orders" element={<Orders />} />
                 <Route path="orders/:id" element={<OrderDetail />} />
                 <Route path="products" element={<Products />} />
                 <Route path="products/:id" element={<ProductDetail />} />

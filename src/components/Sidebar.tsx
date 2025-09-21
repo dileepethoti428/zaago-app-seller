@@ -32,8 +32,7 @@ import {
 
 const navigationLinks = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/customer-orders', label: 'Customer Orders', icon: Users },
-  { href: '/orders', label: 'Seller Orders', icon: ShoppingCart },
+  { href: '/customer-orders', label: 'Orders', icon: ShoppingCart },
   { href: '/products', label: 'Products', icon: Package },
   { href: '/products/new', label: 'Add Product', icon: PlusCircle },
   { href: '/notifications', label: 'Notifications', icon: Bell },
