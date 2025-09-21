@@ -4160,6 +4160,10 @@ export type Database = {
       }
     }
     Functions: {
+      accept_delivery_assignment: {
+        Args: { p_agent_id: string; p_order_id: string }
+        Returns: Json
+      }
       accept_order: {
         Args: { p_agent_id: string; p_order_id: string }
         Returns: Json
@@ -4748,6 +4752,10 @@ export type Database = {
       mark_payout_paid: {
         Args: { payout_id: string }
         Returns: undefined
+      }
+      notify_nearby_delivery_agents: {
+        Args: { p_order_id: string }
+        Returns: number
       }
       process_daily_subscriptions_with_notifications: {
         Args: Record<PropertyKey, never>
