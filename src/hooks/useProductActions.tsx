@@ -7,10 +7,9 @@ export const useProductActions = () => {
   const { toast } = useToast();
 
   const acceptProduct = async (orderId: string, productId: string, sellerId: string) => {
-    const processingKey = `${orderId}-${productId}`;
-    if (isProcessing === processingKey) return false;
+    if (isProcessing) return false;
 
-    setIsProcessing(processingKey);
+    setIsProcessing(`${orderId}-${productId}`);
 
     try {
       const { data, error } = await supabase.rpc('accept_product_in_order', {
@@ -21,7 +20,7 @@ export const useProductActions = () => {
 
       if (error) throw error;
 
-      const result = data as { success: boolean; message?: string; error?: string; agent_id?: string };
+      const result = data as { success: boolean; message?: string; error?: string };
 
       if (result.success) {
         toast({
@@ -47,10 +46,9 @@ export const useProductActions = () => {
   };
 
   const rejectProduct = async (orderId: string, productId: string, sellerId: string, reason?: string) => {
-    const processingKey = `${orderId}-${productId}`;
-    if (isProcessing === processingKey) return false;
+    if (isProcessing) return false;
 
-    setIsProcessing(processingKey);
+    setIsProcessing(`${orderId}-${productId}`);
 
     try {
       const { data, error } = await supabase.rpc('reject_product_in_order', {
@@ -67,7 +65,7 @@ export const useProductActions = () => {
       if (result.success) {
         toast({
           title: "Product Rejected",
-          description: result.message || 'Product rejected successfully',
+          description: result.message || 'Product has been rejected',
           variant: "default"
         });
         return true;
