@@ -84,7 +84,7 @@ const Index = () => {
 
       const recentActivity = recentOrders?.slice(0, 3).map((order: any) => ({
         action: order.status === 'delivered' ? 'Delivery completed' : 'New order received',
-        item: `Order #${order.order_id.toString().slice(0, 8)}`,
+        item: `Order #${order.id.toString().slice(0, 8)}`,
         time: new Date(order.created_at).toLocaleString()
       })) || [];
 

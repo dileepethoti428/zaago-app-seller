@@ -120,9 +120,10 @@ const CustomerOrders = () => {
     setLoading(true);
     try {
       // Fetch orders containing this seller's products only
-      const { data, error } = await supabase.rpc('get_seller_orders', {
-        seller_user_id: user.id
-      });
+    const { data, error } = await supabase.rpc('get_seller_orders', {
+      seller_user_id: user.id,
+      status_filter: null
+    });
 
       if (error) {
         console.error('Error fetching seller orders:', error);

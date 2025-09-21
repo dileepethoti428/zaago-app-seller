@@ -4559,9 +4559,7 @@ export type Database = {
         }[]
       }
       get_seller_orders: {
-        Args:
-          | { seller_user_id: string }
-          | { seller_user_id: string; status_filter?: string[] }
+        Args: { seller_user_id: string; status_filter?: string[] }
         Returns: {
           address: Json
           created_at: string
