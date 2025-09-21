@@ -1841,6 +1841,45 @@ export type Database = {
           },
         ]
       }
+      order_product_status: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          id: string
+          order_id: string
+          packed_at: string | null
+          product_id: string
+          rejection_reason: string | null
+          seller_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          id?: string
+          order_id: string
+          packed_at?: string | null
+          product_id: string
+          rejection_reason?: string | null
+          seller_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string
+          packed_at?: string | null
+          product_id?: string
+          rejection_reason?: string | null
+          seller_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_qr_codes: {
         Row: {
           created_at: string
@@ -4125,6 +4164,10 @@ export type Database = {
         Args: { p_agent_id: string; p_order_id: string }
         Returns: Json
       }
+      accept_product_in_order: {
+        Args: { p_order_id: string; p_product_id: string; p_seller_id: string }
+        Returns: Json
+      }
       activate_delivery_agent: {
         Args: { agent_email: string }
         Returns: Json
@@ -4749,6 +4792,15 @@ export type Database = {
       }
       reject_order: {
         Args: { p_agent_id: string; p_order_id: string; p_reason?: string }
+        Returns: Json
+      }
+      reject_product_in_order: {
+        Args: {
+          p_order_id: string
+          p_product_id: string
+          p_reason?: string
+          p_seller_id: string
+        }
         Returns: Json
       }
       reject_user: {

@@ -23,12 +23,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useSellerOrderActions } from '@/hooks/useSellerOrderActions';
+import { useProductActions } from '@/hooks/useProductActions';
 
 const CustomerOrders = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { acceptOrder, rejectOrder, packOrder, isProcessing } = useSellerOrderActions();
+  const { acceptProduct, rejectProduct, isProcessing: isProductProcessing } = useProductActions();
   const [orders, setOrders] = useState<any[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -416,25 +416,52 @@ const CustomerOrders = () => {
                             <p className="text-zaago-green font-bold text-xl">₹{order.total}</p>
                           </div>
                           
-                          {/* Show first few items */}
+                          {/* Order Items with Product Actions */}
                           {order.items && Array.isArray(order.items) && (
-                            <div className="space-y-1">
-                              {order.items.slice(0, 2).map((item: any, index: number) => (
-                                <div key={index} className="flex justify-between text-sm">
-                                  <span className="text-foreground">{item.name} x {item.quantity}</span>
-                                  <span className="text-zaago-muted-foreground">₹{item.price * item.quantity}</span>
+                            <div className="space-y-3">
+                              {order.items.map((item: any, index: number) => (
+                                <div key={index} className="bg-zaago-card/30 rounded-lg p-4 border border-zaago-border/50">
+                                  <div className="flex justify-between items-start mb-3">
+                                    <div className="flex-1">
+                                      <h4 className="font-medium text-foreground">{item.name}</h4>
+                                      <p className="text-zaago-muted-foreground text-sm">
+                                        Quantity: {item.quantity} | Price: ₹{item.price}
+                                      </p>
+                                      <p className="text-zaago-green font-medium">₹{item.price * item.quantity}</p>
+                                    </div>
+                                    
+                                    {/* Product Accept/Reject Actions */}
+                                    {['new', 'pending'].includes(order.status) && item.id && (
+                                      <div className="flex gap-2 ml-4">
+                                        <Button
+                                          onClick={() => acceptProduct(order.id, item.id, user?.id || '')}
+                                          disabled={isProductProcessing === `${order.id}-${item.id}`}
+                                          size="sm"
+                                          className="bg-zaago-green text-black hover:bg-zaago-green/90 transition-all duration-200"
+                                        >
+                                          <Check className="w-3 h-3 mr-1" />
+                                          Accept
+                                        </Button>
+                                        <Button
+                                          onClick={() => rejectProduct(order.id, item.id, user?.id || '')}
+                                          disabled={isProductProcessing === `${order.id}-${item.id}`}
+                                          size="sm"
+                                          variant="outline"
+                                          className="border-red-500 text-red-400 hover:bg-red-500/10 transition-all duration-200"
+                                        >
+                                          <X className="w-3 h-3 mr-1" />
+                                          Reject
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               ))}
-                              {order.items.length > 2 && (
-                                <p className="text-zaago-muted-foreground text-sm">
-                                  +{order.items.length - 2} more item{order.items.length - 2 !== 1 ? 's' : ''}
-                                </p>
-                              )}
                             </div>
                           )}
                         </div>
 
-                        {/* Action Buttons */}
+                        {/* Main Action Buttons */}
                         <div className="flex gap-2 pt-2">
                           <Link to={`/orders/${order.id}`} className="flex-1">
                             <Button
@@ -442,43 +469,9 @@ const CustomerOrders = () => {
                               className="w-full border-zaago-border text-zaago-muted-foreground hover:bg-zaago-accent/50 hover:text-foreground hover:border-zaago-green transition-all duration-200 flex items-center gap-2"
                             >
                               <Eye className="w-4 h-4" />
-                              View
+                              View Details
                             </Button>
                           </Link>
-                          
-                          {/* Seller Actions */}
-                          {['new', 'pending'].includes(order.status) && (
-                            <>
-                              <Button
-                                onClick={() => acceptOrder(order.id, user?.id || '')}
-                                disabled={isProcessing === order.id}
-                                className="bg-zaago-green text-black hover:bg-zaago-green/90 transition-all duration-200 flex items-center gap-2"
-                              >
-                                <Check className="w-4 h-4" />
-                                Accept
-                              </Button>
-                              <Button
-                                onClick={() => rejectOrder(order.id, user?.id || '')}
-                                disabled={isProcessing === order.id}
-                                variant="outline"
-                                className="border-red-500 text-red-400 hover:bg-red-500/10 transition-all duration-200 flex items-center gap-2"
-                              >
-                                <X className="w-4 h-4" />
-                                Reject
-                              </Button>
-                            </>
-                          )}
-                          
-                          {order.status === 'accepted' && (
-                            <Button
-                              onClick={() => packOrder(order.id, user?.id || '')}
-                              disabled={isProcessing === order.id}
-                              className="bg-purple-500 text-white hover:bg-purple-600 transition-all duration-200 flex items-center gap-2"
-                            >
-                              <Package className="w-4 h-4" />
-                              Pack Order
-                            </Button>
-                          )}
                         </div>
                       </div>
                     </motion.div>
