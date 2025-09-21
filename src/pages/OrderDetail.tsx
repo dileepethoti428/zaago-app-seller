@@ -238,7 +238,7 @@ const OrderDetail = () => {
           The order you're looking for doesn't exist or you don't have permission to view it.
         </p>
         <Button asChild>
-          <Link to="/orders">
+          <Link to="/customer-orders">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Orders
           </Link>
@@ -263,7 +263,7 @@ const OrderDetail = () => {
       >
         <div className="flex items-center gap-4">
           <Button asChild variant="ghost" size="sm" className="text-foreground hover:bg-zaago-accent">
-            <Link to="/orders">
+            <Link to="/customer-orders">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Orders
             </Link>
