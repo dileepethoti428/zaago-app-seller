@@ -32,6 +32,12 @@ export const useSellerOrderActions = () => {
           description: result.message || `Order ${action}ed successfully`,
           variant: "default"
         });
+        
+        // Force a page refresh or emit an event to update the UI
+        window.dispatchEvent(new CustomEvent('orderStatusUpdated', { 
+          detail: { orderId, action, status: result.success } 
+        }));
+        
         return true;
       } else {
         throw new Error(result.error || 'Failed to update order status');

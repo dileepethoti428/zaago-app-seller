@@ -32,8 +32,9 @@ const CustomerOrders = () => {
   const { acceptProduct, rejectProduct, isProcessing: isProductProcessing } = useProductActions();
   const { packOrder, isProcessing } = useSellerOrderActions();
   const [orders, setOrders] = useState<any[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
 
