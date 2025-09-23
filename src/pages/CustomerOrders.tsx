@@ -34,7 +34,6 @@ const CustomerOrders = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [optimisticStates, setOptimisticStates] = useState<{ [key: string]: string }>({});
@@ -50,7 +49,7 @@ const CustomerOrders = () => {
       fetchCustomerOrders();
       setupRealtimeSubscription();
     }
-  }, [user, refreshTrigger]);
+  }, [user]); // Removed refreshTrigger dependency to prevent unnecessary re-fetches
 
   // Listen for order status updates with optimistic handling
   useEffect(() => {
@@ -61,13 +60,13 @@ const CustomerOrders = () => {
         // Immediately update optimistic state for UI responsiveness
         setOptimisticStates(prev => ({ ...prev, [orderId]: status }));
       } else if (confirmed) {
-        // Clear optimistic state and refresh data
+        // Clear optimistic state and let real-time subscription handle the update
         setOptimisticStates(prev => {
           const updated = { ...prev };
           delete updated[orderId];
           return updated;
         });
-        setRefreshTrigger(prev => prev + 1);
+        // No need to set refreshTrigger, real-time subscription will handle updates
       }
     };
 
@@ -108,7 +107,12 @@ const CustomerOrders = () => {
           
           if (payload.eventType === 'INSERT') {
             const newOrder = payload.new;
-            setOrders(prev => [newOrder, ...prev]);
+            // Check if order already exists to prevent duplicates
+            setOrders(prev => {
+              const exists = prev.find(order => order.id === newOrder.id);
+              if (exists) return prev; // Don't add if already exists
+              return [newOrder, ...prev];
+            });
             
             toast({
               title: "Order Placed Successfully! 🎉",
@@ -481,8 +485,8 @@ const CustomerOrders = () => {
                                  
                                  console.log('🔍 DEBUG: Filtered seller items:', sellerItems);
                                  return sellerItems;
-                               })().map((item: any, index: number) => (
-                                 <div key={index} className="bg-zaago-card/30 rounded-lg p-4 border border-zaago-border/50">
+                                })().map((item: any, index: number) => (
+                                  <div key={`${order.id}-${item.id || index}`} className="bg-zaago-card/30 rounded-lg p-4 border border-zaago-border/50">
                                    <div className="flex justify-between items-start mb-3">
                                      <div className="flex-1">
                                        <h4 className="font-medium text-foreground">{item.name}</h4>
