@@ -4221,12 +4221,18 @@ export type Database = {
         Returns: number
       }
       calculate_next_delivery_date: {
-        Args: {
-          p_current_date: string
-          p_frequency_days: string[]
-          p_frequency_type: string
-          p_frequency_value: number
-        }
+        Args:
+          | {
+              input_current_date?: string
+              last_delivery_date?: string
+              subscription_type: string
+            }
+          | {
+              p_current_date: string
+              p_frequency_days: string[]
+              p_frequency_type: string
+              p_frequency_value: number
+            }
         Returns: string
       }
       calculate_seller_payouts: {
@@ -4889,6 +4895,10 @@ export type Database = {
       update_seller_order_status: {
         Args: { p_action: string; p_order_id: string; p_seller_user_id: string }
         Returns: Json
+      }
+      update_subscription_next_delivery_dates: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       update_trending_products: {
         Args: Record<PropertyKey, never>
