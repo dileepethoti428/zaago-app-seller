@@ -11,7 +11,7 @@ export const useSellerOrderActions = () => {
     sellerUserId: string, 
     action: 'accept' | 'reject' | 'pack'
   ) => {
-    if (isProcessing) return;
+    if (isProcessing) return false;
 
     setIsProcessing(orderId);
 
@@ -38,10 +38,21 @@ export const useSellerOrderActions = () => {
       }
     } catch (error) {
       console.error(`Error ${action}ing order:`, error);
+      
+      // Check if it's a location-related error and provide specific guidance
+      const errorMessage = error instanceof Error ? error.message : `Failed to ${action} order`;
+      const isLocationError = errorMessage.includes('location') || 
+                             errorMessage.includes('latitude') || 
+                             errorMessage.includes('longitude') ||
+                             errorMessage.includes('Please set your location in settings');
+      
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : `Failed to ${action} order`,
-        variant: "destructive"
+        title: isLocationError ? "Location Required" : "Error",
+        description: isLocationError 
+          ? "Please set your store location in Settings before packing orders. Click Settings → Location to set up your location."
+          : errorMessage,
+        variant: "destructive",
+        duration: isLocationError ? 8000 : 5000
       });
       return false;
     } finally {

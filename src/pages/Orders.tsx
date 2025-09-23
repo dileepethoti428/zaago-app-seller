@@ -24,6 +24,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useSellerOrderActions } from '@/hooks/useSellerOrderActions';
+import { LocationSetupModal } from '@/components/LocationSetupModal';
 
 const Orders = () => {
   const { user } = useAuth();
@@ -35,6 +36,7 @@ const Orders = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [processingOrder, setProcessingOrder] = useState<string | null>(null);
+  const [showLocationModal, setShowLocationModal] = useState(false);
 
   const orderTabs = [
     { value: 'all', label: 'All Orders', count: 0 },
@@ -445,9 +447,15 @@ const Orders = () => {
                               </>
                             )}
                             
-                            {order.status === 'accepted' && (
+                             {order.status === 'accepted' && (
                               <Button
-                                onClick={() => packOrder(order.id, user?.id || '')}
+                                onClick={async () => {
+                                  const success = await packOrder(order.id, user?.id || '');
+                                  // If pack failed due to location, show location setup modal
+                                  if (!success) {
+                                    setShowLocationModal(true);
+                                  }
+                                }}
                                 disabled={isProcessing === order.id}
                                 size="sm"
                                 className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
@@ -489,6 +497,18 @@ const Orders = () => {
           </TabsContent>
         </Tabs>
       </motion.div>
+
+      {/* Location Setup Modal */}
+      <LocationSetupModal
+        open={showLocationModal}
+        onOpenChange={setShowLocationModal}
+        onLocationSet={() => {
+          toast({
+            title: "Location Set Successfully",
+            description: "You can now mark orders as packed!",
+          });
+        }}
+      />
     </motion.div>
   );
 };
