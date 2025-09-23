@@ -535,52 +535,55 @@ const CustomerOrders = () => {
                                       </div>
                                      )}
                                      
-                                       {/* Pack button for accepted orders - check both actual status and optimistic state */}
+                                        {/* Pack button for accepted orders - check both actual status and optimistic state */}
+                                        {(() => {
+                                          const currentStatus = getOptimisticStatus(order.id) || optimisticStates[order.id] || order.status;
+                                          const shouldShowPackButton = currentStatus === 'accepted';
+                                          
+                                          return shouldShowPackButton && (
+                                            <div className="flex gap-2 ml-4 mt-2">
+                                              <Button
+                                                onClick={async () => {
+                                                  const success = await packOrder(order.id, user?.id || "");
+                                                  // Optimistic update is handled in the hook
+                                                }}
+                                                disabled={isProcessing === order.id}
+                                                size="sm"
+                                                className="bg-purple-600 hover:bg-purple-700 text-white transition-all duration-200"
+                                              >
+                                                {isProcessing === order.id ? (
+                                                  <div className="flex items-center gap-2">
+                                                    <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                                                    Packing...
+                                                  </div>
+                                                ) : (
+                                                  <>
+                                                    <Package className="w-3 h-3 mr-1" />
+                                                    Mark as Packed
+                                                  </>
+                                                )}
+                                              </Button>
+                                            </div>
+                                          );
+                                         })()}
+                                      
+                                       {/* Show status badges */}
                                        {(() => {
-                                         const currentStatus = optimisticStates[order.id] || order.status;
-                                         const shouldShowPackButton = currentStatus === 'accepted';
-                                         
-                                         return shouldShowPackButton && (
-                                           <div className="flex gap-2 ml-4 mt-2">
-                                             <Button
-                                               onClick={async () => {
-                                                 const success = await packOrder(order.id, user?.id || "");
-                                                 // Optimistic update is handled in the hook
-                                               }}
-                                               disabled={isProcessing === order.id}
-                                               size="sm"
-                                               className="bg-purple-600 hover:bg-purple-700 text-white transition-all duration-200"
-                                             >
-                                               {isProcessing === order.id ? (
-                                                 <div className="flex items-center gap-2">
-                                                   <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
-                                                   Packing...
-                                                 </div>
-                                               ) : (
-                                                 <>
-                                                   <Package className="w-3 h-3 mr-1" />
-                                                   Mark as Packed
-                                                 </>
-                                               )}
-                                             </Button>
+                                         const currentStatus = getOptimisticStatus(order.id) || optimisticStates[order.id] || order.status;
+                                         return ['accepted', 'packed', 'in_transit'].includes(currentStatus) && (
+                                           <div className="ml-4">
+                                             <Badge className={
+                                               currentStatus === 'accepted' ? "bg-zaago-green/20 text-zaago-green border-zaago-green/30" :
+                                               currentStatus === 'packed' ? "bg-blue-500/20 text-blue-400 border-blue-500/30" :
+                                               "bg-purple-500/20 text-purple-400 border-purple-500/30"
+                                             }>
+                                               {currentStatus === 'accepted' ? '✅ Accepted' :
+                                                currentStatus === 'packed' ? '📦 Packed' :
+                                                '🚚 In Transit'}
+                                             </Badge>
                                            </div>
                                          );
-                                        })()}
-                                      
-                                      {/* Show status badges */}
-                                      {['accepted', 'packed', 'in_transit'].includes(order.status) && (
-                                        <div className="ml-4">
-                                          <Badge className={
-                                            order.status === 'accepted' ? "bg-zaago-green/20 text-zaago-green border-zaago-green/30" :
-                                            order.status === 'packed' ? "bg-blue-500/20 text-blue-400 border-blue-500/30" :
-                                            "bg-purple-500/20 text-purple-400 border-purple-500/30"
-                                          }>
-                                            {order.status === 'accepted' ? '✅ Accepted' :
-                                             order.status === 'packed' ? '📦 Packed' :
-                                             '🚚 In Transit'}
-                                          </Badge>
-                                        </div>
-                                      )}
+                                       })()}
                                   </div>
                                 </div>
                               ))}
@@ -598,10 +601,17 @@ const CustomerOrders = () => {
                               order.product_statuses?.[item.id]?.status === 'accepted'
                             );
                             
+                            // Get optimistic status if available
+                            const currentOrderStatus = getOptimisticStatus(order.id) || order.status;
+                            
+                            // Only show mark as packed if order is still pending/confirmed/accepted and not already packed
+                            const shouldShowPackButton = hasAcceptedProducts && 
+                              !['packed', 'in_transit', 'delivered'].includes(currentOrderStatus);
+                            
                             return (
                               <>
                                 {/* Mark as Packed button for accepted products */}
-                                {hasAcceptedProducts && (
+                                {shouldShowPackButton && (
                                   <Button
                                     onClick={() => packOrder(order.id, user?.id || "")}
                                     disabled={isProcessing === order.id}
@@ -622,7 +632,7 @@ const CustomerOrders = () => {
                                 )}
                                  
                                  {/* View Details button for packed/delivered orders */}
-                                 {['packed', 'in_transit', 'delivered'].includes(order.status) && (
+                                 {['packed', 'in_transit', 'delivered'].includes(currentOrderStatus) && (
                                   <Link to={`/orders/${order.id}`} className="flex-1">
                                     <Button
                                       variant="outline"
