@@ -6,7 +6,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { SellerNotifications } from './SellerNotifications';
 import { AgentNotifications } from './AgentNotifications';
 import { CustomerNotifications } from './CustomerNotifications';
-import { DeliveryAgentTestNotifications } from './DeliveryAgentTestNotifications';
+
 
 const Layout = () => {
   return (
@@ -23,7 +23,6 @@ const Layout = () => {
       <SellerNotifications />
       <AgentNotifications />
       <CustomerNotifications />
-      <DeliveryAgentTestNotifications />
     </SidebarProvider>
   );
 };
