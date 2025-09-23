@@ -2,7 +2,7 @@
  * Utility for playing notification sounds across the application
  */
 
-export type NotificationSoundType = 'order' | 'delivery' | 'payment' | 'system' | 'urgent' | 'success';
+export type NotificationSoundType = 'order' | 'delivery' | 'payment' | 'system' | 'urgent' | 'success' | 'new_order_ringtone';
 
 export class NotificationSoundManager {
   private static instance: NotificationSoundManager;
@@ -71,6 +71,9 @@ export class NotificationSoundManager {
           break;
         case 'success':
           this.playSuccessSound(oscillator, gainNode);
+          break;
+        case 'new_order_ringtone':
+          this.playNewOrderRingtone(oscillator, gainNode);
           break;
         default:
           this.playSystemSound(oscillator, gainNode);
@@ -173,6 +176,47 @@ export class NotificationSoundManager {
     oscillator.stop(currentTime + 0.3);
   }
 
+  private playNewOrderRingtone(oscillator: OscillatorNode, gainNode: GainNode) {
+    const currentTime = this.audioContext!.currentTime;
+    
+    // Phone ringtone pattern: Repeated melody like incoming call
+    // Ring pattern: C5 -> E5 -> G5 -> C6, repeated 3 times with pauses
+    const frequencies = [
+      523.25, 659.25, 783.99, 1046.50, // First ring
+      0, 0, // Pause
+      523.25, 659.25, 783.99, 1046.50, // Second ring  
+      0, 0, // Pause
+      523.25, 659.25, 783.99, 1046.50  // Third ring
+    ];
+    
+    const durations = [
+      0.15, 0.15, 0.15, 0.3, // First ring
+      0.2, 0.2, // Pause
+      0.15, 0.15, 0.15, 0.3, // Second ring
+      0.2, 0.2, // Pause  
+      0.15, 0.15, 0.15, 0.3  // Third ring
+    ];
+    
+    let timeOffset = 0;
+    frequencies.forEach((freq, index) => {
+      const duration = durations[index];
+      if (freq > 0) {
+        oscillator.frequency.setValueAtTime(freq, currentTime + timeOffset);
+        gainNode.gain.setValueAtTime(0.4, currentTime + timeOffset);
+        gainNode.gain.exponentialRampToValueAtTime(0.1, currentTime + timeOffset + duration * 0.8);
+      } else {
+        // Silence during pause
+        gainNode.gain.setValueAtTime(0.01, currentTime + timeOffset);
+      }
+      timeOffset += duration;
+    });
+    
+    gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + timeOffset);
+    
+    oscillator.start(currentTime);
+    oscillator.stop(currentTime + timeOffset);
+  }
+
   public async playCustomFrequency(
     frequencies: number[],
     durations: number[],
@@ -223,3 +267,4 @@ export const playPaymentSound = () => notificationSound.playNotificationSound('p
 export const playSystemSound = () => notificationSound.playNotificationSound('system');
 export const playUrgentSound = () => notificationSound.playNotificationSound('urgent');
 export const playSuccessSound = () => notificationSound.playNotificationSound('success');
+export const playNewOrderRingtone = () => notificationSound.playNotificationSound('new_order_ringtone');
