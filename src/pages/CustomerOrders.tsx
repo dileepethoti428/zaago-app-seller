@@ -30,13 +30,14 @@ const CustomerOrders = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { acceptProduct, rejectProduct, isProcessing: isProductProcessing } = useProductActions();
-  const { packOrder, isProcessing } = useSellerOrderActions();
+  const { packOrder, isProcessing, getOptimisticStatus } = useSellerOrderActions();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [optimisticStates, setOptimisticStates] = useState<{ [key: string]: string }>({});
 
   const orderTabs = [
     { value: 'all', label: 'All', count: 0 },
@@ -51,14 +52,41 @@ const CustomerOrders = () => {
     }
   }, [user, refreshTrigger]);
 
-  // Listen for order status updates
+  // Listen for order status updates with optimistic handling
   useEffect(() => {
-    const handleOrderUpdate = () => {
-      setRefreshTrigger(prev => prev + 1);
+    const handleOrderUpdate = (event: any) => {
+      const { orderId, action, status, optimistic, confirmed } = event.detail;
+      
+      if (optimistic) {
+        // Immediately update optimistic state for UI responsiveness
+        setOptimisticStates(prev => ({ ...prev, [orderId]: status }));
+      } else if (confirmed) {
+        // Clear optimistic state and refresh data
+        setOptimisticStates(prev => {
+          const updated = { ...prev };
+          delete updated[orderId];
+          return updated;
+        });
+        setRefreshTrigger(prev => prev + 1);
+      }
+    };
+
+    const handleOrderRevert = (event: any) => {
+      const { orderId } = event.detail;
+      // Clear optimistic state on error
+      setOptimisticStates(prev => {
+        const updated = { ...prev };
+        delete updated[orderId];
+        return updated;
+      });
     };
 
     window.addEventListener('orderStatusUpdated', handleOrderUpdate);
-    return () => window.removeEventListener('orderStatusUpdated', handleOrderUpdate);
+    window.addEventListener('orderStatusReverted', handleOrderRevert);
+    return () => {
+      window.removeEventListener('orderStatusUpdated', handleOrderUpdate);
+      window.removeEventListener('orderStatusReverted', handleOrderRevert);
+    };
   }, []);
 
   useEffect(() => {
@@ -505,41 +533,39 @@ const CustomerOrders = () => {
                                           Reject
                                         </Button>
                                       </div>
-                                    )}
-                                    
-                                      {/* Pack button for accepted orders */}
-                                      {order.status === 'accepted' && (
-                                        <div className="flex gap-2 ml-4 mt-2">
-                                          <Button
-                                            onClick={async () => {
-                                              const success = await packOrder(order.id, user?.id || "");
-                                              if (success) {
-                                                // Update local state immediately for better UX
-                                                setOrders(prev => 
-                                                  prev.map(o => 
-                                                    o.id === order.id ? { ...o, status: 'packed' } : o
-                                                  )
-                                                );
-                                              }
-                                            }}
-                                            disabled={isProcessing === order.id}
-                                            size="sm"
-                                            className="bg-blue-600 text-white hover:bg-blue-700"
-                                          >
-                                            {isProcessing === order.id ? (
-                                              <div className="flex items-center gap-2">
-                                                <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
-                                                Packing...
-                                              </div>
-                                            ) : (
-                                              <>
-                                                <Package className="w-3 h-3 mr-1" />
-                                                Mark as Packed
-                                              </>
-                                            )}
-                                          </Button>
-                                        </div>
-                                      )}
+                                     )}
+                                     
+                                       {/* Pack button for accepted orders - check both actual status and optimistic state */}
+                                       {(() => {
+                                         const currentStatus = optimisticStates[order.id] || order.status;
+                                         const shouldShowPackButton = currentStatus === 'accepted';
+                                         
+                                         return shouldShowPackButton && (
+                                           <div className="flex gap-2 ml-4 mt-2">
+                                             <Button
+                                               onClick={async () => {
+                                                 const success = await packOrder(order.id, user?.id || "");
+                                                 // Optimistic update is handled in the hook
+                                               }}
+                                               disabled={isProcessing === order.id}
+                                               size="sm"
+                                               className="bg-purple-600 hover:bg-purple-700 text-white transition-all duration-200"
+                                             >
+                                               {isProcessing === order.id ? (
+                                                 <div className="flex items-center gap-2">
+                                                   <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                                                   Packing...
+                                                 </div>
+                                               ) : (
+                                                 <>
+                                                   <Package className="w-3 h-3 mr-1" />
+                                                   Mark as Packed
+                                                 </>
+                                               )}
+                                             </Button>
+                                           </div>
+                                         );
+                                        })()}
                                       
                                       {/* Show status badges */}
                                       {['accepted', 'packed', 'in_transit'].includes(order.status) && (

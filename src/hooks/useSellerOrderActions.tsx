@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export const useSellerOrderActions = () => {
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
+  const [optimisticUpdates, setOptimisticUpdates] = useState<{ [key: string]: string }>({});
   const { toast } = useToast();
 
   const handleOrderAction = async (
@@ -14,6 +15,15 @@ export const useSellerOrderActions = () => {
     if (isProcessing) return false;
 
     setIsProcessing(orderId);
+
+    // Optimistic update - immediately update UI state
+    const newStatus = action === 'accept' ? 'accepted' : action === 'reject' ? 'rejected' : 'packed';
+    setOptimisticUpdates(prev => ({ ...prev, [orderId]: newStatus }));
+
+    // Immediately dispatch event for UI update
+    window.dispatchEvent(new CustomEvent('orderStatusUpdated', { 
+      detail: { orderId, action, status: newStatus, optimistic: true } 
+    }));
 
     try {
       const { data, error } = await supabase.rpc('update_seller_order_status', {
@@ -27,15 +37,22 @@ export const useSellerOrderActions = () => {
       const result = data as { success: boolean; message?: string; error?: string };
 
       if (result.success) {
+        // Clear optimistic update since real update succeeded
+        setOptimisticUpdates(prev => {
+          const updated = { ...prev };
+          delete updated[orderId];
+          return updated;
+        });
+
         toast({
           title: "Success",
           description: result.message || `Order ${action}ed successfully`,
           variant: "default"
         });
         
-        // Force a page refresh or emit an event to update the UI
+        // Confirm the update with real data
         window.dispatchEvent(new CustomEvent('orderStatusUpdated', { 
-          detail: { orderId, action, status: result.success } 
+          detail: { orderId, action, status: newStatus, confirmed: true } 
         }));
         
         return true;
@@ -44,6 +61,18 @@ export const useSellerOrderActions = () => {
       }
     } catch (error) {
       console.error(`Error ${action}ing order:`, error);
+      
+      // Revert optimistic update on error
+      setOptimisticUpdates(prev => {
+        const updated = { ...prev };
+        delete updated[orderId];
+        return updated;
+      });
+
+      // Revert UI
+      window.dispatchEvent(new CustomEvent('orderStatusReverted', { 
+        detail: { orderId, action } 
+      }));
       
       // Check if it's a location-related error and provide specific guidance
       const errorMessage = error instanceof Error ? error.message : `Failed to ${action} order`;
@@ -66,6 +95,10 @@ export const useSellerOrderActions = () => {
     }
   };
 
+  const getOptimisticStatus = (orderId: string) => {
+    return optimisticUpdates[orderId];
+  };
+
   const acceptOrder = (orderId: string, sellerUserId: string) => 
     handleOrderAction(orderId, sellerUserId, 'accept');
 
@@ -79,6 +112,7 @@ export const useSellerOrderActions = () => {
     acceptOrder,
     rejectOrder,
     packOrder,
-    isProcessing
+    isProcessing,
+    getOptimisticStatus
   };
 };
