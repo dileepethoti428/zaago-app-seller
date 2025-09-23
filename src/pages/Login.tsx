@@ -41,56 +41,39 @@ export default function LoginPage() {
 
     try {
       if (isSignUp) {
-        // Create auth user first
-        const { error: authError } = await signUp(formData.email, formData.password);
+        // Create auth user with business data in metadata
+        const { data: signUpData, error: authError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/#/`,
+            data: {
+              phone: formData.phone,
+              business_name: formData.businessName,
+              full_name: formData.businessName
+            }
+          }
+        });
         
         if (authError) {
           throw authError;
         }
 
-        // Since the signup was successful, we can try to create seller profile
-        try {
-          // Get the current user after signup
-          const { data: { user } } = await supabase.auth.getUser();
-          
-          if (user) {
-            // Create seller profile with additional data
-            const { error: sellerError } = await supabase
-              .from('sellers')
-              .insert({
-                user_id: user.id,
-                email: formData.email,
-                name: formData.businessName,
-                phone: formData.phone,
-                business_name: formData.businessName,
-              });
-
-            if (sellerError) {
-              console.error('Error creating seller profile:', sellerError);
-            }
-
-            // Create admin notification
-            const { error: notificationError } = await supabase
-              .from('admin_notifications')
-              .insert({
-                type: 'new_seller_signup',
-                title: 'New Seller Registration',
-                message: `New seller "${formData.businessName}" has registered with email ${formData.email}`,
-                metadata: {
-                  seller_email: formData.email,
-                  business_name: formData.businessName,
-                  phone: formData.phone,
-                  signup_date: new Date().toISOString()
-                }
-              });
-
-            if (notificationError) {
-              console.error('Error creating admin notification:', notificationError);
-            }
-          }
-        } catch (profileError) {
-          console.error('Error creating seller profile after signup:', profileError);
+        // If the user was created immediately (no email confirmation required)
+        if (signUpData.user && !signUpData.user.email_confirmed_at) {
+          toast({
+            title: "Account Created!",
+            description: "Please check your email to verify your account, then sign in.",
+          });
+        } else if (signUpData.user && signUpData.user.email_confirmed_at) {
+          // User created and confirmed immediately
+          toast({
+            title: "Account Created!",
+            description: "Your account has been created successfully.",
+          });
         }
+        
+        console.log('Signup successful:', signUpData);
 
         toast({
           title: "Account Created!",
