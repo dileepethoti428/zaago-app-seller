@@ -29,7 +29,7 @@ export const CustomerNotifications = () => {
           switch (notification.type) {
             case 'order_confirmed':
             case 'order_accepted':
-              notificationSound.playNotificationSound('order');
+              notificationSound.playNotificationSound('phone_ringtone');
               break;
             case 'order_packed':
             case 'order_shipped':

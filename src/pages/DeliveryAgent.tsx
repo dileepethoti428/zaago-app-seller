@@ -98,8 +98,8 @@ export default function DeliveryAgent() {
               return [newOrder, ...prev];
             });
 
-            // Play ringtone for new order (like phone call)
-            notificationSound.playNotificationSound('new_order_ringtone');
+            // Play phone ringtone for new order
+            notificationSound.playNotificationSound('phone_ringtone');
             
             // Show notification
             toast({

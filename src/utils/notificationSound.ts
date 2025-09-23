@@ -2,12 +2,13 @@
  * Utility for playing notification sounds across the application
  */
 
-export type NotificationSoundType = 'order' | 'delivery' | 'payment' | 'system' | 'urgent' | 'success' | 'new_order_ringtone';
+export type NotificationSoundType = 'order' | 'delivery' | 'payment' | 'system' | 'urgent' | 'success' | 'new_order_ringtone' | 'phone_ringtone';
 
 export class NotificationSoundManager {
   private static instance: NotificationSoundManager;
   private audioContext: AudioContext | null = null;
   private isEnabled: boolean = true;
+  private currentRingtone: { oscillator: OscillatorNode; gainNode: GainNode } | null = null;
 
   private constructor() {
     // Initialize audio context on first interaction
@@ -47,6 +48,12 @@ export class NotificationSoundManager {
       // Resume context if suspended
       if (this.audioContext.state === 'suspended') {
         await this.audioContext.resume();
+      }
+
+      // Handle phone ringtone separately
+      if (type === 'phone_ringtone') {
+        this.playPhoneRingtone();
+        return;
       }
 
       const oscillator = this.audioContext.createOscillator();
@@ -217,6 +224,84 @@ export class NotificationSoundManager {
     oscillator.stop(currentTime + timeOffset);
   }
 
+  private playPhoneRingtone() {
+    if (!this.audioContext) return;
+    
+    // Stop any existing ringtone
+    this.stopRingtone();
+    
+    const currentTime = this.audioContext.currentTime;
+    const oscillator = this.audioContext.createOscillator();
+    const gainNode = this.audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(this.audioContext.destination);
+    
+    // Store reference to stop later
+    this.currentRingtone = { oscillator, gainNode };
+    
+    // Classic phone ringtone pattern - repeating ring with pauses
+    this.createRingtonePattern(oscillator, gainNode, currentTime);
+    
+    oscillator.start(currentTime);
+    
+    // Auto-stop after 15 seconds (like a real phone call)
+    setTimeout(() => {
+      this.stopRingtone();
+    }, 15000);
+  }
+  
+  private createRingtonePattern(oscillator: OscillatorNode, gainNode: GainNode, startTime: number) {
+    // Classic telephone ring: Two-tone with pause pattern
+    const ringFreq1 = 440; // A4
+    const ringFreq2 = 480; // Close to A#4
+    
+    let time = startTime;
+    
+    // Create repeating ring pattern for 15 seconds
+    for (let cycle = 0; cycle < 8; cycle++) {
+      // Ring 1: 0.4s on
+      oscillator.frequency.setValueAtTime(ringFreq1, time);
+      gainNode.gain.setValueAtTime(0.5, time);
+      time += 0.2;
+      
+      oscillator.frequency.setValueAtTime(ringFreq2, time);
+      time += 0.2;
+      
+      // Brief pause: 0.4s
+      gainNode.gain.setValueAtTime(0, time);
+      time += 0.4;
+      
+      // Ring 2: 0.4s on  
+      gainNode.gain.setValueAtTime(0.5, time);
+      oscillator.frequency.setValueAtTime(ringFreq1, time);
+      time += 0.2;
+      
+      oscillator.frequency.setValueAtTime(ringFreq2, time);
+      time += 0.2;
+      
+      // Long pause: 2s (like real phone)
+      gainNode.gain.setValueAtTime(0, time);
+      time += 2;
+    }
+    
+    // Final fade out
+    gainNode.gain.setValueAtTime(0, time);
+    oscillator.stop(time);
+  }
+  
+  public stopRingtone() {
+    if (this.currentRingtone) {
+      try {
+        this.currentRingtone.gainNode.gain.setValueAtTime(0, this.audioContext!.currentTime);
+        this.currentRingtone.oscillator.stop();
+      } catch (error) {
+        // Oscillator might already be stopped
+      }
+      this.currentRingtone = null;
+    }
+  }
+
   public async playCustomFrequency(
     frequencies: number[],
     durations: number[],
@@ -268,3 +353,5 @@ export const playSystemSound = () => notificationSound.playNotificationSound('sy
 export const playUrgentSound = () => notificationSound.playNotificationSound('urgent');
 export const playSuccessSound = () => notificationSound.playNotificationSound('success');
 export const playNewOrderRingtone = () => notificationSound.playNotificationSound('new_order_ringtone');
+export const playPhoneRingtone = () => notificationSound.playNotificationSound('phone_ringtone');
+export const stopRingtone = () => notificationSound.stopRingtone();

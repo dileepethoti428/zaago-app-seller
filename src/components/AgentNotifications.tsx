@@ -44,7 +44,7 @@ export const AgentNotifications = () => {
           switch (notification.type) {
             case 'new_delivery_assignment':
             case 'new_delivery_available':
-              notificationSound.playNotificationSound('order');
+              notificationSound.playNotificationSound('phone_ringtone');
               break;
             case 'delivery_completed':
               notificationSound.playNotificationSound('success');

@@ -28,7 +28,7 @@ export const SellerNotifications = () => {
           // Play appropriate sound based on notification type
           switch (notification.type) {
             case 'new_order':
-              notificationSound.playNotificationSound('order');
+              notificationSound.playNotificationSound('phone_ringtone');
               break;
             case 'order_cancelled':
               notificationSound.playNotificationSound('urgent');
