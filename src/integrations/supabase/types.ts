@@ -4310,10 +4310,6 @@ export type Database = {
         }
         Returns: string
       }
-      create_order_from_existing_subscription: {
-        Args: { p_order_type?: string; p_subscription_id: string }
-        Returns: string
-      }
       create_order_from_subscription: {
         Args: { p_order_type?: string; p_subscription_id: string }
         Returns: string
@@ -4857,6 +4853,10 @@ export type Database = {
         Returns: boolean
       }
       should_skip_delivery_for_vacation_v2: {
+        Args: { p_delivery_date: string; p_subscription_id: string }
+        Returns: boolean
+      }
+      should_skip_delivery_for_vacation_v3: {
         Args: { p_delivery_date: string; p_subscription_id: string }
         Returns: boolean
       }
