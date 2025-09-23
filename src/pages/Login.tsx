@@ -75,10 +75,6 @@ export default function LoginPage() {
         
         console.log('Signup successful:', signUpData);
 
-        toast({
-          title: "Account Created!",
-          description: "Please check your email to verify your account, then sign in.",
-        });
         setIsSignUp(false);
         setFormData({ email: '', password: '', phone: '', businessName: '' });
       } else {
