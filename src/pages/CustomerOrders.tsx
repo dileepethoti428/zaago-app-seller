@@ -508,17 +508,13 @@ const CustomerOrders = () => {
                                        return shouldShowButtons;
                                      })() && (
                                       <div className="flex gap-2 ml-4">
-                                         <Button
-                                           onClick={async () => {
-                                             const success = await acceptProduct(order.id, item.id, user?.id || '');
-                                             if (success) {
-                                               fetchCustomerOrders();
-                                               // Navigate to order details after successful acceptance
-                                               setTimeout(() => {
-                                                 window.location.href = `/#/orders/${order.id}`;
-                                               }, 1000);
-                                             }
-                                           }}
+                                        <Button
+                                            onClick={async () => {
+                                              const success = await acceptProduct(order.id, item.id, user?.id || '');
+                                              if (success) {
+                                                fetchCustomerOrders();
+                                              }
+                                            }}
                                            disabled={isProductProcessing === `${order.id}-${item.id}`}
                                            size="sm"
                                            className="bg-zaago-green text-black hover:bg-zaago-green/90 transition-all duration-200"
