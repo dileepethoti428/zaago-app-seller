@@ -74,20 +74,41 @@ export const useSellerOrderActions = () => {
         detail: { orderId, action } 
       }));
       
-      // Check if it's a location-related error and provide specific guidance
+      // Enhanced error handling with specific feedback
       const errorMessage = error instanceof Error ? error.message : `Failed to ${action} order`;
+      
+      // Check for specific error types
       const isLocationError = errorMessage.includes('location') || 
                              errorMessage.includes('latitude') || 
                              errorMessage.includes('longitude') ||
                              errorMessage.includes('Please set your location in settings');
       
+      const isNotFoundError = errorMessage.includes('not found');
+      const isPermissionError = errorMessage.includes('permission') || errorMessage.includes('unauthorized');
+      
+      let title = "Error";
+      let description = errorMessage;
+      let duration = 5000;
+      
+      if (isLocationError) {
+        title = "Location Required";
+        description = "Please set your store location in Settings before packing orders. Click Settings → Location to set up your location.";
+        duration = 8000;
+      } else if (isNotFoundError) {
+        title = "Order Not Found";
+        description = "This order could not be found. It may have been cancelled or completed by another user.";
+        duration = 6000;
+      } else if (isPermissionError) {
+        title = "Permission Denied";
+        description = "You don't have permission to perform this action on this order.";
+        duration = 6000;
+      }
+      
       toast({
-        title: isLocationError ? "Location Required" : "Error",
-        description: isLocationError 
-          ? "Please set your store location in Settings before packing orders. Click Settings → Location to set up your location."
-          : errorMessage,
+        title,
+        description,
         variant: "destructive",
-        duration: isLocationError ? 8000 : 5000
+        duration
       });
       return false;
     } finally {
