@@ -4223,6 +4223,12 @@ export type Database = {
       calculate_next_delivery_date: {
         Args:
           | {
+              current_hour?: number
+              input_current_date?: string
+              last_delivery_date?: string
+              subscription_type: string
+            }
+          | {
               input_current_date?: string
               last_delivery_date?: string
               subscription_type: string
