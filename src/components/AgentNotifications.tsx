@@ -28,6 +28,7 @@ export const AgentNotifications = () => {
           // Play appropriate sound based on notification type
           switch (notification.type) {
             case 'new_delivery_assignment':
+            case 'new_delivery_available':
               notificationSound.playNotificationSound('order');
               break;
             case 'delivery_completed':
@@ -58,6 +59,7 @@ export const AgentNotifications = () => {
   const getToastStyles = (type: string) => {
     switch (type) {
       case 'new_delivery_assignment':
+      case 'new_delivery_available':
         return "bg-blue-600 text-white border-blue-600";
       case 'delivery_completed':
         return "bg-green-600 text-white border-green-600";

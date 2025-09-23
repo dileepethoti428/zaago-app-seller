@@ -49,7 +49,17 @@ const CustomerOrders = () => {
       fetchCustomerOrders();
       setupRealtimeSubscription();
     }
-  }, [user]);
+  }, [user, refreshTrigger]);
+
+  // Listen for order status updates
+  useEffect(() => {
+    const handleOrderUpdate = () => {
+      setRefreshTrigger(prev => prev + 1);
+    };
+
+    window.addEventListener('orderStatusUpdated', handleOrderUpdate);
+    return () => window.removeEventListener('orderStatusUpdated', handleOrderUpdate);
+  }, []);
 
   useEffect(() => {
     filterOrders();
@@ -497,38 +507,54 @@ const CustomerOrders = () => {
                                       </div>
                                     )}
                                     
-                                     {/* Pack button for accepted orders */}
-                                     {order.status === 'accepted' && (
-                                       <div className="flex gap-2 ml-4 mt-2">
-                                         <Button
-                                           onClick={() => packOrder(order.id, user?.id || "")}
-                                           disabled={isProcessing === order.id}
-                                           size="sm"
-                                           className="bg-blue-600 text-white hover:bg-blue-700"
-                                         >
-                                           {isProcessing === order.id ? (
-                                             <div className="flex items-center gap-2">
-                                               <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
-                                               Packing...
-                                             </div>
-                                           ) : (
-                                             <>
-                                               <Package className="w-3 h-3 mr-1" />
-                                               Mark as Packed
-                                             </>
-                                           )}
-                                         </Button>
-                                       </div>
-                                     )}
-                                     
-                                     {/* Show accepted status */}
-                                     {['accepted', 'packed'].includes(order.status) && (
-                                       <div className="ml-4">
-                                         <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
-                                           ✅ Accepted
-                                         </Badge>
-                                       </div>
-                                     )}
+                                      {/* Pack button for accepted orders */}
+                                      {order.status === 'accepted' && (
+                                        <div className="flex gap-2 ml-4 mt-2">
+                                          <Button
+                                            onClick={async () => {
+                                              const success = await packOrder(order.id, user?.id || "");
+                                              if (success) {
+                                                // Update local state immediately for better UX
+                                                setOrders(prev => 
+                                                  prev.map(o => 
+                                                    o.id === order.id ? { ...o, status: 'packed' } : o
+                                                  )
+                                                );
+                                              }
+                                            }}
+                                            disabled={isProcessing === order.id}
+                                            size="sm"
+                                            className="bg-blue-600 text-white hover:bg-blue-700"
+                                          >
+                                            {isProcessing === order.id ? (
+                                              <div className="flex items-center gap-2">
+                                                <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                                                Packing...
+                                              </div>
+                                            ) : (
+                                              <>
+                                                <Package className="w-3 h-3 mr-1" />
+                                                Mark as Packed
+                                              </>
+                                            )}
+                                          </Button>
+                                        </div>
+                                      )}
+                                      
+                                      {/* Show status badges */}
+                                      {['accepted', 'packed', 'in_transit'].includes(order.status) && (
+                                        <div className="ml-4">
+                                          <Badge className={
+                                            order.status === 'accepted' ? "bg-zaago-green/20 text-zaago-green border-zaago-green/30" :
+                                            order.status === 'packed' ? "bg-blue-500/20 text-blue-400 border-blue-500/30" :
+                                            "bg-purple-500/20 text-purple-400 border-purple-500/30"
+                                          }>
+                                            {order.status === 'accepted' ? '✅ Accepted' :
+                                             order.status === 'packed' ? '📦 Packed' :
+                                             '🚚 In Transit'}
+                                          </Badge>
+                                        </div>
+                                      )}
                                   </div>
                                 </div>
                               ))}
@@ -568,9 +594,9 @@ const CustomerOrders = () => {
                                     )}
                                   </Button>
                                 )}
-                                
-                                {/* View Details button for accepted/packed/delivered orders */}
-                                {['accepted', 'packed', 'delivered'].includes(order.status) && (
+                                 
+                                 {/* View Details button for packed/delivered orders */}
+                                 {['packed', 'in_transit', 'delivered'].includes(order.status) && (
                                   <Link to={`/orders/${order.id}`} className="flex-1">
                                     <Button
                                       variant="outline"
