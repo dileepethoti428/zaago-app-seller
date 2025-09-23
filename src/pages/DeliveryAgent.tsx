@@ -63,7 +63,7 @@ export default function DeliveryAgent() {
   const setupRealtimeSubscriptions = () => {
     console.log('🚚 DeliveryAgent: Setting up real-time subscriptions');
 
-    // Listen for new packed orders
+    // Listen for all order changes (more comprehensive)
     const ordersChannel = supabase
       .channel('delivery-agent-orders')
       .on(
@@ -71,16 +71,15 @@ export default function DeliveryAgent() {
         {
           event: '*',
           schema: 'public',
-          table: 'orders',
-          filter: 'status=eq.packed'
+          table: 'orders'
         },
         (payload) => {
-          console.log('🚚 DeliveryAgent: Order updated:', payload);
+          console.log('🚚 DeliveryAgent: Order event received:', payload);
           
-          if (payload.eventType === 'INSERT' || 
-              (payload.eventType === 'UPDATE' && payload.new.status === 'packed')) {
+          // Handle UPDATE events where status becomes 'packed'
+          if (payload.eventType === 'UPDATE' && payload.new.status === 'packed') {
+            console.log('🚚 DeliveryAgent: Order packed - adding to list:', payload.new);
             
-            // Add new packed order to list
             const newOrder = {
               ...payload.new,
               items: Array.isArray(payload.new.items) ? payload.new.items : (payload.new.items ? [payload.new.items] : [])
@@ -89,10 +88,12 @@ export default function DeliveryAgent() {
             setOrders(prev => {
               const exists = prev.find(order => order.id === newOrder.id);
               if (exists) {
+                console.log('🚚 DeliveryAgent: Order already exists, updating');
                 return prev.map(order => 
                   order.id === newOrder.id ? newOrder : order
                 );
               }
+              console.log('🚚 DeliveryAgent: Adding new packed order to list');
               return [newOrder, ...prev];
             });
 
@@ -103,8 +104,27 @@ export default function DeliveryAgent() {
               duration: 8000,
               className: "bg-green-600 text-white border-green-600"
             });
-          } else if (payload.eventType === 'UPDATE' && payload.new.status !== 'packed') {
-            // Remove order if status changed
+          } 
+          // Handle INSERT events for orders that are already packed
+          else if (payload.eventType === 'INSERT' && payload.new.status === 'packed') {
+            console.log('🚚 DeliveryAgent: New packed order inserted:', payload.new);
+            
+            const newOrder = {
+              ...payload.new,
+              items: Array.isArray(payload.new.items) ? payload.new.items : (payload.new.items ? [payload.new.items] : [])
+            } as Order;
+            
+            setOrders(prev => {
+              const exists = prev.find(order => order.id === newOrder.id);
+              if (!exists) {
+                return [newOrder, ...prev];
+              }
+              return prev;
+            });
+          }
+          // Remove order if status changed away from packed
+          else if (payload.eventType === 'UPDATE' && payload.new.status !== 'packed') {
+            console.log('🚚 DeliveryAgent: Order status changed from packed, removing:', payload.new);
             setOrders(prev => prev.filter(order => order.id !== payload.new.id));
           }
         }
