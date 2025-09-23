@@ -23,7 +23,7 @@ export const DeliveryAgentTestNotifications = () => {
           const notification = payload.new;
           console.log('🚚 TEST: Received agent notification:', notification);
           
-          if (notification.type === 'new_delivery_available') {
+          if (notification.type === 'new_delivery_assignment') {
             toast({
               title: "🚚 TEST: New Delivery Alert",
               description: `${notification.title} - ${notification.message}`,

@@ -29,6 +29,7 @@ import SellerApprovals from "./pages/SellerApprovals";
 import ProductsCustomer from "./pages/ProductsCustomer";
 import CustomerProductDetail from "./pages/CustomerProductDetail";
 import CustomerOrders from "./pages/CustomerOrders";
+import DeliveryAgent from "./pages/DeliveryAgent";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
                 <Route path="products/new" element={<AddProduct />} />
                 <Route path="products/:id/edit" element={<EditProduct />} />
                 <Route path="deliveries" element={<Deliveries />} />
+                <Route path="delivery-agent" element={<DeliveryAgent />} />
                 <Route path="payments" element={<Payments />} />
                 <Route path="payments/:id" element={<PaymentDetail />} />
                 <Route path="settings" element={<Settings />} />
