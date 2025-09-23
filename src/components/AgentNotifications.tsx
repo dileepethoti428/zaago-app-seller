@@ -4,40 +4,37 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { notificationSound } from '@/utils/notificationSound';
 
-export const SellerNotifications = () => {
+export const AgentNotifications = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     if (!user) return;
 
-    // Subscribe to notifications for this seller
-    const notificationsChannel = supabase
-      .channel('seller-notifications')
+    // Subscribe to agent notifications
+    const agentNotificationsChannel = supabase
+      .channel('agent-notifications')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`
+          table: 'agent_notifications',
+          filter: `agent_id=eq.${user.id}`
         },
         (payload) => {
           const notification = payload.new;
           
           // Play appropriate sound based on notification type
           switch (notification.type) {
-            case 'new_order':
+            case 'new_delivery_assignment':
               notificationSound.playNotificationSound('order');
-              break;
-            case 'order_cancelled':
-              notificationSound.playNotificationSound('urgent');
-              break;
-            case 'payment_received':
-              notificationSound.playNotificationSound('payment');
               break;
             case 'delivery_completed':
               notificationSound.playNotificationSound('success');
+              break;
+            case 'urgent':
+              notificationSound.playNotificationSound('urgent');
               break;
             default:
               notificationSound.playNotificationSound('system');
@@ -54,20 +51,18 @@ export const SellerNotifications = () => {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(notificationsChannel);
+      supabase.removeChannel(agentNotificationsChannel);
     };
   }, [user, toast]);
 
   const getToastStyles = (type: string) => {
     switch (type) {
-      case 'new_order':
-        return "bg-green-600 text-white border-green-600";
-      case 'order_cancelled':
-        return "bg-red-600 text-white border-red-600";
-      case 'payment_received':
-        return "bg-purple-600 text-white border-purple-600";
-      case 'delivery_completed':
+      case 'new_delivery_assignment':
         return "bg-blue-600 text-white border-blue-600";
+      case 'delivery_completed':
+        return "bg-green-600 text-white border-green-600";
+      case 'urgent':
+        return "bg-red-600 text-white border-red-600";
       default:
         return "bg-primary text-primary-foreground border-primary";
     }

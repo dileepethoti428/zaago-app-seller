@@ -4,16 +4,16 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { notificationSound } from '@/utils/notificationSound';
 
-export const SellerNotifications = () => {
+export const CustomerNotifications = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     if (!user) return;
 
-    // Subscribe to notifications for this seller
-    const notificationsChannel = supabase
-      .channel('seller-notifications')
+    // Subscribe to customer notifications
+    const customerNotificationsChannel = supabase
+      .channel('customer-notifications')
       .on(
         'postgres_changes',
         {
@@ -27,17 +27,24 @@ export const SellerNotifications = () => {
           
           // Play appropriate sound based on notification type
           switch (notification.type) {
-            case 'new_order':
+            case 'order_confirmed':
+            case 'order_accepted':
               notificationSound.playNotificationSound('order');
               break;
-            case 'order_cancelled':
-              notificationSound.playNotificationSound('urgent');
+            case 'order_packed':
+            case 'order_shipped':
+              notificationSound.playNotificationSound('delivery');
               break;
+            case 'order_delivered':
+              notificationSound.playNotificationSound('success');
+              break;
+            case 'payment_confirmed':
             case 'payment_received':
               notificationSound.playNotificationSound('payment');
               break;
-            case 'delivery_completed':
-              notificationSound.playNotificationSound('success');
+            case 'order_cancelled':
+            case 'order_rejected':
+              notificationSound.playNotificationSound('urgent');
               break;
             default:
               notificationSound.playNotificationSound('system');
@@ -46,7 +53,7 @@ export const SellerNotifications = () => {
           toast({
             title: notification.title,
             description: notification.message,
-            duration: 8000,
+            duration: 6000,
             className: getToastStyles(notification.type)
           });
         }
@@ -54,20 +61,25 @@ export const SellerNotifications = () => {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(notificationsChannel);
+      supabase.removeChannel(customerNotificationsChannel);
     };
   }, [user, toast]);
 
   const getToastStyles = (type: string) => {
     switch (type) {
-      case 'new_order':
+      case 'order_confirmed':
+      case 'order_accepted':
+      case 'order_packed':
+      case 'order_shipped':
+        return "bg-blue-600 text-white border-blue-600";
+      case 'order_delivered':
         return "bg-green-600 text-white border-green-600";
-      case 'order_cancelled':
-        return "bg-red-600 text-white border-red-600";
+      case 'payment_confirmed':
       case 'payment_received':
         return "bg-purple-600 text-white border-purple-600";
-      case 'delivery_completed':
-        return "bg-blue-600 text-white border-blue-600";
+      case 'order_cancelled':
+      case 'order_rejected':
+        return "bg-red-600 text-white border-red-600";
       default:
         return "bg-primary text-primary-foreground border-primary";
     }
