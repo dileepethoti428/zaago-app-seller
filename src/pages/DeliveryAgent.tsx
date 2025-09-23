@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Package, MapPin, Clock, Phone } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { AudioTestButton } from '@/components/AudioTestButton';
 
 interface Order {
   id: string;
@@ -99,6 +100,7 @@ export default function DeliveryAgent() {
             });
 
             // Play phone ringtone for new order
+            console.log('🚚 Playing ringtone for new order');
             notificationSound.playNotificationSound('phone_ringtone');
             
             // Show notification
@@ -212,8 +214,13 @@ export default function DeliveryAgent() {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-primary mb-2">Delivery Agent Dashboard</h1>
-        <p className="text-secondary">Available orders ready for pickup</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-primary mb-2">Delivery Agent Dashboard</h1>
+            <p className="text-secondary">Available orders ready for pickup</p>
+          </div>
+          <AudioTestButton />
+        </div>
       </div>
 
       {orders.length === 0 ? (

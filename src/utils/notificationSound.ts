@@ -9,10 +9,11 @@ export class NotificationSoundManager {
   private audioContext: AudioContext | null = null;
   private isEnabled: boolean = true;
   private currentRingtone: { oscillator: OscillatorNode; gainNode: GainNode } | null = null;
+  private isInitialized: boolean = false;
 
   private constructor() {
-    // Initialize audio context on first interaction
-    this.initializeAudioContext();
+    // Initialize audio context but don't create it until user interaction
+    this.setupUserInteractionListeners();
   }
 
   public static getInstance(): NotificationSoundManager {
@@ -22,16 +23,51 @@ export class NotificationSoundManager {
     return NotificationSoundManager.instance;
   }
 
+  private setupUserInteractionListeners() {
+    // Add event listeners for user interaction to initialize audio context
+    const initAudio = async () => {
+      if (!this.isInitialized) {
+        await this.initializeAudioContext();
+        console.log('🔊 Audio context initialized after user interaction');
+      }
+    };
+
+    // Listen for various user interactions
+    document.addEventListener('click', initAudio, { once: true });
+    document.addEventListener('touchstart', initAudio, { once: true });
+    document.addEventListener('keydown', initAudio, { once: true });
+  }
+
   private async initializeAudioContext() {
     try {
+      console.log('🔊 Initializing audio context...');
       this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       
       // Resume context if it's suspended (required for user interaction)
       if (this.audioContext.state === 'suspended') {
+        console.log('🔊 Resuming suspended audio context...');
         await this.audioContext.resume();
       }
+      
+      this.isInitialized = true;
+      console.log('🔊 Audio context initialized successfully. State:', this.audioContext.state);
     } catch (error) {
-      console.warn('Could not initialize audio context:', error);
+      console.warn('🔊 Could not initialize audio context:', error);
+    }
+  }
+
+  public async ensureAudioContext() {
+    if (!this.isInitialized || !this.audioContext) {
+      await this.initializeAudioContext();
+    }
+    
+    if (this.audioContext?.state === 'suspended') {
+      try {
+        await this.audioContext.resume();
+        console.log('🔊 Audio context resumed');
+      } catch (error) {
+        console.warn('🔊 Failed to resume audio context:', error);
+      }
     }
   }
 
@@ -40,18 +76,25 @@ export class NotificationSoundManager {
   }
 
   public async playNotificationSound(type: NotificationSoundType = 'system') {
-    if (!this.isEnabled || !this.audioContext) {
+    console.log('🔊 Playing notification sound:', type);
+    
+    if (!this.isEnabled) {
+      console.log('🔊 Notification sounds disabled');
+      return;
+    }
+
+    // Ensure audio context is initialized
+    await this.ensureAudioContext();
+
+    if (!this.audioContext) {
+      console.warn('🔊 No audio context available');
       return;
     }
 
     try {
-      // Resume context if suspended
-      if (this.audioContext.state === 'suspended') {
-        await this.audioContext.resume();
-      }
-
       // Handle phone ringtone separately
       if (type === 'phone_ringtone') {
+        console.log('🔊 Playing phone ringtone');
         this.playPhoneRingtone();
         return;
       }
@@ -225,7 +268,12 @@ export class NotificationSoundManager {
   }
 
   private playPhoneRingtone() {
-    if (!this.audioContext) return;
+    if (!this.audioContext) {
+      console.warn('🔊 No audio context for phone ringtone');
+      return;
+    }
+    
+    console.log('🔊 Starting phone ringtone, audio context state:', this.audioContext.state);
     
     // Stop any existing ringtone
     this.stopRingtone();

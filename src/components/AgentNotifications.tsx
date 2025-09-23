@@ -41,6 +41,7 @@ export const AgentNotifications = () => {
           console.log('🚚 AgentNotifications: Processing notification for agent:', notification.type);
           
           // Play appropriate sound based on notification type
+          console.log('🚚 AgentNotifications: Playing sound for type:', notification.type);
           switch (notification.type) {
             case 'new_delivery_assignment':
             case 'new_delivery_available':
