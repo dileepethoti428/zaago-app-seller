@@ -565,16 +565,16 @@ const CustomerOrders = () => {
                           {(() => {
                             const sellerItems = order.items?.filter((item: any) => item.seller_id === user?.id) || [];
                             
-                            // Check if any products from this seller are accepted
+                            // Get optimistic status if available
+                            const currentOrderStatus = getOptimisticStatus(order.id) || order.status;
+                            
+                            // Check if any products from this seller are accepted OR if order status is confirmed/accepted
                             const hasAcceptedProducts = sellerItems.some((item: any) => 
                               order.product_statuses?.[item.id]?.status === 'accepted'
                             );
                             
-                            // Get optimistic status if available
-                            const currentOrderStatus = getOptimisticStatus(order.id) || order.status;
-                            
-                             // Only show mark as packed if order has accepted/confirmed products and is in the right status
-                             const shouldShowPackButton = hasAcceptedProducts && ['accepted', 'confirmed'].includes(currentOrderStatus);
+                            // Show pack button if order is confirmed/accepted (regardless of individual product status)
+                            const shouldShowPackButton = sellerItems.length > 0 && ['accepted', 'confirmed'].includes(currentOrderStatus);
                             
                             return (
                               <>
