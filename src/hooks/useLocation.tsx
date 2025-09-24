@@ -55,8 +55,8 @@ export const useLocation = () => {
           }, 
           {
             enableHighAccuracy: true,
-            timeout: 30000, // Increased to 30 seconds
-            maximumAge: forceRefresh ? 0 : 300000, // Force fresh location if requested, otherwise 5 minute cache
+            timeout: 15000, // Reduced timeout
+            maximumAge: forceRefresh ? 0 : 60000, // Reduced cache time for more accurate location
           }
         );
       });
