@@ -535,37 +535,6 @@ const CustomerOrders = () => {
                                       </div>
                                      )}
                                      
-                                          {/* Pack button for accepted orders - check both actual status and optimistic state */}
-                                          {(() => {
-                                            const currentStatus = getOptimisticStatus(order.id) || optimisticStates[order.id] || order.status;
-                                            const shouldShowPackButton = ['accepted', 'confirmed'].includes(currentStatus);
-                                          
-                                          return shouldShowPackButton && (
-                                            <div className="flex gap-2 ml-4 mt-2">
-                                              <Button
-                                                onClick={async () => {
-                                                  const success = await packOrder(order.id, user?.id || "");
-                                                  // Optimistic update is handled in the hook
-                                                }}
-                                                disabled={isProcessing === order.id}
-                                                size="sm"
-                                                className="bg-purple-600 hover:bg-purple-700 text-white transition-all duration-200"
-                                              >
-                                                {isProcessing === order.id ? (
-                                                  <div className="flex items-center gap-2">
-                                                    <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
-                                                    Packing...
-                                                  </div>
-                                                ) : (
-                                                  <>
-                                                    <Package className="w-3 h-3 mr-1" />
-                                                    Mark as Packed
-                                                  </>
-                                                )}
-                                              </Button>
-                                            </div>
-                                          );
-                                         })()}
                                       
                                        {/* Show status badges */}
                                        {(() => {
