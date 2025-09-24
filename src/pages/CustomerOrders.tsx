@@ -496,63 +496,103 @@ const CustomerOrders = () => {
                                        <p className="text-zaago-green font-medium">₹{item.price * item.quantity}</p>
                                      </div>
                                      
-                                     {/* Product Accept/Reject Actions */}
-                                     {(() => {
-                                       const shouldShowButtons = ['new', 'pending', 'placed'].includes(order.status) && item.id;
-                                       console.log('🔍 DEBUG: Should show accept/reject buttons for item', item.name, ':', shouldShowButtons, {
-                                         order_status: order.status,
-                                         item_id: item.id,
-                                         status_check: ['new', 'pending', 'placed'].includes(order.status),
-                                         has_item_id: !!item.id
-                                       });
-                                       return shouldShowButtons;
-                                     })() && (
-                                      <div className="flex gap-2 ml-4">
-                                        <Button
-                                            onClick={async () => {
-                                              const success = await acceptProduct(order.id, item.id, user?.id || '');
-                                              if (success) {
-                                                fetchCustomerOrders();
-                                              }
-                                            }}
+                                      {/* Product Accept/Reject Actions */}
+                                      {(() => {
+                                        // Check if product is already accepted
+                                        const isAccepted = order.product_statuses?.[item.id]?.status === 'accepted';
+                                        const isRejected = order.product_statuses?.[item.id]?.status === 'rejected';
+                                        
+                                        // Show buttons only if order allows it and product is not already accepted/rejected
+                                        const shouldShowButtons = ['new', 'pending', 'placed'].includes(order.status) && 
+                                                                item.id && 
+                                                                !isAccepted && 
+                                                                !isRejected;
+                                        
+                                        console.log('🔍 DEBUG: Should show accept/reject buttons for item', item.name, ':', shouldShowButtons, {
+                                          order_status: order.status,
+                                          item_id: item.id,
+                                          status_check: ['new', 'pending', 'placed'].includes(order.status),
+                                          has_item_id: !!item.id,
+                                          isAccepted,
+                                          isRejected,
+                                          product_statuses: order.product_statuses?.[item.id]
+                                        });
+                                        return shouldShowButtons;
+                                      })() && (
+                                       <div className="flex gap-2 ml-4">
+                                         <Button
+                                             onClick={async () => {
+                                               const success = await acceptProduct(order.id, item.id, user?.id || '');
+                                               if (success) {
+                                                 fetchCustomerOrders();
+                                               }
+                                             }}
+                                            disabled={isProductProcessing === `${order.id}-${item.id}`}
+                                            size="sm"
+                                            className="bg-zaago-green text-black hover:bg-zaago-green/90 transition-all duration-200"
+                                          >
+                                            {isProductProcessing === `${order.id}-${item.id}` ? (
+                                              <>
+                                                <div className="w-3 h-3 border border-black border-t-transparent rounded-full animate-spin mr-1"></div>
+                                                Accepting...
+                                              </>
+                                            ) : (
+                                              <>
+                                                <Check className="w-3 h-3 mr-1" />
+                                                Accept
+                                              </>
+                                            )}
+                                          </Button>
+                                         <Button
+                                           onClick={async () => {
+                                             const success = await rejectProduct(order.id, item.id, user?.id || '');
+                                             if (success) {
+                                               fetchCustomerOrders();
+                                             }
+                                           }}
                                            disabled={isProductProcessing === `${order.id}-${item.id}`}
                                            size="sm"
-                                           className="bg-zaago-green text-black hover:bg-zaago-green/90 transition-all duration-200"
+                                           variant="outline"
+                                           className="border-red-500 text-red-400 hover:bg-red-500/10 transition-all duration-200"
                                          >
-                                           <Check className="w-3 h-3 mr-1" />
-                                           Accept
+                                           {isProductProcessing === `${order.id}-${item.id}` ? (
+                                             <>
+                                               <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin mr-1"></div>
+                                               Rejecting...
+                                             </>
+                                           ) : (
+                                             <>
+                                               <X className="w-3 h-3 mr-1" />
+                                               Reject
+                                             </>
+                                           )}
                                          </Button>
-                                        <Button
-                                          onClick={() => rejectProduct(order.id, item.id, user?.id || '')}
-                                          disabled={isProductProcessing === `${order.id}-${item.id}`}
-                                          size="sm"
-                                          variant="outline"
-                                          className="border-red-500 text-red-400 hover:bg-red-500/10 transition-all duration-200"
-                                        >
-                                          <X className="w-3 h-3 mr-1" />
-                                          Reject
-                                        </Button>
-                                      </div>
-                                     )}
-                                     
+                                       </div>
+                                      )}
                                       
-                                       {/* Show status badges */}
-                                       {(() => {
-                                         const currentStatus = getOptimisticStatus(order.id) || optimisticStates[order.id] || order.status;
-                                         return ['accepted', 'packed', 'in_transit'].includes(currentStatus) && (
-                                           <div className="ml-4">
-                                             <Badge className={
-                                               currentStatus === 'accepted' ? "bg-zaago-green/20 text-zaago-green border-zaago-green/30" :
-                                               currentStatus === 'packed' ? "bg-blue-500/20 text-blue-400 border-blue-500/30" :
-                                               "bg-purple-500/20 text-purple-400 border-purple-500/30"
-                                             }>
-                                               {currentStatus === 'accepted' ? '✅ Accepted' :
-                                                currentStatus === 'packed' ? '📦 Packed' :
-                                                '🚚 In Transit'}
-                                             </Badge>
-                                           </div>
-                                         );
-                                       })()}
+                                      {/* Show product status badges */}
+                                      {(() => {
+                                        const productStatus = order.product_statuses?.[item.id]?.status;
+                                        if (productStatus === 'accepted') {
+                                          return (
+                                            <div className="ml-4">
+                                              <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
+                                                ✅ Accepted
+                                              </Badge>
+                                            </div>
+                                          );
+                                        } else if (productStatus === 'rejected') {
+                                          return (
+                                            <div className="ml-4">
+                                              <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+                                                ❌ Rejected
+                                              </Badge>
+                                            </div>
+                                          );
+                                        }
+                                        return null;
+                                      })()}
+                                     
                                   </div>
                                 </div>
                               ))}
