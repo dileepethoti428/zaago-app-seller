@@ -538,7 +538,7 @@ const CustomerOrders = () => {
                                           {/* Pack button for accepted orders - check both actual status and optimistic state */}
                                           {(() => {
                                             const currentStatus = getOptimisticStatus(order.id) || optimisticStates[order.id] || order.status;
-                                            const shouldShowPackButton = currentStatus === 'accepted';
+                                            const shouldShowPackButton = ['accepted', 'confirmed'].includes(currentStatus);
                                           
                                           return shouldShowPackButton && (
                                             <div className="flex gap-2 ml-4 mt-2">
@@ -604,8 +604,8 @@ const CustomerOrders = () => {
                             // Get optimistic status if available
                             const currentOrderStatus = getOptimisticStatus(order.id) || order.status;
                             
-                             // Only show mark as packed if order has accepted products and is in accepted status
-                             const shouldShowPackButton = hasAcceptedProducts && currentOrderStatus === 'accepted';
+                             // Only show mark as packed if order has accepted/confirmed products and is in the right status
+                             const shouldShowPackButton = hasAcceptedProducts && ['accepted', 'confirmed'].includes(currentOrderStatus);
                             
                             return (
                               <>
