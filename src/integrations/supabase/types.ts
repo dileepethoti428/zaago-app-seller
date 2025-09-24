@@ -1593,6 +1593,63 @@ export type Database = {
           },
         ]
       }
+      milk_transactions: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          payment_method: string | null
+          price_per_litre: number
+          quantity_litres: number
+          seller_id: string
+          status: string | null
+          total_amount: number
+          transaction_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          price_per_litre: number
+          quantity_litres: number
+          seller_id: string
+          status?: string | null
+          total_amount: number
+          transaction_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          price_per_litre?: number
+          quantity_litres?: number
+          seller_id?: string
+          status?: string | null
+          total_amount?: number
+          transaction_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "milk_transactions_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "seller_analytics_view"
+            referencedColumns: ["seller_id"]
+          },
+          {
+            foreignKeyName: "milk_transactions_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           admin_notifications: boolean
@@ -2021,6 +2078,8 @@ export type Database = {
         Row: {
           address: Json
           agent_id: string | null
+          agent_notification_sent: boolean | null
+          agent_notification_sent_at: string | null
           created_at: string
           customer_name: string | null
           customer_phone: string | null
@@ -2034,6 +2093,13 @@ export type Database = {
           items: Json
           payment_id: string | null
           payment_status: string | null
+          pickup_address: string | null
+          pickup_location: Json | null
+          pickup_status: string | null
+          seller_latitude: number | null
+          seller_longitude: number | null
+          seller_name: string | null
+          seller_phone: string | null
           settlement_locked: boolean | null
           special_instructions: string | null
           status: string
@@ -2045,6 +2111,8 @@ export type Database = {
         Insert: {
           address: Json
           agent_id?: string | null
+          agent_notification_sent?: boolean | null
+          agent_notification_sent_at?: string | null
           created_at?: string
           customer_name?: string | null
           customer_phone?: string | null
@@ -2058,6 +2126,13 @@ export type Database = {
           items: Json
           payment_id?: string | null
           payment_status?: string | null
+          pickup_address?: string | null
+          pickup_location?: Json | null
+          pickup_status?: string | null
+          seller_latitude?: number | null
+          seller_longitude?: number | null
+          seller_name?: string | null
+          seller_phone?: string | null
           settlement_locked?: boolean | null
           special_instructions?: string | null
           status?: string
@@ -2069,6 +2144,8 @@ export type Database = {
         Update: {
           address?: Json
           agent_id?: string | null
+          agent_notification_sent?: boolean | null
+          agent_notification_sent_at?: string | null
           created_at?: string
           customer_name?: string | null
           customer_phone?: string | null
@@ -2082,6 +2159,13 @@ export type Database = {
           items?: Json
           payment_id?: string | null
           payment_status?: string | null
+          pickup_address?: string | null
+          pickup_location?: Json | null
+          pickup_status?: string | null
+          seller_latitude?: number | null
+          seller_longitude?: number | null
+          seller_name?: string | null
+          seller_phone?: string | null
           settlement_locked?: boolean | null
           special_instructions?: string | null
           status?: string
