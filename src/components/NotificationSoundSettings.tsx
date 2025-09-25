@@ -108,7 +108,86 @@ export const NotificationSoundSettings = () => {
 
         {soundEnabled && (
           <div className="space-y-6">
-            {/* All notification settings removed as requested */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">
+                Volume: {volume}%
+              </Label>
+              <Slider
+                value={[volume]}
+                onValueChange={handleVolumeChange}
+                max={100}
+                min={0}
+                step={5}
+                className="w-full"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">
+                New Order Ringtone: Rapido Style
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Loud and urgent ringtone designed to grab attention like Rapido notifications
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => testRingtone(selectedRingtone)}
+                className="w-full bg-orange-50 hover:bg-orange-100 text-orange-800 border-orange-200"
+              >
+                🔔 Test Rapido Ringtone
+              </Button>
+            </div>
+
+            {/* Continuous Ringing Settings */}
+            <div className="space-y-4 pt-4 border-t">
+              <h4 className="font-medium text-foreground">Continuous Ringing (for New Orders)</h4>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="continuous-ringing">Enable Continuous Ringing</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Ring continuously until you respond to new orders (like Rapido)
+                  </p>
+                </div>
+                <Switch
+                  id="continuous-ringing"
+                  checked={continuousRingingEnabled}
+                  onCheckedChange={handleContinuousRingingToggle}
+                />
+              </div>
+
+              {continuousRingingEnabled && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="max-repetitions">
+                      Max Repetitions: {maxRepetitions} ({Math.round(maxRepetitions * 5 / 60)} minutes)
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Maximum number of times to repeat before auto-stopping
+                    </p>
+                    <Slider
+                      id="max-repetitions"
+                      min={6}
+                      max={48}
+                      step={6}
+                      value={[maxRepetitions]}
+                      onValueChange={handleMaxRepetitionsChange}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <Button 
+                    onClick={testContinuousRinging} 
+                    variant="outline" 
+                    size="sm"
+                    className="bg-orange-100 hover:bg-orange-200 text-orange-800 border-orange-300"
+                  >
+                    Test Continuous Ringing (15s)
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         )}
       </CardContent>
