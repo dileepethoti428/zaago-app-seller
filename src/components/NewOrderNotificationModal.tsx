@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Phone, PhoneOff, Eye, CheckCircle } from 'lucide-react';
+import { Phone, PhoneOff, Eye, CheckCircle, VolumeX } from 'lucide-react';
 import { stopContinuousRinging } from '@/utils/notificationSound';
 
 interface NewOrderNotificationModalProps {
@@ -27,6 +27,10 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
   const handleAction = (action: () => void) => {
     stopContinuousRinging();
     action();
+  };
+
+  const handleStopRingtone = () => {
+    stopContinuousRinging();
   };
 
   const formatAmount = (amount?: number) => {
@@ -95,6 +99,16 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
               </div>
             )}
           </div>
+
+          {/* Stop Ringtone Button */}
+          <Button
+            onClick={handleStopRingtone}
+            variant="secondary"
+            className="w-full flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white"
+          >
+            <VolumeX className="h-4 w-4" />
+            Stop Ringtone
+          </Button>
 
           {/* Action Buttons */}
           <div className="grid grid-cols-2 gap-3">
