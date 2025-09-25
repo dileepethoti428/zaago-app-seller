@@ -153,7 +153,7 @@ export class NotificationSoundManager {
     }
   }
 
-  public getAudioStatus(): { status: string; canPlay: boolean; message: string } {
+  public getAudioStatus(): { status: string; canPlay: boolean; message: string; isContinuousRinging: boolean } {
     const recentInteraction = Date.now() - this.lastUserInteraction < 5000;
     
     switch (this.audioStatus) {
@@ -161,25 +161,29 @@ export class NotificationSoundManager {
         return { 
           status: 'ready', 
           canPlay: true, 
-          message: 'Audio is ready and working' 
+          message: 'Audio is ready and working',
+          isContinuousRinging: this.currentRingingInterval !== null
         };
       case 'suspended':
         return { 
           status: 'suspended', 
           canPlay: recentInteraction, 
-          message: recentInteraction ? 'Audio will work after interaction' : 'Please interact with the page to enable audio' 
+          message: recentInteraction ? 'Audio will work after interaction' : 'Please interact with the page to enable audio',
+          isContinuousRinging: this.currentRingingInterval !== null
         };
       case 'blocked':
         return { 
           status: 'blocked', 
           canPlay: false, 
-          message: 'Audio is blocked by browser. Please enable audio in browser settings.' 
+          message: 'Audio is blocked by browser. Please enable audio in browser settings.',
+          isContinuousRinging: this.currentRingingInterval !== null
         };
       default:
         return { 
           status: 'unavailable', 
           canPlay: false, 
-          message: 'Audio is not available on this device' 
+          message: 'Audio is not available on this device',
+          isContinuousRinging: this.currentRingingInterval !== null
         };
     }
   }

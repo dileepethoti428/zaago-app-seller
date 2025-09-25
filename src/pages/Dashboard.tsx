@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StopRingtonePopup } from '@/components/StopRingtonePopup';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -132,6 +133,7 @@ const Dashboard = () => {
       transition={{ duration: 0.5 }}
       className="space-y-6 sm:space-y-8"
     >
+      <StopRingtonePopup />
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
