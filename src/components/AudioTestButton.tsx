@@ -10,7 +10,7 @@ export const AudioTestButton = () => {
     try {
       console.log('🔊 Testing audio...');
       await notificationSound.ensureAudioContext();
-      await notificationSound.playNotificationSound('phone_ringtone');
+      await notificationSound.playNotificationSound('rapido_ringtone');
       
       toast({
         title: "Audio Test",

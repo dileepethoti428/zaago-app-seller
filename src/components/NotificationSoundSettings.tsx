@@ -11,7 +11,7 @@ import { notificationSound, RingtoneType } from '@/utils/notificationSound';
 export const NotificationSoundSettings = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [volume, setVolume] = useState(70);
-  const [selectedRingtone, setSelectedRingtone] = useState<RingtoneType>('classic_phone');
+  const [selectedRingtone, setSelectedRingtone] = useState<RingtoneType>('rapido_ringtone');
   const [continuousRingingEnabled, setContinuousRingingEnabled] = useState(true);
   const [maxRepetitions, setMaxRepetitions] = useState(24);
 
@@ -124,46 +124,21 @@ export const NotificationSoundSettings = () => {
 
             <div className="space-y-3">
               <Label className="text-sm font-medium">
-                New Order Ringtone
+                New Order Ringtone: Rapido Style
               </Label>
-              <Select value={selectedRingtone} onValueChange={handleRingtoneChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select ringtone" />
-                </SelectTrigger>
-                <SelectContent>
-                  {notificationSound.getRingtoneOptions().map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <p className="text-xs text-muted-foreground">
+                Loud and urgent ringtone designed to grab attention like Rapido notifications
+              </p>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => testRingtone(selectedRingtone)}
-                className="w-full"
+                className="w-full bg-orange-50 hover:bg-orange-100 text-orange-800 border-orange-200"
               >
-                Test Selected Ringtone
+                🔔 Test Rapido Ringtone
               </Button>
             </div>
 
-            <div className="space-y-3">
-              <h4 className="text-sm font-medium text-muted-foreground">Test all ringtones:</h4>
-              <div className="grid grid-cols-2 gap-2">
-                {notificationSound.getRingtoneOptions().map((option) => (
-                  <Button
-                    key={option.value}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => testRingtone(option.value)}
-                    className="text-xs"
-                  >
-                    {option.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
 
             <div className="space-y-3">
               <h4 className="text-sm font-medium text-muted-foreground">Test other sounds:</h4>

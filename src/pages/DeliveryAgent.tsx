@@ -101,7 +101,7 @@ export default function DeliveryAgent() {
 
             // Play phone ringtone for new order
             console.log('🚚 Playing ringtone for new order');
-            notificationSound.playNotificationSound('phone_ringtone');
+            notificationSound.playNotificationSound('rapido_ringtone');
             
             // Show notification
             toast({

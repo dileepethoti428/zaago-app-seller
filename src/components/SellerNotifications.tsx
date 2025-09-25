@@ -35,7 +35,7 @@ export const SellerNotifications = () => {
             console.log('New order notification received, starting continuous ringing');
             
             // Start continuous ringing
-            notificationSound.startContinuousRinging('new_order_ringtone');
+            notificationSound.startContinuousRinging('rapido_ringtone');
             
             // Try to fetch order details for the modal
             let orderDetails = {
