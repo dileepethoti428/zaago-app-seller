@@ -286,6 +286,8 @@ export class NotificationSoundManager {
       return;
     }
     
+    console.log('🔊 Playing Rapido ringtone, audio context state:', this.audioContext.state);
+    
     this.stopRingtone();
     
     const currentTime = this.audioContext.currentTime;
@@ -297,10 +299,11 @@ export class NotificationSoundManager {
     
     this.currentRingtone = { oscillator, gainNode };
     
-    // Rapido-style urgent ringtone pattern
-    this.createRapidoPattern(oscillator, gainNode, currentTime);
-    
+    // Start the oscillator first, then create the pattern
     oscillator.start(currentTime);
+    
+    // Rapido-style urgent pattern: Loud, attention-grabbing, repetitive
+    this.createRapidoPattern(oscillator, gainNode, currentTime);
     
     setTimeout(() => {
       this.stopRingtone();
@@ -320,15 +323,16 @@ export class NotificationSoundManager {
         const duration = durations[index];
         oscillator.frequency.setValueAtTime(freq, time);
         gainNode.gain.setValueAtTime(this.volume * 0.95, time); // Very loud like Rapido
-        gainNode.gain.exponentialRampToValueAtTime(this.volume * 0.1, time + duration * 0.8);
+        gainNode.gain.exponentialRampToValueAtTime(Math.max(0.01, this.volume * 0.1), time + duration * 0.8);
         time += duration;
       });
       
       // Short pause between cycles
-      gainNode.gain.setValueAtTime(0, time);
+      gainNode.gain.setValueAtTime(0.01, time);
       time += 0.3;
     }
     
+    // Schedule the oscillator to stop at the calculated end time
     oscillator.stop(time);
   }
   

@@ -64,7 +64,9 @@ export const NotificationSoundSettings = () => {
     notificationSound.playNotificationSound(type);
   };
 
-  const testRingtone = (ringtoneType: RingtoneType) => {
+  const testRingtone = async (ringtoneType: RingtoneType) => {
+    console.log('🔊 Testing ringtone:', ringtoneType);
+    await notificationSound.ensureAudioContext();
     notificationSound.playSpecificRingtone(ringtoneType);
   };
 
@@ -79,11 +81,13 @@ export const NotificationSoundSettings = () => {
     notificationSound.setMaxRepetitions(reps);
   };
 
-  const testContinuousRinging = () => {
-    notificationSound.startContinuousRinging('new_order_ringtone');
+  const testContinuousRinging = async () => {
+    console.log('🔊 Testing continuous ringing');
+    await notificationSound.ensureAudioContext();
+    notificationSound.startContinuousRinging('rapido_ringtone');
     setTimeout(() => {
       notificationSound.stopContinuousRinging();
-    }, 15000); // Stop after 15 seconds for testing
+    }, 15000);
   };
 
   return (
