@@ -10,15 +10,19 @@ export class NotificationSoundManager {
   private static instance: NotificationSoundManager;
   private audioContext: AudioContext | null = null;
   private isEnabled: boolean = true;
-  private volume: number = 0.7; // Default to 70% volume
+  private volume: number = 0.7;
   private selectedRingtone: RingtoneType = 'classic_phone';
   private currentRingtone: { oscillator: OscillatorNode; gainNode: GainNode } | null = null;
   private isInitialized: boolean = false;
+  private continuousRingingEnabled: boolean = true;
+  private maxRepetitions: number = 24;
+  private currentRingingInterval: number | null = null;
+  private currentRepetitionCount: number = 0;
+  private isTabVisible: boolean = true;
 
   private constructor() {
-    // Initialize audio context but don't create it until user interaction
     this.setupUserInteractionListeners();
-    // Load saved preferences
+    this.setupVisibilityTracking();
     this.loadPreferences();
   }
 
@@ -30,7 +34,6 @@ export class NotificationSoundManager {
   }
 
   private setupUserInteractionListeners() {
-    // Add event listeners for user interaction to initialize audio context
     const initAudio = async () => {
       if (!this.isInitialized) {
         await this.initializeAudioContext();
@@ -38,10 +41,18 @@ export class NotificationSoundManager {
       }
     };
 
-    // Listen for various user interactions
     document.addEventListener('click', initAudio, { once: true });
     document.addEventListener('touchstart', initAudio, { once: true });
     document.addEventListener('keydown', initAudio, { once: true });
+  }
+
+  private setupVisibilityTracking() {
+    document.addEventListener('visibilitychange', () => {
+      this.isTabVisible = !document.hidden;
+      if (!this.isTabVisible && this.currentRingingInterval) {
+        this.stopContinuousRinging();
+      }
+    });
   }
 
   private async initializeAudioContext() {
@@ -49,7 +60,6 @@ export class NotificationSoundManager {
       console.log('🔊 Initializing audio context...');
       this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       
-      // Resume context if it's suspended (required for user interaction)
       if (this.audioContext.state === 'suspended') {
         console.log('🔊 Resuming suspended audio context...');
         await this.audioContext.resume();
@@ -83,7 +93,7 @@ export class NotificationSoundManager {
   }
 
   public setVolume(volume: number) {
-    this.volume = Math.max(0, Math.min(1, volume)); // Clamp between 0 and 1
+    this.volume = Math.max(0, Math.min(1, volume));
     localStorage.setItem('notificationVolume', JSON.stringify(this.volume));
   }
 
@@ -115,6 +125,16 @@ export class NotificationSoundManager {
     if (savedEnabled !== null) {
       this.isEnabled = JSON.parse(savedEnabled);
     }
+
+    const savedContinuous = localStorage.getItem('continuousRingingEnabled');
+    if (savedContinuous !== null) {
+      this.continuousRingingEnabled = JSON.parse(savedContinuous);
+    }
+
+    const savedMaxReps = localStorage.getItem('maxRepetitions');
+    if (savedMaxReps !== null) {
+      this.maxRepetitions = parseInt(savedMaxReps);
+    }
   }
 
   private isValidRingtone(ringtone: string): boolean {
@@ -129,7 +149,6 @@ export class NotificationSoundManager {
       return;
     }
 
-    // Ensure audio context is initialized
     await this.ensureAudioContext();
 
     if (!this.audioContext) {
@@ -138,21 +157,18 @@ export class NotificationSoundManager {
     }
 
     try {
-      // Handle phone ringtone and new ringtone types
       if (type === 'phone_ringtone') {
         console.log('🔊 Playing phone ringtone');
         this.playPhoneRingtone();
         return;
       }
 
-      // Handle new order notifications with selected ringtone
       if (type === 'new_order_ringtone') {
         console.log('🔊 Playing new order ringtone:', this.selectedRingtone);
         this.playSelectedRingtone();
         return;
       }
 
-      // Handle specific ringtone types
       if (['classic_phone', 'modern_phone', 'bell_chime', 'urgent_alert', 'musical_tone', 'traditional_ring'].includes(type)) {
         console.log('🔊 Playing specific ringtone:', type);
         this.playSpecificRingtone(type as RingtoneType);
@@ -165,7 +181,6 @@ export class NotificationSoundManager {
       oscillator.connect(gainNode);
       gainNode.connect(this.audioContext.destination);
       
-      // Different sound patterns for different notification types
       switch (type) {
         case 'order':
           this.playOrderSound(oscillator, gainNode);
@@ -194,7 +209,6 @@ export class NotificationSoundManager {
   private playOrderSound(oscillator: OscillatorNode, gainNode: GainNode) {
     const currentTime = this.audioContext!.currentTime;
     
-    // Two-tone chime: C5 -> G5
     oscillator.frequency.setValueAtTime(523.25, currentTime);
     oscillator.frequency.setValueAtTime(783.99, currentTime + 0.15);
     
@@ -208,7 +222,6 @@ export class NotificationSoundManager {
   private playDeliverySound(oscillator: OscillatorNode, gainNode: GainNode) {
     const currentTime = this.audioContext!.currentTime;
     
-    // Success pattern: C5 -> E5 -> G5
     oscillator.frequency.setValueAtTime(523.25, currentTime);
     oscillator.frequency.setValueAtTime(659.25, currentTime + 0.1);
     oscillator.frequency.setValueAtTime(783.99, currentTime + 0.2);
@@ -223,7 +236,6 @@ export class NotificationSoundManager {
   private playPaymentSound(oscillator: OscillatorNode, gainNode: GainNode) {
     const currentTime = this.audioContext!.currentTime;
     
-    // Cash register sound: High -> Low
     oscillator.frequency.setValueAtTime(1000, currentTime);
     oscillator.frequency.exponentialRampToValueAtTime(400, currentTime + 0.3);
     
@@ -237,7 +249,6 @@ export class NotificationSoundManager {
   private playUrgentSound(oscillator: OscillatorNode, gainNode: GainNode) {
     const currentTime = this.audioContext!.currentTime;
     
-    // Urgent beep pattern: High frequency, repeated
     oscillator.frequency.setValueAtTime(880, currentTime);
     oscillator.frequency.setValueAtTime(880, currentTime + 0.1);
     oscillator.frequency.setValueAtTime(880, currentTime + 0.2);
@@ -256,7 +267,6 @@ export class NotificationSoundManager {
   private playSuccessSound(oscillator: OscillatorNode, gainNode: GainNode) {
     const currentTime = this.audioContext!.currentTime;
     
-    // Success chord: C -> E -> G
     oscillator.frequency.setValueAtTime(261.63, currentTime);
     oscillator.frequency.setValueAtTime(329.63, currentTime + 0.08);
     oscillator.frequency.setValueAtTime(392.00, currentTime + 0.16);
@@ -271,7 +281,6 @@ export class NotificationSoundManager {
   private playSystemSound(oscillator: OscillatorNode, gainNode: GainNode) {
     const currentTime = this.audioContext!.currentTime;
     
-    // Simple notification: G5 -> C5 -> G5
     oscillator.frequency.setValueAtTime(783.99, currentTime);
     oscillator.frequency.setValueAtTime(523.25, currentTime + 0.1);
     oscillator.frequency.setValueAtTime(783.99, currentTime + 0.2);
@@ -283,56 +292,12 @@ export class NotificationSoundManager {
     oscillator.stop(currentTime + 0.3);
   }
 
-  private playNewOrderRingtone(oscillator: OscillatorNode, gainNode: GainNode) {
-    const currentTime = this.audioContext!.currentTime;
-    
-    // Phone ringtone pattern: Repeated melody like incoming call
-    // Ring pattern: C5 -> E5 -> G5 -> C6, repeated 3 times with pauses
-    const frequencies = [
-      523.25, 659.25, 783.99, 1046.50, // First ring
-      0, 0, // Pause
-      523.25, 659.25, 783.99, 1046.50, // Second ring  
-      0, 0, // Pause
-      523.25, 659.25, 783.99, 1046.50  // Third ring
-    ];
-    
-    const durations = [
-      0.15, 0.15, 0.15, 0.3, // First ring
-      0.2, 0.2, // Pause
-      0.15, 0.15, 0.15, 0.3, // Second ring
-      0.2, 0.2, // Pause  
-      0.15, 0.15, 0.15, 0.3  // Third ring
-    ];
-    
-    let timeOffset = 0;
-    frequencies.forEach((freq, index) => {
-      const duration = durations[index];
-      if (freq > 0) {
-        oscillator.frequency.setValueAtTime(freq, currentTime + timeOffset);
-        gainNode.gain.setValueAtTime(this.volume * 0.6, currentTime + timeOffset);
-        gainNode.gain.exponentialRampToValueAtTime(this.volume * 0.1, currentTime + timeOffset + duration * 0.8);
-      } else {
-        // Silence during pause
-        gainNode.gain.setValueAtTime(0.01, currentTime + timeOffset);
-      }
-      timeOffset += duration;
-    });
-    
-    gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + timeOffset);
-    
-    oscillator.start(currentTime);
-    oscillator.stop(currentTime + timeOffset);
-  }
-
   private playPhoneRingtone() {
     if (!this.audioContext) {
       console.warn('🔊 No audio context for phone ringtone');
       return;
     }
     
-    console.log('🔊 Starting phone ringtone, audio context state:', this.audioContext.state);
-    
-    // Stop any existing ringtone
     this.stopRingtone();
     
     const currentTime = this.audioContext.currentTime;
@@ -342,30 +307,24 @@ export class NotificationSoundManager {
     oscillator.connect(gainNode);
     gainNode.connect(this.audioContext.destination);
     
-    // Store reference to stop later
     this.currentRingtone = { oscillator, gainNode };
     
-    // Classic phone ringtone pattern - repeating ring with pauses
     this.createRingtonePattern(oscillator, gainNode, currentTime);
     
     oscillator.start(currentTime);
     
-    // Auto-stop after 15 seconds (like a real phone call)
     setTimeout(() => {
       this.stopRingtone();
     }, 15000);
   }
   
   private createRingtonePattern(oscillator: OscillatorNode, gainNode: GainNode, startTime: number) {
-    // Classic telephone ring: Two-tone with pause pattern
-    const ringFreq1 = 440; // A4
-    const ringFreq2 = 480; // Close to A#4
+    const ringFreq1 = 440;
+    const ringFreq2 = 480;
     
     let time = startTime;
     
-    // Create repeating ring pattern for 15 seconds
     for (let cycle = 0; cycle < 8; cycle++) {
-      // Ring 1: 0.4s on
       oscillator.frequency.setValueAtTime(ringFreq1, time);
       gainNode.gain.setValueAtTime(this.volume * 0.7, time);
       time += 0.2;
@@ -373,11 +332,9 @@ export class NotificationSoundManager {
       oscillator.frequency.setValueAtTime(ringFreq2, time);
       time += 0.2;
       
-      // Brief pause: 0.4s
       gainNode.gain.setValueAtTime(0, time);
       time += 0.4;
       
-      // Ring 2: 0.4s on  
       gainNode.gain.setValueAtTime(this.volume * 0.7, time);
       oscillator.frequency.setValueAtTime(ringFreq1, time);
       time += 0.2;
@@ -385,12 +342,10 @@ export class NotificationSoundManager {
       oscillator.frequency.setValueAtTime(ringFreq2, time);
       time += 0.2;
       
-      // Long pause: 2s (like real phone)
       gainNode.gain.setValueAtTime(0, time);
       time += 2;
     }
     
-    // Final fade out
     gainNode.gain.setValueAtTime(0, time);
     oscillator.stop(time);
   }
@@ -455,7 +410,6 @@ export class NotificationSoundManager {
       return;
     }
 
-    // Stop any existing ringtone
     this.stopRingtone();
 
     const currentTime = this.audioContext.currentTime;
@@ -465,7 +419,6 @@ export class NotificationSoundManager {
     oscillator.connect(gainNode);
     gainNode.connect(this.audioContext.destination);
     
-    // Store reference to stop later
     this.currentRingtone = { oscillator, gainNode };
 
     switch (ringtoneType) {
@@ -491,79 +444,54 @@ export class NotificationSoundManager {
 
     oscillator.start(currentTime);
     
-    // Auto-stop after 10 seconds
     setTimeout(() => {
       this.stopRingtone();
     }, 10000);
   }
 
   private createClassicPhoneRingtone(oscillator: OscillatorNode, gainNode: GainNode, startTime: number) {
-    const ringFreq1 = 440; // A4
-    const ringFreq2 = 480; // Close to A#4
+    // Enhanced classic phone ring - more prominent like Rapido
+    const frequencies = [880, 1174, 880, 1174, 880, 1174, 1318, 1046];
+    const durations = [300, 300, 300, 300, 300, 300, 600, 400];
+    
     let time = startTime;
+    frequencies.forEach((freq, index) => {
+      const duration = durations[index] / 1000;
+      oscillator.frequency.setValueAtTime(freq, time);
+      gainNode.gain.setValueAtTime(this.volume * 0.9, time);
+      gainNode.gain.exponentialRampToValueAtTime(this.volume * 0.1, time + duration * 0.8);
+      time += duration;
+    });
     
-    for (let cycle = 0; cycle < 6; cycle++) {
-      oscillator.frequency.setValueAtTime(ringFreq1, time);
-      gainNode.gain.setValueAtTime(this.volume * 0.8, time);
-      time += 0.2;
-      
-      oscillator.frequency.setValueAtTime(ringFreq2, time);
-      time += 0.2;
-      
-      gainNode.gain.setValueAtTime(0, time);
-      time += 0.4;
-      
-      gainNode.gain.setValueAtTime(this.volume * 0.8, time);
-      oscillator.frequency.setValueAtTime(ringFreq1, time);
-      time += 0.2;
-      
-      oscillator.frequency.setValueAtTime(ringFreq2, time);
-      time += 0.2;
-      
-      gainNode.gain.setValueAtTime(0, time);
-      time += 1.2;
-    }
-    
-    gainNode.gain.setValueAtTime(0, time);
     oscillator.stop(time);
   }
 
   private createModernPhoneRingtone(oscillator: OscillatorNode, gainNode: GainNode, startTime: number) {
-    const frequencies = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
     let time = startTime;
     
     for (let cycle = 0; cycle < 4; cycle++) {
-      frequencies.forEach((freq, index) => {
+      const frequencies = [523, 659, 784, 1047];
+      frequencies.forEach((freq) => {
         oscillator.frequency.setValueAtTime(freq, time);
-        gainNode.gain.setValueAtTime(this.volume * 0.7, time);
-        time += 0.15;
-        
-        if (index < frequencies.length - 1) {
-          gainNode.gain.setValueAtTime(this.volume * 0.3, time);
-          time += 0.05;
-        }
+        gainNode.gain.setValueAtTime(this.volume * 0.8, time);
+        time += 0.1;
       });
       
       gainNode.gain.setValueAtTime(0, time);
-      time += 1.5;
+      time += 0.3;
     }
     
     oscillator.stop(time);
   }
 
   private createBellChimeRingtone(oscillator: OscillatorNode, gainNode: GainNode, startTime: number) {
-    const bellFreqs = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
     let time = startTime;
     
-    for (let cycle = 0; cycle < 5; cycle++) {
-      bellFreqs.forEach(freq => {
-        oscillator.frequency.setValueAtTime(freq, time);
-        gainNode.gain.setValueAtTime(this.volume * 0.6, time);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, time + 0.8);
-        time += 0.3;
-      });
-      
-      time += 0.8;
+    for (let cycle = 0; cycle < 3; cycle++) {
+      oscillator.frequency.setValueAtTime(1047, time);
+      gainNode.gain.setValueAtTime(this.volume * 0.8, time);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, time + 1.0);
+      time += 1.2;
     }
     
     oscillator.stop(time);
@@ -573,45 +501,26 @@ export class NotificationSoundManager {
     let time = startTime;
     
     for (let cycle = 0; cycle < 8; cycle++) {
-      // Fast alternating high-pitched beeps
-      for (let beep = 0; beep < 6; beep++) {
-        oscillator.frequency.setValueAtTime(1000, time);
-        gainNode.gain.setValueAtTime(this.volume * 0.9, time);
-        time += 0.1;
-        
-        gainNode.gain.setValueAtTime(0, time);
-        time += 0.05;
-        
-        oscillator.frequency.setValueAtTime(1200, time);
-        gainNode.gain.setValueAtTime(this.volume * 0.9, time);
-        time += 0.1;
-        
-        gainNode.gain.setValueAtTime(0, time);
-        time += 0.05;
-      }
+      oscillator.frequency.setValueAtTime(1400, time);
+      gainNode.gain.setValueAtTime(this.volume * 0.9, time);
+      time += 0.15;
       
-      time += 0.8;
+      gainNode.gain.setValueAtTime(0, time);
+      time += 0.15;
     }
     
     oscillator.stop(time);
   }
 
   private createMusicalToneRingtone(oscillator: OscillatorNode, gainNode: GainNode, startTime: number) {
-    // Musical melody: "Für Elise" opening notes
-    const melody = [659.25, 622.25, 659.25, 622.25, 659.25, 493.88, 587.33, 523.25, 293.66]; // E5, D#5, E5, D#5, E5, B4, D5, C5, D4
-    const durations = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.4];
+    const melody = [523, 587, 659, 698, 784, 880, 988, 1047];
     let time = startTime;
     
     for (let cycle = 0; cycle < 3; cycle++) {
-      melody.forEach((freq, index) => {
+      melody.forEach((freq) => {
         oscillator.frequency.setValueAtTime(freq, time);
         gainNode.gain.setValueAtTime(this.volume * 0.6, time);
-        time += durations[index];
-        
-        if (index < melody.length - 1) {
-          gainNode.gain.setValueAtTime(this.volume * 0.1, time);
-          time += 0.05;
-        }
+        time += 0.2;
       });
       
       gainNode.gain.setValueAtTime(0, time);
@@ -622,11 +531,9 @@ export class NotificationSoundManager {
   }
 
   private createTraditionalRingRingtone(oscillator: OscillatorNode, gainNode: GainNode, startTime: number) {
-    // Old-style telephone ring with warbling effect
     let time = startTime;
     
     for (let cycle = 0; cycle < 5; cycle++) {
-      // Create warbling effect with frequency modulation
       const baseFreq = 400;
       for (let i = 0; i < 20; i++) {
         const warblingFreq = baseFreq + Math.sin(i * 0.5) * 50;
@@ -652,22 +559,75 @@ export class NotificationSoundManager {
     oscillator.stop(time);
   }
 
-  public getRingtoneOptions(): { value: RingtoneType; label: string }[] {
+  public startContinuousRinging(type: NotificationSoundType = 'new_order_ringtone') {
+    if (!this.continuousRingingEnabled || !this.isEnabled || !this.isTabVisible) {
+      return;
+    }
+
+    console.log(`Starting continuous ringing for ${type}`);
+    this.stopContinuousRinging();
+    this.currentRepetitionCount = 0;
+
+    this.playNotificationSound(type);
+    this.currentRepetitionCount++;
+
+    this.currentRingingInterval = window.setInterval(() => {
+      if (this.currentRepetitionCount >= this.maxRepetitions || !this.isTabVisible) {
+        console.log('Auto-stopping continuous ringing - max repetitions reached or tab not visible');
+        this.stopContinuousRinging();
+        return;
+      }
+
+      console.log(`Playing ringtone repetition ${this.currentRepetitionCount + 1}`);
+      this.playNotificationSound(type);
+      this.currentRepetitionCount++;
+    }, 5000);
+  }
+
+  public stopContinuousRinging() {
+    if (this.currentRingingInterval) {
+      console.log('Stopping continuous ringing');
+      clearInterval(this.currentRingingInterval);
+      this.currentRingingInterval = null;
+      this.currentRepetitionCount = 0;
+    }
+  }
+
+  public setContinuousRingingEnabled(enabled: boolean) {
+    this.continuousRingingEnabled = enabled;
+    localStorage.setItem('continuousRingingEnabled', JSON.stringify(enabled));
+    if (!enabled) {
+      this.stopContinuousRinging();
+    }
+  }
+
+  public setMaxRepetitions(repetitions: number) {
+    this.maxRepetitions = Math.max(1, Math.min(48, repetitions));
+    localStorage.setItem('maxRepetitions', this.maxRepetitions.toString());
+  }
+
+  public getContinuousRingingEnabled(): boolean {
+    return this.continuousRingingEnabled;
+  }
+
+  public getMaxRepetitions(): number {
+    return this.maxRepetitions;
+  }
+
+  public getRingtoneOptions() {
     return [
-      { value: 'classic_phone', label: 'Classic Phone Ring' },
-      { value: 'modern_phone', label: 'Modern Phone Ring' },
-      { value: 'bell_chime', label: 'Bell Chime' },
-      { value: 'urgent_alert', label: 'Urgent Alert' },
-      { value: 'musical_tone', label: 'Musical Tone' },
-      { value: 'traditional_ring', label: 'Traditional Ring' }
+      { value: 'classic_phone' as const, label: 'Classic Phone' },
+      { value: 'modern_phone' as const, label: 'Modern Phone' },
+      { value: 'bell_chime' as const, label: 'Bell Chime' },
+      { value: 'urgent_alert' as const, label: 'Urgent Alert' },
+      { value: 'musical_tone' as const, label: 'Musical Tone' },
+      { value: 'traditional_ring' as const, label: 'Traditional Ring' }
     ];
   }
 }
 
-// Export singleton instance
 export const notificationSound = NotificationSoundManager.getInstance();
 
-// Convenience functions
 export const playOrderSound = () => notificationSound.playNotificationSound('order');
 export const playDeliverySound = () => notificationSound.playNotificationSound('delivery');
 export const playPaymentSound = () => notificationSound.playNotificationSound('payment');
@@ -677,3 +637,5 @@ export const playSuccessSound = () => notificationSound.playNotificationSound('s
 export const playNewOrderRingtone = () => notificationSound.playNotificationSound('new_order_ringtone');
 export const playPhoneRingtone = () => notificationSound.playNotificationSound('phone_ringtone');
 export const stopRingtone = () => notificationSound.stopRingtone();
+export const startContinuousRinging = () => notificationSound.startContinuousRinging();
+export const stopContinuousRinging = () => notificationSound.stopContinuousRinging();
