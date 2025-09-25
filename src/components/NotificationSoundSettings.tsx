@@ -128,10 +128,10 @@ export const NotificationSoundSettings = () => {
 
             <div className="space-y-3">
               <Label className="text-sm font-medium">
-                New Order Ringtone: Rapido Style
+                New Order Ringtone
               </Label>
               <p className="text-xs text-muted-foreground">
-                Loud and urgent ringtone designed to grab attention like Rapido notifications
+                Loud and urgent ringtone designed to grab attention for new orders
               </p>
               <Button
                 variant="outline"
@@ -139,7 +139,7 @@ export const NotificationSoundSettings = () => {
                 onClick={() => testRingtone(selectedRingtone)}
                 className="w-full bg-orange-50 hover:bg-orange-100 text-orange-800 border-orange-200"
               >
-                🔔 Test Rapido Ringtone
+                🔔 Test Ringtone
               </Button>
             </div>
 
@@ -151,7 +151,7 @@ export const NotificationSoundSettings = () => {
                 <div className="space-y-0.5">
                   <Label htmlFor="continuous-ringing">Enable Continuous Ringing</Label>
                   <p className="text-sm text-muted-foreground">
-                    Ring continuously until you respond to new orders (like Rapido)
+                    Ring continuously until you respond to new orders
                   </p>
                 </div>
                 <Switch
