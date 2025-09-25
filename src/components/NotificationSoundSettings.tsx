@@ -5,8 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX, AlertTriangle } from 'lucide-react';
 import { notificationSound, RingtoneType } from '@/utils/notificationSound';
+import { AudioStatusIndicator } from './AudioStatusIndicator';
+import { useToast } from '@/hooks/use-toast';
 
 export const NotificationSoundSettings = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -14,6 +16,7 @@ export const NotificationSoundSettings = () => {
   const [selectedRingtone, setSelectedRingtone] = useState<RingtoneType>('rapido_ringtone');
   const [continuousRingingEnabled, setContinuousRingingEnabled] = useState(true);
   const [maxRepetitions, setMaxRepetitions] = useState(24);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Load preferences from localStorage and notification manager
@@ -60,14 +63,28 @@ export const NotificationSoundSettings = () => {
     notificationSound.setRingtone(value);
   };
 
-  const testSound = (type: 'order' | 'delivery' | 'payment' | 'system' | 'urgent' | 'success') => {
-    notificationSound.playNotificationSound(type);
+  const testSound = async (type: 'order' | 'delivery' | 'payment' | 'system' | 'urgent' | 'success') => {
+    await notificationSound.ensureAudioContext();
+    await notificationSound.playNotificationSound(type);
+    
+    toast({
+      title: "Audio Test",
+      description: `Played ${type} notification sound`,
+      duration: 2000,
+    });
   };
 
   const testRingtone = async (ringtoneType: RingtoneType) => {
     console.log('🔊 Testing ringtone:', ringtoneType);
     await notificationSound.ensureAudioContext();
-    notificationSound.playSpecificRingtone(ringtoneType);
+    await notificationSound.playSpecificRingtone(ringtoneType);
+    
+    toast({
+      title: "Ringtone Test",
+      description: "If you heard the urgent ringtone, new order notifications will work!",
+      duration: 5000,
+      className: "bg-orange-600 text-white border-orange-600"
+    });
   };
 
   const handleContinuousRingingToggle = (enabled: boolean) => {
@@ -85,8 +102,21 @@ export const NotificationSoundSettings = () => {
     console.log('🔊 Testing continuous ringing');
     await notificationSound.ensureAudioContext();
     notificationSound.startContinuousRinging('rapido_ringtone');
+    
+    toast({
+      title: "Testing Continuous Ringing",
+      description: "This will ring for 15 seconds like a real new order notification",
+      duration: 15000,
+      className: "bg-red-600 text-white border-red-600"
+    });
+    
     setTimeout(() => {
       notificationSound.stopContinuousRinging();
+      toast({
+        title: "Test Complete",
+        description: "Continuous ringing test finished",
+        duration: 3000,
+      });
     }, 15000);
   };
 
@@ -99,6 +129,9 @@ export const NotificationSoundSettings = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Audio Status Indicator */}
+        <AudioStatusIndicator />
+
         <div className="flex items-center justify-between">
           <Label htmlFor="sound-toggle" className="text-sm font-medium">
             Enable notification sounds
@@ -127,11 +160,14 @@ export const NotificationSoundSettings = () => {
             </div>
 
             <div className="space-y-3">
-              <Label className="text-sm font-medium">
-                New Order Ringtone
-              </Label>
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-orange-600" />
+                <Label className="text-sm font-medium">
+                  New Order Ringtone - URGENT
+                </Label>
+              </div>
               <p className="text-xs text-muted-foreground">
-                Loud and urgent ringtone designed to grab attention for new orders
+                Extra loud and persistent ringtone that ensures you never miss a new order notification
               </p>
               <Button
                 variant="outline"
@@ -139,7 +175,7 @@ export const NotificationSoundSettings = () => {
                 onClick={() => testRingtone(selectedRingtone)}
                 className="w-full bg-orange-50 hover:bg-orange-100 text-orange-800 border-orange-200"
               >
-                🔔 Test Ringtone
+                🔔 Test URGENT Ringtone
               </Button>
             </div>
 

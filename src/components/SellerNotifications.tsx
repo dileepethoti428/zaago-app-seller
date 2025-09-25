@@ -30,12 +30,47 @@ export const SellerNotifications = () => {
         async (payload) => {
           const notification = payload.new;
           
-          // Handle new order notifications with continuous ringing
+          // Handle new order notifications with enhanced urgency
           if (notification.type === 'new_order') {
-            console.log('New order notification received, starting continuous ringing');
+            console.log('🚨 URGENT: New order notification received! Starting immediate action sequence');
             
-            // Start continuous ringing
-            notificationSound.startContinuousRinging('rapido_ringtone');
+            // Immediate audio notification with maximum urgency
+            try {
+              await notificationSound.ensureAudioContext();
+              const audioStatus = notificationSound.getAudioStatus();
+              console.log('🔊 Audio status for new order:', audioStatus);
+              
+              // Start continuous ringing immediately
+              notificationSound.startContinuousRinging('rapido_ringtone');
+              
+              // Request browser notification permission if not granted
+              if ('Notification' in window && Notification.permission === 'default') {
+                await Notification.requestPermission();
+              }
+              
+              // Show persistent browser notification
+              if ('Notification' in window && Notification.permission === 'granted') {
+                const notif = new Notification('🚨 NEW ORDER RECEIVED!', {
+                  body: `Urgent: New customer order needs your immediate attention`,
+                  icon: '/zaago-logo.png',
+                  badge: '/zaago-logo.png',
+                  tag: 'new-order',
+                  requireInteraction: true
+                });
+                
+                // Try vibration separately for mobile devices
+                if ('vibrate' in navigator) {
+                  navigator.vibrate([200, 100, 200, 100, 200, 100, 200]);
+                }
+                
+                notif.onclick = () => {
+                  window.focus();
+                  notif.close();
+                };
+              }
+            } catch (error) {
+              console.error('🚨 Error with new order notification:', error);
+            }
             
             // Try to fetch order details for the modal
             let orderDetails = {
@@ -100,11 +135,13 @@ export const SellerNotifications = () => {
             }
           }
           
-          // Show toast for all notifications
+          // Show enhanced toast for all notifications
           toast({
-            title: notification.title,
-            description: notification.message,
-            duration: notification.type === 'new_order' ? 30000 : 8000, // Longer duration for new orders
+            title: notification.type === 'new_order' ? '🚨 URGENT: NEW ORDER!' : notification.title,
+            description: notification.type === 'new_order' 
+              ? `${notification.message} - Action required immediately!`
+              : notification.message,
+            duration: notification.type === 'new_order' ? 60000 : 8000, // Extra long duration for new orders
             className: getToastStyles(notification.type)
           });
         }
@@ -132,23 +169,37 @@ export const SellerNotifications = () => {
   };
 
   const handleAcceptOrder = () => {
-    console.log('Order accepted');
+    console.log('✅ Order accepted - stopping all notifications');
+    
+    // Stop continuous ringing immediately
+    notificationSound.stopContinuousRinging();
+    
     setNewOrderModal({ visible: false, order: null });
+    
     // Here you would typically update the order status
     toast({
-      title: "Order Accepted",
-      description: "You have accepted the new order",
-      className: "bg-green-600 text-white border-green-600"
+      title: "✅ Order Accepted",
+      description: "You have accepted the new order successfully",
+      className: "bg-green-600 text-white border-green-600",
+      duration: 5000
     });
   };
 
   const handleDismissOrder = () => {
-    console.log('Order dismissed');
+    console.log('❌ Order notification dismissed');
+    
+    // Stop continuous ringing
+    notificationSound.stopContinuousRinging();
+    
     setNewOrderModal({ visible: false, order: null });
   };
 
   const handleViewOrder = () => {
-    console.log('Viewing order details');
+    console.log('👀 Viewing order details - stopping notifications');
+    
+    // Stop continuous ringing
+    notificationSound.stopContinuousRinging();
+    
     setNewOrderModal({ visible: false, order: null });
     // Here you would typically navigate to the order details page
     window.location.href = `/orders/${newOrderModal.order?.id}`;
