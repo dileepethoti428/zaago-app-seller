@@ -140,59 +140,6 @@ export const NotificationSoundSettings = () => {
             </div>
 
 
-            <div className="space-y-3">
-              <h4 className="text-sm font-medium text-muted-foreground">Test other sounds:</h4>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => testSound('order')}
-                  className="text-xs"
-                >
-                  Order Sound
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => testSound('delivery')}
-                  className="text-xs"
-                >
-                  Delivery Sound
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => testSound('payment')}
-                  className="text-xs"
-                >
-                  Payment Sound
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => testSound('success')}
-                  className="text-xs"
-                >
-                  Success Sound
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => testSound('urgent')}
-                  className="text-xs"
-                >
-                  Urgent Sound
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => testSound('system')}
-                  className="text-xs"
-                >
-                  System Sound
-                </Button>
-              </div>
-            </div>
 
             {/* Continuous Ringing Settings */}
             <div className="space-y-4 pt-4 border-t">
