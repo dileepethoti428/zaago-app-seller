@@ -40,9 +40,10 @@ export const AgentNotifications = () => {
           
           console.log('🚚 AgentNotifications: Processing notification for agent:', notification.type);
           
-          // Play appropriate sound based on notification type
+          // Play appropriate sound based on notification type - SINGLE SOUND ONLY
           console.log('🚚 AgentNotifications: Playing sound for type:', notification.type);
           switch (notification.type) {
+            case 'new_order':
             case 'new_delivery_assignment':
             case 'new_delivery_available':
               notificationSound.playNotificationSound('rapido_ringtone');
@@ -67,42 +68,9 @@ export const AgentNotifications = () => {
       )
       .subscribe();
 
-    // Also subscribe to regular notifications table for agent-specific messages
-    const regularNotificationsChannel = supabase
-      .channel('agent-regular-notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          const notification = payload.new;
-          console.log('🚚 AgentNotifications: Received regular notification:', notification);
-          
-          // Only process delivery-related notifications
-          if (notification.role === 'agent' || notification.type?.includes('delivery')) {
-            console.log('🚚 AgentNotifications: Processing delivery notification');
-            
-            notificationSound.playNotificationSound('order');
-            
-            toast({
-              title: notification.title,
-              description: notification.message,
-              duration: 8000,
-              className: "bg-blue-600 text-white border-blue-600"
-            });
-          }
-        }
-      )
-      .subscribe();
-
     return () => {
       console.log('🚚 AgentNotifications: Cleaning up subscriptions');
       supabase.removeChannel(agentNotificationsChannel);
-      supabase.removeChannel(regularNotificationsChannel);
     };
   }, [user, toast]);
 
