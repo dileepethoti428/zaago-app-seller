@@ -315,6 +315,22 @@ export class NotificationSoundManager {
       return;
     }
 
+    // Force audio context initialization for urgent sounds
+    if (type === 'new_order_ringtone' || type === 'rapido_ringtone') {
+      console.log('🔊 URGENT: Force initializing audio for new order');
+      await this.ensureAudioContext();
+      
+      // Try audio immediately for urgent notifications
+      try {
+        await this.playNewOrderRingtone();
+        return;
+      } catch (error) {
+        console.warn('🔊 Direct audio failed, trying fallbacks:', error);
+        await this.playFallbackSound();
+        return;
+      }
+    }
+
     await this.ensureAudioContext();
 
     // Check if we can play audio
@@ -323,11 +339,7 @@ export class NotificationSoundManager {
 
     if (!audioStatus.canPlay) {
       console.warn('🔊 Cannot play audio, trying fallbacks');
-      const fallbackSuccess = await this.playFallbackSound();
-      
-      if (!fallbackSuccess && type === 'rapido_ringtone') {
-        this.showAudioPermissionPrompt();
-      }
+      await this.playFallbackSound();
       return;
     }
 
@@ -338,11 +350,6 @@ export class NotificationSoundManager {
     }
 
     try {
-      if (type === 'new_order_ringtone' || type === 'rapido_ringtone') {
-        console.log('🔊 Playing new order ringtone');
-        this.playNewOrderRingtone();
-        return;
-      }
 
       const oscillator = this.audioContext.createOscillator();
       const gainNode = this.audioContext.createGain();
@@ -470,8 +477,19 @@ export class NotificationSoundManager {
     if (this.newOrderAudio) {
       try {
         this.newOrderAudio.currentTime = 0;
-        this.newOrderAudio.volume = this.volume * 0.5; // Controlled volume
-        await this.newOrderAudio.play();
+        this.newOrderAudio.volume = Math.min(this.volume * 1.5, 0.8); // Increase volume for urgency
+        
+        // Ensure the audio is loaded
+        if (this.newOrderAudio.readyState < 2) {
+          console.log('🔊 Audio not ready, loading...');
+          await new Promise((resolve) => {
+            this.newOrderAudio!.addEventListener('canplay', resolve, { once: true });
+            this.newOrderAudio!.load();
+          });
+        }
+        
+        console.log('🔊 Starting audio playback...');
+        const playPromise = this.newOrderAudio.play();
         console.log('🔊 Playing custom ringtone');
         return;
       } catch (error) {
@@ -605,7 +623,7 @@ export class NotificationSoundManager {
     this.playRapidoRingtone();
   }
   public startContinuousRinging(type: NotificationSoundType = 'rapido_ringtone') {
-    if (!this.continuousRingingEnabled || !this.isEnabled || !this.isTabVisible) {
+    if (!this.continuousRingingEnabled || !this.isEnabled) {
       console.log('🔊 Continuous ringing blocked:', { 
         enabled: this.continuousRingingEnabled, 
         soundEnabled: this.isEnabled, 
@@ -619,23 +637,23 @@ export class NotificationSoundManager {
     this.currentRepetitionCount = 0;
     this.continuousRingingStartTime = Date.now();
 
-    // Play immediately
-    this.playNotificationSound('new_order_ringtone');
+    // Play immediately - force play
+    this.playNotificationSound('rapido_ringtone');
     this.currentRepetitionCount++;
 
     this.currentRingingInterval = window.setInterval(() => {
       const elapsed = Date.now() - (this.continuousRingingStartTime || 0);
       
-      if (this.currentRepetitionCount >= this.maxRepetitions || !this.isTabVisible || elapsed >= this.continuousRingingDuration) {
-        console.log('🔊 Auto-stopping continuous ringing - max repetitions/time reached or tab not visible');
+      if (this.currentRepetitionCount >= this.maxRepetitions || elapsed >= this.continuousRingingDuration) {
+        console.log('🔊 Auto-stopping continuous ringing - max repetitions/time reached');
         this.stopContinuousRinging();
         return;
       }
 
       console.log(`🔊 Playing ringtone repetition ${this.currentRepetitionCount + 1}/${this.maxRepetitions}`);
-      this.playNotificationSound('new_order_ringtone');
+      this.playNotificationSound('rapido_ringtone');
       this.currentRepetitionCount++;
-    }, 4000); // Slightly faster for urgency
+    }, 3000); // Faster for urgency
   }
 
   public stopContinuousRinging() {
