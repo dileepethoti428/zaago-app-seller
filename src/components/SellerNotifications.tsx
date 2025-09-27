@@ -36,11 +36,29 @@ export const SellerNotifications = () => {
             
             // Immediate audio notification with maximum urgency
             try {
+              console.log('🚨 Ensuring audio context for urgent notification');
               await notificationSound.ensureAudioContext();
+              
               const audioStatus = notificationSound.getAudioStatus();
               console.log('🔊 Audio status for new order:', audioStatus);
               
-              // Start continuous ringing immediately
+              if (!audioStatus.canPlay) {
+                console.warn('🚨 Audio cannot play, requesting user interaction');
+                // Show user prompt to enable audio
+                toast({
+                  title: "🔊 Enable Audio",
+                  description: "Click here to enable notification sounds",
+                  duration: 10000,
+                  className: "bg-yellow-600 text-white border-yellow-600 cursor-pointer",
+                  onClick: async () => {
+                    await notificationSound.ensureAudioContext();
+                    notificationSound.playNotificationSound('urgent');
+                  }
+                });
+              }
+              
+              console.log('🚨 Starting continuous ringing for new order');
+              // Start continuous ringing immediately - even if audio is suspended, it will retry
               notificationSound.startContinuousRinging('rapido_ringtone');
               
               // Request browser notification permission if not granted

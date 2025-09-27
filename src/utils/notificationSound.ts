@@ -150,12 +150,23 @@ export class NotificationSoundManager {
     
     if (this.audioContext?.state === 'suspended') {
       try {
+        console.log('🔊 Attempting to resume suspended audio context');
         await this.audioContext.resume();
         this.updateAudioStatus();
-        console.log('🔊 Audio context resumed');
+        console.log('🔊 Audio context resumed successfully');
       } catch (error) {
         console.warn('🔊 Failed to resume audio context:', error);
         this.audioStatus = 'blocked';
+        
+        // Try to create a new context if resume failed
+        try {
+          console.log('🔊 Creating new audio context after resume failure');
+          this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+          this.isInitialized = true;
+          this.updateAudioStatus();
+        } catch (newError) {
+          console.error('🔊 Could not create new audio context:', newError);
+        }
       }
     } else {
       this.updateAudioStatus();
@@ -318,17 +329,36 @@ export class NotificationSoundManager {
     // Force audio context initialization for urgent sounds
     if (type === 'new_order_ringtone' || type === 'rapido_ringtone') {
       console.log('🔊 URGENT: Force initializing audio for new order');
-      await this.ensureAudioContext();
       
-      // Try audio immediately for urgent notifications
+      let success = false;
+      
+      // Try multiple approaches for urgent notifications
       try {
+        await this.ensureAudioContext();
         await this.playNewOrderRingtone();
-        return;
+        success = true;
+        console.log('🔊 SUCCESS: Custom ringtone played');
       } catch (error) {
-        console.warn('🔊 Direct audio failed, trying fallbacks:', error);
-        await this.playFallbackSound();
-        return;
+        console.warn('🔊 Custom ringtone failed:', error);
       }
+      
+      // If custom audio failed, try fallback immediately
+      if (!success) {
+        console.log('🔊 Trying fallback audio for urgent notification');
+        success = await this.playFallbackSound();
+      }
+      
+      // If all audio fails, at least try vibration
+      if (!success && this.hasVibrationSupport) {
+        console.log('🔊 All audio failed, using vibration');
+        try {
+          navigator.vibrate([500, 200, 500, 200, 500, 200, 500]);
+        } catch (e) {
+          console.warn('🔊 Vibration also failed:', e);
+        }
+      }
+      
+      return;
     }
 
     await this.ensureAudioContext();
