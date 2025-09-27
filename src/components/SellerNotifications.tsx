@@ -432,33 +432,9 @@ export const SellerNotifications = () => {
 
   return (
     <>
-      {/* Connection Status and Manual Controls */}
-      <div className="fixed top-4 right-4 z-40 flex flex-col gap-2">
-        {/* Connection Status Indicator */}
-        <div className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 ${
-          connectionStatus === 'connected' ? 'bg-green-600 text-white' : 
-          connectionStatus === 'connecting' ? 'bg-yellow-600 text-white' : 
-          'bg-red-600 text-white'
-        }`}>
-          {connectionStatus === 'connected' ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
-          {connectionStatus === 'connected' ? 'Connected' : 
-           connectionStatus === 'connecting' ? 'Connecting...' : 
-           isPolling ? 'Backup Mode' : 'Disconnected'}
-        </div>
-        
-        {/* Manual Refresh Button */}
-        <Button
-          onClick={manualRefresh}
-          disabled={manualRefreshing}
-          className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
-          size="sm"
-        >
-          <RefreshCw className={`w-3 h-3 mr-1 ${manualRefreshing ? 'animate-spin' : ''}`} />
-          {manualRefreshing ? 'Checking...' : 'Check Orders'}
-        </Button>
-        
-        {/* Test Button for Development */}
-        {process.env.NODE_ENV === 'development' && (
+      {/* Test Button for Development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed top-4 right-4 z-40">
           <Button
             onClick={testNewOrderNotification}
             className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
@@ -466,8 +442,8 @@ export const SellerNotifications = () => {
           >
             🧪 Test New Order
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Enhanced Modal with debugging */}
       {newOrderModal.visible && newOrderModal.order && (
