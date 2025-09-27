@@ -100,15 +100,25 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
             )}
           </div>
 
-          {/* Stop Ringtone Button */}
-          <Button
-            onClick={handleStopRingtone}
-            variant="secondary"
-            className="w-full flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white"
-          >
-            <VolumeX className="h-4 w-4" />
-            Stop Ringtone
-          </Button>
+          {/* Emergency Stop Ringtone Button */}
+          <div className="flex gap-2">
+            <Button
+              onClick={handleStopRingtone}
+              variant="secondary"
+              className="flex-1 flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white"
+            >
+              <VolumeX className="h-4 w-4" />
+              Stop Sound
+            </Button>
+            <Button
+              onClick={() => handleAction(onDismiss)}
+              variant="destructive"
+              className="flex-1 flex items-center gap-2"
+            >
+              <PhoneOff className="h-4 w-4" />
+              Cancel
+            </Button>
+          </div>
 
           {/* Action Buttons */}
           <div className="grid grid-cols-2 gap-3">
@@ -117,7 +127,7 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
               className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
             >
               <CheckCircle className="h-4 w-4" />
-              Accept
+              Accept Order
             </Button>
             <Button
               onClick={() => handleAction(onViewOrder)}
@@ -128,16 +138,6 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
               View Details
             </Button>
           </div>
-
-          {/* Dismiss Button */}
-          <Button
-            onClick={() => handleAction(onDismiss)}
-            variant="ghost"
-            className="w-full text-muted-foreground hover:text-destructive flex items-center gap-2"
-          >
-            <PhoneOff className="h-4 w-4" />
-            Dismiss
-          </Button>
         </div>
       </Card>
     </div>
