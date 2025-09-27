@@ -434,7 +434,7 @@ export const SellerNotifications = () => {
     <>
       {/* Test Button for Development */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="fixed top-4 right-4 z-40">
+        <div className="fixed top-12 right-4 z-40">
           <Button
             onClick={testNewOrderNotification}
             className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
