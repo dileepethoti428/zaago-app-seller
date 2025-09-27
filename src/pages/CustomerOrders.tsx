@@ -160,31 +160,46 @@ const CustomerOrders = () => {
   const fetchCustomerOrders = async () => {
     if (!user?.id) return;
     
+    // Check authentication first
+    if (!user?.id) {
+      console.error('User not authenticated or missing user ID');
+      toast({
+        title: "Authentication Error",
+        description: "Please log in to view your orders.",
+        variant: "destructive"
+      });
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
-      // Use direct query to avoid TypeScript issues
-      const { data, error } = await (supabase as any)
+      console.log('Fetching orders for user ID:', user.id);
+      
+      // Fixed: Use 'user_id' instead of 'customer_id' to match the database schema
+      const { data, error } = await supabase
         .from('orders')
         .select('*')
-        .eq('customer_id', user.id)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching customer orders:', error);
+        console.error('Database error fetching customer orders:', error);
         toast({
           title: "Error",
-          description: "Failed to fetch orders. Please try again.",
+          description: `Failed to fetch orders: ${error.message}`,
           variant: "destructive"
         });
         return;
       }
 
+      console.log('Successfully fetched orders:', data?.length || 0, 'orders');
       setOrders(data || []);
     } catch (error) {
-      console.error('Error fetching customer orders:', error);
+      console.error('Unexpected error fetching customer orders:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch orders. Please try again.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive"
       });
     } finally {
