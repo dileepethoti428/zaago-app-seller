@@ -97,22 +97,21 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
-      <Card className="w-full max-w-md bg-background border-4 border-red-500 shadow-2xl animate-bounce"
+      <Card className="w-full max-w-md bg-background border-4 border-red-500 shadow-2xl"
             style={{
-              boxShadow: '0 0 50px rgba(239, 68, 68, 0.5), inset 0 0 20px rgba(239, 68, 68, 0.1)',
-              animation: 'bounce 1s infinite, glow 2s ease-in-out infinite alternate'
+              boxShadow: '0 0 50px rgba(239, 68, 68, 0.5), inset 0 0 20px rgba(239, 68, 68, 0.1)'
             }}>
         <div className="p-6 space-y-4 relative">
           {/* Emergency Header */}
           <div className="flex items-center justify-between bg-red-100 dark:bg-red-900/20 p-3 rounded-lg border-2 border-red-500">
             <div className="flex items-center gap-2">
-              <Phone className="h-8 w-8 text-red-600 animate-bounce" />
+              <Phone className="h-8 w-8 text-red-600" />
               <div>
-                <h2 className="text-2xl font-bold text-red-600 animate-pulse">🚨 NEW ORDER!</h2>
+                <h2 className="text-2xl font-bold text-red-600">🚨 NEW ORDER!</h2>
                 <p className="text-sm text-red-500 font-medium">IMMEDIATE ACTION REQUIRED</p>
               </div>
             </div>
-            <Badge variant="destructive" className="animate-pulse text-lg px-4 py-2">
+            <Badge variant="destructive" className="text-lg px-4 py-2">
               EMERGENCY
             </Badge>
           </div>
@@ -239,7 +238,7 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
           <div className="grid grid-cols-2 gap-3">
             <Button
               onClick={() => handleAction(onAccept)}
-              className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 text-lg py-6 animate-pulse"
+              className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 text-lg py-6"
             >
               <CheckCircle className="h-6 w-6" />
               ACCEPT ORDER
