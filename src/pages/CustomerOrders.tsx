@@ -162,14 +162,15 @@ const CustomerOrders = () => {
     
     setLoading(true);
     try {
-      // Fetch orders containing this seller's products only
-    const { data, error } = await supabase.rpc('get_seller_orders', {
-      seller_user_id: user.id,
-      status_filter: null
-    });
+      // Use direct query to avoid TypeScript issues
+      const { data, error } = await (supabase as any)
+        .from('orders')
+        .select('*')
+        .eq('customer_id', user.id)
+        .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching seller orders:', error);
+        console.error('Error fetching customer orders:', error);
         toast({
           title: "Error",
           description: "Failed to fetch orders. Please try again.",
@@ -180,7 +181,12 @@ const CustomerOrders = () => {
 
       setOrders(data || []);
     } catch (error) {
-      console.error('Error fetching seller orders:', error);
+      console.error('Error fetching customer orders:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch orders. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
