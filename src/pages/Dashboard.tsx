@@ -17,7 +17,6 @@ import { useAuth } from '@/context/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StopRingtonePopup } from '@/components/StopRingtonePopup';
-import { AudioDebugPanel } from '@/components/AudioDebugPanel';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -135,11 +134,6 @@ const Dashboard = () => {
       className="space-y-6 sm:space-y-8"
     >
       <StopRingtonePopup />
-      
-      {/* Audio Debug Panel - Temporary for testing */}
-      <div className="fixed top-4 right-4 z-50">
-        <AudioDebugPanel />
-      </div>
       
       {/* Header */}
       <motion.div
