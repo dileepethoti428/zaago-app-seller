@@ -226,9 +226,13 @@ export type Database = {
           id: string
           language: string | null
           location_services: boolean | null
+          notification_frequency: string | null
           personal_info: Json | null
           preferred_areas: Json | null
           push_notifications: boolean | null
+          ringtone_enabled: boolean | null
+          ringtone_type: string | null
+          ringtone_volume: number | null
           sound_alerts: boolean | null
           updated_at: string | null
           vehicle_info: Json | null
@@ -241,9 +245,13 @@ export type Database = {
           id?: string
           language?: string | null
           location_services?: boolean | null
+          notification_frequency?: string | null
           personal_info?: Json | null
           preferred_areas?: Json | null
           push_notifications?: boolean | null
+          ringtone_enabled?: boolean | null
+          ringtone_type?: string | null
+          ringtone_volume?: number | null
           sound_alerts?: boolean | null
           updated_at?: string | null
           vehicle_info?: Json | null
@@ -256,9 +264,13 @@ export type Database = {
           id?: string
           language?: string | null
           location_services?: boolean | null
+          notification_frequency?: string | null
           personal_info?: Json | null
           preferred_areas?: Json | null
           push_notifications?: boolean | null
+          ringtone_enabled?: boolean | null
+          ringtone_type?: string | null
+          ringtone_volume?: number | null
           sound_alerts?: boolean | null
           updated_at?: string | null
           vehicle_info?: Json | null
@@ -331,7 +343,7 @@ export type Database = {
         }
         Insert: {
           agent_id: string
-          amount: number
+          amount?: number
           created_at?: string | null
           description?: string | null
           id?: string
@@ -1130,6 +1142,7 @@ export type Database = {
           average_rating: number | null
           created_at: string | null
           deliveries_today: number | null
+          device_info: Json | null
           email: string
           id: string
           is_active: boolean | null
@@ -1137,6 +1150,7 @@ export type Database = {
           last_delivery_at: string | null
           last_status_change: string | null
           name: string
+          onesignal_player_id: string | null
           performance_score: number | null
           phone: string | null
           total_deliveries: number | null
@@ -1148,6 +1162,7 @@ export type Database = {
           average_rating?: number | null
           created_at?: string | null
           deliveries_today?: number | null
+          device_info?: Json | null
           email: string
           id?: string
           is_active?: boolean | null
@@ -1155,6 +1170,7 @@ export type Database = {
           last_delivery_at?: string | null
           last_status_change?: string | null
           name: string
+          onesignal_player_id?: string | null
           performance_score?: number | null
           phone?: string | null
           total_deliveries?: number | null
@@ -1166,6 +1182,7 @@ export type Database = {
           average_rating?: number | null
           created_at?: string | null
           deliveries_today?: number | null
+          device_info?: Json | null
           email?: string
           id?: string
           is_active?: boolean | null
@@ -1173,6 +1190,7 @@ export type Database = {
           last_delivery_at?: string | null
           last_status_change?: string | null
           name?: string
+          onesignal_player_id?: string | null
           performance_score?: number | null
           phone?: string | null
           total_deliveries?: number | null
@@ -1380,6 +1398,45 @@ export type Database = {
           is_active?: boolean
           slot_name?: string
           start_time?: string
+        }
+        Relationships: []
+      }
+      delivery_timings: {
+        Row: {
+          created_at: string
+          delivery_type: string
+          id: string
+          is_active: boolean
+          max_duration_minutes: number
+          priority: number
+          slot_name: string
+          time_slot_end: string
+          time_slot_start: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_type: string
+          id?: string
+          is_active?: boolean
+          max_duration_minutes?: number
+          priority?: number
+          slot_name: string
+          time_slot_end: string
+          time_slot_start: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          delivery_type?: string
+          id?: string
+          is_active?: boolean
+          max_duration_minutes?: number
+          priority?: number
+          slot_name?: string
+          time_slot_end?: string
+          time_slot_start?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2829,10 +2886,12 @@ export type Database = {
           created_at: string
           date_of_birth: string | null
           default_address: Json | null
+          device_info: Json | null
           emergency_contact: string | null
           full_name: string | null
           id: string
           notification_preferences: Json | null
+          onesignal_player_id: string | null
           phone: string | null
           photo_uploaded_at: string | null
           photo_url: string | null
@@ -2852,10 +2911,12 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           default_address?: Json | null
+          device_info?: Json | null
           emergency_contact?: string | null
           full_name?: string | null
           id?: string
           notification_preferences?: Json | null
+          onesignal_player_id?: string | null
           phone?: string | null
           photo_uploaded_at?: string | null
           photo_url?: string | null
@@ -2875,10 +2936,12 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           default_address?: Json | null
+          device_info?: Json | null
           emergency_contact?: string | null
           full_name?: string | null
           id?: string
           notification_preferences?: Json | null
+          onesignal_player_id?: string | null
           phone?: string | null
           photo_uploaded_at?: string | null
           photo_url?: string | null
@@ -3118,6 +3181,7 @@ export type Database = {
           business_license: string | null
           business_name: string | null
           created_at: string
+          device_info: Json | null
           email: string
           id: string
           ifsc_code: string | null
@@ -3126,6 +3190,7 @@ export type Database = {
           location_verified: boolean | null
           longitude: number | null
           name: string
+          onesignal_player_id: string | null
           phone: string | null
           rejection_reason: string | null
           status: string
@@ -3146,6 +3211,7 @@ export type Database = {
           business_license?: string | null
           business_name?: string | null
           created_at?: string
+          device_info?: Json | null
           email: string
           id?: string
           ifsc_code?: string | null
@@ -3154,6 +3220,7 @@ export type Database = {
           location_verified?: boolean | null
           longitude?: number | null
           name: string
+          onesignal_player_id?: string | null
           phone?: string | null
           rejection_reason?: string | null
           status?: string
@@ -3174,6 +3241,7 @@ export type Database = {
           business_license?: string | null
           business_name?: string | null
           created_at?: string
+          device_info?: Json | null
           email?: string
           id?: string
           ifsc_code?: string | null
@@ -3182,6 +3250,7 @@ export type Database = {
           location_verified?: boolean | null
           longitude?: number | null
           name?: string
+          onesignal_player_id?: string | null
           phone?: string | null
           rejection_reason?: string | null
           status?: string
@@ -3694,6 +3763,45 @@ export type Database = {
           },
         ]
       }
+      user_devices: {
+        Row: {
+          created_at: string
+          device_name: string | null
+          device_type: string | null
+          id: string
+          is_active: boolean
+          last_seen: string | null
+          onesignal_player_id: string
+          updated_at: string
+          user_id: string
+          user_type: string
+        }
+        Insert: {
+          created_at?: string
+          device_name?: string | null
+          device_type?: string | null
+          id?: string
+          is_active?: boolean
+          last_seen?: string | null
+          onesignal_player_id: string
+          updated_at?: string
+          user_id: string
+          user_type: string
+        }
+        Update: {
+          created_at?: string
+          device_name?: string | null
+          device_type?: string | null
+          id?: string
+          is_active?: boolean
+          last_seen?: string | null
+          onesignal_player_id?: string
+          updated_at?: string
+          user_id?: string
+          user_type?: string
+        }
+        Relationships: []
+      }
       user_locations: {
         Row: {
           address: string | null
@@ -3773,6 +3881,36 @@ export type Database = {
           is_default?: boolean | null
           razorpay_customer_id?: string
           razorpay_token_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_player_ids: {
+        Row: {
+          created_at: string
+          device_info: Json | null
+          id: string
+          is_active: boolean
+          player_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_info?: Json | null
+          id?: string
+          is_active?: boolean
+          player_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_info?: Json | null
+          id?: string
+          is_active?: boolean
+          player_id?: string
           updated_at?: string
           user_id?: string
         }
@@ -4067,20 +4205,36 @@ export type Database = {
           agent_email: string | null
           agent_id: string | null
           agent_name: string | null
+          agent_notification_sent: boolean | null
+          agent_notification_sent_at: string | null
           agent_phone: string | null
           created_at: string | null
           customer_name: string | null
           customer_phone: string | null
           delivered: boolean | null
+          delivered_at: string | null
+          delivery_address_id: string | null
           delivery_date: string | null
+          delivery_time: string | null
           delivery_time_slot: string | null
           id: string | null
           items: Json | null
+          payment_id: string | null
           payment_status: string | null
+          pickup_address: string | null
+          pickup_location: Json | null
+          pickup_status: string | null
+          seller_latitude: number | null
+          seller_longitude: number | null
+          seller_name: string | null
+          seller_phone: string | null
+          settlement_locked: boolean | null
           special_instructions: string | null
           status: string | null
+          subscription_id: string | null
           total: number | null
           updated_at: string | null
+          user_id: string | null
         }
         Relationships: [
           {
@@ -4088,6 +4242,20 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_delivery_address_id_fkey"
+            columns: ["delivery_address_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_addresses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
             referencedColumns: ["id"]
           },
         ]
@@ -4292,11 +4460,15 @@ export type Database = {
       }
       calculate_delivery_payout: {
         Args: {
-          agent_id_param?: string
-          delivery_time?: string
-          distance_km: number
+          p_agent_id?: string
+          p_delivery_time?: string
+          p_distance_km?: number
         }
         Returns: Json
+      }
+      calculate_delivery_payout_safe: {
+        Args: { p_distance_km?: number; p_transaction_type?: string }
+        Returns: number
       }
       calculate_distance: {
         Args:
@@ -4347,6 +4519,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      cancel_vacation_and_resume_subscription: {
+        Args: { p_vacation_id: string }
+        Returns: Json
+      }
       check_rate_limit: {
         Args: {
           action_type: string
@@ -4355,6 +4531,10 @@ export type Database = {
           user_identifier: string
         }
         Returns: boolean
+      }
+      cleanup_abandoned_payment_orders: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       cleanup_expired_otps: {
         Args: Record<PropertyKey, never>
@@ -4369,6 +4549,24 @@ export type Database = {
           p_agent_id: string
           p_order_id: string
           p_payment_method?: string
+        }
+        Returns: Json
+      }
+      complete_delivery_safe: {
+        Args: {
+          p_agent_id: string
+          p_order_id: string
+          p_payment_method?: string
+        }
+        Returns: Json
+      }
+      complete_delivery_simple: {
+        Args: {
+          p_agent_id: string
+          p_distance_km?: number
+          p_order_id: string
+          p_payment_method?: string
+          p_payout_amount?: number
         }
         Returns: Json
       }
@@ -4404,6 +4602,10 @@ export type Database = {
           agent_phone?: string
           custom_agent_id?: string
         }
+        Returns: string
+      }
+      create_order_from_existing_subscription: {
+        Args: { p_order_type?: string; p_subscription_id: string }
         Returns: string
       }
       create_order_from_subscription: {
@@ -4442,6 +4644,19 @@ export type Database = {
         Args: { end_date: string; start_date: string; target_seller_id: string }
         Returns: string
       }
+      delete_orders_with_related_data: {
+        Args: { order_ids: string[] }
+        Returns: undefined
+      }
+      direct_complete_delivery: {
+        Args: {
+          p_agent_id: string
+          p_new_payment_status: string
+          p_new_status: string
+          p_order_id: string
+        }
+        Returns: Json
+      }
       ensure_delivery_data_consistency: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -4456,7 +4671,7 @@ export type Database = {
       }
       generate_order_qr_code: {
         Args: { order_uuid: string }
-        Returns: string
+        Returns: undefined
       }
       get_agent_distance_stats: {
         Args: { agent_uuid: string }
@@ -4613,6 +4828,10 @@ export type Database = {
           revenue: number
         }[]
       }
+      get_player_ids_by_type: {
+        Args: { target_type: string }
+        Returns: string[]
+      }
       get_previously_bought_products: {
         Args: { limit_count?: number; target_user_id: string }
         Returns: {
@@ -4655,7 +4874,9 @@ export type Database = {
         }[]
       }
       get_seller_orders: {
-        Args: { seller_user_id: string; status_filter?: string[] }
+        Args:
+          | { seller_user_id: string; status_filter?: string[] }
+          | { seller_user_id: string; status_filter?: string[] }
         Returns: {
           address: Json
           created_at: string
@@ -4664,8 +4885,7 @@ export type Database = {
           delivery_time_slot: string
           id: string
           items: Json
-          product_statuses: Json
-          special_instructions: string
+          payment_status: string
           status: string
           total: number
         }[]
@@ -4679,7 +4899,7 @@ export type Database = {
         Returns: Json
       }
       get_seller_specific_orders: {
-        Args: { p_seller_user_id: string }
+        Args: { p_seller_user_id: string } | { p_seller_user_id: string }
         Returns: {
           address: Json
           agent_id: string
@@ -4688,12 +4908,6 @@ export type Database = {
           customer_phone: string
           delivery_date: string
           order_id: string
-          order_status: string
-          payment_status: string
-          seller_items: Json
-          seller_total: number
-          total_amount: number
-          updated_at: string
         }[]
       }
       get_seller_stats: {
@@ -4769,6 +4983,12 @@ export type Database = {
           valid_until: string
         }[]
       }
+      get_user_player_ids: {
+        Args: { target_user_id: string }
+        Returns: {
+          player_id: string
+        }[]
+      }
       get_users_by_role: {
         Args: { target_role: Database["public"]["Enums"]["app_role"] }
         Returns: {
@@ -4777,6 +4997,10 @@ export type Database = {
           phone: string
           user_id: string
         }[]
+      }
+      handle_expired_subscriptions: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       has_agent_rejected_order: {
         Args: { p_agent_id: string; p_order_id: string }
@@ -4837,9 +5061,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      manual_subscription_recovery: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       manual_trigger_subscription_processing: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      mark_order_as_packed: {
+        Args: { order_id: string }
+        Returns: undefined
+      }
+      mark_order_as_packed_v2: {
+        Args: { order_id: string }
+        Returns: undefined
       }
       mark_payout_paid: {
         Args: { payout_id: string }
@@ -4916,6 +5152,10 @@ export type Database = {
         Args: { identifier: string }
         Returns: string
       }
+      resume_expired_vacations: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       sanitize_input: {
         Args: { input_text: string }
         Returns: string
@@ -4923,6 +5163,10 @@ export type Database = {
       scan_qr_and_deliver_order: {
         Args: { agent_id: string; order_id: string; qr_code_id: string }
         Returns: boolean
+      }
+      seller_order_action: {
+        Args: { p_action: string; p_order_id: string; p_seller_user_id: string }
+        Returns: Json
       }
       send_birthday_messages: {
         Args: Record<PropertyKey, never>
@@ -4960,9 +5204,21 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      sync_user_player_id: {
+        Args: { device_info?: Json; player_id: string; target_user_id: string }
+        Returns: boolean
+      }
       trigger_subscription_processing: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      ultra_simple_complete_delivery: {
+        Args: {
+          p_agent_id: string
+          p_order_id: string
+          p_payment_status: string
+        }
+        Returns: Json
       }
       update_order_status: {
         Args: {
