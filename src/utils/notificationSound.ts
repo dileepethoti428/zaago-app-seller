@@ -10,7 +10,7 @@ export class NotificationSoundManager {
   private static instance: NotificationSoundManager;
   private audioContext: AudioContext | null = null;
   private isEnabled: boolean = true;
-  private volume: number = 0.7;
+  private volume: number = 0.3; // Reduced default volume
   private selectedRingtone: RingtoneType = 'rapido_ringtone';
   private currentRingtone: { oscillator: OscillatorNode; gainNode: GainNode } | null = null;
   private isInitialized: boolean = false;
@@ -23,6 +23,7 @@ export class NotificationSoundManager {
   private audioStatus: 'ready' | 'suspended' | 'blocked' | 'unavailable' = 'unavailable';
   private fallbackAudio: HTMLAudioElement | null = null;
   private hasVibrationSupport: boolean = false;
+  private newOrderAudio: HTMLAudioElement | null = null;
 
   private constructor() {
     this.setupUserInteractionListeners();
@@ -129,6 +130,12 @@ export class NotificationSoundManager {
       // Create a simple beep sound data URL
       const beepDataURL = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LKdSEGKHfH8N2QQAoUX7zuyKNRDwtOnu' + '...'; // truncated for brevity
       this.fallbackAudio.src = beepDataURL;
+
+      // Setup new order ringtone audio
+      this.newOrderAudio = new Audio('/audio/new-order-ringtone.mp3');
+      this.newOrderAudio.preload = 'auto';
+      this.newOrderAudio.volume = this.volume * 0.5; // Even lower volume for the ringtone
+      this.newOrderAudio.loop = false;
     } catch (error) {
       console.warn('🔊 Could not create fallback audio:', error);
     }
@@ -237,6 +244,14 @@ export class NotificationSoundManager {
   public setVolume(volume: number) {
     this.volume = Math.max(0, Math.min(1, volume));
     localStorage.setItem('notificationVolume', JSON.stringify(this.volume));
+    
+    // Update audio volumes
+    if (this.fallbackAudio) {
+      this.fallbackAudio.volume = this.volume;
+    }
+    if (this.newOrderAudio) {
+      this.newOrderAudio.volume = this.volume * 0.5; // Keep ringtone volume lower
+    }
   }
 
   public getVolume(): number {
@@ -315,8 +330,8 @@ export class NotificationSoundManager {
 
     try {
       if (type === 'new_order_ringtone' || type === 'rapido_ringtone') {
-        console.log('🔊 Playing urgent new order ringtone');
-        this.playRapidoRingtone();
+        console.log('🔊 Playing new order ringtone');
+        this.playNewOrderRingtone();
         return;
       }
 
@@ -438,6 +453,27 @@ export class NotificationSoundManager {
     oscillator.stop(currentTime + 0.3);
   }
 
+  private async playNewOrderRingtone() {
+    console.log('🔊 Playing new order ringtone');
+    
+    this.stopRingtone();
+    
+    if (this.newOrderAudio) {
+      try {
+        this.newOrderAudio.currentTime = 0;
+        this.newOrderAudio.volume = this.volume * 0.5; // Controlled volume
+        await this.newOrderAudio.play();
+        console.log('🔊 Playing custom ringtone');
+        return;
+      } catch (error) {
+        console.warn('🔊 Could not play custom ringtone, falling back:', error);
+      }
+    }
+    
+    // Fallback to synthetic ringtone if MP3 fails
+    this.playRapidoRingtone();
+  }
+
   private playRapidoRingtone() {
     if (!this.audioContext) {
       console.warn('🔊 No audio context for Rapido ringtone');
@@ -495,6 +531,13 @@ export class NotificationSoundManager {
   }
   
   public stopRingtone() {
+    // Stop custom MP3 ringtone
+    if (this.newOrderAudio) {
+      this.newOrderAudio.pause();
+      this.newOrderAudio.currentTime = 0;
+    }
+    
+    // Stop synthetic ringtone
     if (this.currentRingtone) {
       try {
         this.currentRingtone.gainNode.gain.setValueAtTime(0, this.audioContext!.currentTime);
@@ -566,8 +609,8 @@ export class NotificationSoundManager {
     this.stopContinuousRinging();
     this.currentRepetitionCount = 0;
 
-    // Play immediately with maximum urgency
-    this.playNotificationSound('rapido_ringtone');
+    // Play immediately
+    this.playNotificationSound('new_order_ringtone');
     this.currentRepetitionCount++;
 
     this.currentRingingInterval = window.setInterval(() => {
@@ -577,8 +620,8 @@ export class NotificationSoundManager {
         return;
       }
 
-      console.log(`🔊 Playing urgent ringtone repetition ${this.currentRepetitionCount + 1}/${this.maxRepetitions}`);
-      this.playNotificationSound('rapido_ringtone');
+      console.log(`🔊 Playing ringtone repetition ${this.currentRepetitionCount + 1}/${this.maxRepetitions}`);
+      this.playNotificationSound('new_order_ringtone');
       this.currentRepetitionCount++;
     }, 4000); // Slightly faster for urgency
   }
