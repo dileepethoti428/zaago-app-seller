@@ -662,28 +662,55 @@ export class NotificationSoundManager {
       return;
     }
 
-    console.log(`🔊 Starting continuous urgent ringing for ${type}`);
+    console.log(`🚨 STARTING EMERGENCY CONTINUOUS RINGING for ${type}`);
     this.stopContinuousRinging();
     this.currentRepetitionCount = 0;
     this.continuousRingingStartTime = Date.now();
 
-    // Play immediately - force play
-    this.playNotificationSound('rapido_ringtone');
+    // Force maximum volume for emergency
+    const originalVolume = this.volume;
+    this.setVolume(0.9);
+
+    // Play immediately - multiple attempts for reliability
+    const playEmergencySound = async () => {
+      try {
+        console.log(`🚨 EMERGENCY RING ${this.currentRepetitionCount + 1} - MAXIMUM VOLUME`);
+        
+        // Try multiple methods simultaneously
+        await Promise.allSettled([
+          this.playNotificationSound('rapido_ringtone'),
+          this.playFallbackSound(),
+          this.newOrderAudio?.play()
+        ]);
+
+        // Force vibration for mobile
+        if ('vibrate' in navigator) {
+          navigator.vibrate([800, 200, 800]);
+        }
+
+      } catch (error) {
+        console.error('🚨 Emergency sound failed:', error);
+      }
+    };
+
+    // Play immediately
+    playEmergencySound();
     this.currentRepetitionCount++;
 
-    this.currentRingingInterval = window.setInterval(() => {
+    // Set up rapid continuous ringing
+    this.currentRingingInterval = window.setInterval(async () => {
       const elapsed = Date.now() - (this.continuousRingingStartTime || 0);
       
-      if (this.currentRepetitionCount >= this.maxRepetitions || elapsed >= this.continuousRingingDuration) {
-        console.log('🔊 Auto-stopping continuous ringing - max repetitions/time reached');
+      if (this.currentRepetitionCount >= 50 || elapsed >= 60000) { // 60 seconds max for emergency
+        console.log('🚨 Emergency ringing completed');
         this.stopContinuousRinging();
+        this.setVolume(originalVolume);
         return;
       }
 
-      console.log(`🔊 Playing ringtone repetition ${this.currentRepetitionCount + 1}/${this.maxRepetitions}`);
-      this.playNotificationSound('rapido_ringtone');
+      await playEmergencySound();
       this.currentRepetitionCount++;
-    }, 3000); // Faster for urgency
+    }, 1200); // Fast interval for emergency
   }
 
   public stopContinuousRinging() {

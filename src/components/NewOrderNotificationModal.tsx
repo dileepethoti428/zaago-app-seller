@@ -96,17 +96,24 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-md bg-background border-2 border-primary shadow-2xl animate-pulse">
-        <div className="p-6 space-y-4">
-          {/* Header */}
-          <div className="flex items-center justify-between">
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
+      <Card className="w-full max-w-md bg-background border-4 border-red-500 shadow-2xl animate-bounce"
+            style={{
+              boxShadow: '0 0 50px rgba(239, 68, 68, 0.5), inset 0 0 20px rgba(239, 68, 68, 0.1)',
+              animation: 'bounce 1s infinite, glow 2s ease-in-out infinite alternate'
+            }}>
+        <div className="p-6 space-y-4 relative">
+          {/* Emergency Header */}
+          <div className="flex items-center justify-between bg-red-100 dark:bg-red-900/20 p-3 rounded-lg border-2 border-red-500">
             <div className="flex items-center gap-2">
-              <Phone className="h-6 w-6 text-primary animate-bounce" />
-              <h2 className="text-xl font-bold text-primary">New Order!</h2>
+              <Phone className="h-8 w-8 text-red-600 animate-bounce" />
+              <div>
+                <h2 className="text-2xl font-bold text-red-600 animate-pulse">🚨 NEW ORDER!</h2>
+                <p className="text-sm text-red-500 font-medium">IMMEDIATE ACTION REQUIRED</p>
+              </div>
             </div>
-            <Badge variant="destructive" className="animate-pulse">
-              URGENT
+            <Badge variant="destructive" className="animate-pulse text-lg px-4 py-2">
+              EMERGENCY
             </Badge>
           </div>
 
@@ -157,24 +164,29 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
             )}
           </div>
 
-          {/* Emergency Stop Ringtone Button */}
-          <div className="flex gap-2">
-            <Button
-              onClick={handleStopRingtone}
-              variant="secondary"
-              className="flex-1 flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white"
-            >
-              <VolumeX className="h-4 w-4" />
-              Stop Sound
-            </Button>
-            <Button
-              onClick={() => handleAction(onDismiss)}
-              variant="destructive"
-              className="flex-1 flex items-center gap-2"
-            >
-              <PhoneOff className="h-4 w-4" />
-              Cancel
-            </Button>
+          {/* EMERGENCY ACTION BUTTONS */}
+          <div className="bg-yellow-100 dark:bg-yellow-900/20 p-4 rounded-lg border-2 border-yellow-500">
+            <p className="text-center text-yellow-800 dark:text-yellow-200 font-bold mb-3 text-lg">
+              🔊 LOUD RINGTONE PLAYING 🔊
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                onClick={handleStopRingtone}
+                variant="secondary"
+                className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white text-lg py-4"
+              >
+                <VolumeX className="h-5 w-5" />
+                STOP ALARM
+              </Button>
+              <Button
+                onClick={() => handleAction(onDismiss)}
+                variant="destructive"
+                className="flex items-center gap-2 text-lg py-4"
+              >
+                <PhoneOff className="h-5 w-5" />
+                DISMISS
+              </Button>
+            </div>
           </div>
 
           {/* Audio Controls */}
@@ -223,22 +235,22 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Action Buttons */}
+          {/* PRIMARY ACTION BUTTONS */}
           <div className="grid grid-cols-2 gap-3">
             <Button
               onClick={() => handleAction(onAccept)}
-              className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+              className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 text-lg py-6 animate-pulse"
             >
-              <CheckCircle className="h-4 w-4" />
-              Accept Order
+              <CheckCircle className="h-6 w-6" />
+              ACCEPT ORDER
             </Button>
             <Button
               onClick={() => handleAction(onViewOrder)}
               variant="outline"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 text-lg py-6 border-2 border-blue-500 text-blue-600 hover:bg-blue-50"
             >
-              <Eye className="h-4 w-4" />
-              View Details
+              <Eye className="h-6 w-6" />
+              VIEW DETAILS
             </Button>
           </div>
         </div>

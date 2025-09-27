@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { notificationSound } from '@/utils/notificationSound';
 import { NewOrderNotificationModal } from './NewOrderNotificationModal';
+import { Button } from '@/components/ui/button';
 
 export const SellerNotifications = () => {
   const { user } = useAuth();
@@ -12,11 +13,26 @@ export const SellerNotifications = () => {
     visible: boolean;
     order: any;
   }>({ visible: false, order: null });
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
 
   useEffect(() => {
     if (!user) return;
 
-    // Subscribe to notifications for this seller
+    console.log('🔔 Setting up notification subscription for user:', user.id);
+    setConnectionStatus('connecting');
+
+    // Initialize audio context early
+    const initAudio = async () => {
+      try {
+        await notificationSound.ensureAudioContext();
+        console.log('🔊 Audio context pre-initialized for notifications');
+      } catch (error) {
+        console.warn('🔊 Could not pre-initialize audio:', error);
+      }
+    };
+    initAudio();
+
+    // Subscribe to notifications for this seller with enhanced logging
     const notificationsChannel = supabase
       .channel('seller-notifications')
       .on(
@@ -30,64 +46,93 @@ export const SellerNotifications = () => {
         async (payload) => {
           const notification = payload.new;
           
-          // Handle new order notifications with enhanced urgency
+          console.log('🔔 Raw notification received:', notification);
+          
+          // Handle new order notifications with MAXIMUM URGENCY
           if (notification.type === 'new_order') {
-            console.log('🚨 URGENT: New order notification received! Starting immediate action sequence');
+            console.log('🚨 CRITICAL: NEW ORDER NOTIFICATION! Initiating emergency alert sequence');
+            console.log('🚨 Order ID:', notification.reference_id);
+            console.log('🚨 Message:', notification.message);
             
-            // Immediate audio notification with maximum urgency
-            try {
-              console.log('🚨 Ensuring audio context for urgent notification');
-              await notificationSound.ensureAudioContext();
-              
-              const audioStatus = notificationSound.getAudioStatus();
-              console.log('🔊 Audio status for new order:', audioStatus);
-              
-              if (!audioStatus.canPlay) {
-                console.warn('🚨 Audio cannot play, requesting user interaction');
-                // Show user prompt to enable audio
-                toast({
-                  title: "🔊 Enable Audio",
-                  description: "Click here to enable notification sounds",
-                  duration: 10000,
-                  className: "bg-yellow-600 text-white border-yellow-600 cursor-pointer",
-                  onClick: async () => {
-                    await notificationSound.ensureAudioContext();
-                    notificationSound.playNotificationSound('urgent');
-                  }
-                });
-              }
-              
-              console.log('🚨 Starting continuous ringing for new order');
-              // Start continuous ringing immediately - even if audio is suspended, it will retry
-              notificationSound.startContinuousRinging('rapido_ringtone');
-              
-              // Request browser notification permission if not granted
-              if ('Notification' in window && Notification.permission === 'default') {
-                await Notification.requestPermission();
-              }
-              
-              // Show persistent browser notification
-              if ('Notification' in window && Notification.permission === 'granted') {
-                const notif = new Notification('🚨 NEW ORDER RECEIVED!', {
-                  body: `Urgent: New customer order needs your immediate attention`,
-                  icon: '/zaago-logo.png',
-                  badge: '/zaago-logo.png',
-                  tag: 'new-order',
-                  requireInteraction: true
-                });
+            // IMMEDIATE VISUAL FEEDBACK - Show modal state change
+            console.log('🚨 Setting modal visible state to TRUE');
+            
+            // IMMEDIATE AUDIO with multiple fallbacks
+            const playEmergencyAudio = async () => {
+              try {
+                console.log('🚨 EMERGENCY AUDIO: Forcing audio context initialization');
+                await notificationSound.ensureAudioContext();
                 
-                // Try vibration separately for mobile devices
-                if ('vibrate' in navigator) {
-                  navigator.vibrate([200, 100, 200, 100, 200, 100, 200]);
+                const audioStatus = notificationSound.getAudioStatus();
+                console.log('🔊 Emergency audio status:', audioStatus);
+                
+                // Force maximum volume for emergency
+                notificationSound.setVolume(0.8);
+                
+                // Start continuous high-volume ringing IMMEDIATELY
+                console.log('🚨 STARTING MAXIMUM VOLUME CONTINUOUS RINGING');
+                notificationSound.startContinuousRinging('rapido_ringtone');
+                
+                // Also play immediate urgent sound
+                await notificationSound.playNotificationSound('urgent');
+                
+                // If audio is blocked, show urgent prompt
+                if (!audioStatus.canPlay) {
+                  console.warn('🚨 AUDIO BLOCKED - SHOWING URGENT INTERACTION PROMPT');
+                  toast({
+                    title: "🚨 URGENT: ENABLE SOUND!",
+                    description: "NEW ORDER ALERT - Click to enable emergency audio!",
+                    duration: 30000,
+                    className: "bg-red-600 text-white border-red-600 text-xl font-bold animate-pulse cursor-pointer",
+                    onClick: async () => {
+                      await notificationSound.ensureAudioContext();
+                      notificationSound.startContinuousRinging('rapido_ringtone');
+                    }
+                  });
                 }
                 
-                notif.onclick = () => {
-                  window.focus();
-                  notif.close();
-                };
+              } catch (error) {
+                console.error('🚨 EMERGENCY AUDIO FAILED:', error);
+                // Fallback: at least try vibration
+                if ('vibrate' in navigator) {
+                  navigator.vibrate([1000, 500, 1000, 500, 1000, 500, 1000]);
+                }
               }
-            } catch (error) {
-              console.error('🚨 Error with new order notification:', error);
+            };
+            
+            // Execute emergency audio immediately
+            playEmergencyAudio();
+            
+            // BROWSER NOTIFICATION with maximum urgency
+            const showEmergencyNotification = async () => {
+              if ('Notification' in window) {
+                if (Notification.permission === 'default') {
+                  await Notification.requestPermission();
+                }
+                
+                if (Notification.permission === 'granted') {
+                  const notif = new Notification('🚨🚨 EMERGENCY: NEW ORDER! 🚨🚨', {
+                    body: `URGENT ACTION REQUIRED: Customer order #${notification.reference_id?.slice(-6) || 'Unknown'}`,
+                    icon: '/zaago-logo.png',
+                    badge: '/zaago-logo.png',
+                    tag: 'emergency-order',
+                    requireInteraction: true,
+                    silent: false
+                  });
+                  
+                  notif.onclick = () => {
+                    window.focus();
+                    notif.close();
+                  };
+                }
+              }
+            };
+            
+            showEmergencyNotification();
+            
+            // VIBRATION for mobile devices
+            if ('vibrate' in navigator) {
+              navigator.vibrate([500, 200, 500, 200, 500, 200, 1000]);
             }
             
             // Try to fetch order details for the modal
@@ -133,8 +178,10 @@ export const SellerNotifications = () => {
               }
             }
 
-            // Show the modal
+            // SHOW MODAL with enhanced logging
+            console.log('🚨 SHOWING NEW ORDER MODAL with order details:', orderDetails);
             setNewOrderModal({ visible: true, order: orderDetails });
+            console.log('🚨 Modal state set - should be visible now!');
             
           } else {
             // Handle other notification types normally
@@ -164,9 +211,19 @@ export const SellerNotifications = () => {
           });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('🔔 Subscription status changed:', status);
+        if (status === 'SUBSCRIBED') {
+          setConnectionStatus('connected');
+          console.log('🔔 Successfully connected to notifications');
+        } else if (status === 'CHANNEL_ERROR') {
+          setConnectionStatus('disconnected');
+          console.error('🔔 Channel error - attempting reconnection');
+        }
+      });
 
     return () => {
+      console.log('🔔 Cleaning up notification subscription');
       supabase.removeChannel(notificationsChannel);
     };
   }, [user, toast]);
@@ -223,15 +280,67 @@ export const SellerNotifications = () => {
     window.location.href = `/orders/${newOrderModal.order?.id}`;
   };
 
+  // Add test notification function for debugging
+  const testNewOrderNotification = () => {
+    console.log('🧪 Testing new order notification manually');
+    const testOrder = {
+      id: 'test-' + Date.now(),
+      customer_name: 'Test Customer',
+      total_amount: 150,
+      items: [{ name: 'Test Item', quantity: 2 }],
+      delivery_address: 'Test Address 123'
+    };
+    
+    // Start emergency audio
+    notificationSound.setVolume(0.8);
+    notificationSound.startContinuousRinging('rapido_ringtone');
+    
+    setNewOrderModal({ visible: true, order: testOrder });
+    
+    toast({
+      title: "🧪 Test: New Order Alert",
+      description: "This is a test notification",
+      className: "bg-green-600 text-white border-green-600"
+    });
+  };
+
   return (
     <>
+      {/* Connection Status Indicator */}
+      <div className="fixed top-4 right-4 z-40">
+        <div className={`px-2 py-1 rounded text-xs ${
+          connectionStatus === 'connected' ? 'bg-green-600 text-white' : 
+          connectionStatus === 'connecting' ? 'bg-yellow-600 text-white' : 
+          'bg-red-600 text-white'
+        }`}>
+          Notifications: {connectionStatus}
+        </div>
+      </div>
+
+      {/* Test Button for Development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed top-16 right-4 z-40">
+          <Button
+            onClick={testNewOrderNotification}
+            className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
+            size="sm"
+          >
+            🧪 Test New Order
+          </Button>
+        </div>
+      )}
+
+      {/* Enhanced Modal with debugging */}
       {newOrderModal.visible && newOrderModal.order && (
-        <NewOrderNotificationModal
-          order={newOrderModal.order}
-          onAccept={handleAcceptOrder}
-          onDismiss={handleDismissOrder}
-          onViewOrder={handleViewOrder}
-        />
+        <>
+          <div className="fixed inset-0 bg-red-500/20 z-50 animate-pulse" />
+          <NewOrderNotificationModal
+            order={newOrderModal.order}
+            onAccept={handleAcceptOrder}
+            onDismiss={handleDismissOrder}
+            onViewOrder={handleViewOrder}
+          />
+        </>
       )}
     </>
   );
