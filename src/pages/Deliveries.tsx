@@ -312,7 +312,7 @@ export default function DeliveriesPage() {
         delivery_time_slot: order.delivery_time_slot,
         payment_id: '',
         payment_status: 'Pending', // Default value
-        special_instructions: order.special_instructions,
+        special_instructions: (order as any).special_instructions || '',
         user_id: null, // Not available in new structure
       }));
 
