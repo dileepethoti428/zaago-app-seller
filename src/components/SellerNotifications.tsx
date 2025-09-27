@@ -306,16 +306,6 @@ export const SellerNotifications = () => {
 
   return (
     <>
-      {/* Connection Status Indicator */}
-      <div className="fixed top-4 right-4 z-40">
-        <div className={`px-2 py-1 rounded text-xs ${
-          connectionStatus === 'connected' ? 'bg-green-600 text-white' : 
-          connectionStatus === 'connecting' ? 'bg-yellow-600 text-white' : 
-          'bg-red-600 text-white'
-        }`}>
-          Notifications: {connectionStatus}
-        </div>
-      </div>
 
       {/* Test Button for Development */}
       {process.env.NODE_ENV === 'development' && (
