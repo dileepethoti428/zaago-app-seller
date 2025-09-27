@@ -18,6 +18,8 @@ export class NotificationSoundManager {
   private maxRepetitions: number = 24;
   private currentRingingInterval: number | null = null;
   private currentRepetitionCount: number = 0;
+  private continuousRingingStartTime: number | null = null;
+  private continuousRingingDuration: number = 40000; // 40 seconds total
   private isTabVisible: boolean = true;
   private lastUserInteraction: number = 0;
   private audioStatus: 'ready' | 'suspended' | 'blocked' | 'unavailable' = 'unavailable';
@@ -160,8 +162,11 @@ export class NotificationSoundManager {
     }
   }
 
-  public getAudioStatus(): { status: string; canPlay: boolean; message: string; isContinuousRinging: boolean } {
+  public getAudioStatus(): { status: string; canPlay: boolean; message: string; isContinuousRinging: boolean; remainingTime?: number } {
     const recentInteraction = Date.now() - this.lastUserInteraction < 5000;
+    const remainingTime = this.continuousRingingStartTime 
+      ? Math.max(0, this.continuousRingingDuration - (Date.now() - this.continuousRingingStartTime))
+      : undefined;
     
     switch (this.audioStatus) {
       case 'ready':
@@ -169,28 +174,32 @@ export class NotificationSoundManager {
           status: 'ready', 
           canPlay: true, 
           message: 'Audio is ready and working',
-          isContinuousRinging: this.currentRingingInterval !== null
+          isContinuousRinging: this.currentRingingInterval !== null,
+          remainingTime
         };
       case 'suspended':
         return { 
           status: 'suspended', 
           canPlay: recentInteraction, 
           message: recentInteraction ? 'Audio will work after interaction' : 'Please interact with the page to enable audio',
-          isContinuousRinging: this.currentRingingInterval !== null
+          isContinuousRinging: this.currentRingingInterval !== null,
+          remainingTime
         };
       case 'blocked':
         return { 
           status: 'blocked', 
           canPlay: false, 
           message: 'Audio is blocked by browser. Please enable audio in browser settings.',
-          isContinuousRinging: this.currentRingingInterval !== null
+          isContinuousRinging: this.currentRingingInterval !== null,
+          remainingTime
         };
       default:
         return { 
           status: 'unavailable', 
           canPlay: false, 
           message: 'Audio is not available on this device',
-          isContinuousRinging: this.currentRingingInterval !== null
+          isContinuousRinging: this.currentRingingInterval !== null,
+          remainingTime
         };
     }
   }
@@ -608,14 +617,17 @@ export class NotificationSoundManager {
     console.log(`🔊 Starting continuous urgent ringing for ${type}`);
     this.stopContinuousRinging();
     this.currentRepetitionCount = 0;
+    this.continuousRingingStartTime = Date.now();
 
     // Play immediately
     this.playNotificationSound('new_order_ringtone');
     this.currentRepetitionCount++;
 
     this.currentRingingInterval = window.setInterval(() => {
-      if (this.currentRepetitionCount >= this.maxRepetitions || !this.isTabVisible) {
-        console.log('🔊 Auto-stopping continuous ringing - max repetitions reached or tab not visible');
+      const elapsed = Date.now() - (this.continuousRingingStartTime || 0);
+      
+      if (this.currentRepetitionCount >= this.maxRepetitions || !this.isTabVisible || elapsed >= this.continuousRingingDuration) {
+        console.log('🔊 Auto-stopping continuous ringing - max repetitions/time reached or tab not visible');
         this.stopContinuousRinging();
         return;
       }
@@ -632,7 +644,10 @@ export class NotificationSoundManager {
       clearInterval(this.currentRingingInterval);
       this.currentRingingInterval = null;
       this.currentRepetitionCount = 0;
+      this.continuousRingingStartTime = null;
     }
+    // Also stop any currently playing ringtone
+    this.stopRingtone();
   }
 
   public setContinuousRingingEnabled(enabled: boolean) {
