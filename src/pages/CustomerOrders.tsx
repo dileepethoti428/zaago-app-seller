@@ -182,6 +182,11 @@ const CustomerOrders = () => {
   };
 
   const getCustomerFriendlyStatus = (status: string) => {
+    // Handle undefined or null status
+    if (!status) {
+      return 'Unknown Status';
+    }
+    
     switch (status) {
       case 'pending':
       case 'new':
