@@ -149,7 +149,7 @@ export default function Sidebar() {
                             animate={{ opacity: 1, width: 'auto' }}
                             exit={{ opacity: 0, width: 0 }}
                             transition={{ duration: 0.2 }}
-                            className="font-medium text-sm sm:text-base"
+                            className="font-medium text-sm sm:text-base text-white"
                           >
                             {label}
                           </motion.span>
