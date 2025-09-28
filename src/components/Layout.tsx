@@ -6,7 +6,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { SellerNotifications } from './SellerNotifications';
 import { AgentNotifications } from './AgentNotifications';
 import { CustomerNotifications } from './CustomerNotifications';
-import { StopRingtonePopup } from './StopRingtonePopup';
+
 
 
 const Layout = () => {
@@ -24,7 +24,7 @@ const Layout = () => {
       <SellerNotifications />
       <AgentNotifications />
       <CustomerNotifications />
-      <StopRingtonePopup />
+      
     </SidebarProvider>
   );
 };

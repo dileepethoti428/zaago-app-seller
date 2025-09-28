@@ -28,7 +28,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from 'next-themes';
-import { NotificationSoundSettings } from '@/components/NotificationSoundSettings';
+
 
 const Settings = () => {
   const { user } = useAuth();
@@ -547,14 +547,6 @@ const Settings = () => {
             </CardContent>
           </Card>
 
-          {/* Notification Sound Settings */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.3 }}
-          >
-            <NotificationSoundSettings />
-          </motion.div>
         </motion.div>
       </div>
 
