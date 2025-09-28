@@ -163,20 +163,8 @@ export const SellerNotifications = () => {
       console.log('🚨 Modal state set - should be visible now!');
       
     } else {
-      // Handle other notification types normally
-      switch (notification.type) {
-        case 'order_cancelled':
-          notificationSound.playNotificationSound('urgent');
-          break;
-        case 'payment_received':
-          notificationSound.playNotificationSound('payment');
-          break;
-        case 'delivery_completed':
-          notificationSound.playNotificationSound('success');
-          break;
-        default:
-          notificationSound.playNotificationSound('system');
-      }
+      // Handle other notification types silently (no sound for delivery updates, etc.)
+      console.log('📬 Silent notification received:', notification.type);
     }
     
     // Show enhanced toast for all notifications
