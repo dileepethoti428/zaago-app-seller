@@ -163,18 +163,17 @@ export const SellerNotifications = () => {
       console.log('🚨 Modal state set - should be visible now!');
       
     } else {
-      // Handle other notification types silently (no sound for delivery updates, etc.)
-      console.log('📬 Silent notification received:', notification.type);
+      // This should never happen now since we filter for new_order only
+      console.warn('⚠️ Received non-new-order notification (this should not happen):', notification.type);
+      return; // Exit early, don't show toast for unexpected notifications
     }
     
-    // Show enhanced toast for all notifications
+    // Show toast only for new orders (since we filter for them)
     toast({
-      title: notification.type === 'new_order' ? '🚨 URGENT: NEW ORDER!' : notification.title,
-      description: notification.type === 'new_order' 
-        ? `${notification.message} - Action required immediately!`
-        : notification.message,
-      duration: notification.type === 'new_order' ? 60000 : 8000, // Extra long duration for new orders
-      className: getToastStyles(notification.type)
+      title: '🚨 URGENT: NEW ORDER!',
+      description: `${notification.message} - Action required immediately!`,
+      duration: 60000, // Extra long duration for new orders
+      className: getToastStyles('new_order')
     });
   }, [toast]);
 
@@ -183,11 +182,12 @@ export const SellerNotifications = () => {
     if (!user) return;
     
     try {
-      console.log('🔍 Polling for new notifications since:', lastChecked);
+      console.log('🔍 Polling for NEW ORDER notifications since:', lastChecked);
       const { data: notifications, error } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
+        .eq('type', 'new_order')
         .gt('created_at', lastChecked.toISOString())
         .order('created_at', { ascending: false });
 
@@ -197,8 +197,9 @@ export const SellerNotifications = () => {
       }
 
       if (notifications && notifications.length > 0) {
-        console.log('📬 Found notifications via polling:', notifications.length);
+        console.log('📬 Found NEW ORDER notifications via polling:', notifications.length);
         for (const notification of notifications) {
+          console.log('🚨 Processing NEW ORDER from polling:', notification.type);
           await handleNotification(notification);
         }
         setLastChecked(new Date());
@@ -226,7 +227,7 @@ export const SellerNotifications = () => {
     };
     initAudio();
 
-    // Subscribe to notifications for this seller with enhanced logging
+      // Subscribe to notifications for this seller - ONLY NEW ORDERS
     const notificationsChannel = supabase
       .channel('seller-notifications')
       .on(
@@ -235,11 +236,11 @@ export const SellerNotifications = () => {
           event: 'INSERT',
           schema: 'public',
           table: 'notifications',
-          filter: `user_id=eq.${user.id}`
+          filter: `user_id=eq.${user.id},type=eq.new_order`
         },
         async (payload) => {
           const notification = payload.new;
-          console.log('🔔 Real-time notification received:', notification);
+          console.log('🔔 NEW ORDER notification received via real-time:', notification);
           await handleNotification(notification);
         }
       )
