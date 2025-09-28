@@ -36,22 +36,15 @@ const CustomerOrders: React.FC = () => {
   const { acceptOrder, rejectOrder, packOrder, notifyDeliveryAgents, isProcessing } = useSellerOrderActions();
   const [orders, setOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
   const [loading, setLoading] = useState(true);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   
   // Filter states
+  const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [amountFilter, setAmountFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
 
-  const orderTabs = [
-    { label: 'All Orders', value: 'all' },
-    { label: 'New Orders', value: 'new' },
-    { label: 'Accepted', value: 'accepted' },
-    { label: 'In Transit', value: 'in_transit' },
-    { label: 'Delivered', value: 'delivered' }
-  ];
 
   useEffect(() => {
     if (user?.id) {
@@ -147,7 +140,8 @@ const CustomerOrders: React.FC = () => {
         order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.status.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const matchesTab = activeTab === 'all' || order.status === activeTab;
+      // Status filter
+      const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
       
       // Date filter
       const orderDate = new Date(order.created_at);
@@ -177,7 +171,7 @@ const CustomerOrders: React.FC = () => {
         matchesAmount = order.total_amount > 2000;
       }
       
-      return matchesSearch && matchesTab && matchesDate && matchesAmount;
+      return matchesSearch && matchesStatus && matchesDate && matchesAmount;
     })
     .sort((a, b) => {
       if (sortBy === 'newest') {
@@ -191,6 +185,15 @@ const CustomerOrders: React.FC = () => {
       }
       return 0;
     });
+
+  // Calculate counts for each status
+  const orderCounts = {
+    all: orders.length,
+    new: orders.filter(o => o.status === 'new').length,
+    accepted: orders.filter(o => o.status === 'accepted').length,
+    in_transit: orders.filter(o => o.status === 'in_transit').length,
+    delivered: orders.filter(o => o.status === 'delivered').length,
+  };
 
   const handleAcceptOrder = async (orderId: string, sellerId: string) => {
     const success = await acceptOrder(orderId, sellerId);
@@ -294,11 +297,6 @@ const CustomerOrders: React.FC = () => {
     return items.reduce((total, item) => total + (item.quantity || 0), 0);
   };
 
-  // Calculate tab counts
-  const tabCounts = orderTabs.map(tab => ({
-    ...tab,
-    count: tab.value === 'all' ? orders.length : orders.filter(order => order.status === tab.value).length
-  }));
 
   return (
     <div className="space-y-6">
@@ -335,7 +333,22 @@ const CustomerOrders: React.FC = () => {
               <DropdownMenuLabel className="text-foreground">Filter Orders</DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-zaago-border" />
               
-              {/* Date Filter */}
+              {/* Order Status Filter */}
+              <div className="p-2">
+                <label className="text-xs font-medium text-zaago-muted-foreground mb-1 block">Order Status</label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="h-8 bg-zaago-background border-zaago-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zaago-card border-zaago-border">
+                    <SelectItem value="all">All Orders ({orderCounts.all})</SelectItem>
+                    <SelectItem value="new">New Orders ({orderCounts.new})</SelectItem>
+                    <SelectItem value="accepted">Accepted ({orderCounts.accepted})</SelectItem>
+                    <SelectItem value="in_transit">In Transit ({orderCounts.in_transit})</SelectItem>
+                    <SelectItem value="delivered">Delivered ({orderCounts.delivered})</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="p-2">
                 <label className="text-xs font-medium text-zaago-muted-foreground mb-1 block">Date Range</label>
                 <Select value={dateFilter} onValueChange={setDateFilter}>
@@ -387,6 +400,7 @@ const CustomerOrders: React.FC = () => {
               <DropdownMenuSeparator className="bg-zaago-border" />
               <DropdownMenuItem 
                 onClick={() => {
+                  setStatusFilter('all');
                   setDateFilter('all');
                   setAmountFilter('all');
                   setSortBy('newest');
@@ -427,7 +441,7 @@ const CustomerOrders: React.FC = () => {
       </motion.div>
 
       {/* Active Filters Indicator */}
-      {(dateFilter !== 'all' || amountFilter !== 'all' || sortBy !== 'newest') && (
+      {(statusFilter !== 'all' || dateFilter !== 'all' || amountFilter !== 'all' || sortBy !== 'newest') && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -435,6 +449,18 @@ const CustomerOrders: React.FC = () => {
           className="flex items-center gap-2 flex-wrap"
         >
           <span className="text-sm text-zaago-muted-foreground">Active filters:</span>
+          {statusFilter !== 'all' && (
+            <Badge variant="secondary" className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
+              <Package className="w-3 h-3 mr-1" />
+              {statusFilter === 'new' ? 'New Orders' :
+               statusFilter === 'accepted' ? 'Accepted' :
+               statusFilter === 'in_transit' ? 'In Transit' : 'Delivered'}
+              <X 
+                className="w-3 h-3 ml-1 cursor-pointer hover:bg-zaago-green/30 rounded" 
+                onClick={() => setStatusFilter('all')}
+              />
+            </Badge>
+          )}
           {dateFilter !== 'all' && (
             <Badge variant="secondary" className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
               <Calendar className="w-3 h-3 mr-1" />
@@ -471,47 +497,20 @@ const CustomerOrders: React.FC = () => {
         </motion.div>
       )}
 
-      {/* Status Tabs */}
+      {/* Orders List */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.3 }}
+        className="space-y-4"
       >
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-5 bg-transparent gap-1">
-            {tabCounts.map((tab) => (
-              <TabsTrigger
-                key={tab.value}
-                value={tab.value}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                  activeTab === tab.value
-                    ? 'bg-zaago-green text-black font-medium'
-                    : 'bg-zaago-card/50 text-zaago-muted-foreground hover:bg-zaago-accent/50'
-                }`}
-              >
-                <span className="font-medium text-sm">
-                  {tab.value === 'all' ? 'All Orders' : 
-                   tab.value === 'new' ? 'New' :
-                   tab.value === 'accepted' ? 'Accepted' :
-                   tab.value === 'in_transit' ? 'In Transit' :
-                   'Delivered'}
-                </span>
-                <span className={`px-2 py-0.5 rounded-full text-xs ${
-                  activeTab === tab.value
-                    ? 'bg-black/20 text-black'
-                    : 'bg-zaago-muted text-zaago-muted-foreground'
-                }`}>
-                  {tab.count}
-                </span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          <TabsContent value={activeTab} className="mt-6">
-            <div className="space-y-4">
-              <h2 className="text-xl font-bold text-foreground">
-                All Orders ({filteredOrders.length})
-              </h2>
+        <h2 className="text-xl font-bold text-foreground">
+          {statusFilter === 'all' ? 'All Orders' :
+           statusFilter === 'new' ? 'New Orders' :
+           statusFilter === 'accepted' ? 'Accepted Orders' :
+           statusFilter === 'in_transit' ? 'In Transit Orders' :
+           'Delivered Orders'} ({filteredOrders.length})
+        </h2>
 
               {loading ? (
                 <div className="flex items-center justify-center py-12">
@@ -726,9 +725,9 @@ const CustomerOrders: React.FC = () => {
                   <Package className="w-16 h-16 text-zaago-muted-foreground mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-foreground mb-2">No Orders Found</h3>
                   <p className="text-zaago-muted-foreground mb-6">
-                    {activeTab === 'all' 
+                    {statusFilter === 'all' 
                       ? "You don't have any orders containing your products yet. Once customers start purchasing your products, their orders will appear here."
-                      : `No ${activeTab} orders found.`
+                      : `No ${statusFilter} orders found.`
                     }
                   </p>
                   <div className="space-y-2 text-sm text-zaago-muted-foreground">
@@ -739,10 +738,7 @@ const CustomerOrders: React.FC = () => {
                   </div>
                 </div>
               )}
-            </div>
-          </TabsContent>
-        </Tabs>
-      </motion.div>
+        </motion.div>
 
       <LocationSetupModal 
         open={isLocationModalOpen} 
