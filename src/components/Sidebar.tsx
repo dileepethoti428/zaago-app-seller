@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { motion } from 'framer-motion';
 import {
   Sidebar as SidebarUI,
@@ -50,13 +51,16 @@ export default function Sidebar() {
   const { state, setOpen } = useSidebar();
   const { signOut } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const location = useLocation();
   const currentPath = location.pathname;
   const collapsed = state === 'collapsed';
 
   const handleNavClick = () => {
-    // Close sidebar on mobile/tablet when navigation item is clicked
-    setOpen(false);
+    // Only close sidebar on mobile devices, keep it open on desktop
+    if (isMobile) {
+      setOpen(false);
+    }
   };
 
   const handleLogout = async () => {
