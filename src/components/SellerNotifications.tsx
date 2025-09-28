@@ -470,58 +470,17 @@ export const SellerNotifications = () => {
     });
   };
 
-  // Debug function to check seller and order data
-  const debugSellerData = async () => {
-    console.log('🔍 === DEBUGGING SELLER DATA ===');
-    
-    // Check current auth user
-    const { data: { user } } = await supabase.auth.getUser();
-    console.log('🔍 Current auth user:', user?.id, user?.email);
-    
-    // Check seller record
-    const { data: sellerRecord } = await supabase
-      .from('sellers')
-      .select('*')
-      .eq('user_id', user?.id)
-      .single();
-    console.log('🔍 Seller record:', sellerRecord);
-    
-    // Check recent orders
-    const { data: recentOrders } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(3);
-    console.log('🔍 Recent orders:', recentOrders);
-    
-    // Check products owned by this seller
-    const { data: products } = await supabase
-      .from('products')
-      .select('id, name, seller_id')
-      .eq('seller_id', user?.id);
-    console.log('🔍 Products owned by this seller:', products);
-    
-    console.log('🔍 === END DEBUG ===');
-  };
-
   return (
     <>
-      {/* Test Buttons for Development */}
+      {/* Test Button for Development */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="fixed top-12 right-4 z-40 flex flex-col gap-2">
+        <div className="fixed top-12 right-4 z-40">
           <Button
             onClick={testNewOrderNotification}
             className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
             size="sm"
           >
             🧪 Test New Order
-          </Button>
-          <Button
-            onClick={debugSellerData}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
-            size="sm"
-          >
-            🔍 Debug Seller Data
           </Button>
         </div>
       )}
