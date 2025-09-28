@@ -99,7 +99,7 @@ const Orders = () => {
     
     setLoading(true);
     try {
-      // Use the new seller-specific function to get orders containing this seller's products
+      // Use the corrected seller-specific function to get orders containing this seller's products
       const { data, error } = await supabase.rpc('get_seller_specific_orders', {
         p_seller_user_id: user.id
       });

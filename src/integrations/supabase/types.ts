@@ -4901,13 +4901,13 @@ export type Database = {
           customer_name: string
           customer_phone: string
           delivery_date: string
+          items: Json
           order_id: string
-          order_status: string
+          payment_method: string
           payment_status: string
-          seller_items: Json
           seller_total: number
-          total_amount: number
-          updated_at: string
+          status: string
+          total: number
         }[]
       }
       get_seller_stats: {
