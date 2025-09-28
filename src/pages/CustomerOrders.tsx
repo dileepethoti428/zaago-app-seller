@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Clock, Package, CheckCircle, Truck, MapPin, Search, RefreshCw, Eye, Phone, X } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Clock, Package, CheckCircle, Truck, MapPin, Search, RefreshCw, Eye, Phone, X, Filter, Calendar, DollarSign } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useSellerOrderActions } from '@/hooks/useSellerOrderActions';
@@ -37,6 +39,11 @@ const CustomerOrders: React.FC = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [loading, setLoading] = useState(true);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  
+  // Filter states
+  const [dateFilter, setDateFilter] = useState('all');
+  const [amountFilter, setAmountFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
 
   const orderTabs = [
     { label: 'All Orders', value: 'all' },
@@ -133,16 +140,57 @@ const CustomerOrders: React.FC = () => {
     }
   };
 
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = searchTerm === '' || 
-      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.status.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesTab = activeTab === 'all' || order.status === activeTab;
-    
-    return matchesSearch && matchesTab;
-  });
+  const filteredOrders = orders
+    .filter(order => {
+      const matchesSearch = searchTerm === '' || 
+        order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.status.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesTab = activeTab === 'all' || order.status === activeTab;
+      
+      // Date filter
+      const orderDate = new Date(order.created_at);
+      const now = new Date();
+      let matchesDate = true;
+      
+      if (dateFilter === 'today') {
+        matchesDate = orderDate.toDateString() === now.toDateString();
+      } else if (dateFilter === 'week') {
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        matchesDate = orderDate >= weekAgo;
+      } else if (dateFilter === 'month') {
+        const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+        matchesDate = orderDate >= monthAgo;
+      } else if (dateFilter === 'year') {
+        const yearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+        matchesDate = orderDate >= yearAgo;
+      }
+      
+      // Amount filter
+      let matchesAmount = true;
+      if (amountFilter === 'low') {
+        matchesAmount = order.total_amount < 500;
+      } else if (amountFilter === 'medium') {
+        matchesAmount = order.total_amount >= 500 && order.total_amount <= 2000;
+      } else if (amountFilter === 'high') {
+        matchesAmount = order.total_amount > 2000;
+      }
+      
+      return matchesSearch && matchesTab && matchesDate && matchesAmount;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'newest') {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      } else if (sortBy === 'oldest') {
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      } else if (sortBy === 'amount_high') {
+        return b.total_amount - a.total_amount;
+      } else if (sortBy === 'amount_low') {
+        return a.total_amount - b.total_amount;
+      }
+      return 0;
+    });
 
   const handleAcceptOrder = async (orderId: string, sellerId: string) => {
     const success = await acceptOrder(orderId, sellerId);
@@ -270,15 +318,96 @@ const CustomerOrders: React.FC = () => {
           </p>
         </div>
         
-        <Button 
-          onClick={fetchOrders} 
-          disabled={loading}
-          className="bg-transparent border border-zaago-border text-foreground hover:bg-zaago-accent flex items-center gap-2"
-          size="sm"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Filter Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline"
+                size="sm"
+                className="bg-transparent border border-zaago-border text-foreground hover:bg-zaago-accent flex items-center gap-2"
+              >
+                <Filter className="w-4 h-4" />
+                Filters
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-64 bg-zaago-card border-zaago-border">
+              <DropdownMenuLabel className="text-foreground">Filter Orders</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-zaago-border" />
+              
+              {/* Date Filter */}
+              <div className="p-2">
+                <label className="text-xs font-medium text-zaago-muted-foreground mb-1 block">Date Range</label>
+                <Select value={dateFilter} onValueChange={setDateFilter}>
+                  <SelectTrigger className="h-8 bg-zaago-background border-zaago-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zaago-card border-zaago-border">
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="week">This Week</SelectItem>
+                    <SelectItem value="month">This Month</SelectItem>
+                    <SelectItem value="year">This Year</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Amount Filter */}
+              <div className="p-2">
+                <label className="text-xs font-medium text-zaago-muted-foreground mb-1 block">Order Amount</label>
+                <Select value={amountFilter} onValueChange={setAmountFilter}>
+                  <SelectTrigger className="h-8 bg-zaago-background border-zaago-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zaago-card border-zaago-border">
+                    <SelectItem value="all">All Amounts</SelectItem>
+                    <SelectItem value="low">Under ₹500</SelectItem>
+                    <SelectItem value="medium">₹500 - ₹2000</SelectItem>
+                    <SelectItem value="high">Over ₹2000</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Sort By */}
+              <div className="p-2">
+                <label className="text-xs font-medium text-zaago-muted-foreground mb-1 block">Sort By</label>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="h-8 bg-zaago-background border-zaago-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zaago-card border-zaago-border">
+                    <SelectItem value="newest">Newest First</SelectItem>
+                    <SelectItem value="oldest">Oldest First</SelectItem>
+                    <SelectItem value="amount_high">Highest Amount</SelectItem>
+                    <SelectItem value="amount_low">Lowest Amount</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <DropdownMenuSeparator className="bg-zaago-border" />
+              <DropdownMenuItem 
+                onClick={() => {
+                  setDateFilter('all');
+                  setAmountFilter('all');
+                  setSortBy('newest');
+                }}
+                className="text-zaago-muted-foreground hover:bg-zaago-accent hover:text-foreground"
+              >
+                Clear All Filters
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button 
+            onClick={fetchOrders} 
+            disabled={loading}
+            className="bg-transparent border border-zaago-border text-foreground hover:bg-zaago-accent flex items-center gap-2"
+            size="sm"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </motion.div>
 
       {/* Search Bar */}
@@ -296,6 +425,51 @@ const CustomerOrders: React.FC = () => {
           className="pl-10 py-3 bg-zaago-card/50 border-zaago-border text-foreground placeholder:text-zaago-muted-foreground focus:border-zaago-green focus:ring-zaago-green"
         />
       </motion.div>
+
+      {/* Active Filters Indicator */}
+      {(dateFilter !== 'all' || amountFilter !== 'all' || sortBy !== 'newest') && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25, duration: 0.3 }}
+          className="flex items-center gap-2 flex-wrap"
+        >
+          <span className="text-sm text-zaago-muted-foreground">Active filters:</span>
+          {dateFilter !== 'all' && (
+            <Badge variant="secondary" className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
+              <Calendar className="w-3 h-3 mr-1" />
+              {dateFilter === 'today' ? 'Today' : 
+               dateFilter === 'week' ? 'This Week' :
+               dateFilter === 'month' ? 'This Month' : 'This Year'}
+              <X 
+                className="w-3 h-3 ml-1 cursor-pointer hover:bg-zaago-green/30 rounded" 
+                onClick={() => setDateFilter('all')}
+              />
+            </Badge>
+          )}
+          {amountFilter !== 'all' && (
+            <Badge variant="secondary" className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
+              <DollarSign className="w-3 h-3 mr-1" />
+              {amountFilter === 'low' ? 'Under ₹500' :
+               amountFilter === 'medium' ? '₹500-₹2000' : 'Over ₹2000'}
+              <X 
+                className="w-3 h-3 ml-1 cursor-pointer hover:bg-zaago-green/30 rounded" 
+                onClick={() => setAmountFilter('all')}
+              />
+            </Badge>
+          )}
+          {sortBy !== 'newest' && (
+            <Badge variant="secondary" className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
+              Sort: {sortBy === 'oldest' ? 'Oldest' :
+                     sortBy === 'amount_high' ? 'High Amount' : 'Low Amount'}
+              <X 
+                className="w-3 h-3 ml-1 cursor-pointer hover:bg-zaago-green/30 rounded" 
+                onClick={() => setSortBy('newest')}
+              />
+            </Badge>
+          )}
+        </motion.div>
+      )}
 
       {/* Status Tabs */}
       <motion.div
