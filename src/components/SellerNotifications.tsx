@@ -669,51 +669,6 @@ export const SellerNotifications = () => {
 
   return (
     <>
-      {/* Connection Status Indicator */}
-      <div className="fixed top-4 right-4 z-30 flex items-center gap-2 bg-background/95 backdrop-blur-sm border rounded-lg px-3 py-2 shadow-lg">
-        <div className="flex items-center gap-2">
-          {connectionStatus === 'connected' ? (
-            <>
-              <Wifi className="h-4 w-4 text-green-500" />
-              <span className="text-green-500 text-xs font-medium">Connected</span>
-            </>
-          ) : connectionStatus === 'connecting' ? (
-            <>
-              <RefreshCw className="h-4 w-4 text-yellow-500 animate-spin" />
-              <span className="text-yellow-500 text-xs font-medium">Connecting</span>
-            </>
-          ) : (
-            <>
-              <WifiOff className="h-4 w-4 text-red-500" />
-              <span className="text-red-500 text-xs font-medium">Backup Mode</span>
-            </>
-          )}
-        </div>
-        
-        {isPolling && (
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-            <span className="text-xs text-muted-foreground">Monitoring</span>
-          </div>
-        )}
-        
-        {notificationDeliveryCount > 0 && (
-          <div className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-            {notificationDeliveryCount}
-          </div>
-        )}
-        
-        <Button
-          onClick={manualRefresh}
-          disabled={manualRefreshing}
-          size="sm"
-          variant="ghost"
-          className="h-6 w-6 p-0"
-        >
-          <RefreshCw className={`h-3 w-3 ${manualRefreshing ? 'animate-spin' : ''}`} />
-        </Button>
-      </div>
-
       {/* Test Button for Development Only */}
       {process.env.NODE_ENV === 'development' && (
         <div className="fixed top-16 right-4 z-40">
