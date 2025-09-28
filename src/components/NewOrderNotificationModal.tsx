@@ -60,12 +60,25 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
   }, []);
 
   const handleAction = (action: () => void) => {
-    notificationSound.stopContinuousRinging();
-    action();
+    console.log('🔧 Handle action called');
+    try {
+      notificationSound.stopContinuousRinging();
+      console.log('🔧 Stopped continuous ringing');
+      action();
+      console.log('🔧 Action executed successfully');
+    } catch (error) {
+      console.error('🔧 Error in handleAction:', error);
+    }
   };
 
   const handleStopRingtone = () => {
-    notificationSound.stopContinuousRinging();
+    console.log('🔧 Stop ringtone called');
+    try {
+      notificationSound.stopContinuousRinging();
+      console.log('🔧 Ringtone stopped successfully');
+    } catch (error) {
+      console.error('🔧 Error stopping ringtone:', error);
+    }
   };
 
   const formatAmount = (amount?: number) => {
@@ -303,7 +316,12 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
             </p>
             <div className="grid grid-cols-2 gap-3">
               <Button
-                onClick={handleStopRingtone}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('🔧 Stop alarm button clicked');
+                  handleStopRingtone();
+                }}
                 variant="secondary"
                 className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white text-lg py-4"
               >
@@ -311,7 +329,12 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
                 STOP ALARM
               </Button>
               <Button
-                onClick={() => handleAction(onDismiss)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('🔧 Dismiss button clicked');
+                  handleAction(onDismiss);
+                }}
                 variant="destructive"
                 className="flex items-center gap-2 text-lg py-4"
               >
