@@ -470,6 +470,16 @@ const CustomerOrders: React.FC = () => {
                                 </Button>
                               </>
                             )}
+                            
+                            {order.status === 'packed' && (
+                              <div className="flex items-center gap-2">
+                                <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 flex items-center gap-2">
+                                  <Package className="w-4 h-4" />
+                                  Packed - Ready for Pickup
+                                </Badge>
+                              </div>
+                            )}
+
                             {/* View Details button for packed/delivered orders */}
                             {['packed', 'in_transit', 'delivered'].includes(order.status) && (
                               <Link to={`/orders/${order.id}`} className="flex-1">
