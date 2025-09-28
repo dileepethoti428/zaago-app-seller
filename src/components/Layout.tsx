@@ -11,7 +11,7 @@ import { CustomerNotifications } from './CustomerNotifications';
 
 const Layout = () => {
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0">

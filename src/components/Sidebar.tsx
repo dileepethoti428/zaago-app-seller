@@ -57,8 +57,8 @@ export default function Sidebar() {
   const collapsed = state === 'collapsed';
 
   const handleNavClick = () => {
-    // Don't close sidebar when navigation items are clicked
-    // This keeps the sidebar open and text visible
+    // Close sidebar when navigation items are clicked
+    setOpen(false);
   };
 
   const handleLogout = async () => {
