@@ -471,14 +471,7 @@ const CustomerOrders: React.FC = () => {
                                         {productStatus === 'pending' && (
                                           <>
                                              <Button
-                                               onClick={async () => {
-                                                 // First accept the order
-                                                 const accepted = await acceptOrder(order.id, user?.id || "");
-                                                 if (accepted) {
-                                                   // Then immediately pack it
-                                                   await handlePackOrder(order.id, user?.id || "");
-                                                 }
-                                               }}
+                                               onClick={() => handlePackOrder(order.id, user?.id || "")}
                                                disabled={isProcessing === order.id}
                                                className="bg-zaago-green text-black hover:bg-zaago-green/90 flex items-center gap-2"
                                                size="sm"
@@ -486,7 +479,7 @@ const CustomerOrders: React.FC = () => {
                                                {isProcessing === order.id ? (
                                                  <>
                                                    <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
-                                                   Processing...
+                                                   Accepting...
                                                  </>
                                                ) : (
                                                  <>
