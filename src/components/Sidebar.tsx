@@ -47,12 +47,17 @@ const customerLinks = [
 ];
 
 export default function Sidebar() {
-  const { state } = useSidebar();
+  const { state, setOpen } = useSidebar();
   const { signOut } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
   const currentPath = location.pathname;
   const collapsed = state === 'collapsed';
+
+  const handleNavClick = () => {
+    // Close sidebar on mobile/tablet when navigation item is clicked
+    setOpen(false);
+  };
 
   const handleLogout = async () => {
     try {
@@ -133,6 +138,7 @@ export default function Sidebar() {
                   <NavLink
                     to={href}
                     className={getNavClassName(href)}
+                    onClick={handleNavClick}
                   >
                     <SidebarMenuButton className="w-full h-full p-0">
                       <div className="flex items-center gap-3 w-full p-3">
