@@ -242,13 +242,6 @@ export const SellerNotifications = () => {
 
       if (error) {
         console.error('❌ Polling error:', error);
-        // If polling fails, show warning toast
-        toast({
-          title: "⚠️ Connection Issue",
-          description: "Checking connection status...",
-          duration: 2000,
-          className: "bg-yellow-600 text-white border-yellow-600"
-        });
         return;
       }
 
@@ -267,13 +260,6 @@ export const SellerNotifications = () => {
       }
     } catch (error) {
       console.error('❌ Polling failed:', error);
-      // Show critical connection error
-      toast({
-        title: "🚨 Connection Failed",
-        description: "Cannot check for new orders! Please refresh.",
-        duration: 10000,
-        className: "bg-red-600 text-white border-red-600"
-      });
     }
   }, [user, lastChecked, handleNotification, toast]);
 
@@ -315,12 +301,6 @@ export const SellerNotifications = () => {
       pollingIntervalRef.current = setInterval(checkForNewNotifications, 3000); // Every 3 seconds
       setIsPolling(true);
       
-      toast({
-        title: "🚨 Connection Issues",
-        description: "Using backup notification system. New orders will still be detected.",
-        duration: 10000,
-        className: "bg-orange-600 text-white border-orange-600"
-      });
       return;
     }
 
@@ -387,12 +367,7 @@ export const SellerNotifications = () => {
             await handleNotification(notification);
             
             // Show success toast for real-time delivery
-            toast({
-              title: "✅ Real-time Connected",
-              description: "New order notification received instantly!",
-              duration: 3000,
-              className: "bg-green-600 text-white border-green-600"
-            });
+            console.log('✅ Real-time notification delivered successfully');
           } else {
             console.log('🔇 Ignoring non-new-order notification:', notification.type);
           }
