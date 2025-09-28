@@ -8,12 +8,11 @@ import {
   CheckCircle2, 
   AlertCircle, 
   Search,
+  Filter,
   Eye,
-  RefreshCw,
-  User,
-  MapPin,
-  Check,
-  X
+  CheckSquare,
+  XSquare,
+  RefreshCw
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -23,70 +22,35 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useProductActions } from '@/hooks/useProductActions';
 import { useSellerOrderActions } from '@/hooks/useSellerOrderActions';
+import { LocationSetupModal } from '@/components/LocationSetupModal';
 
 const CustomerOrders = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { acceptProduct, rejectProduct, isProcessing: isProductProcessing } = useProductActions();
-  const { packOrder, isProcessing, getOptimisticStatus } = useSellerOrderActions();
+  const { acceptOrder, rejectOrder, packOrder, isProcessing } = useSellerOrderActions();
   const [orders, setOrders] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
-  const [optimisticStates, setOptimisticStates] = useState<{ [key: string]: string }>({});
+  const [processingOrder, setProcessingOrder] = useState<string | null>(null);
+  const [showLocationModal, setShowLocationModal] = useState(false);
 
   const orderTabs = [
-    { value: 'all', label: 'All', count: 0 },
-    { value: 'ongoing', label: 'Ongoing', count: 0 },
+    { value: 'all', label: 'All Orders', count: 0 },
+    { value: 'new', label: 'New', count: 0 },
+    { value: 'accepted', label: 'Accepted', count: 0 },
+    { value: 'in_transit', label: 'In Transit', count: 0 },
     { value: 'delivered', label: 'Delivered', count: 0 }
   ];
 
   useEffect(() => {
     if (user) {
-      fetchCustomerOrders();
+      fetchOrders();
       setupRealtimeSubscription();
     }
-  }, [user]); // Removed refreshTrigger dependency to prevent unnecessary re-fetches
-
-  // Listen for order status updates with optimistic handling
-  useEffect(() => {
-    const handleOrderUpdate = (event: any) => {
-      const { orderId, action, status, optimistic, confirmed } = event.detail;
-      
-      if (optimistic) {
-        // Immediately update optimistic state for UI responsiveness
-        setOptimisticStates(prev => ({ ...prev, [orderId]: status }));
-      } else if (confirmed) {
-        // Clear optimistic state and let real-time subscription handle the update
-        setOptimisticStates(prev => {
-          const updated = { ...prev };
-          delete updated[orderId];
-          return updated;
-        });
-        // No need to set refreshTrigger, real-time subscription will handle updates
-      }
-    };
-
-    const handleOrderRevert = (event: any) => {
-      const { orderId } = event.detail;
-      // Clear optimistic state on error
-      setOptimisticStates(prev => {
-        const updated = { ...prev };
-        delete updated[orderId];
-        return updated;
-      });
-    };
-
-    window.addEventListener('orderStatusUpdated', handleOrderUpdate);
-    window.addEventListener('orderStatusReverted', handleOrderRevert);
-    return () => {
-      window.removeEventListener('orderStatusUpdated', handleOrderUpdate);
-      window.removeEventListener('orderStatusReverted', handleOrderRevert);
-    };
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     filterOrders();
@@ -94,7 +58,7 @@ const CustomerOrders = () => {
 
   const setupRealtimeSubscription = () => {
     const channel = supabase
-      .channel('customer-orders-realtime')
+      .channel('seller-orders-realtime')
       .on(
         'postgres_changes',
         {
@@ -103,50 +67,22 @@ const CustomerOrders = () => {
           table: 'orders'
         },
         (payload) => {
-          console.log('Seller order realtime update:', payload);
+          console.log('Realtime update:', payload);
           
+          // Re-fetch orders when any order changes to get updated seller data
           if (payload.eventType === 'INSERT') {
-            const newOrder = payload.new;
-            // Check if order already exists to prevent duplicates
-            setOrders(prev => {
-              const exists = prev.find(order => order.id === newOrder.id);
-              if (exists) return prev; // Don't add if already exists
-              return [newOrder, ...prev];
-            });
+            // For new orders, check if they contain this seller's products
+            fetchOrders();
             
+            // Show notification if this order contains seller's products
             toast({
-              title: "Order Placed Successfully! 🎉",
-              description: `Order #${newOrder.id.toString().slice(0, 8)} has been placed`,
+              title: "New Order Alert! 🔔",
+              description: "Check if this order contains your products",
               duration: 5000
             });
           } else if (payload.eventType === 'UPDATE') {
-            const updatedOrder = payload.new;
-            setOrders(prev => 
-              prev.map(order => 
-                order.id === updatedOrder.id ? updatedOrder : order
-              )
-            );
-            
-            // Show notification for status changes
-            if (updatedOrder.status === 'accepted') {
-              toast({
-                title: "Order Accepted! ✅",
-                description: `Order #${updatedOrder.id.toString().slice(0, 8)} has been accepted by the seller`,
-                duration: 5000
-              });
-            } else if (updatedOrder.status === 'packed') {
-              toast({
-                title: "Order Packed! 📦",
-                description: `Order #${updatedOrder.id.toString().slice(0, 8)} is packed and ready for delivery`,
-                duration: 5000
-              });
-            } else if (updatedOrder.status === 'delivered') {
-              toast({
-                title: "Order Delivered! 🚛",
-                description: `Order #${updatedOrder.id.toString().slice(0, 8)} has been delivered`,
-                duration: 5000
-              });
-            }
+            // Re-fetch to get updated order status
+            fetchOrders();
           }
         }
       )
@@ -157,83 +93,68 @@ const CustomerOrders = () => {
     };
   };
 
-  const fetchCustomerOrders = async () => {
+  const fetchOrders = async () => {
     if (!user?.id) return;
     
-    // Check authentication first
-    if (!user?.id) {
-      console.error('User not authenticated or missing user ID');
-      toast({
-        title: "Authentication Error",
-        description: "Please log in to view your orders.",
-        variant: "destructive"
-      });
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
     try {
-      console.log('Fetching orders for user ID:', user.id);
-      
-      // Fixed: Use 'user_id' instead of 'customer_id' to match the database schema
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      // Use the corrected seller-specific function to get orders containing this seller's products
+      const { data, error } = await supabase.rpc('get_seller_specific_orders', {
+        p_seller_user_id: user.id
+      });
 
       if (error) {
-        console.error('Database error fetching customer orders:', error);
+        console.error('Error fetching seller orders:', error);
         toast({
           title: "Error",
-          description: `Failed to fetch orders: ${error.message}`,
+          description: "Failed to fetch orders. Please try again.",
           variant: "destructive"
         });
         return;
       }
 
-      console.log('Successfully fetched orders:', data?.length || 0, 'orders');
-      setOrders(data || []);
+      // Map the data to match the expected order structure
+      const mappedOrders = (data || []).map((order: any) => ({
+        id: order.order_id,
+        total: order.seller_total, // Show only seller's portion
+        status: order.order_status,
+        created_at: order.created_at,
+        updated_at: order.updated_at,
+        customer_name: order.customer_name,
+        customer_phone: order.customer_phone,
+        delivery_date: order.delivery_date,
+        items: order.seller_items, // Show only seller's items
+        address: order.address,
+        payment_status: order.payment_status,
+        agent_id: order.agent_id,
+        user_id: user.id // This is the seller's user_id
+      }));
+
+      setOrders(mappedOrders);
     } catch (error) {
-      console.error('Unexpected error fetching customer orders:', error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive"
-      });
+      console.error('Error fetching orders:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const filterOrders = () => {
-    console.log('🔍 DEBUG: Current user from auth context:', user?.id);
-    console.log('🔍 DEBUG: All orders before filtering:', orders);
-    
     let filtered = orders;
 
-    // Filter by tab with customer-friendly categories
-    if (activeTab === 'ongoing') {
-      // Ongoing orders: everything except delivered and rejected
-      filtered = filtered.filter(order => 
-        !['delivered', 'rejected', 'cancelled'].includes(order.status)
-      );
-    } else if (activeTab === 'delivered') {
-      filtered = filtered.filter(order => order.status === 'delivered');
+    // Filter by tab
+    if (activeTab !== 'all') {
+      filtered = filtered.filter(order => order.status === activeTab);
     }
-    // 'all' shows everything
 
     // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(order => 
-        order.id.toString().includes(searchTerm) ||
         order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.customer_phone?.includes(searchTerm)
+        order.customer_phone?.includes(searchTerm) ||
+        order.id.toString().includes(searchTerm)
       );
     }
 
-    console.log('🔍 DEBUG: Filtered orders:', filtered);
     setFilteredOrders(filtered);
   };
 
@@ -314,20 +235,11 @@ const CustomerOrders = () => {
     return items.reduce((total, item) => total + (item.quantity || 0), 0);
   };
 
-  // Calculate tab counts with customer-friendly categories
-  const tabCounts = orderTabs.map(tab => {
-    if (tab.value === 'all') {
-      return { ...tab, count: orders.length };
-    } else if (tab.value === 'ongoing') {
-      return { 
-        ...tab, 
-        count: orders.filter(order => !['delivered', 'rejected', 'cancelled'].includes(order.status)).length 
-      };
-    } else if (tab.value === 'delivered') {
-      return { ...tab, count: orders.filter(order => order.status === 'delivered').length };
-    }
-    return tab;
-  });
+  // Calculate tab counts
+  const tabCounts = orderTabs.map(tab => ({
+    ...tab,
+    count: tab.value === 'all' ? orders.length : orders.filter(order => order.status === tab.value).length
+  }));
 
   return (
     <motion.div
@@ -353,7 +265,7 @@ const CustomerOrders = () => {
         </div>
         
         <Button 
-          onClick={fetchCustomerOrders} 
+          onClick={fetchOrders} 
           disabled={loading}
           className="bg-transparent border border-zaago-border text-foreground hover:bg-zaago-accent flex items-center gap-2"
           size="sm"
@@ -372,7 +284,7 @@ const CustomerOrders = () => {
       >
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zaago-muted-foreground w-5 h-5" />
         <Input
-          placeholder="Search by order ID or items..."
+          placeholder="Search by customer name, phone, or order ID..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10 py-3 bg-zaago-card/50 border-zaago-border text-foreground placeholder:text-zaago-muted-foreground focus:border-zaago-green focus:ring-zaago-green"
@@ -386,19 +298,23 @@ const CustomerOrders = () => {
         transition={{ delay: 0.3, duration: 0.3 }}
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-3 bg-transparent gap-1 w-full max-w-md mx-auto">
+          <TabsList className="grid grid-cols-5 bg-transparent gap-1">
             {tabCounts.map((tab) => (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className={`flex flex-col items-center gap-1 px-4 py-3 rounded-lg transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                   activeTab === tab.value
                     ? 'bg-zaago-green text-black font-medium'
                     : 'bg-zaago-card/50 text-zaago-muted-foreground hover:bg-zaago-accent/50'
                 }`}
               >
                 <span className="font-medium text-sm">
-                  {tab.label}
+                  {tab.value === 'all' ? 'All Orders' : 
+                   tab.value === 'new' ? 'New' :
+                   tab.value === 'accepted' ? 'Accepted' :
+                   tab.value === 'in_transit' ? 'In Transit' :
+                   'Delivered'}
                 </span>
                 <span className={`px-2 py-0.5 rounded-full text-xs ${
                   activeTab === tab.value
@@ -414,7 +330,7 @@ const CustomerOrders = () => {
           <TabsContent value={activeTab} className="mt-6">
             <div className="space-y-4">
               <h2 className="text-xl font-bold text-foreground">
-                {activeTab === 'all' ? 'All Orders' : `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Orders`} ({filteredOrders.length})
+                All Orders ({filteredOrders.length})
               </h2>
 
               {loading ? (
@@ -540,55 +456,27 @@ const CustomerOrders = () => {
                                         });
                                         return shouldShowButtons;
                                       })() && (
-                                       <div className="flex gap-2 ml-4">
-                                         <Button
-                                             onClick={async () => {
-                                               const success = await acceptProduct(order.id, item.id, user?.id || '');
-                                               if (success) {
-                                                 fetchCustomerOrders();
-                                               }
-                                             }}
-                                            disabled={isProductProcessing === `${order.id}-${item.id}`}
+                                        <div className="flex gap-2 ml-4">
+                                          <Button
+                                            onClick={() => acceptOrder(order.id, user?.id || '')}
+                                            disabled={isProcessing === order.id}
                                             size="sm"
-                                            className="bg-zaago-green text-black hover:bg-zaago-green/90 transition-all duration-200"
+                                            className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
                                           >
-                                            {isProductProcessing === `${order.id}-${item.id}` ? (
-                                              <>
-                                                <div className="w-3 h-3 border border-black border-t-transparent rounded-full animate-spin mr-1"></div>
-                                                Accepting...
-                                              </>
-                                            ) : (
-                                              <>
-                                                <Check className="w-3 h-3 mr-1" />
-                                                Accept
-                                              </>
-                                            )}
+                                            <CheckSquare className="w-4 h-4" />
+                                            Accept Order
                                           </Button>
-                                         <Button
-                                           onClick={async () => {
-                                             const success = await rejectProduct(order.id, item.id, user?.id || '');
-                                             if (success) {
-                                               fetchCustomerOrders();
-                                             }
-                                           }}
-                                           disabled={isProductProcessing === `${order.id}-${item.id}`}
-                                           size="sm"
-                                           variant="outline"
-                                           className="border-red-500 text-red-400 hover:bg-red-500/10 transition-all duration-200"
-                                         >
-                                           {isProductProcessing === `${order.id}-${item.id}` ? (
-                                             <>
-                                               <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin mr-1"></div>
-                                               Rejecting...
-                                             </>
-                                           ) : (
-                                             <>
-                                               <X className="w-3 h-3 mr-1" />
-                                               Reject
-                                             </>
-                                           )}
-                                         </Button>
-                                       </div>
+                                          <Button
+                                            onClick={() => rejectOrder(order.id, user?.id || '')}
+                                            disabled={isProcessing === order.id}
+                                            variant="destructive"
+                                            size="sm"
+                                            className="flex items-center gap-2"
+                                          >
+                                            <XSquare className="w-4 h-4" />
+                                            Reject Order
+                                          </Button>
+                                        </div>
                                       )}
                                       
                                       {/* Show product status badges */}
@@ -626,8 +514,8 @@ const CustomerOrders = () => {
                           {(() => {
                             const sellerItems = order.items?.filter((item: any) => item.seller_id === user?.id) || [];
                             
-                            // Get optimistic status if available
-                            const currentOrderStatus = getOptimisticStatus(order.id) || order.status;
+                            // Get current order status
+                            const currentOrderStatus = order.status;
                             
                             // Check if any products from this seller are accepted OR if order status is confirmed/accepted
                             const hasAcceptedProducts = sellerItems.some((item: any) => 
