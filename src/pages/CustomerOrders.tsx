@@ -31,7 +31,7 @@ interface Order {
 const CustomerOrders: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { acceptOrder, rejectOrder, packOrder, isProcessing } = useSellerOrderActions();
+  const { acceptOrder, rejectOrder, packOrder, notifyDeliveryAgents, isProcessing } = useSellerOrderActions();
   const [orders, setOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
@@ -160,6 +160,13 @@ const CustomerOrders: React.FC = () => {
 
   const handlePackOrder = async (orderId: string, sellerId: string) => {
     const success = await packOrder(orderId, sellerId);
+    if (success) {
+      fetchOrders();
+    }
+  };
+
+  const handleNotifyAgents = async (orderId: string, sellerId: string) => {
+    const success = await notifyDeliveryAgents(orderId, sellerId);
     if (success) {
       fetchOrders();
     }
@@ -493,9 +500,9 @@ const CustomerOrders: React.FC = () => {
 
                             {order.status === 'packed' && (
                               <Button
-                                onClick={() => handlePackOrder(order.id, user.id)}
+                                onClick={() => handleNotifyAgents(order.id, user.id)}
                                 disabled={isProcessing === order.id}
-                                className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+                                className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
                                 size="sm"
                               >
                                 {isProcessing === order.id ? (

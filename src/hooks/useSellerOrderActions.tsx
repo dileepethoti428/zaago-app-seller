@@ -10,14 +10,16 @@ export const useSellerOrderActions = () => {
   const handleOrderAction = async (
     orderId: string, 
     sellerUserId: string, 
-    action: 'accept' | 'reject' | 'pack'
+    action: 'accept' | 'reject' | 'pack' | 'notify_agents'
   ) => {
     if (isProcessing) return false;
 
     setIsProcessing(orderId);
 
     // Optimistic update - immediately update UI state
-    const newStatus = action === 'accept' ? 'accepted' : action === 'reject' ? 'rejected' : 'packed';
+    const newStatus = action === 'accept' ? 'accepted' : 
+                      action === 'reject' ? 'rejected' : 
+                      action === 'pack' ? 'packed' : 'assigned';
     setOptimisticUpdates(prev => ({ ...prev, [orderId]: newStatus }));
 
     // Immediately dispatch event for UI update
@@ -129,10 +131,14 @@ export const useSellerOrderActions = () => {
   const packOrder = (orderId: string, sellerUserId: string) => 
     handleOrderAction(orderId, sellerUserId, 'pack');
 
+  const notifyDeliveryAgents = (orderId: string, sellerUserId: string) => 
+    handleOrderAction(orderId, sellerUserId, 'notify_agents');
+
   return {
     acceptOrder,
     rejectOrder,
     packOrder,
+    notifyDeliveryAgents,
     isProcessing,
     getOptimisticStatus
   };
