@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Clock, Package, CheckCircle, Truck, MapPin, Search, RefreshCw, Eye, Phone } from 'lucide-react';
+import { Clock, Package, CheckCircle, Truck, MapPin, Search, RefreshCw, Eye, Phone, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useSellerOrderActions } from '@/hooks/useSellerOrderActions';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
 import { LocationSetupModal } from '@/components/LocationSetupModal';
@@ -31,11 +32,11 @@ interface Order {
 const CustomerOrders: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { acceptOrder, rejectOrder, packOrder, isProcessing } = useSellerOrderActions();
   const [orders, setOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [loading, setLoading] = useState(true);
-  const [isProcessing, setIsProcessing] = useState<string | null>(null);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
 
   const orderTabs = [
@@ -145,7 +146,8 @@ const CustomerOrders: React.FC = () => {
     return matchesSearch && matchesTab;
   });
 
-  const packOrder = async (orderId: string, sellerId: string) => {
+  // Pack order function - now handled by useSellerOrderActions hook
+  const handlePackOrder = async (orderId: string, sellerId: string) => {
     const { data: profile } = await supabase
       .from('profiles')
       .select('address')
@@ -157,32 +159,8 @@ const CustomerOrders: React.FC = () => {
       return;
     }
 
-    setIsProcessing(orderId);
-
-    try {
-      const { data, error } = await supabase
-        .from('orders')
-        .update({ status: 'packed' })
-        .eq('id', orderId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Order marked as packed successfully",
-      });
-
-      fetchOrders();
-    } catch (error) {
-      console.error('Error packing order:', error);
-      toast({
-        title: "Error",
-        description: "Failed to pack order. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(null);
-    }
+    await packOrder(orderId, sellerId);
+    fetchOrders();
   };
 
   const getStatusIcon = (status: string) => {
@@ -467,61 +445,130 @@ const CustomerOrders: React.FC = () => {
                           </div>
                         )}
 
-                        {/* Order Actions */}
-                        <div className="flex gap-2 pt-3 border-t border-zaago-border/30 mt-3">
-                          {(() => {
-                            const sellerItems = order.items?.filter((item: any) => item.seller_id === user?.id) || [];
-                            
-                            // Get current order status
-                            const currentOrderStatus = order.status;
-                            
-                            // Check if any products from this seller are accepted OR if order status is confirmed/accepted
-                            const hasAcceptedProducts = sellerItems.some((item: any) => 
-                              order.product_statuses?.[item.id]?.status === 'accepted'
-                            );
-                            
-                            // Show pack button if order is confirmed/accepted (regardless of individual product status)
-                            const shouldShowPackButton = sellerItems.length > 0 && ['accepted', 'confirmed'].includes(currentOrderStatus);
-                            
+                        {/* Individual Product Actions for New Orders */}
+                        {(() => {
+                          const sellerItems = order.items?.filter((item: any) => item.seller_id === user?.id) || [];
+                          const currentOrderStatus = order.status;
+                          
+                          // Show individual product accept/reject buttons for new orders
+                          if (['new', 'pending'].includes(currentOrderStatus) && sellerItems.length > 0) {
                             return (
-                              <>
-                                {/* Mark as Packed button for accepted products */}
-                                {shouldShowPackButton && (
-                                  <Button
-                                    onClick={() => packOrder(order.id, user?.id || "")}
-                                    disabled={isProcessing === order.id}
-                                    className="bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
-                                  >
-                                    {isProcessing === order.id ? (
-                                      <>
-                                        <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
-                                        Packing...
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Package className="w-4 h-4" />
-                                        Mark as Packed
-                                      </>
-                                    )}
-                                  </Button>
-                                )}
-                                 
-                                 {/* View Details button for packed/delivered orders */}
-                                 {['packed', 'in_transit', 'delivered'].includes(currentOrderStatus) && (
-                                  <Link to={`/orders/${order.id}`} className="flex-1">
-                                    <Button
-                                      variant="outline"
-                                      className="w-full border-zaago-border text-zaago-muted-foreground hover:bg-zaago-accent/50 hover:text-foreground hover:border-zaago-green transition-all duration-200 flex items-center gap-2"
-                                    >
-                                      <Eye className="w-4 h-4" />
-                                      View Details
-                                    </Button>
-                                  </Link>
-                                )}
-                              </>
+                              <div className="space-y-3 pt-3 border-t border-zaago-border/30 mt-3">
+                                <h5 className="font-medium text-foreground">Action Required for Your Products:</h5>
+                                {sellerItems.map((item: any) => {
+                                  const productStatus = order.product_statuses?.[item.id]?.status || 'pending';
+                                  
+                                  return (
+                                    <div key={item.id} className="flex items-center justify-between bg-zaago-card/30 rounded-lg p-3">
+                                      <div>
+                                        <p className="font-medium text-foreground">{item.product_name}</p>
+                                        <p className="text-zaago-muted-foreground text-sm">
+                                          Qty: {item.quantity} × ₹{item.price?.toFixed(2)}
+                                        </p>
+                                      </div>
+                                      
+                                      <div className="flex items-center gap-2">
+                                        {productStatus === 'pending' && (
+                                          <>
+                                            <Button
+                                              onClick={() => acceptOrder(order.id, user?.id || "")}
+                                              disabled={isProcessing === order.id}
+                                              className="bg-zaago-green text-black hover:bg-zaago-green/90 flex items-center gap-2"
+                                              size="sm"
+                                            >
+                                              {isProcessing === order.id ? (
+                                                <>
+                                                  <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
+                                                  Accepting...
+                                                </>
+                                              ) : (
+                                                <>
+                                                  <CheckCircle className="w-4 h-4" />
+                                                  Accept
+                                                </>
+                                              )}
+                                            </Button>
+                                            <Button
+                                              onClick={() => rejectOrder(order.id, user?.id || "")}
+                                              disabled={isProcessing === order.id}
+                                              variant="destructive"
+                                              className="flex items-center gap-2"
+                                              size="sm"
+                                            >
+                                              {isProcessing === order.id ? (
+                                                <>
+                                                  <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                                                  Rejecting...
+                                                </>
+                                              ) : (
+                                                <>
+                                                  <X className="w-4 h-4" />
+                                                  Reject
+                                                </>
+                                              )}
+                                            </Button>
+                                          </>
+                                        )}
+                                        
+                                        {productStatus === 'accepted' && (
+                                          <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
+                                            ✅ Accepted
+                                          </Badge>
+                                        )}
+                                        
+                                        {productStatus === 'rejected' && (
+                                          <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+                                            ❌ Rejected
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
                             );
-                          })()}
-                        </div>
+                          }
+                          
+                          // Show pack button for accepted orders
+                          const shouldShowPackButton = sellerItems.length > 0 && ['accepted', 'confirmed'].includes(currentOrderStatus);
+                          
+                          return (
+                            <div className="flex gap-2 pt-3 border-t border-zaago-border/30 mt-3">
+                              {shouldShowPackButton && (
+                                <Button
+                                  onClick={() => handlePackOrder(order.id, user?.id || "")}
+                                  disabled={isProcessing === order.id}
+                                  className="bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
+                                >
+                                  {isProcessing === order.id ? (
+                                    <>
+                                      <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
+                                      Packing...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Package className="w-4 h-4" />
+                                      Mark as Packed
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                               
+                               {/* View Details button for packed/delivered orders */}
+                               {['packed', 'in_transit', 'delivered'].includes(currentOrderStatus) && (
+                                <Link to={`/orders/${order.id}`} className="flex-1">
+                                  <Button
+                                    variant="outline"
+                                    className="w-full border-zaago-border text-zaago-muted-foreground hover:bg-zaago-accent/50 hover:text-foreground hover:border-zaago-green transition-all duration-200 flex items-center gap-2"
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                    View Details
+                                  </Button>
+                                </Link>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </motion.div>
                   ))}

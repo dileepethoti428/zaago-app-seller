@@ -331,11 +331,11 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
             </p>
             <div className="grid grid-cols-2 gap-3">
               <Button
-                onClick={async (e) => {
+                onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   console.log('🔧 Stop alarm button clicked');
-                  await handleStopRingtone();
+                  handleStopRingtone();
                 }}
                 variant="secondary"
                 className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white text-lg py-4 font-bold"
@@ -345,11 +345,11 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
                 STOP ALARM
               </Button>
               <Button
-                onClick={async (e) => {
+                onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   console.log('🔧 Dismiss button clicked');
-                  await handleAction(onDismiss);
+                  handleAction(onDismiss);
                 }}
                 variant="destructive"
                 className="flex items-center gap-2 text-lg py-4 font-bold"
@@ -410,7 +410,7 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
           {/* PRIMARY ACTION BUTTONS */}
           <div className="grid grid-cols-2 gap-3">
             <Button
-              onClick={async () => await handleAction(onViewOrder)}
+              onClick={() => handleAction(onViewOrder)}
               variant="outline"
               className="flex items-center gap-2 text-lg py-6 border-2 border-blue-500 text-blue-600 hover:bg-blue-50 font-bold"
               type="button"
@@ -419,7 +419,7 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
               VIEW FULL ORDER
             </Button>
             <Button
-              onClick={async () => await handleAction(onDismiss)}
+              onClick={() => handleAction(onDismiss)}
               className="bg-gray-600 hover:bg-gray-700 text-white flex items-center gap-2 text-lg py-6 font-bold"
               type="button"
             >
