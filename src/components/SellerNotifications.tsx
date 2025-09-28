@@ -148,21 +148,30 @@ export const SellerNotifications = () => {
             console.log('🔍 Auth user ID:', authUser?.id);
             
             // Get the seller record for the authenticated user
-            const { data: sellerRecord } = await supabase
+            const { data: sellerRecord, error: sellerError } = await supabase
               .from('sellers')
-              .select('id, user_id')
+              .select('id, user_id, name, email')
               .eq('user_id', authUser?.id)
               .single();
             
             console.log('🔍 Seller record:', sellerRecord);
+            console.log('🔍 Seller error:', sellerError);
             
-            // Use the seller's user_id (which should match auth user) for filtering
-            const sellerUserId = sellerRecord?.user_id;
+            if (!sellerRecord) {
+              console.log('❌ No seller record found for user:', authUser?.id);
+              console.log('📋 This might be the issue - user is not registered as a seller');
+              return;
+            }
+            
+            // Use the seller's user_id for filtering
+            const sellerUserId = sellerRecord.user_id;
+            console.log('🔍 Filtering products for seller:', sellerRecord.name, '(', sellerRecord.email, ')');
             console.log('🔍 Using seller user ID for filtering:', sellerUserId);
 
             // Filter items to only include products from this seller
             const sellerItems = items.filter((item: any) => {
-              console.log('🔍 Checking item seller_id:', item.seller_id, 'against seller user_id:', sellerUserId);
+              console.log('🔍 Item:', item.name, 'seller_id:', item.seller_id);
+              console.log('🔍 Does', item.seller_id, '===', sellerUserId, '?', item.seller_id === sellerUserId);
               return item.seller_id === sellerUserId;
             });
 
@@ -461,17 +470,58 @@ export const SellerNotifications = () => {
     });
   };
 
+  // Debug function to check seller and order data
+  const debugSellerData = async () => {
+    console.log('🔍 === DEBUGGING SELLER DATA ===');
+    
+    // Check current auth user
+    const { data: { user } } = await supabase.auth.getUser();
+    console.log('🔍 Current auth user:', user?.id, user?.email);
+    
+    // Check seller record
+    const { data: sellerRecord } = await supabase
+      .from('sellers')
+      .select('*')
+      .eq('user_id', user?.id)
+      .single();
+    console.log('🔍 Seller record:', sellerRecord);
+    
+    // Check recent orders
+    const { data: recentOrders } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(3);
+    console.log('🔍 Recent orders:', recentOrders);
+    
+    // Check products owned by this seller
+    const { data: products } = await supabase
+      .from('products')
+      .select('id, name, seller_id')
+      .eq('seller_id', user?.id);
+    console.log('🔍 Products owned by this seller:', products);
+    
+    console.log('🔍 === END DEBUG ===');
+  };
+
   return (
     <>
-      {/* Test Button for Development */}
+      {/* Test Buttons for Development */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="fixed top-12 right-4 z-40">
+        <div className="fixed top-12 right-4 z-40 flex flex-col gap-2">
           <Button
             onClick={testNewOrderNotification}
             className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
             size="sm"
           >
             🧪 Test New Order
+          </Button>
+          <Button
+            onClick={debugSellerData}
+            className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
+            size="sm"
+          >
+            🔍 Debug Seller Data
           </Button>
         </div>
       )}
