@@ -95,8 +95,8 @@ export default function Sidebar() {
   };
 
   return (
-    <SidebarUI className={`${collapsed ? 'w-12 sm:w-14' : 'w-60 sm:w-64'} bg-card border-r border-border`}>
-      <SidebarContent className="bg-card">
+    <SidebarUI className={`${collapsed ? 'w-12 sm:w-14' : 'w-60 sm:w-64'} bg-zaago-dark border-r border-border`}>
+      <SidebarContent className="bg-zaago-dark">
         {/* Header */}
         <div className="p-3 sm:p-4 border-b border-border">
           {!collapsed && (
