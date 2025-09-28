@@ -93,7 +93,7 @@ export default function Sidebar() {
   };
 
   return (
-    <SidebarUI collapsible="offcanvas" className={`${collapsed ? 'w-12 sm:w-14' : 'w-60 sm:w-64'} bg-zaago-dark border-r border-border`}>
+    <SidebarUI collapsible="none" className={`${collapsed ? 'w-12 sm:w-14' : 'w-60 sm:w-64'} bg-zaago-dark border-r border-border`}>
       <SidebarContent className="bg-zaago-dark">
         {/* Header */}
         <div className="p-3 sm:p-4 border-b border-border">
