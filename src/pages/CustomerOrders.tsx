@@ -506,10 +506,19 @@ const CustomerOrders: React.FC = () => {
                                 ) : (
                                   <>
                                     <Package className="w-4 h-4" />
-                                    Mark as Packed
+                                    Notify Delivery Agents
                                   </>
                                 )}
                               </Button>
+                            )}
+
+                            {order.status === 'assigned' && (
+                              <div className="flex items-center gap-2">
+                                <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 flex items-center gap-2">
+                                  <Truck className="w-4 h-4" />
+                                  Assigned to Delivery Agent
+                                </Badge>
+                              </div>
                             )}
 
                             {/* View Details button for packed/delivered orders */}
