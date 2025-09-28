@@ -151,43 +151,40 @@ const CustomerOrders: React.FC = () => {
     console.log('🟢 Accept button clicked:', { orderId, sellerId });
     
     try {
-      // Optimistically update the product statuses immediately
-      setOrders(prevOrders => 
-        prevOrders.map(order => {
-          if (order.id === orderId) {
-            console.log('🔄 Updating order in UI:', orderId);
-            // Update product statuses for seller's products
-            const updatedProductStatuses = { ...order.product_statuses };
-            order.items.forEach(item => {
-              if (item.seller_id === sellerId) {
-                console.log('✅ Marking item as accepted:', item.id);
-                updatedProductStatuses[item.id] = { status: 'accepted' };
-              }
-            });
-            
-            return { 
-              ...order, 
-              product_statuses: updatedProductStatuses,
-              status: 'accepted'
-            };
-          }
-          return order;
-        })
-      );
-
-      // Make the API call to accept order
-      console.log('📡 Making API call to accept order...');
       const success = await acceptOrder(orderId, sellerId);
       console.log('📡 Accept API result:', success);
       
       if (success) {
-        await fetchOrders();
-      } else {
-        await fetchOrders();
+        // Optimistically update the order status to accepted
+        setOrders(prevOrders => 
+          prevOrders.map(order => {
+            if (order.id === orderId) {
+              console.log('🔄 Updating order status to accepted:', orderId);
+              return { 
+                ...order, 
+                status: 'accepted'
+              };
+            }
+            return order;
+          })
+        );
+        
+        toast({
+          title: "Order Accepted",
+          description: "Order has been accepted successfully.",
+          variant: "default",
+        });
+        
+        // Refresh orders to get latest data
+        setTimeout(() => fetchOrders(), 500);
       }
     } catch (error) {
       console.error('❌ Error accepting order:', error);
-      await fetchOrders();
+      toast({
+        title: "Error", 
+        description: "Failed to accept order. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
