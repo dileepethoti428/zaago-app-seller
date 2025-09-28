@@ -148,15 +148,19 @@ const CustomerOrders: React.FC = () => {
 
   // Accept order function - only updates status to accepted
   const handleAcceptOrder = async (orderId: string, sellerId: string) => {
+    console.log('🟢 Accept button clicked:', { orderId, sellerId });
+    
     try {
       // Optimistically update the product statuses immediately
       setOrders(prevOrders => 
         prevOrders.map(order => {
           if (order.id === orderId) {
+            console.log('🔄 Updating order in UI:', orderId);
             // Update product statuses for seller's products
             const updatedProductStatuses = { ...order.product_statuses };
             order.items.forEach(item => {
               if (item.seller_id === sellerId) {
+                console.log('✅ Marking item as accepted:', item.id);
                 updatedProductStatuses[item.id] = { status: 'accepted' };
               }
             });
@@ -172,7 +176,9 @@ const CustomerOrders: React.FC = () => {
       );
 
       // Make the API call to accept order
+      console.log('📡 Making API call to accept order...');
       const success = await acceptOrder(orderId, sellerId);
+      console.log('📡 Accept API result:', success);
       
       if (success) {
         await fetchOrders();
@@ -180,7 +186,7 @@ const CustomerOrders: React.FC = () => {
         await fetchOrders();
       }
     } catch (error) {
-      console.error('Error accepting order:', error);
+      console.error('❌ Error accepting order:', error);
       await fetchOrders();
     }
   };
@@ -532,7 +538,10 @@ const CustomerOrders: React.FC = () => {
                                          {productStatus === 'pending' && (
                                            <>
                                               <Button
-                                                onClick={() => handleAcceptOrder(order.id, user?.id || "")}
+                                                 onClick={() => {
+                                                   console.log('🔥 BUTTON CLICKED - Accept');
+                                                   handleAcceptOrder(order.id, user?.id || "");
+                                                 }}
                                                 disabled={isProcessing === order.id}
                                                 className="bg-zaago-green text-black hover:bg-zaago-green/90 flex items-center gap-2"
                                                 size="sm"
