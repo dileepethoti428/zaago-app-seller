@@ -514,6 +514,14 @@ const CustomerOrders: React.FC = () => {
                           const sellerItems = order.items?.filter((item: any) => item.seller_id === user?.id) || [];
                           const currentOrderStatus = order.status;
                           
+                          console.log('🔍 ORDER DEBUG:', {
+                            orderId: order.id,
+                            currentOrderStatus,
+                            sellerItemsCount: sellerItems.length,
+                            isNewOrPending: ['new', 'pending'].includes(currentOrderStatus),
+                            userId: user?.id
+                          });
+                          
                           // Show individual product accept/reject buttons for new orders
                           if (['new', 'pending'].includes(currentOrderStatus) && sellerItems.length > 0) {
                             return (
@@ -521,6 +529,13 @@ const CustomerOrders: React.FC = () => {
                                 <h5 className="font-medium text-foreground">Action Required for Your Products:</h5>
                                 {sellerItems.map((item: any) => {
                                   const productStatus = order.product_statuses?.[item.id]?.status || 'pending';
+                                  
+                                  console.log('🔍 PRODUCT DEBUG:', {
+                                    itemId: item.id,
+                                    productName: item.product_name,
+                                    productStatus,
+                                    isPending: productStatus === 'pending'
+                                  });
                                   
                                   return (
                                     <div key={item.id} className="flex items-center justify-between bg-zaago-card/30 rounded-lg p-3">
@@ -535,8 +550,10 @@ const CustomerOrders: React.FC = () => {
                                          {productStatus === 'pending' && (
                                            <>
                                               <Button
-                                                 onClick={() => {
-                                                   console.log('🔥 BUTTON CLICKED - Accept');
+                                                 onClick={(e) => {
+                                                   console.log('🔥 BUTTON CLICKED - Accept', { event: e, orderId: order.id, userId: user?.id });
+                                                   e.preventDefault();
+                                                   e.stopPropagation();
                                                    handleAcceptOrder(order.id, user?.id || "");
                                                  }}
                                                 disabled={isProcessing === order.id}
