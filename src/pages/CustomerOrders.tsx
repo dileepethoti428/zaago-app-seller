@@ -146,29 +146,59 @@ const CustomerOrders: React.FC = () => {
     return matchesSearch && matchesTab;
   });
 
-  // Pack order function with immediate UI update
-  const handlePackOrder = async (orderId: string, sellerId: string) => {
-    console.log('🎯 Packing order:', { orderId, sellerId });
-    
+  // Accept order function - only updates status to accepted
+  const handleAcceptOrder = async (orderId: string, sellerId: string) => {
     try {
       // Optimistically update the product statuses immediately
       setOrders(prevOrders => 
         prevOrders.map(order => {
           if (order.id === orderId) {
-            console.log('📦 Found order to update:', order.id);
-            console.log('📝 Order items:', order.items);
-            
             // Update product statuses for seller's products
             const updatedProductStatuses = { ...order.product_statuses };
             order.items.forEach(item => {
-              console.log('🔍 Checking item:', { itemId: item.id, itemSellerId: item.seller_id, targetSellerId: sellerId });
               if (item.seller_id === sellerId) {
-                console.log('✅ Updating product status for item:', item.id);
-                updatedProductStatuses[item.id] = { status: 'packed' };
+                updatedProductStatuses[item.id] = { status: 'accepted' };
               }
             });
             
-            console.log('📊 Updated product statuses:', updatedProductStatuses);
+            return { 
+              ...order, 
+              product_statuses: updatedProductStatuses,
+              status: 'accepted'
+            };
+          }
+          return order;
+        })
+      );
+
+      // Make the API call to accept order
+      const success = await acceptOrder(orderId, sellerId);
+      
+      if (success) {
+        await fetchOrders();
+      } else {
+        await fetchOrders();
+      }
+    } catch (error) {
+      console.error('Error accepting order:', error);
+      await fetchOrders();
+    }
+  };
+
+  // Pack order function - updates status to packed and notifies delivery agents
+  const handlePackOrder = async (orderId: string, sellerId: string) => {
+    try {
+      // Optimistically update the product statuses immediately
+      setOrders(prevOrders => 
+        prevOrders.map(order => {
+          if (order.id === orderId) {
+            // Update product statuses for seller's products
+            const updatedProductStatuses = { ...order.product_statuses };
+            order.items.forEach(item => {
+              if (item.seller_id === sellerId) {
+                updatedProductStatuses[item.id] = { status: 'packed' };
+              }
+            });
             
             return { 
               ...order, 
@@ -180,20 +210,16 @@ const CustomerOrders: React.FC = () => {
         })
       );
 
-      // Then make the actual API call
+      // Make the API call to pack order (this will notify delivery agents)
       const success = await packOrder(orderId, sellerId);
-      console.log('📡 Pack order API result:', success);
       
       if (success) {
-        // Refresh orders to get the latest state from server
         await fetchOrders();
       } else {
-        // Revert optimistic update if failed
         await fetchOrders();
       }
     } catch (error) {
-      console.error('❌ Error packing order:', error);
-      // Revert optimistic update on error
+      console.error('Error packing order:', error);
       await fetchOrders();
     }
   };
@@ -503,26 +529,26 @@ const CustomerOrders: React.FC = () => {
                                       </div>
                                       
                                       <div className="flex items-center gap-2">
-                                        {productStatus === 'pending' && (
-                                          <>
-                                             <Button
-                                               onClick={() => handlePackOrder(order.id, user?.id || "")}
-                                               disabled={isProcessing === order.id}
-                                               className="bg-zaago-green text-black hover:bg-zaago-green/90 flex items-center gap-2"
-                                               size="sm"
-                                             >
-                                               {isProcessing === order.id ? (
-                                                 <>
-                                                   <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
-                                                   Accepting...
-                                                 </>
-                                               ) : (
-                                                 <>
-                                                   <CheckCircle className="w-4 h-4" />
-                                                   Accept
-                                                 </>
-                                               )}
-                                             </Button>
+                                         {productStatus === 'pending' && (
+                                           <>
+                                              <Button
+                                                onClick={() => handleAcceptOrder(order.id, user?.id || "")}
+                                                disabled={isProcessing === order.id}
+                                                className="bg-zaago-green text-black hover:bg-zaago-green/90 flex items-center gap-2"
+                                                size="sm"
+                                              >
+                                                {isProcessing === order.id ? (
+                                                  <>
+                                                    <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
+                                                    Accepting...
+                                                  </>
+                                                ) : (
+                                                  <>
+                                                    <CheckCircle className="w-4 h-4" />
+                                                    Accept
+                                                  </>
+                                                )}
+                                              </Button>
                                             <Button
                                               onClick={() => rejectOrder(order.id, user?.id || "")}
                                               disabled={isProcessing === order.id}
@@ -545,24 +571,23 @@ const CustomerOrders: React.FC = () => {
                                           </>
                                         )}
                                         
-                                        {(productStatus === 'accepted' || productStatus === 'packed') && (
-                                          <>
-                                            {console.log('🏷️ Showing packed badge for item:', { itemId: item.id, productStatus, orderStatus: order.status })}
-                                            <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
-                                              ✅ Packed
-                                            </Badge>
-                                          </>
-                                        )}
-                                        
-                                        {/* Also show packed if order status is packed */}
-                                        {order.status === 'packed' && !productStatus && (
-                                          <>
-                                            {console.log('🏷️ Showing packed badge for order-level status:', { orderId: order.id, orderStatus: order.status, noProductStatus: !productStatus })}
-                                            <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
-                                              ✅ Packed
-                                            </Badge>
-                                          </>
-                                        )}
+                                         {productStatus === 'accepted' && (
+                                           <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                                             ✅ Accepted
+                                           </Badge>
+                                         )}
+                                         
+                                         {productStatus === 'packed' && (
+                                           <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                                             📦 Ready for Pickup
+                                           </Badge>
+                                         )}
+                                         
+                                         {order.status === 'packed' && !productStatus && (
+                                           <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                                             📦 Ready for Pickup
+                                           </Badge>
+                                         )}
                                          
                                          {productStatus === 'rejected' && (
                                            <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
@@ -577,33 +602,30 @@ const CustomerOrders: React.FC = () => {
                             );
                           }
                           
-                          // Show pack button for accepted orders
-                          const shouldShowPackButton = sellerItems.length > 0 && ['accepted', 'confirmed'].includes(currentOrderStatus);
-                          
-                          return (
-                            <div className="flex gap-2 pt-3 border-t border-zaago-border/30 mt-3">
-                              {shouldShowPackButton && (
-                                <Button
-                                  onClick={() => {
-                                    console.log('🎯 Accept button clicked:', { orderId: order.id, userId: user?.id, sellerItems });
-                                    handlePackOrder(order.id, user?.id || "");
-                                  }}
-                                  disabled={isProcessing === order.id}
-                                  className="bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
-                                >
-                                  {isProcessing === order.id ? (
-                                    <>
-                                      <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
-                                      Packing...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Package className="w-4 h-4" />
-                                      Mark as Packed
-                                    </>
-                                  )}
-                                </Button>
-                              )}
+                           // Show pack button for accepted orders
+                           const shouldShowPackButton = sellerItems.length > 0 && ['accepted', 'confirmed'].includes(currentOrderStatus);
+                           
+                           return (
+                             <div className="flex gap-2 pt-3 border-t border-zaago-border/30 mt-3">
+                               {shouldShowPackButton && (
+                                 <Button
+                                   onClick={() => handlePackOrder(order.id, user?.id || "")}
+                                   disabled={isProcessing === order.id}
+                                   className="bg-purple-600 text-white hover:bg-purple-700 flex items-center gap-2"
+                                 >
+                                   {isProcessing === order.id ? (
+                                     <>
+                                       <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
+                                       Notifying Agents...
+                                     </>
+                                   ) : (
+                                     <>
+                                       <Package className="w-4 h-4" />
+                                       Ready for Pickup
+                                     </>
+                                   )}
+                                 </Button>
+                               )}
                                
                                 {/* View Details button for packed/delivered orders */}
                                {['packed', 'in_transit', 'delivered'].includes(currentOrderStatus) && (
