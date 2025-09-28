@@ -4919,7 +4919,6 @@ export type Database = {
           delivery_date: string
           items: Json
           order_id: string
-          payment_method: string
           payment_status: string
           seller_total: number
           status: string
