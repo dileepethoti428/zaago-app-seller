@@ -130,25 +130,27 @@ export default function Sidebar() {
             <SidebarMenu className="space-y-1 sm:space-y-2 px-2 sm:px-4">
               {navigationLinks.map(({ href, label, icon: Icon }) => (
                 <SidebarMenuItem key={href}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={href}
-                      className={getNavClassName(href)}
-                    >
-                      <Icon size={18} className="shrink-0 sm:w-5 sm:h-5" />
-                      {!collapsed && (
-                        <motion.span
-                          initial={{ opacity: 0, width: 0 }}
-                          animate={{ opacity: 1, width: 'auto' }}
-                          exit={{ opacity: 0, width: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="font-medium text-sm sm:text-base"
-                        >
-                          {label}
-                        </motion.span>
-                      )}
-                    </NavLink>
-                  </SidebarMenuButton>
+                  <NavLink
+                    to={href}
+                    className={getNavClassName(href)}
+                  >
+                    <SidebarMenuButton className="w-full h-full p-0">
+                      <div className="flex items-center gap-3 w-full p-3">
+                        <Icon size={18} className="shrink-0 sm:w-5 sm:h-5" />
+                        {!collapsed && (
+                          <motion.span
+                            initial={{ opacity: 0, width: 0 }}
+                            animate={{ opacity: 1, width: 'auto' }}
+                            exit={{ opacity: 0, width: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="font-medium text-sm sm:text-base"
+                          >
+                            {label}
+                          </motion.span>
+                        )}
+                      </div>
+                    </SidebarMenuButton>
+                  </NavLink>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
