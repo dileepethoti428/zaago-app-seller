@@ -4449,6 +4449,14 @@ export type Database = {
         Args: { _agent_id: string; _order_id: string }
         Returns: undefined
       }
+      bypass_complete_order: {
+        Args: {
+          p_agent_id: string
+          p_order_id: string
+          p_payment_method: string
+        }
+        Returns: Json
+      }
       calculate_delivery_payout: {
         Args: {
           p_agent_id?: string
@@ -4546,6 +4554,14 @@ export type Database = {
           p_payment_method?: string
         }
         Returns: Json
+      }
+      complete_delivery_bypass_validation: {
+        Args: { p_order_id: string; p_payment_method?: string }
+        Returns: undefined
+      }
+      complete_delivery_minimal_update: {
+        Args: { p_order_id: string; p_payment_method?: string }
+        Returns: boolean
       }
       complete_delivery_safe: {
         Args: {
@@ -4868,23 +4884,6 @@ export type Database = {
           stock_quantity: number
         }[]
       }
-      get_seller_orders: {
-        Args:
-          | { seller_user_id: string; status_filter?: string[] }
-          | { seller_user_id: string; status_filter?: string[] }
-        Returns: {
-          address: Json
-          created_at: string
-          customer_name: string
-          customer_phone: string
-          delivery_time_slot: string
-          id: string
-          items: Json
-          payment_status: string
-          status: string
-          total: number
-        }[]
-      }
       get_seller_payouts_summary_json: {
         Args: { target_seller_id: string }
         Returns: Json
@@ -4894,7 +4893,7 @@ export type Database = {
         Returns: Json
       }
       get_seller_specific_orders: {
-        Args: { p_seller_user_id: string } | { p_seller_user_id: string }
+        Args: { p_seller_user_id: string }
         Returns: {
           address: Json
           agent_id: string
@@ -4903,6 +4902,12 @@ export type Database = {
           customer_phone: string
           delivery_date: string
           order_id: string
+          order_status: string
+          payment_status: string
+          seller_items: Json
+          seller_total: number
+          total_amount: number
+          updated_at: string
         }[]
       }
       get_seller_stats: {
@@ -5063,6 +5068,10 @@ export type Database = {
       mark_order_as_packed: {
         Args: { order_id: string }
         Returns: undefined
+      }
+      mark_order_as_packed_simple: {
+        Args: { order_id: string }
+        Returns: Json
       }
       mark_order_as_packed_v2: {
         Args: { order_id: string }
