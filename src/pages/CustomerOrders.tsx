@@ -145,7 +145,8 @@ const CustomerOrders: React.FC = () => {
   });
 
   const handleAcceptOrder = async (orderId: string, sellerId: string) => {
-    const success = await acceptOrder(orderId, sellerId);
+    // Directly pack the order (accept + pack in one action)
+    const success = await packOrder(orderId, sellerId);
     if (success) {
       fetchOrders();
     }
@@ -439,7 +440,7 @@ const CustomerOrders: React.FC = () => {
                                   {isProcessing === order.id ? (
                                     <>
                                       <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
-                                      Accepting...
+                                      Packing...
                                     </>
                                   ) : (
                                     <>
@@ -469,28 +470,6 @@ const CustomerOrders: React.FC = () => {
                                 </Button>
                               </>
                             )}
-                            
-                            {order.status === 'accepted' && (
-                              <Button
-                                onClick={() => handlePackOrder(order.id, user.id)}
-                                disabled={isProcessing === order.id}
-                                className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
-                                size="sm"
-                              >
-                                {isProcessing === order.id ? (
-                                  <>
-                                    <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
-                                    Packing...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Package className="w-4 h-4" />
-                                    Pack Order
-                                  </>
-                                )}
-                              </Button>
-                            )}
-
                             {/* View Details button for packed/delivered orders */}
                             {['packed', 'in_transit', 'delivered'].includes(order.status) && (
                               <Link to={`/orders/${order.id}`} className="flex-1">
