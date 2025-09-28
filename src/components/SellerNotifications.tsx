@@ -236,12 +236,19 @@ export const SellerNotifications = () => {
           event: 'INSERT',
           schema: 'public',
           table: 'notifications',
-          filter: `user_id=eq.${user.id},type=eq.new_order`
+          filter: `user_id=eq.${user.id}`
         },
         async (payload) => {
           const notification = payload.new;
-          console.log('🔔 NEW ORDER notification received via real-time:', notification);
-          await handleNotification(notification);
+          console.log('🔔 Real-time notification received:', notification);
+          
+          // Filter for new_order only at the application level
+          if (notification.type === 'new_order') {
+            console.log('🚨 NEW ORDER notification received via real-time:', notification);
+            await handleNotification(notification);
+          } else {
+            console.log('🔇 Ignoring non-new-order notification:', notification.type);
+          }
         }
       )
       .subscribe((status) => {
