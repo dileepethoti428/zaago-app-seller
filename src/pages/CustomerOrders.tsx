@@ -1,96 +1,77 @@
+import React, { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { 
-  Package, 
-  Truck, 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle, 
-  Search,
-  Filter,
-  Eye,
-  CheckSquare,
-  XSquare,
-  RefreshCw
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabase } from '@/integrations/supabase/client';
+import { Clock, Package, CheckCircle, Truck, MapPin, Search, RefreshCw, Eye, Phone } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useSellerOrderActions } from '@/hooks/useSellerOrderActions';
+import { supabase } from '@/integrations/supabase/client';
+import { Link } from 'react-router-dom';
 import { LocationSetupModal } from '@/components/LocationSetupModal';
 
-const CustomerOrders = () => {
+interface Order {
+  id: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  customer_name: string;
+  customer_phone: string;
+  delivery_address: string;
+  total_amount: number;
+  items: any[];
+  product_statuses?: any;
+  order_type: string;
+  seller_total?: number;
+  seller_items?: number;
+}
+
+const CustomerOrders: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { acceptOrder, rejectOrder, packOrder, isProcessing } = useSellerOrderActions();
-  const [orders, setOrders] = useState<any[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
-  const [processingOrder, setProcessingOrder] = useState<string | null>(null);
-  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState<string | null>(null);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
 
   const orderTabs = [
-    { value: 'all', label: 'All Orders', count: 0 },
-    { value: 'new', label: 'New', count: 0 },
-    { value: 'accepted', label: 'Accepted', count: 0 },
-    { value: 'in_transit', label: 'In Transit', count: 0 },
-    { value: 'delivered', label: 'Delivered', count: 0 }
+    { label: 'All Orders', value: 'all' },
+    { label: 'New Orders', value: 'new' },
+    { label: 'Accepted', value: 'accepted' },
+    { label: 'In Transit', value: 'in_transit' },
+    { label: 'Delivered', value: 'delivered' }
   ];
 
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       fetchOrders();
-      setupRealtimeSubscription();
+      const subscription = setupRealtimeSubscription();
+      
+      return () => {
+        subscription?.unsubscribe?.();
+      };
     }
-  }, [user]);
-
-  useEffect(() => {
-    filterOrders();
-  }, [orders, searchTerm, activeTab]);
+  }, [user?.id]);
 
   const setupRealtimeSubscription = () => {
-    const channel = supabase
-      .channel('seller-orders-realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'orders'
-        },
+    return supabase
+      .channel('seller-orders-channel')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'orders' 
+        }, 
         (payload) => {
-          console.log('Realtime update:', payload);
-          
-          // Re-fetch orders when any order changes to get updated seller data
-          if (payload.eventType === 'INSERT') {
-            // For new orders, check if they contain this seller's products
-            fetchOrders();
-            
-            // Show notification if this order contains seller's products
-            toast({
-              title: "New Order Alert! 🔔",
-              description: "Check if this order contains your products",
-              duration: 5000
-            });
-          } else if (payload.eventType === 'UPDATE') {
-            // Re-fetch to get updated order status
-            fetchOrders();
-          }
+          console.log('Real-time order update:', payload);
+          fetchOrders();
         }
       )
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   };
 
   const fetchOrders = async () => {
@@ -98,105 +79,133 @@ const CustomerOrders = () => {
     
     setLoading(true);
     try {
-      console.log('🔍 Fetching seller orders for user:', user.id);
+      console.log('Fetching orders for seller:', user.id);
       
-      // Use the corrected seller-specific function to get orders containing this seller's products
-      const { data, error } = await supabase.rpc('get_seller_specific_orders', {
-        p_seller_user_id: user.id
-      });
-
+      const { data, error } = await supabase
+        .rpc('get_seller_specific_orders', { 
+          p_seller_user_id: user.id 
+        });
+      
       if (error) {
-        console.error('Error fetching seller orders:', error);
+        console.error('Error fetching orders:', error);
         toast({
           title: "Error",
           description: "Failed to fetch orders. Please try again.",
-          variant: "destructive"
+          variant: "destructive",
         });
         return;
       }
 
-      console.log('📦 Raw seller orders data:', data);
+      console.log('Fetched orders data:', data);
+      
+      if (!data) {
+        console.log('No data returned from RPC function');
+        setOrders([]);
+        return;
+      }
 
-      // Map the data to match the expected order structure
+      // Map the RPC response to our Order interface
       const mappedOrders = (data || []).map((order: any) => ({
         id: order.order_id,
-        total: order.seller_total || 0,
-        status: order.order_status || 'unknown',
+        status: order.order_status,
         created_at: order.created_at,
         updated_at: order.updated_at,
-        customer_name: order.customer_name || 'Unknown Customer',
+        customer_name: order.customer_name,
         customer_phone: order.customer_phone,
-        delivery_date: order.delivery_date,
-        items: order.seller_items || [],
-        address: order.address,
-        payment_status: order.payment_status,
-        agent_id: order.agent_id,
-        user_id: user.id // This is the seller's user_id
+        delivery_address: order.address,
+        total_amount: order.seller_total,
+        items: order.seller_items,
+        product_statuses: {},
+        order_type: 'delivery',
+        seller_total: order.seller_total,
+        seller_items: Array.isArray(order.seller_items) ? order.seller_items.length : 0
       }));
 
-      console.log('✅ Mapped seller orders:', mappedOrders);
       setOrders(mappedOrders);
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      console.error('Error in fetchOrders:', error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred while fetching orders.",
-        variant: "destructive"
+        description: "Failed to fetch orders. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const filterOrders = () => {
-    let filtered = orders;
+  const filteredOrders = orders.filter(order => {
+    const matchesSearch = searchTerm === '' || 
+      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.status.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesTab = activeTab === 'all' || order.status === activeTab;
+    
+    return matchesSearch && matchesTab;
+  });
 
-    // Filter by tab
-    if (activeTab !== 'all') {
-      filtered = filtered.filter(order => order.status === activeTab);
+  const packOrder = async (orderId: string, sellerId: string) => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('address')
+      .eq('id', sellerId)
+      .single();
+
+    if (!profile?.address) {
+      setIsLocationModalOpen(true);
+      return;
     }
 
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter(order => 
-        order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.customer_phone?.includes(searchTerm) ||
-        order.id.toString().includes(searchTerm)
-      );
-    }
+    setIsProcessing(orderId);
 
-    setFilteredOrders(filtered);
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .update({ status: 'packed' })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Order marked as packed successfully",
+      });
+
+      fetchOrders();
+    } catch (error) {
+      console.error('Error packing order:', error);
+      toast({
+        title: "Error",
+        description: "Failed to pack order. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(null);
+    }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'delivered':
-        return <CheckCircle2 className="w-5 h-5 text-green-500" />;
       case 'pending':
       case 'new':
-        return <Clock className="w-5 h-5 text-orange-500" />;
+        return <Clock className="w-5 h-5 text-orange-400" />;
       case 'accepted':
-        return <CheckCircle2 className="w-5 h-5 text-blue-500" />;
+        return <CheckCircle className="w-5 h-5 text-blue-400" />;
       case 'packed':
-        return <Package className="w-5 h-5 text-purple-500" />;
-      case 'in_transit':
+        return <Package className="w-5 h-5 text-purple-400" />;
       case 'assigned':
+      case 'in_transit':
       case 'out_for_delivery':
-        return <Truck className="w-5 h-5 text-blue-500" />;
-      case 'rejected':
-      case 'cancelled':
-        return <AlertCircle className="w-5 h-5 text-red-500" />;
+        return <Truck className="w-5 h-5 text-blue-400" />;
+      case 'delivered':
+        return <CheckCircle className="w-5 h-5 text-green-400" />;
       default:
-        return <Clock className="w-5 h-5 text-gray-500" />;
+        return <Clock className="w-5 h-5 text-gray-400" />;
     }
   };
 
-  const getCustomerFriendlyStatus = (status: string) => {
-    // Handle undefined or null status
-    if (!status) {
-      return 'Unknown Status';
-    }
-    
+  const getStatusLabel = (status: string) => {
     switch (status) {
       case 'pending':
       case 'new':
@@ -257,12 +266,7 @@ const CustomerOrders = () => {
   }));
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
@@ -299,7 +303,7 @@ const CustomerOrders = () => {
       >
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zaago-muted-foreground w-5 h-5" />
         <Input
-          placeholder="Search by customer name, phone, or order ID..."
+          placeholder="Search orders by ID, customer name, or status..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10 py-3 bg-zaago-card/50 border-zaago-border text-foreground placeholder:text-zaago-muted-foreground focus:border-zaago-green focus:ring-zaago-green"
@@ -390,137 +394,78 @@ const CustomerOrders = () => {
                             <p className="font-medium text-foreground">
                               Customer: {order.customer_name}
                             </p>
-                              <p className="text-zaago-muted-foreground text-sm">
-                                {order.status === 'delivered' 
-                                  ? `Delivered at ${new Date(order.updated_at || order.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
-                                  : order.status === 'packed'
-                                  ? 'Your order is being prepared'
-                                  : order.status === 'accepted'
-                                  ? 'Restaurant is preparing your order'
-                                  : order.status === 'in_transit' || order.status === 'assigned'
-                                  ? 'Your order is on the way'
-                                  : 'Your order has been placed'}
-                              </p>
-                            </div>
+                            <p className="text-zaago-muted-foreground text-sm">
+                              {order.status === 'delivered' 
+                                ? `Delivered at ${new Date(order.updated_at || order.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+                                : order.status === 'packed'
+                                ? 'Your order is being prepared'
+                                : order.status === 'accepted'
+                                ? 'Restaurant is preparing your order'
+                                : order.status === 'in_transit' || order.status === 'assigned'
+                                ? 'Your order is on the way'
+                                : 'Your order has been placed'}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold text-foreground text-lg">
+                              ₹{(order.seller_total || 0).toFixed(2)}
+                            </p>
+                            <p className="text-zaago-muted-foreground text-sm">
+                              {order.seller_items || 0} items
+                            </p>
                           </div>
                         </div>
 
-                        {/* Order Items Preview */}
-                        <div className="border-t border-zaago-border pt-4">
-                          <div className="flex justify-between items-center mb-2">
-                            <p className="text-zaago-muted-foreground text-sm">
-                              {getItemsCount(order.items)} item{getItemsCount(order.items) !== 1 ? 's' : ''}
-                            </p>
-                            <p className="text-zaago-green font-bold text-xl">₹{order.total}</p>
-                          </div>
-                          
-                           {/* Order Items with Product Actions */}
-                           {order.items && Array.isArray(order.items) && (
-                             <div className="space-y-3">
-                               {(() => {
-                                 console.log('🔍 DEBUG: Processing order items for order:', order.id);
-                                 console.log('🔍 DEBUG: Order status:', order.status);
-                                 console.log('🔍 DEBUG: All items in order:', order.items);
-                                 
-                                 const sellerItems = order.items.filter((item: any) => {
-                                   console.log('🔍 DEBUG: Checking item:', {
-                                     id: item.id,
-                                     name: item.name,
-                                     seller_id: item.seller_id,
-                                     current_user_id: user?.id,
-                                     matches: item.seller_id === user?.id
-                                   });
-                                   return item.seller_id === user?.id;
-                                 });
-                                 
-                                 console.log('🔍 DEBUG: Filtered seller items:', sellerItems);
-                                 return sellerItems;
-                                })().map((item: any, index: number) => (
-                                  <div key={`${order.id}-${item.id || index}`} className="bg-zaago-card/30 rounded-lg p-4 border border-zaago-border/50">
-                                   <div className="flex justify-between items-start mb-3">
-                                     <div className="flex-1">
-                                       <h4 className="font-medium text-foreground">{item.name}</h4>
-                                       <p className="text-zaago-muted-foreground text-sm">
-                                         Quantity: {item.quantity} | Price: ₹{item.price}
-                                       </p>
-                                       <p className="text-zaago-green font-medium">₹{item.price * item.quantity}</p>
-                                     </div>
-                                     
-                                      {/* Product Accept/Reject Actions */}
-                                      {(() => {
-                                        // Check if product is already accepted
-                                        const isAccepted = order.product_statuses?.[item.id]?.status === 'accepted';
-                                        const isRejected = order.product_statuses?.[item.id]?.status === 'rejected';
-                                        
-                                        // Show buttons only if order allows it and product is not already accepted/rejected
-                                        const shouldShowButtons = ['new', 'pending', 'placed'].includes(order.status) && 
-                                                                item.id && 
-                                                                !isAccepted && 
-                                                                !isRejected;
-                                        
-                                        console.log('🔍 DEBUG: Should show accept/reject buttons for item', item.name, ':', shouldShowButtons, {
-                                          order_status: order.status,
-                                          item_id: item.id,
-                                          status_check: ['new', 'pending', 'placed'].includes(order.status),
-                                          has_item_id: !!item.id,
-                                          isAccepted,
-                                          isRejected,
-                                          product_statuses: order.product_statuses?.[item.id]
-                                        });
-                                        return shouldShowButtons;
-                                      })() && (
-                                        <div className="flex gap-2 ml-4">
-                                          <Button
-                                            onClick={() => acceptOrder(order.id, user?.id || '')}
-                                            disabled={isProcessing === order.id}
-                                            size="sm"
-                                            className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
-                                          >
-                                            <CheckSquare className="w-4 h-4" />
-                                            Accept Order
-                                          </Button>
-                                          <Button
-                                            onClick={() => rejectOrder(order.id, user?.id || '')}
-                                            disabled={isProcessing === order.id}
-                                            variant="destructive"
-                                            size="sm"
-                                            className="flex items-center gap-2"
-                                          >
-                                            <XSquare className="w-4 h-4" />
-                                            Reject Order
-                                          </Button>
-                                        </div>
-                                      )}
+                        {/* Products from this seller */}
+                        {order.items && order.items.length > 0 && (
+                          <div className="space-y-3">
+                            <h4 className="font-medium text-foreground">Your Products in this Order:</h4>
+                            <div className="space-y-2">
+                              {order.items.filter((item: any) => item.seller_id === user?.id).map((item: any, index: number) => (
+                                <div key={index} className="flex items-center justify-between bg-zaago-card/20 rounded-lg p-3">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 bg-zaago-card rounded-lg flex items-center justify-center">
+                                      <Package className="w-6 h-6 text-zaago-muted-foreground" />
+                                    </div>
+                                    <div>
+                                      <p className="font-medium text-foreground">{item.product_name}</p>
+                                      <p className="text-zaago-muted-foreground text-sm">
+                                        Qty: {item.quantity} × ₹{item.price?.toFixed(2)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    <p className="font-semibold text-foreground">
+                                      ₹{((item.quantity || 0) * (item.price || 0)).toFixed(2)}
+                                    </p>
+                                    {(() => {
+                                      const productStatus = order.product_statuses?.[item.id]?.status || 'pending';
                                       
-                                      {/* Show product status badges */}
-                                      {(() => {
-                                        const productStatus = order.product_statuses?.[item.id]?.status;
-                                        if (productStatus === 'accepted') {
-                                          return (
-                                            <div className="ml-4">
-                                              <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
-                                                ✅ Accepted
-                                              </Badge>
-                                            </div>
-                                          );
-                                        } else if (productStatus === 'rejected') {
-                                          return (
-                                            <div className="ml-4">
-                                              <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
-                                                ❌ Rejected
-                                              </Badge>
-                                            </div>
-                                          );
-                                        }
-                                        return null;
-                                      })()}
-                                     
+                                      if (productStatus === 'accepted') {
+                                        return (
+                                          <div className="ml-4">
+                                            <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
+                                              ✅ Accepted
+                                            </Badge>
+                                          </div>
+                                        );
+                                      } else if (productStatus === 'rejected') {
+                                        return (
+                                          <div className="ml-4">
+                                            <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+                                              ❌ Rejected
+                                            </Badge>
+                                          </div>
+                                        );
+                                      }
+                                      return null;
+                                    })()}
                                   </div>
                                 </div>
                               ))}
                             </div>
-                          )}
-                        </div>
+                          </div>
+                        )}
 
                         {/* Order Actions */}
                         <div className="flex gap-2 pt-3 border-t border-zaago-border/30 mt-3">
@@ -603,7 +548,12 @@ const CustomerOrders = () => {
           </TabsContent>
         </Tabs>
       </motion.div>
-    </motion.div>
+
+      <LocationSetupModal 
+        open={isLocationModalOpen} 
+        onOpenChange={setIsLocationModalOpen}
+      />
+    </div>
   );
 };
 
