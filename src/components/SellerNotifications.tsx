@@ -18,10 +18,15 @@ export const SellerNotifications = () => {
   const [lastChecked, setLastChecked] = useState<Date>(new Date());
   const [isPolling, setIsPolling] = useState(false);
   const [manualRefreshing, setManualRefreshing] = useState(false);
+  const [heartbeatActive, setHeartbeatActive] = useState(false);
+  const [notificationDeliveryCount, setNotificationDeliveryCount] = useState(0);
+  const [lastNotificationTime, setLastNotificationTime] = useState<Date | null>(null);
   const channelRef = useRef<any>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttempts = useRef(0);
+  const maxReconnectAttempts = 10;
 
   // Handle notification processing (extracted for reuse)
   const handleNotification = useCallback(async (notification: any) => {
@@ -221,12 +226,12 @@ export const SellerNotifications = () => {
     });
   }, [toast]);
 
-  // Fallback polling function to check for new notifications
+  // Enhanced polling function with aggressive checks for critical notifications
   const checkForNewNotifications = useCallback(async () => {
     if (!user) return;
     
     try {
-      console.log('🔍 Polling for NEW ORDER notifications since:', lastChecked);
+      console.log('🔍 Aggressive polling for NEW ORDER notifications since:', lastChecked);
       const { data: notifications, error } = await supabase
         .from('notifications')
         .select('*')
@@ -237,43 +242,129 @@ export const SellerNotifications = () => {
 
       if (error) {
         console.error('❌ Polling error:', error);
+        // If polling fails, show warning toast
+        toast({
+          title: "⚠️ Connection Issue",
+          description: "Checking connection status...",
+          duration: 2000,
+          className: "bg-yellow-600 text-white border-yellow-600"
+        });
         return;
       }
 
       if (notifications && notifications.length > 0) {
         console.log('📬 Found NEW ORDER notifications via polling:', notifications.length);
+        setNotificationDeliveryCount(prev => prev + notifications.length);
+        setLastNotificationTime(new Date());
+        
         for (const notification of notifications) {
           console.log('🚨 Processing NEW ORDER from polling:', notification.type);
           await handleNotification(notification);
         }
         setLastChecked(new Date());
+      } else {
+        console.log('✅ Polling check complete - no new notifications');
       }
     } catch (error) {
       console.error('❌ Polling failed:', error);
+      // Show critical connection error
+      toast({
+        title: "🚨 Connection Failed",
+        description: "Cannot check for new orders! Please refresh.",
+        duration: 10000,
+        className: "bg-red-600 text-white border-red-600"
+      });
     }
-  }, [user, lastChecked, handleNotification]);
+  }, [user, lastChecked, handleNotification, toast]);
 
-  // Setup real-time subscription with auto-reconnection
+  // Heartbeat function to ensure connection stays alive
+  const sendHeartbeat = useCallback(async () => {
+    if (!user || !channelRef.current) return;
+    
+    try {
+      // Simple query to keep connection alive
+      await supabase
+        .from('notifications')
+        .select('count')
+        .eq('user_id', user.id)
+        .limit(1);
+      
+      console.log('💓 Heartbeat sent successfully');
+      setHeartbeatActive(true);
+      
+      // Reset connection status to connected if it was disconnected
+      if (connectionStatus === 'disconnected') {
+        setConnectionStatus('connected');
+      }
+    } catch (error) {
+      console.error('💔 Heartbeat failed:', error);
+      setHeartbeatActive(false);
+      setConnectionStatus('disconnected');
+    }
+  }, [user, connectionStatus]);
+
+  // Enhanced reconnection strategy
+  const attemptReconnection = useCallback(() => {
+    if (reconnectAttempts.current >= maxReconnectAttempts) {
+      console.error('🚨 Maximum reconnection attempts reached. Falling back to aggressive polling.');
+      
+      // Start very aggressive polling as last resort
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+      pollingIntervalRef.current = setInterval(checkForNewNotifications, 3000); // Every 3 seconds
+      setIsPolling(true);
+      
+      toast({
+        title: "🚨 Connection Issues",
+        description: "Using backup notification system. New orders will still be detected.",
+        duration: 10000,
+        className: "bg-orange-600 text-white border-orange-600"
+      });
+      return;
+    }
+
+    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 15000);
+    reconnectAttempts.current++;
+    
+    console.log(`🔄 Scheduling reconnection attempt ${reconnectAttempts.current}/${maxReconnectAttempts} in ${delay}ms`);
+    
+    reconnectTimeoutRef.current = setTimeout(() => {
+      console.log(`🔄 Executing reconnection attempt ${reconnectAttempts.current}`);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
+      channelRef.current = setupSubscription();
+    }, delay);
+  }, [checkForNewNotifications, toast]);
+
+  // Enhanced real-time subscription with comprehensive monitoring
   const setupSubscription = useCallback(() => {
     if (!user) return null;
 
-    console.log('🔔 Setting up notification subscription for user:', user.id);
+    console.log('🔔 Setting up enhanced notification subscription for user:', user.id);
     setConnectionStatus('connecting');
 
-    // Initialize audio context early
+    // Initialize audio context early and request permissions
     const initAudio = async () => {
       try {
         await notificationSound.ensureAudioContext();
         console.log('🔊 Audio context pre-initialized for notifications');
+        
+        // Request notification permission proactively
+        if ('Notification' in window && Notification.permission === 'default') {
+          const permission = await Notification.requestPermission();
+          console.log('🔔 Notification permission:', permission);
+        }
       } catch (error) {
         console.warn('🔊 Could not pre-initialize audio:', error);
       }
     };
     initAudio();
 
-      // Subscribe to notifications for this seller - ONLY NEW ORDERS
+    // Subscribe to notifications for this seller - ONLY NEW ORDERS
     const notificationsChannel = supabase
-      .channel('seller-notifications')
+      .channel(`seller-notifications-${user.id}-${Date.now()}`) // Unique channel name
       .on(
         'postgres_changes',
         {
@@ -286,10 +377,22 @@ export const SellerNotifications = () => {
           const notification = payload.new;
           console.log('🔔 Real-time notification received:', notification);
           
+          // Update delivery metrics
+          setNotificationDeliveryCount(prev => prev + 1);
+          setLastNotificationTime(new Date());
+          
           // Filter for new_order only at the application level
           if (notification.type === 'new_order') {
             console.log('🚨 NEW ORDER notification received via real-time:', notification);
             await handleNotification(notification);
+            
+            // Show success toast for real-time delivery
+            toast({
+              title: "✅ Real-time Connected",
+              description: "New order notification received instantly!",
+              duration: 3000,
+              className: "bg-green-600 text-white border-green-600"
+            });
           } else {
             console.log('🔇 Ignoring non-new-order notification:', notification.type);
           }
@@ -297,37 +400,50 @@ export const SellerNotifications = () => {
       )
       .subscribe((status) => {
         console.log('🔔 Subscription status changed:', status);
+        
         if (status === 'SUBSCRIBED') {
           setConnectionStatus('connected');
           reconnectAttempts.current = 0;
-          setLastChecked(new Date()); // Update last checked time on successful connection
+          setLastChecked(new Date());
           console.log('🔔 Successfully connected to notifications');
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          setConnectionStatus('disconnected');
-          console.error('🔔 Channel error/timeout - scheduling reconnection');
           
-          // Start polling as backup
-          if (!isPolling) {
-            setIsPolling(true);
-            pollingIntervalRef.current = setInterval(checkForNewNotifications, 15000);
+          // Start heartbeat to maintain connection
+          if (heartbeatIntervalRef.current) {
+            clearInterval(heartbeatIntervalRef.current);
+          }
+          heartbeatIntervalRef.current = setInterval(sendHeartbeat, 30000); // Every 30 seconds
+          
+          // Reduce polling frequency when real-time is working
+          if (isPolling && pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = setInterval(checkForNewNotifications, 60000); // Every minute as backup
           }
           
-          // Schedule reconnection with exponential backoff
-          const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
-          reconnectAttempts.current++;
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          setConnectionStatus('disconnected');
+          setHeartbeatActive(false);
+          console.error('🔔 Channel error/timeout/closed - initiating recovery');
           
-          reconnectTimeoutRef.current = setTimeout(() => {
-            console.log(`🔄 Attempting reconnection (attempt ${reconnectAttempts.current})`);
-            if (channelRef.current) {
-              supabase.removeChannel(channelRef.current);
-            }
-            channelRef.current = setupSubscription();
-          }, delay);
+          // Stop heartbeat
+          if (heartbeatIntervalRef.current) {
+            clearInterval(heartbeatIntervalRef.current);
+            heartbeatIntervalRef.current = null;
+          }
+          
+          // Start aggressive polling as backup
+          if (!isPolling) {
+            setIsPolling(true);
+            pollingIntervalRef.current = setInterval(checkForNewNotifications, 5000); // Every 5 seconds
+            console.log('🔄 Started aggressive backup polling');
+          }
+          
+          // Attempt reconnection
+          attemptReconnection();
         }
       });
 
     return notificationsChannel;
-  }, [user, handleNotification, checkForNewNotifications, isPolling]);
+  }, [user, handleNotification, checkForNewNotifications, isPolling, sendHeartbeat, attemptReconnection, toast]);
 
   // Manual refresh function
   const manualRefresh = useCallback(async () => {
@@ -357,30 +473,45 @@ export const SellerNotifications = () => {
   useEffect(() => {
     if (!user) return;
 
-    // Setup subscription
+    console.log('🚀 Initializing comprehensive notification system for user:', user.id);
+    
+    // Setup subscription immediately
     channelRef.current = setupSubscription();
 
-    // Start polling as fallback after 30 seconds
+    // Start immediate polling as backup (more aggressive)
     const pollingDelayTimeout = setTimeout(() => {
       if (!isPolling) {
-        console.log('🔄 Starting fallback polling');
+        console.log('🔄 Starting backup polling system');
         setIsPolling(true);
-        pollingIntervalRef.current = setInterval(checkForNewNotifications, 15000);
+        pollingIntervalRef.current = setInterval(checkForNewNotifications, 10000); // Every 10 seconds
       }
-    }, 30000);
+    }, 5000); // Start after 5 seconds instead of 30
+
+    // Initial check for any missed notifications
+    const initialCheck = setTimeout(() => {
+      console.log('🔍 Performing initial notification check');
+      checkForNewNotifications();
+    }, 1000);
 
     return () => {
-      console.log('🔔 Cleaning up notification subscription');
+      console.log('🔔 Comprehensive cleanup of notification system');
       
       // Clean up subscription
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
       }
       
       // Clean up polling
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
+      }
+      
+      // Clean up heartbeat
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
       }
       
       // Clean up reconnection timeout
@@ -390,7 +521,9 @@ export const SellerNotifications = () => {
       }
       
       clearTimeout(pollingDelayTimeout);
+      clearTimeout(initialCheck);
       setIsPolling(false);
+      setHeartbeatActive(false);
     };
   }, [user, setupSubscription, checkForNewNotifications]);
 
@@ -472,18 +605,81 @@ export const SellerNotifications = () => {
 
   return (
     <>
-      {/* Test Button for Development */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed top-12 right-4 z-40">
+      {/* Enhanced Connection Status and Controls */}
+      <div className="fixed top-12 right-4 z-40 flex flex-col gap-2">
+        {/* Connection Status Indicator */}
+        <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
+          connectionStatus === 'connected' 
+            ? 'bg-green-100 text-green-800 border border-green-200' 
+            : connectionStatus === 'connecting'
+            ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+            : 'bg-red-100 text-red-800 border border-red-200'
+        }`}>
+          {connectionStatus === 'connected' ? (
+            <>
+              <Wifi className="h-3 w-3" />
+              <span>Connected</span>
+              {heartbeatActive && <span className="animate-pulse">💓</span>}
+            </>
+          ) : connectionStatus === 'connecting' ? (
+            <>
+              <RefreshCw className="h-3 w-3 animate-spin" />
+              <span>Connecting...</span>
+            </>
+          ) : (
+            <>
+              <WifiOff className="h-3 w-3" />
+              <span>Disconnected</span>
+            </>
+          )}
+        </div>
+
+        {/* Notification Metrics */}
+        {(notificationDeliveryCount > 0 || isPolling) && (
+          <div className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded border border-blue-200">
+            {notificationDeliveryCount > 0 && (
+              <div>📬 Delivered: {notificationDeliveryCount}</div>
+            )}
+            {isPolling && (
+              <div className="flex items-center gap-1">
+                <RefreshCw className="h-2 w-2 animate-spin" />
+                <span>Polling Active</span>
+              </div>
+            )}
+            {lastNotificationTime && (
+              <div className="text-xs opacity-75">
+                Last: {lastNotificationTime.toLocaleTimeString()}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Manual Refresh Button */}
+        <Button
+          onClick={manualRefresh}
+          disabled={manualRefreshing}
+          className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
+          size="sm"
+        >
+          {manualRefreshing ? (
+            <RefreshCw className="h-3 w-3 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3 w-3" />
+          )}
+          Refresh
+        </Button>
+
+        {/* Test Button for Development */}
+        {process.env.NODE_ENV === 'development' && (
           <Button
             onClick={testNewOrderNotification}
             className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
             size="sm"
           >
-            🧪 Test New Order
+            🧪 Test Order
           </Button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Enhanced Modal with debugging */}
       {newOrderModal.visible && newOrderModal.order && (
