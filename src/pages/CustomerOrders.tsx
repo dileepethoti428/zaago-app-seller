@@ -492,12 +492,24 @@ const CustomerOrders: React.FC = () => {
                             )}
 
                             {order.status === 'packed' && (
-                              <div className="flex items-center gap-2">
-                                <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 flex items-center gap-2">
-                                  <Package className="w-4 h-4" />
-                                  Packed - Ready for Pickup
-                                </Badge>
-                              </div>
+                              <Button
+                                onClick={() => handlePackOrder(order.id, user.id)}
+                                disabled={isProcessing === order.id}
+                                className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+                                size="sm"
+                              >
+                                {isProcessing === order.id ? (
+                                  <>
+                                    <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
+                                    Notifying Agents...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Package className="w-4 h-4" />
+                                    Mark as Packed
+                                  </>
+                                )}
+                              </Button>
                             )}
 
                             {/* View Details button for packed/delivered orders */}
