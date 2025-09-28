@@ -605,72 +605,9 @@ export const SellerNotifications = () => {
 
   return (
     <>
-      {/* Enhanced Connection Status and Controls */}
-      <div className="fixed top-12 right-4 z-40 flex flex-col gap-2">
-        {/* Connection Status Indicator */}
-        <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
-          connectionStatus === 'connected' 
-            ? 'bg-green-100 text-green-800 border border-green-200' 
-            : connectionStatus === 'connecting'
-            ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
-            : 'bg-red-100 text-red-800 border border-red-200'
-        }`}>
-          {connectionStatus === 'connected' ? (
-            <>
-              <Wifi className="h-3 w-3" />
-              <span>Connected</span>
-              {heartbeatActive && <span className="animate-pulse">💓</span>}
-            </>
-          ) : connectionStatus === 'connecting' ? (
-            <>
-              <RefreshCw className="h-3 w-3 animate-spin" />
-              <span>Connecting...</span>
-            </>
-          ) : (
-            <>
-              <WifiOff className="h-3 w-3" />
-              <span>Disconnected</span>
-            </>
-          )}
-        </div>
-
-        {/* Notification Metrics */}
-        {(notificationDeliveryCount > 0 || isPolling) && (
-          <div className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded border border-blue-200">
-            {notificationDeliveryCount > 0 && (
-              <div>📬 Delivered: {notificationDeliveryCount}</div>
-            )}
-            {isPolling && (
-              <div className="flex items-center gap-1">
-                <RefreshCw className="h-2 w-2 animate-spin" />
-                <span>Polling Active</span>
-              </div>
-            )}
-            {lastNotificationTime && (
-              <div className="text-xs opacity-75">
-                Last: {lastNotificationTime.toLocaleTimeString()}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Manual Refresh Button */}
-        <Button
-          onClick={manualRefresh}
-          disabled={manualRefreshing}
-          className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
-          size="sm"
-        >
-          {manualRefreshing ? (
-            <RefreshCw className="h-3 w-3 animate-spin" />
-          ) : (
-            <RefreshCw className="h-3 w-3" />
-          )}
-          Refresh
-        </Button>
-
-        {/* Test Button for Development */}
-        {process.env.NODE_ENV === 'development' && (
+      {/* Test Button for Development Only */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed top-12 right-4 z-40">
           <Button
             onClick={testNewOrderNotification}
             className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
@@ -678,8 +615,8 @@ export const SellerNotifications = () => {
           >
             🧪 Test Order
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Enhanced Modal with debugging */}
       {newOrderModal.visible && newOrderModal.order && (
