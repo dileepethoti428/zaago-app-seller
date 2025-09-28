@@ -57,10 +57,8 @@ export default function Sidebar() {
   const collapsed = state === 'collapsed';
 
   const handleNavClick = () => {
-    // Only close sidebar on mobile devices, keep it open on desktop
-    if (isMobile) {
-      setOpen(false);
-    }
+    // Don't close sidebar when navigation items are clicked
+    // This keeps the sidebar open and text visible
   };
 
   const handleLogout = async () => {
