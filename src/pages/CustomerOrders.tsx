@@ -506,7 +506,7 @@ const CustomerOrders: React.FC = () => {
                                 ) : (
                                   <>
                                     <Package className="w-4 h-4" />
-                                    Notify Delivery Agents
+                                    Packed
                                   </>
                                 )}
                               </Button>
