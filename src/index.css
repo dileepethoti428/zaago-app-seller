@@ -246,7 +246,7 @@ body {
   }
   
   .zaago-nav-inactive {
-    @apply text-white hover:bg-zaago-green/10 hover:text-zaago-green active:bg-zaago-green/15;
+    @apply text-white hover:bg-white/10 hover:text-white active:bg-white/20;
   }
   
   .zaago-button-outline {
