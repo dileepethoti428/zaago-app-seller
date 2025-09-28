@@ -148,17 +148,7 @@ const CustomerOrders: React.FC = () => {
 
   // Pack order function - now handled by useSellerOrderActions hook
   const handlePackOrder = async (orderId: string, sellerId: string) => {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('address')
-      .eq('id', sellerId)
-      .single();
-
-    if (!profile?.address) {
-      setIsLocationModalOpen(true);
-      return;
-    }
-
+    // Directly pack the order without location check
     await packOrder(orderId, sellerId);
     fetchOrders();
   };
