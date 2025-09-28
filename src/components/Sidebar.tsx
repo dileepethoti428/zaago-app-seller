@@ -57,8 +57,7 @@ export default function Sidebar() {
   const collapsed = state === 'collapsed';
 
   const handleNavClick = () => {
-    // Close sidebar when navigation items are clicked
-    setOpen(false);
+    // Keep sidebar open when navigation items are clicked
   };
 
   const handleLogout = async () => {
@@ -93,7 +92,7 @@ export default function Sidebar() {
   };
 
   return (
-    <SidebarUI collapsible="none" className={`${collapsed ? 'w-12 sm:w-14' : 'w-60 sm:w-64'} bg-zaago-dark border-r border-border`}>
+    <SidebarUI className={`${collapsed ? 'w-12 sm:w-14' : 'w-60 sm:w-64'} bg-zaago-dark border-r border-border`}>
       <SidebarContent className="bg-zaago-dark">
         {/* Header */}
         <div className="p-3 sm:p-4 border-b border-border">
