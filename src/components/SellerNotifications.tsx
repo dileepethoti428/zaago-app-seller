@@ -21,12 +21,63 @@ export const SellerNotifications = () => {
   const [heartbeatActive, setHeartbeatActive] = useState(false);
   const [notificationDeliveryCount, setNotificationDeliveryCount] = useState(0);
   const [lastNotificationTime, setLastNotificationTime] = useState<Date | null>(null);
+  const [sessionInitialized, setSessionInitialized] = useState(false);
   const channelRef = useRef<any>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 10;
+
+  // Enhanced session initialization - check for missed notifications on first load
+  const initializeSession = useCallback(async () => {
+    if (!user || sessionInitialized) return;
+    
+    console.log('🚀 Initializing comprehensive notification system for user:', user.id);
+    
+    // Check for missed notifications from the last 24 hours for new sessions
+    const checkSinceTime = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    console.log('🔍 Checking for missed notifications since:', checkSinceTime.toISOString());
+    
+    try {
+      const { data: missedNotifications, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('type', 'new_order')
+        .gt('created_at', checkSinceTime.toISOString())
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('❌ Failed to check for missed notifications:', error);
+      } else if (missedNotifications && missedNotifications.length > 0) {
+        console.log('📬 Found', missedNotifications.length, 'missed notifications');
+        
+        // Store notification state in localStorage for persistence
+        localStorage.setItem('zaago_missed_notifications', JSON.stringify({
+          count: missedNotifications.length,
+          lastCheck: new Date().toISOString(),
+          notifications: missedNotifications.slice(0, 3) // Store latest 3
+        }));
+
+        // Show urgent toast for missed notifications
+        toast({
+          title: `🚨 ${missedNotifications.length} MISSED ORDER(S)!`,
+          description: `You have ${missedNotifications.length} new order notification(s) that need attention!`,
+          duration: 30000,
+          className: "bg-red-600 text-white border-red-600 text-lg font-bold animate-pulse"
+        });
+
+        // Process the most recent missed notification immediately
+        await handleNotification(missedNotifications[0]);
+      }
+    } catch (error) {
+      console.error('❌ Session initialization failed:', error);
+    }
+    
+    setSessionInitialized(true);
+    setLastChecked(new Date());
+  }, [user, sessionInitialized, toast]);
 
   // Handle notification processing (extracted for reuse)
   const handleNotification = useCallback(async (notification: any) => {
@@ -206,9 +257,22 @@ export const SellerNotifications = () => {
         }
       }
 
-      // SHOW MODAL with enhanced logging
+      // SHOW MODAL with enhanced logging and persistence
       console.log('🚨 SHOWING NEW ORDER MODAL with order details:', orderDetails);
-      setNewOrderModal({ visible: true, order: orderDetails });
+      
+      // Force state update with callback to ensure it's processed
+      setNewOrderModal(prev => {
+        console.log('🚨 Modal state transition:', prev, '→', { visible: true, order: orderDetails });
+        return { visible: true, order: orderDetails };
+      });
+      
+      // Store in localStorage for recovery
+      localStorage.setItem('zaago_active_modal', JSON.stringify({
+        visible: true,
+        order: orderDetails,
+        timestamp: Date.now()
+      }));
+      
       console.log('🚨 Modal state set - should be visible now!');
       
     } else {
@@ -231,7 +295,9 @@ export const SellerNotifications = () => {
     if (!user) return;
     
     try {
-      console.log('🔍 Aggressive polling for NEW ORDER notifications since:', lastChecked);
+      console.log('🔍 Enhanced polling for NEW ORDER notifications since:', lastChecked);
+      console.log('🔍 Using user ID for query:', user.id);
+      
       const { data: notifications, error } = await supabase
         .from('notifications')
         .select('*')
@@ -245,13 +311,23 @@ export const SellerNotifications = () => {
         return;
       }
 
+      console.log('🔍 Polling query result:', { 
+        found: notifications?.length || 0, 
+        notifications: notifications?.map(n => ({ id: n.id, type: n.type, created_at: n.created_at }))
+      });
+
       if (notifications && notifications.length > 0) {
         console.log('📬 Found NEW ORDER notifications via polling:', notifications.length);
         setNotificationDeliveryCount(prev => prev + notifications.length);
         setLastNotificationTime(new Date());
         
+        // Update localStorage for persistence
+        const existing = JSON.parse(localStorage.getItem('zaago_notifications_processed') || '[]');
+        const newIds = notifications.map(n => n.id);
+        localStorage.setItem('zaago_notifications_processed', JSON.stringify([...existing, ...newIds]));
+        
         for (const notification of notifications) {
-          console.log('🚨 Processing NEW ORDER from polling:', notification.type);
+          console.log('🚨 Processing NEW ORDER from polling:', notification.type, notification.id);
           await handleNotification(notification);
         }
         setLastChecked(new Date());
@@ -261,7 +337,7 @@ export const SellerNotifications = () => {
     } catch (error) {
       console.error('❌ Polling failed:', error);
     }
-  }, [user, lastChecked, handleNotification, toast]);
+  }, [user, lastChecked, handleNotification]);
 
   // Heartbeat function to ensure connection stays alive
   const sendHeartbeat = useCallback(async () => {
@@ -289,10 +365,18 @@ export const SellerNotifications = () => {
     }
   }, [user, connectionStatus]);
 
-  // Enhanced reconnection strategy
+  // Enhanced reconnection strategy with better fallback handling
   const attemptReconnection = useCallback(() => {
     if (reconnectAttempts.current >= maxReconnectAttempts) {
       console.error('🚨 Maximum reconnection attempts reached. Falling back to aggressive polling.');
+      
+      // Show user feedback about connection issues
+      toast({
+        title: "⚠️ Connection Issues",
+        description: "Using backup system to ensure you don't miss orders",
+        duration: 5000,
+        className: "bg-orange-600 text-white"
+      });
       
       // Start very aggressive polling as last resort
       if (pollingIntervalRef.current) {
@@ -300,6 +384,7 @@ export const SellerNotifications = () => {
       }
       pollingIntervalRef.current = setInterval(checkForNewNotifications, 3000); // Every 3 seconds
       setIsPolling(true);
+      setConnectionStatus('disconnected');
       
       return;
     }
@@ -388,11 +473,12 @@ export const SellerNotifications = () => {
           }
           heartbeatIntervalRef.current = setInterval(sendHeartbeat, 30000); // Every 30 seconds
           
-          // Reduce polling frequency when real-time is working
-          if (isPolling && pollingIntervalRef.current) {
+          // Reduce polling frequency when real-time is working, but keep it active
+          if (pollingIntervalRef.current) {
             clearInterval(pollingIntervalRef.current);
-            pollingIntervalRef.current = setInterval(checkForNewNotifications, 60000); // Every minute as backup
           }
+          pollingIntervalRef.current = setInterval(checkForNewNotifications, 30000); // Every 30 seconds as backup
+          setIsPolling(true);
           
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           setConnectionStatus('disconnected');
@@ -524,6 +610,7 @@ export const SellerNotifications = () => {
     notificationSound.stopContinuousRinging();
     
     setNewOrderModal({ visible: false, order: null });
+    localStorage.removeItem('zaago_active_modal');
     
     // Here you would typically update the order status
     toast({
@@ -541,6 +628,7 @@ export const SellerNotifications = () => {
     notificationSound.stopContinuousRinging();
     
     setNewOrderModal({ visible: false, order: null });
+    localStorage.removeItem('zaago_active_modal');
   };
 
   const handleViewOrder = () => {
@@ -550,6 +638,7 @@ export const SellerNotifications = () => {
     notificationSound.stopContinuousRinging();
     
     setNewOrderModal({ visible: false, order: null });
+    localStorage.removeItem('zaago_active_modal');
     // Here you would typically navigate to the order details page
     window.location.href = `/orders/${newOrderModal.order?.id}`;
   };
@@ -580,9 +669,54 @@ export const SellerNotifications = () => {
 
   return (
     <>
+      {/* Connection Status Indicator */}
+      <div className="fixed top-4 right-4 z-30 flex items-center gap-2 bg-background/95 backdrop-blur-sm border rounded-lg px-3 py-2 shadow-lg">
+        <div className="flex items-center gap-2">
+          {connectionStatus === 'connected' ? (
+            <>
+              <Wifi className="h-4 w-4 text-green-500" />
+              <span className="text-green-500 text-xs font-medium">Connected</span>
+            </>
+          ) : connectionStatus === 'connecting' ? (
+            <>
+              <RefreshCw className="h-4 w-4 text-yellow-500 animate-spin" />
+              <span className="text-yellow-500 text-xs font-medium">Connecting</span>
+            </>
+          ) : (
+            <>
+              <WifiOff className="h-4 w-4 text-red-500" />
+              <span className="text-red-500 text-xs font-medium">Backup Mode</span>
+            </>
+          )}
+        </div>
+        
+        {isPolling && (
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+            <span className="text-xs text-muted-foreground">Monitoring</span>
+          </div>
+        )}
+        
+        {notificationDeliveryCount > 0 && (
+          <div className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+            {notificationDeliveryCount}
+          </div>
+        )}
+        
+        <Button
+          onClick={manualRefresh}
+          disabled={manualRefreshing}
+          size="sm"
+          variant="ghost"
+          className="h-6 w-6 p-0"
+        >
+          <RefreshCw className={`h-3 w-3 ${manualRefreshing ? 'animate-spin' : ''}`} />
+        </Button>
+      </div>
+
       {/* Test Button for Development Only */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="fixed top-12 right-4 z-40">
+        <div className="fixed top-16 right-4 z-40">
           <Button
             onClick={testNewOrderNotification}
             className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
