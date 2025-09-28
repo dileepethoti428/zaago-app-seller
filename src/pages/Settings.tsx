@@ -503,44 +503,76 @@ const Settings = () => {
                   Choose your preferred color scheme for the app
                 </p>
                 
-                <RadioGroup 
-                  value={theme} 
-                  onValueChange={setTheme}
-                  className="space-y-3"
-                >
-                  <div className="flex items-center justify-between p-3 rounded-md border bg-card hover:bg-accent/50 transition-colors">
-                    <div className="flex items-center gap-3">
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-md border bg-card hover:bg-accent/50 transition-colors">
+                    <div className="flex items-center gap-3 flex-1">
                       <Monitor className="w-5 h-5 text-muted-foreground" />
                       <div>
                         <p className="font-medium text-foreground text-sm">System</p>
                         <p className="text-xs text-muted-foreground">Follow your device's theme setting</p>
                       </div>
                     </div>
-                    <RadioGroupItem value="system" id="system" />
+                    <div className="flex justify-end sm:justify-start">
+                      <button
+                        type="button"
+                        onClick={() => setTheme("system")}
+                        className={`px-4 py-2 text-xs font-medium rounded-md transition-colors ${
+                          theme === "system"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}
+                      >
+                        {theme === "system" ? "Selected" : "Select"}
+                      </button>
+                    </div>
                   </div>
                   
-                  <div className="flex items-center justify-between p-3 rounded-md border bg-card hover:bg-accent/50 transition-colors">
-                    <div className="flex items-center gap-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-md border bg-card hover:bg-accent/50 transition-colors">
+                    <div className="flex items-center gap-3 flex-1">
                       <Sun className="w-5 h-5 text-amber-500" />
                       <div>
                         <p className="font-medium text-foreground text-sm">Light</p>
                         <p className="text-xs text-muted-foreground">Bright and clean interface</p>
                       </div>
                     </div>
-                    <RadioGroupItem value="light" id="light" />
+                    <div className="flex justify-end sm:justify-start">
+                      <button
+                        type="button"
+                        onClick={() => setTheme("light")}
+                        className={`px-4 py-2 text-xs font-medium rounded-md transition-colors ${
+                          theme === "light"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}
+                      >
+                        {theme === "light" ? "Selected" : "Select"}
+                      </button>
+                    </div>
                   </div>
                   
-                  <div className="flex items-center justify-between p-3 rounded-md border bg-card hover:bg-accent/50 transition-colors">
-                    <div className="flex items-center gap-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-md border bg-card hover:bg-accent/50 transition-colors">
+                    <div className="flex items-center gap-3 flex-1">
                       <Moon className="w-5 h-5 text-blue-400" />
                       <div>
                         <p className="font-medium text-foreground text-sm">Dark</p>
                         <p className="text-xs text-muted-foreground">Easy on the eyes in low light</p>
                       </div>
                     </div>
-                    <RadioGroupItem value="dark" id="dark" />
+                    <div className="flex justify-end sm:justify-start">
+                      <button
+                        type="button"
+                        onClick={() => setTheme("dark")}
+                        className={`px-4 py-2 text-xs font-medium rounded-md transition-colors ${
+                          theme === "dark"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}
+                      >
+                        {theme === "dark" ? "Selected" : "Select"}
+                      </button>
+                    </div>
                   </div>
-                </RadioGroup>
+                </div>
               </div>
               
               <div className="mt-6 p-4 bg-gradient-to-r from-zaago-green/5 to-zaago-green/10 border border-zaago-green/20 rounded-lg">
