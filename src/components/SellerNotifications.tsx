@@ -144,11 +144,27 @@ export const SellerNotifications = () => {
             const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items || [];
             
             // Get current user (seller) ID to filter products
-            const { data: { user } } = await supabase.auth.getUser();
-            const sellerId = user?.id;
+            const { data: { user: authUser } } = await supabase.auth.getUser();
+            console.log('🔍 Auth user ID:', authUser?.id);
+            
+            // Get the seller record for the authenticated user
+            const { data: sellerRecord } = await supabase
+              .from('sellers')
+              .select('id, user_id')
+              .eq('user_id', authUser?.id)
+              .single();
+            
+            console.log('🔍 Seller record:', sellerRecord);
+            
+            // Use the seller's user_id (which should match auth user) for filtering
+            const sellerUserId = sellerRecord?.user_id;
+            console.log('🔍 Using seller user ID for filtering:', sellerUserId);
 
             // Filter items to only include products from this seller
-            const sellerItems = items.filter((item: any) => item.seller_id === sellerId);
+            const sellerItems = items.filter((item: any) => {
+              console.log('🔍 Checking item seller_id:', item.seller_id, 'against seller user_id:', sellerUserId);
+              return item.seller_id === sellerUserId;
+            });
 
             console.log('🔍 Total items in order:', items.length);
             console.log('🔍 Items for current seller:', sellerItems.length);
@@ -166,7 +182,7 @@ export const SellerNotifications = () => {
                 : 'Address not available',
               payment_method: (order as any).payment_method || 'COD',
               payment_status: (order as any).payment_status || 'pending',
-              seller_id: sellerId
+              seller_id: sellerUserId
             };
 
             console.log('📦 Final order details for modal:', orderDetails);
