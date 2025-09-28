@@ -149,13 +149,25 @@ const CustomerOrders: React.FC = () => {
   // Pack order function with immediate UI update
   const handlePackOrder = async (orderId: string, sellerId: string) => {
     try {
-      // Optimistically update the order status immediately
+      // Optimistically update the product statuses immediately
       setOrders(prevOrders => 
-        prevOrders.map(order => 
-          order.id === orderId 
-            ? { ...order, status: 'packed' }
-            : order
-        )
+        prevOrders.map(order => {
+          if (order.id === orderId) {
+            // Update product statuses for seller's products
+            const updatedProductStatuses = { ...order.product_statuses };
+            order.items.forEach(item => {
+              if (item.seller_id === sellerId) {
+                updatedProductStatuses[item.id] = { status: 'packed' };
+              }
+            });
+            return { 
+              ...order, 
+              product_statuses: updatedProductStatuses,
+              status: 'packed'
+            };
+          }
+          return order;
+        })
       );
 
       // Then make the actual API call
