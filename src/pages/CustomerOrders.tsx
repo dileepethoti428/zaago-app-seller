@@ -148,18 +148,28 @@ const CustomerOrders: React.FC = () => {
 
   // Pack order function with immediate UI update
   const handlePackOrder = async (orderId: string, sellerId: string) => {
+    console.log('🎯 Packing order:', { orderId, sellerId });
+    
     try {
       // Optimistically update the product statuses immediately
       setOrders(prevOrders => 
         prevOrders.map(order => {
           if (order.id === orderId) {
+            console.log('📦 Found order to update:', order.id);
+            console.log('📝 Order items:', order.items);
+            
             // Update product statuses for seller's products
             const updatedProductStatuses = { ...order.product_statuses };
             order.items.forEach(item => {
+              console.log('🔍 Checking item:', { itemId: item.id, itemSellerId: item.seller_id, targetSellerId: sellerId });
               if (item.seller_id === sellerId) {
+                console.log('✅ Updating product status for item:', item.id);
                 updatedProductStatuses[item.id] = { status: 'packed' };
               }
             });
+            
+            console.log('📊 Updated product statuses:', updatedProductStatuses);
+            
             return { 
               ...order, 
               product_statuses: updatedProductStatuses,
@@ -172,6 +182,7 @@ const CustomerOrders: React.FC = () => {
 
       // Then make the actual API call
       const success = await packOrder(orderId, sellerId);
+      console.log('📡 Pack order API result:', success);
       
       if (success) {
         // Refresh orders to get the latest state from server
@@ -181,7 +192,7 @@ const CustomerOrders: React.FC = () => {
         await fetchOrders();
       }
     } catch (error) {
-      console.error('Error packing order:', error);
+      console.error('❌ Error packing order:', error);
       // Revert optimistic update on error
       await fetchOrders();
     }
@@ -534,18 +545,24 @@ const CustomerOrders: React.FC = () => {
                                           </>
                                         )}
                                         
-                                         {(productStatus === 'accepted' || productStatus === 'packed') && (
-                                           <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
-                                             ✅ Packed
-                                           </Badge>
-                                         )}
-                                         
-                                         {/* Also show packed if order status is packed */}
-                                         {order.status === 'packed' && !productStatus && (
-                                           <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
-                                             ✅ Packed
-                                           </Badge>
-                                         )}
+                                        {(productStatus === 'accepted' || productStatus === 'packed') && (
+                                          <>
+                                            {console.log('🏷️ Showing packed badge for item:', { itemId: item.id, productStatus, orderStatus: order.status })}
+                                            <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
+                                              ✅ Packed
+                                            </Badge>
+                                          </>
+                                        )}
+                                        
+                                        {/* Also show packed if order status is packed */}
+                                        {order.status === 'packed' && !productStatus && (
+                                          <>
+                                            {console.log('🏷️ Showing packed badge for order-level status:', { orderId: order.id, orderStatus: order.status, noProductStatus: !productStatus })}
+                                            <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
+                                              ✅ Packed
+                                            </Badge>
+                                          </>
+                                        )}
                                          
                                          {productStatus === 'rejected' && (
                                            <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
@@ -567,7 +584,10 @@ const CustomerOrders: React.FC = () => {
                             <div className="flex gap-2 pt-3 border-t border-zaago-border/30 mt-3">
                               {shouldShowPackButton && (
                                 <Button
-                                  onClick={() => handlePackOrder(order.id, user?.id || "")}
+                                  onClick={() => {
+                                    console.log('🎯 Accept button clicked:', { orderId: order.id, userId: user?.id, sellerItems });
+                                    handlePackOrder(order.id, user?.id || "");
+                                  }}
                                   disabled={isProcessing === order.id}
                                   className="bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
                                 >
