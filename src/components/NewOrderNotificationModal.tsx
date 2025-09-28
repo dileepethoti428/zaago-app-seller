@@ -3,17 +3,32 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Phone, PhoneOff, Eye, CheckCircle, VolumeX, Volume2, Play, Square, ChevronDown } from 'lucide-react';
+import { Phone, PhoneOff, Eye, CheckCircle, VolumeX, Volume2, Play, Square, ChevronDown, X, Check } from 'lucide-react';
 import { notificationSound } from '@/utils/notificationSound';
 import { useToast } from '@/hooks/use-toast';
+import { useProductActions } from '@/hooks/useProductActions';
+
+interface OrderItem {
+  id: string;
+  name: string;
+  quantity: number;
+  price: number;
+  total_price: number;
+  image_url?: string;
+  seller_id?: string;
+}
 
 interface NewOrderNotificationModalProps {
   order: {
     id: string;
     customer_name?: string;
+    customer_phone?: string;
     total_amount?: number;
-    items?: Array<{ name: string; quantity: number }>;
+    items?: OrderItem[];
     delivery_address?: string;
+    payment_method?: string;
+    payment_status?: string;
+    seller_id?: string;
   };
   onAccept: () => void;
   onDismiss: () => void;
@@ -27,8 +42,11 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
   onViewOrder
 }) => {
   const { toast } = useToast();
+  const { acceptProduct, rejectProduct, isProcessing } = useProductActions();
   const [audioControlsOpen, setAudioControlsOpen] = useState(false);
   const [audioStatus, setAudioStatus] = useState<any>(null);
+  const [acceptedProducts, setAcceptedProducts] = useState<Set<string>>(new Set());
+  const [rejectedProducts, setRejectedProducts] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const checkStatus = () => {
@@ -53,6 +71,44 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
   const formatAmount = (amount?: number) => {
     if (!amount) return '₹0';
     return `₹${amount.toFixed(2)}`;
+  };
+
+  const handleProductAccept = async (productId: string) => {
+    if (!order.seller_id) return;
+    
+    const success = await acceptProduct(order.id, productId, order.seller_id);
+    if (success) {
+      setAcceptedProducts(prev => new Set([...prev, productId]));
+      setRejectedProducts(prev => {
+        const newSet = new Set([...prev]);
+        newSet.delete(productId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleProductReject = async (productId: string) => {
+    if (!order.seller_id) return;
+    
+    const success = await rejectProduct(order.id, productId, order.seller_id);
+    if (success) {
+      setRejectedProducts(prev => new Set([...prev, productId]));
+      setAcceptedProducts(prev => {
+        const newSet = new Set([...prev]);
+        newSet.delete(productId);
+        return newSet;
+      });
+    }
+  };
+
+  const getProductStatus = (productId: string) => {
+    if (acceptedProducts.has(productId)) return 'accepted';
+    if (rejectedProducts.has(productId)) return 'rejected';
+    return 'pending';
+  };
+
+  const calculateSellerTotal = () => {
+    return order.items?.reduce((total, item) => total + (item.total_price || 0), 0) || 0;
   };
 
   const testNewOrderRingtone = async () => {
@@ -131,25 +187,23 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
             )}
             
             <div className="flex justify-between">
-              <span className="font-medium">Amount:</span>
+              <span className="font-medium">Your Items Total:</span>
               <span className="text-primary font-bold text-lg">
-                {formatAmount(order.total_amount)}
+                {formatAmount(calculateSellerTotal())}
               </span>
             </div>
 
-            {order.items && order.items.length > 0 && (
-              <div className="space-y-1">
-                <span className="font-medium">Items:</span>
-                <div className="text-sm text-muted-foreground">
-                  {order.items.slice(0, 3).map((item, index) => (
-                    <div key={index}>
-                      {item.quantity}x {item.name}
-                    </div>
-                  ))}
-                  {order.items.length > 3 && (
-                    <div className="text-xs">+{order.items.length - 3} more items</div>
-                  )}
-                </div>
+            {order.customer_phone && (
+              <div className="flex justify-between">
+                <span className="font-medium">Phone:</span>
+                <span className="font-mono">{order.customer_phone}</span>
+              </div>
+            )}
+
+            {order.payment_method && (
+              <div className="flex justify-between">
+                <span className="font-medium">Payment:</span>
+                <span>{order.payment_method}</span>
               </div>
             )}
 
@@ -162,6 +216,85 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
               </div>
             )}
           </div>
+
+          {/* Products Section */}
+          {order.items && order.items.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="font-bold text-lg text-center border-b pb-2">
+                Your Products ({order.items.length})
+              </h3>
+              
+              <div className="space-y-3 max-h-60 overflow-y-auto">
+                {order.items.map((item) => {
+                  const status = getProductStatus(item.id);
+                  const isProcessingThisProduct = isProcessing === `${order.id}-${item.id}`;
+                  
+                  return (
+                    <Card key={item.id} className={`p-3 border-2 ${
+                      status === 'accepted' ? 'border-green-500 bg-green-50' :
+                      status === 'rejected' ? 'border-red-500 bg-red-50' :
+                      'border-orange-500 bg-orange-50'
+                    }`}>
+                      <div className="flex items-center gap-3">
+                        {item.image_url && (
+                          <img 
+                            src={item.image_url} 
+                            alt={item.name}
+                            className="w-12 h-12 object-cover rounded-lg"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <h4 className="font-medium">{item.name}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Qty: {item.quantity} × {formatAmount(item.price)} = {formatAmount(item.total_price)}
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          {status === 'pending' && (
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={() => handleProductAccept(item.id)}
+                                disabled={isProcessingThisProduct}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <Check className="h-4 w-4" />
+                                Accept
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleProductReject(item.id)}
+                                disabled={isProcessingThisProduct}
+                              >
+                                <X className="h-4 w-4" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                          
+                          {status === 'accepted' && (
+                            <Badge variant="default" className="bg-green-600 text-white">
+                              <Check className="h-3 w-3 mr-1" />
+                              Accepted
+                            </Badge>
+                          )}
+                          
+                          {status === 'rejected' && (
+                            <Badge variant="destructive">
+                              <X className="h-3 w-3 mr-1" />
+                              Rejected
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* EMERGENCY ACTION BUTTONS */}
           <div className="bg-yellow-100 dark:bg-yellow-900/20 p-4 rounded-lg border-2 border-yellow-500">
@@ -237,19 +370,19 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
           {/* PRIMARY ACTION BUTTONS */}
           <div className="grid grid-cols-2 gap-3">
             <Button
-              onClick={() => handleAction(onAccept)}
-              className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 text-lg py-6"
-            >
-              <CheckCircle className="h-6 w-6" />
-              ACCEPT ORDER
-            </Button>
-            <Button
               onClick={() => handleAction(onViewOrder)}
               variant="outline"
               className="flex items-center gap-2 text-lg py-6 border-2 border-blue-500 text-blue-600 hover:bg-blue-50"
             >
               <Eye className="h-6 w-6" />
-              VIEW DETAILS
+              VIEW FULL ORDER
+            </Button>
+            <Button
+              onClick={() => handleAction(onDismiss)}
+              className="bg-gray-600 hover:bg-gray-700 text-white flex items-center gap-2 text-lg py-6"
+            >
+              <CheckCircle className="h-6 w-6" />
+              DONE
             </Button>
           </div>
         </div>

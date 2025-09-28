@@ -118,39 +118,58 @@ export const SellerNotifications = () => {
       let orderDetails = {
         id: notification.reference_id || 'N/A',
         customer_name: 'New Customer',
+        customer_phone: '',
         total_amount: 0,
         items: [],
-        delivery_address: ''
+        delivery_address: '',
+        payment_method: 'COD',
+        payment_status: 'pending',
+        seller_id: ''
       };
 
       if (notification.reference_id) {
         try {
+          // Fetch complete order details with all products
           const { data: order } = await supabase
             .from('orders')
             .select(`
               *,
-              order_items (
-                quantity,
-                product_variants (
-                  products (name)
-                )
-              ),
-              customer_profiles (display_name)
+              address
             `)
             .eq('id', notification.reference_id)
             .single();
 
           if (order) {
+            // Parse the items JSON to get detailed product information
+            const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items || [];
+            
+            // Get current user (seller) ID to filter products
+            const { data: { user } } = await supabase.auth.getUser();
+            const sellerId = user?.id;
+
+            // Filter items to only include products from this seller
+            const sellerItems = items.filter((item: any) => item.seller_id === sellerId);
+
+            console.log('🔍 Total items in order:', items.length);
+            console.log('🔍 Items for current seller:', sellerItems.length);
+            console.log('🔍 Seller items:', sellerItems);
+
             orderDetails = {
               id: order.id,
               customer_name: order.customer_name || 'Customer',
-              total_amount: 0,
-              items: order.order_items?.map((item: any) => ({
-                name: item.product_variants?.products?.name || 'Product',
-                quantity: item.quantity
-              })) || [],
-              delivery_address: order.customer_phone || ''
+              customer_phone: order.customer_phone || '',
+              total_amount: order.total || 0,
+              items: sellerItems, // Only seller's products
+              delivery_address: order.address ? 
+                (typeof order.address === 'string' ? order.address : 
+                 `${(order.address as any)?.full_address || ''}, ${(order.address as any)?.city || ''}`.trim()) 
+                : 'Address not available',
+              payment_method: (order as any).payment_method || 'COD',
+              payment_status: (order as any).payment_status || 'pending',
+              seller_id: sellerId
             };
+
+            console.log('📦 Final order details for modal:', orderDetails);
           }
         } catch (error) {
           console.error('Error fetching order details:', error);
