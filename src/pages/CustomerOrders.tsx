@@ -471,7 +471,7 @@ const CustomerOrders: React.FC = () => {
                                         {productStatus === 'pending' && (
                                           <>
                                             <Button
-                                              onClick={() => acceptOrder(order.id, user?.id || "")}
+                                              onClick={() => handlePackOrder(order.id, user?.id || "")}
                                               disabled={isProcessing === order.id}
                                               className="bg-zaago-green text-black hover:bg-zaago-green/90 flex items-center gap-2"
                                               size="sm"
@@ -479,12 +479,12 @@ const CustomerOrders: React.FC = () => {
                                               {isProcessing === order.id ? (
                                                 <>
                                                   <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
-                                                  Accepting...
+                                                  Accepting & Packing...
                                                 </>
                                               ) : (
                                                 <>
                                                   <CheckCircle className="w-4 h-4" />
-                                                  Accept
+                                                  Accept & Pack
                                                 </>
                                               )}
                                             </Button>
@@ -512,15 +512,21 @@ const CustomerOrders: React.FC = () => {
                                         
                                         {productStatus === 'accepted' && (
                                           <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
-                                            ✅ Accepted
+                                            ✅ Packed
                                           </Badge>
                                         )}
                                         
-                                        {productStatus === 'rejected' && (
-                                          <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
-                                            ❌ Rejected
-                                          </Badge>
-                                        )}
+                                         {productStatus === 'packed' && (
+                                           <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
+                                             ✅ Packed
+                                           </Badge>
+                                         )}
+                                         
+                                         {productStatus === 'rejected' && (
+                                           <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+                                             ❌ Rejected
+                                           </Badge>
+                                         )}
                                       </div>
                                     </div>
                                   );
@@ -554,7 +560,7 @@ const CustomerOrders: React.FC = () => {
                                 </Button>
                               )}
                                
-                               {/* View Details button for packed/delivered orders */}
+                                {/* View Details button for packed/delivered orders */}
                                {['packed', 'in_transit', 'delivered'].includes(currentOrderStatus) && (
                                 <Link to={`/orders/${order.id}`} className="flex-1">
                                   <Button
