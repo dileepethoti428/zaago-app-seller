@@ -669,18 +669,6 @@ export const SellerNotifications = () => {
 
   return (
     <>
-      {/* Test Button for Development Only */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed top-16 right-4 z-40">
-          <Button
-            onClick={testNewOrderNotification}
-            className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
-            size="sm"
-          >
-            🧪 Test Order
-          </Button>
-        </div>
-      )}
 
       {/* Enhanced Modal with debugging */}
       {newOrderModal.visible && newOrderModal.order && (
