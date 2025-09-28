@@ -4884,6 +4884,22 @@ export type Database = {
           stock_quantity: number
         }[]
       }
+      get_seller_orders: {
+        Args: { seller_user_id: string; status_filter?: string[] }
+        Returns: {
+          address: Json
+          created_at: string
+          customer_name: string
+          customer_phone: string
+          delivery_time_slot: string
+          id: string
+          items: Json
+          payment_status: string
+          seller_total: number
+          status: string
+          total: number
+        }[]
+      }
       get_seller_payouts_summary_json: {
         Args: { target_seller_id: string }
         Returns: Json
