@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useCart } from '@/context/CartContext';
 import ProductVariantSelector from '@/components/ProductVariantSelector';
 
 interface ProductWithSeller {
@@ -32,6 +33,7 @@ const CustomerProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { addToCart } = useCart();
   
   const [product, setProduct] = useState<ProductWithSeller | null>(null);
   const [loading, setLoading] = useState(true);
@@ -103,13 +105,19 @@ const CustomerProductDetail = () => {
     setFinalPrice(price);
   };
 
-  const addToCart = () => {
+  const handleAddToCart = async () => {
     if (!product) return;
     
-    toast({
-      title: "Added to Cart",
-      description: `${product.name}${selectedVariant ? ` (${selectedVariant.variant_name})` : ''} has been added to your cart`,
-    });
+    const productData = {
+      id: product.id,
+      name: product.name,
+      price: selectedVariant?.price || product.price,
+      image_url: product.image_url,
+      seller_id: product.seller_id,
+      stock_quantity: product.stock_quantity
+    };
+    
+    await addToCart(productData, 1, selectedVariant);
   };
 
   const toggleFavorite = () => {
@@ -235,7 +243,7 @@ const CustomerProductDetail = () => {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4">
             <Button
-              onClick={addToCart}
+              onClick={handleAddToCart}
               disabled={product.stock_quantity === 0}
               className="flex-1"
               size="lg"

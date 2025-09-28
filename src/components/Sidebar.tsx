@@ -40,6 +40,12 @@ const navigationLinks = [
   { href: '/profile', label: 'Profile', icon: User },
 ];
 
+const customerLinks = [
+  { href: '/products-customer', label: 'Browse Products', icon: Package },
+  { href: '/cart', label: 'Shopping Cart', icon: ShoppingCart },
+  { href: '/customer-orders', label: 'My Orders', icon: Truck },
+];
+
 export default function Sidebar() {
   const { state } = useSidebar();
   const { signOut } = useAuth();

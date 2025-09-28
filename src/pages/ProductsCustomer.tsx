@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useProductsWithLocation } from "@/hooks/useProductsWithLocation";
 import { useToast } from "@/hooks/use-toast";
+import { useCart } from "@/context/CartContext";
 import ProductVariantSelector from "@/components/ProductVariantSelector";
 
 const ProductsCustomer = () => {
@@ -15,17 +16,24 @@ const ProductsCustomer = () => {
   const [maxDistance, setMaxDistance] = useState(15);
   const { products, loading, error, customerLocation } = useProductsWithLocation(maxDistance);
   const { toast } = useToast();
+  const { addToCart } = useCart();
 
   const filteredProducts = products.filter(product =>
     product.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.product_description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const addToCart = (product: any) => {
-    toast({
-      title: "Added to Cart",
-      description: `${product.product_name} has been added to your cart`,
-    });
+  const handleAddToCart = async (product: any) => {
+    const productData = {
+      id: product.product_id,
+      name: product.product_name,
+      price: product.discounted_price || product.product_price,
+      image_url: product.product_image_url,
+      seller_id: product.seller_id,
+      stock_quantity: product.stock_quantity
+    };
+    
+    await addToCart(productData);
   };
 
   const toggleFavorite = (product: any) => {
@@ -193,7 +201,7 @@ const ProductsCustomer = () => {
                   <Button
                     onClick={(e) => {
                       e.preventDefault();
-                      addToCart(product);
+                      handleAddToCart(product);
                     }}
                     className="w-full mt-4"
                     disabled={product.stock_quantity === 0}

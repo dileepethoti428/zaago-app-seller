@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from '@/context/AuthContext';
+import { CartProvider } from '@/context/CartContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
@@ -30,6 +31,11 @@ import ProductsCustomer from "./pages/ProductsCustomer";
 import CustomerProductDetail from "./pages/CustomerProductDetail";
 import CustomerOrders from "./pages/CustomerOrders";
 import DeliveryAgent from "./pages/DeliveryAgent";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import { CustomerNotifications } from "@/components/CustomerNotifications";
+import { AgentNotifications } from "@/components/AgentNotifications";
+import { SellerNotifications } from "@/components/SellerNotifications";
 
 const queryClient = new QueryClient();
 
@@ -37,9 +43,13 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <HashRouter>
+        <CartProvider>
+          <Toaster />
+          <Sonner />
+          <CustomerNotifications />
+          <AgentNotifications />
+          <SellerNotifications />
+          <HashRouter>
           <ProtectedRoute>
             <Routes>
               <Route path="/login" element={<Login />} />
@@ -66,12 +76,15 @@ const App = () => (
                 <Route path="seller-approvals" element={<SellerApprovals />} />
                 <Route path="products-customer" element={<ProductsCustomer />} />
                 <Route path="customer-products/:id" element={<CustomerProductDetail />} />
+                <Route path="cart" element={<Cart />} />
+                <Route path="checkout" element={<Checkout />} />
               </Route>
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </ProtectedRoute>
         </HashRouter>
+        </CartProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

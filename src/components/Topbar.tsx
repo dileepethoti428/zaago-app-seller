@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
-import { LogOut, User, MapPin, Navigation } from 'lucide-react';
+import { useCart } from '@/context/CartContext';
+import { LogOut, User, MapPin, Navigation, ShoppingCart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 import { useLocation } from '@/hooks/useLocation';
@@ -10,6 +11,7 @@ import { useState } from 'react';
 
 export default function Topbar() {
   const { user, signOut } = useAuth();
+  const { itemCount } = useCart();
   const { toast } = useToast();
   const { location, loading: locationLoading, getCurrentLocation } = useLocation();
   const [showLocationSelector, setShowLocationSelector] = useState(false);
@@ -88,6 +90,20 @@ export default function Topbar() {
       
       
       <div className="flex items-center gap-2 sm:gap-4">
+        {/* Cart Button */}
+        <Link 
+          to="/cart"
+          className="relative p-2 text-zaago-muted-foreground hover:text-zaago-card-foreground transition-colors"
+          title="Shopping Cart"
+        >
+          <ShoppingCart className="w-5 h-5" />
+          {itemCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              {itemCount > 99 ? '99+' : itemCount}
+            </span>
+          )}
+        </Link>
+        
         {user ? (
           <>
             <div className="flex items-center gap-1 sm:gap-2 text-zaago-muted-foreground">
