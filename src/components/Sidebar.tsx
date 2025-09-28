@@ -101,12 +101,11 @@ export default function Sidebar() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
             >
-              <NavLink 
-                to="/"
+              <div 
                 className="text-zaago-green font-bold text-lg sm:text-xl lg:text-2xl hover:text-zaago-green-light transition-colors cursor-pointer block leading-tight"
               >
                 Seller
-              </NavLink>
+              </div>
             </motion.div>
           )}
           {collapsed && (
@@ -116,12 +115,11 @@ export default function Sidebar() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
             >
-              <NavLink 
-                to="/"
+              <div 
                 className="text-zaago-green hover:text-zaago-green-light transition-colors cursor-pointer block"
               >
                 S
-              </NavLink>
+              </div>
             </motion.div>
           )}
         </div>
