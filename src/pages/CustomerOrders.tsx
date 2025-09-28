@@ -98,6 +98,8 @@ const CustomerOrders = () => {
     
     setLoading(true);
     try {
+      console.log('🔍 Fetching seller orders for user:', user.id);
+      
       // Use the corrected seller-specific function to get orders containing this seller's products
       const { data, error } = await supabase.rpc('get_seller_specific_orders', {
         p_seller_user_id: user.id
@@ -113,26 +115,34 @@ const CustomerOrders = () => {
         return;
       }
 
+      console.log('📦 Raw seller orders data:', data);
+
       // Map the data to match the expected order structure
       const mappedOrders = (data || []).map((order: any) => ({
         id: order.order_id,
-        total: order.seller_total, // Show only seller's portion
-        status: order.order_status,
+        total: order.seller_total || 0,
+        status: order.order_status || 'unknown',
         created_at: order.created_at,
         updated_at: order.updated_at,
-        customer_name: order.customer_name,
+        customer_name: order.customer_name || 'Unknown Customer',
         customer_phone: order.customer_phone,
         delivery_date: order.delivery_date,
-        items: order.seller_items, // Show only seller's items
+        items: order.seller_items || [],
         address: order.address,
         payment_status: order.payment_status,
         agent_id: order.agent_id,
         user_id: user.id // This is the seller's user_id
       }));
 
+      console.log('✅ Mapped seller orders:', mappedOrders);
       setOrders(mappedOrders);
     } catch (error) {
       console.error('Error fetching orders:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while fetching orders.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -374,14 +384,12 @@ const CustomerOrders = () => {
                           {getStatusBadge(order.status)}
                         </div>
 
-                        {/* Order Progress */}
-                        <div className="bg-zaago-card/30 rounded-lg p-4">
-                          <div className="flex items-center gap-3 mb-2">
-                            {getStatusIcon(order.status)}
-                            <div>
-                              <p className="font-medium text-foreground">
-                                {getCustomerFriendlyStatus(order.status)}
-                              </p>
+                        {/* Customer Info */}
+                        <div className="flex items-center justify-between bg-zaago-card/30 rounded-lg p-4">
+                          <div>
+                            <p className="font-medium text-foreground">
+                              Customer: {order.customer_name}
+                            </p>
                               <p className="text-zaago-muted-foreground text-sm">
                                 {order.status === 'delivered' 
                                   ? `Delivered at ${new Date(order.updated_at || order.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
@@ -575,15 +583,20 @@ const CustomerOrders = () => {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <Package className="w-16 h-16 text-zaago-muted mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-zaago-muted-foreground mb-2">No orders found</h3>
-                  <p className="text-zaago-muted-foreground">
+                  <Package className="w-16 h-16 text-zaago-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-foreground mb-2">No Orders Found</h3>
+                  <p className="text-zaago-muted-foreground mb-6">
                     {activeTab === 'all' 
-                      ? "No orders containing your products yet." 
-                      : activeTab === 'ongoing'
-                      ? "No ongoing orders at the moment."
-                      : "No delivered orders found."}
+                      ? "You don't have any orders containing your products yet. Once customers start purchasing your products, their orders will appear here."
+                      : `No ${activeTab} orders found.`
+                    }
                   </p>
+                  <div className="space-y-2 text-sm text-zaago-muted-foreground">
+                    <p>💡 To start receiving orders:</p>
+                    <p>1. Add products to your store</p>
+                    <p>2. Set competitive prices</p>
+                    <p>3. Wait for customers to place orders</p>
+                  </div>
                 </div>
               )}
             </div>

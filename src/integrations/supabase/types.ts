@@ -4917,12 +4917,12 @@ export type Database = {
           customer_name: string
           customer_phone: string
           delivery_date: string
-          items: Json
           order_id: string
+          order_status: string
           payment_status: string
+          seller_items: Json
           seller_total: number
-          status: string
-          total: number
+          updated_at: string
         }[]
       }
       get_seller_stats: {
