@@ -146,11 +146,33 @@ const CustomerOrders: React.FC = () => {
     return matchesSearch && matchesTab;
   });
 
-  // Pack order function - now handled by useSellerOrderActions hook
+  // Pack order function with immediate UI update
   const handlePackOrder = async (orderId: string, sellerId: string) => {
-    // Directly pack the order without location check
-    await packOrder(orderId, sellerId);
-    fetchOrders();
+    try {
+      // Optimistically update the order status immediately
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.id === orderId 
+            ? { ...order, status: 'packed' }
+            : order
+        )
+      );
+
+      // Then make the actual API call
+      const success = await packOrder(orderId, sellerId);
+      
+      if (success) {
+        // Refresh orders to get the latest state from server
+        await fetchOrders();
+      } else {
+        // Revert optimistic update if failed
+        await fetchOrders();
+      }
+    } catch (error) {
+      console.error('Error packing order:', error);
+      // Revert optimistic update on error
+      await fetchOrders();
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -500,13 +522,14 @@ const CustomerOrders: React.FC = () => {
                                           </>
                                         )}
                                         
-                                        {productStatus === 'accepted' && (
-                                          <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
-                                            ✅ Packed
-                                          </Badge>
-                                        )}
-                                        
-                                         {productStatus === 'packed' && (
+                                         {(productStatus === 'accepted' || productStatus === 'packed') && (
+                                           <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
+                                             ✅ Packed
+                                           </Badge>
+                                         )}
+                                         
+                                         {/* Also show packed if order status is packed */}
+                                         {order.status === 'packed' && !productStatus && (
                                            <Badge className="bg-zaago-green/20 text-zaago-green border-zaago-green/30">
                                              ✅ Packed
                                            </Badge>
