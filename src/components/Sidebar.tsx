@@ -131,7 +131,7 @@ export default function Sidebar() {
             Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1 sm:space-y-2 px-2 sm:px-4">
+            <SidebarMenu className="space-y-0.5 px-2 sm:px-4">
               {navigationLinks.map(({ href, label, icon: Icon }) => (
                 <SidebarMenuItem key={href}>
                   <NavLink
