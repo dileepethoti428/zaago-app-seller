@@ -59,23 +59,38 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
     return () => clearInterval(interval);
   }, []);
 
-  const handleAction = (action: () => void) => {
+  const handleAction = async (action: () => void) => {
     console.log('🔧 Handle action called');
     try {
-      notificationSound.stopContinuousRinging();
-      console.log('🔧 Stopped continuous ringing');
+      // Stop all sounds first
+      await notificationSound.stopContinuousRinging();
+      await notificationSound.stopAllSounds();
+      console.log('🔧 Stopped all sounds');
+      
+      // Execute the action
       action();
       console.log('🔧 Action executed successfully');
     } catch (error) {
       console.error('🔧 Error in handleAction:', error);
+      // Still execute action even if sound stopping fails
+      action();
     }
   };
 
-  const handleStopRingtone = () => {
+  const handleStopRingtone = async () => {
     console.log('🔧 Stop ringtone called');
     try {
-      notificationSound.stopContinuousRinging();
+      // Stop all sounds immediately
+      await notificationSound.stopContinuousRinging();
+      await notificationSound.stopAllSounds();
       console.log('🔧 Ringtone stopped successfully');
+      
+      // Give user feedback
+      toast({
+        title: "Alarm Stopped",
+        description: "Sound has been stopped",
+        duration: 2000
+      });
     } catch (error) {
       console.error('🔧 Error stopping ringtone:', error);
     }
@@ -316,27 +331,29 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
             </p>
             <div className="grid grid-cols-2 gap-3">
               <Button
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   console.log('🔧 Stop alarm button clicked');
-                  handleStopRingtone();
+                  await handleStopRingtone();
                 }}
                 variant="secondary"
-                className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white text-lg py-4"
+                className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white text-lg py-4 font-bold"
+                type="button"
               >
                 <VolumeX className="h-5 w-5" />
                 STOP ALARM
               </Button>
               <Button
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   console.log('🔧 Dismiss button clicked');
-                  handleAction(onDismiss);
+                  await handleAction(onDismiss);
                 }}
                 variant="destructive"
-                className="flex items-center gap-2 text-lg py-4"
+                className="flex items-center gap-2 text-lg py-4 font-bold"
+                type="button"
               >
                 <PhoneOff className="h-5 w-5" />
                 DISMISS
@@ -393,16 +410,18 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
           {/* PRIMARY ACTION BUTTONS */}
           <div className="grid grid-cols-2 gap-3">
             <Button
-              onClick={() => handleAction(onViewOrder)}
+              onClick={async () => await handleAction(onViewOrder)}
               variant="outline"
-              className="flex items-center gap-2 text-lg py-6 border-2 border-blue-500 text-blue-600 hover:bg-blue-50"
+              className="flex items-center gap-2 text-lg py-6 border-2 border-blue-500 text-blue-600 hover:bg-blue-50 font-bold"
+              type="button"
             >
               <Eye className="h-6 w-6" />
               VIEW FULL ORDER
             </Button>
             <Button
-              onClick={() => handleAction(onDismiss)}
-              className="bg-gray-600 hover:bg-gray-700 text-white flex items-center gap-2 text-lg py-6"
+              onClick={async () => await handleAction(onDismiss)}
+              className="bg-gray-600 hover:bg-gray-700 text-white flex items-center gap-2 text-lg py-6 font-bold"
+              type="button"
             >
               <CheckCircle className="h-6 w-6" />
               DONE

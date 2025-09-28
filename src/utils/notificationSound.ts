@@ -129,15 +129,23 @@ export class NotificationSoundManager {
       this.fallbackAudio.preload = 'auto';
       this.fallbackAudio.volume = this.volume;
       
-      // Create a simple beep sound data URL
-      const beepDataURL = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LKdSEGKHfH8N2QQAoUX7zuyKNRDwtOnu' + '...'; // truncated for brevity
-      this.fallbackAudio.src = beepDataURL;
+      // Use the same MP3 file as the new order ringtone for better quality
+      this.fallbackAudio.src = '/audio/new-order-ringtone.mp3';
 
       // Setup new order ringtone audio
       this.newOrderAudio = new Audio('/audio/new-order-ringtone.mp3');
       this.newOrderAudio.preload = 'auto';
-      this.newOrderAudio.volume = this.volume * 0.5; // Even lower volume for the ringtone
+      this.newOrderAudio.volume = this.volume;
       this.newOrderAudio.loop = false;
+      
+      // Setup error handlers for better debugging
+      this.fallbackAudio.addEventListener('error', (e) => {
+        console.error('🔊 Fallback audio error:', e);
+      });
+      
+      this.newOrderAudio.addEventListener('error', (e) => {
+        console.error('🔊 New order audio error:', e);
+      });
     } catch (error) {
       console.warn('🔊 Could not create fallback audio:', error);
     }
@@ -723,6 +731,39 @@ export class NotificationSoundManager {
     }
     // Also stop any currently playing ringtone
     this.stopRingtone();
+  }
+
+  public stopAllSounds() {
+    console.log('🔧 Stopping all sounds and audio');
+    try {
+      // Stop continuous ringing
+      this.stopContinuousRinging();
+      
+      // Stop the current ringtone if playing
+      this.stopRingtone();
+      
+      // Stop fallback audio if playing
+      if (this.fallbackAudio) {
+        this.fallbackAudio.pause();
+        this.fallbackAudio.currentTime = 0;
+      }
+      
+      // Stop new order audio if playing
+      if (this.newOrderAudio) {
+        this.newOrderAudio.pause();
+        this.newOrderAudio.currentTime = 0;
+      }
+      
+      // Clear any intervals
+      if (this.currentRingingInterval) {
+        clearInterval(this.currentRingingInterval);
+        this.currentRingingInterval = null;
+      }
+      
+      console.log('🔧 All sounds stopped successfully');
+    } catch (error) {
+      console.error('🔧 Error stopping all sounds:', error);
+    }
   }
 
   public setContinuousRingingEnabled(enabled: boolean) {
