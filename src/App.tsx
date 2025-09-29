@@ -1,7 +1,8 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
@@ -36,54 +37,66 @@ import Checkout from "./pages/Checkout";
 import { CustomerNotifications } from "@/components/CustomerNotifications";
 import { AgentNotifications } from "@/components/AgentNotifications";
 import { SellerNotifications } from "@/components/SellerNotifications";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { CacheStatus } from "@/components/CacheStatus";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 
-const queryClient = new QueryClient();
+const AppContent = () => {
+  useRealtimeSync();
+  
+  return (
+    <>
+      <Toaster />
+      <Sonner />
+      <OfflineIndicator />
+      <CacheStatus />
+      <CustomerNotifications />
+      <AgentNotifications />
+      <SellerNotifications />
+      <HashRouter>
+        <ProtectedRoute>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/bank-details" element={<BankDetails />} />
+            <Route path="/pending-approval" element={<PendingApproval />} />
+            <Route path="/application-rejected" element={<ApplicationRejected />} />
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Index />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="orders" element={<Orders />} />
+              <Route path="customer-orders" element={<CustomerOrders />} />
+              <Route path="orders/:id" element={<OrderDetail />} />
+              <Route path="products" element={<Products />} />
+              <Route path="products/:id" element={<ProductDetail />} />
+              <Route path="products/new" element={<AddProduct />} />
+              <Route path="products/:id/edit" element={<EditProduct />} />
+              <Route path="deliveries" element={<Deliveries />} />
+              <Route path="delivery-agent" element={<DeliveryAgent />} />
+              <Route path="payments" element={<Payments />} />
+              <Route path="payments/:id" element={<PaymentDetail />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="notifications" element={<Notifications />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="seller-approvals" element={<SellerApprovals />} />
+              <Route path="products-customer" element={<ProductsCustomer />} />
+              <Route path="customer-products/:id" element={<CustomerProductDetail />} />
+              <Route path="cart" element={<Cart />} />
+              <Route path="checkout" element={<Checkout />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </ProtectedRoute>
+      </HashRouter>
+    </>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
         <CartProvider>
-          <Toaster />
-          <Sonner />
-          <CustomerNotifications />
-          <AgentNotifications />
-          <SellerNotifications />
-          <HashRouter>
-          <ProtectedRoute>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/bank-details" element={<BankDetails />} />
-              <Route path="/pending-approval" element={<PendingApproval />} />
-              <Route path="/application-rejected" element={<ApplicationRejected />} />
-              <Route path="/" element={<Layout />}>
-                <Route index element={<Index />} />
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="orders" element={<Orders />} />
-                <Route path="customer-orders" element={<CustomerOrders />} />
-                <Route path="orders/:id" element={<OrderDetail />} />
-                <Route path="products" element={<Products />} />
-                <Route path="products/:id" element={<ProductDetail />} />
-                <Route path="products/new" element={<AddProduct />} />
-                <Route path="products/:id/edit" element={<EditProduct />} />
-                <Route path="deliveries" element={<Deliveries />} />
-                <Route path="delivery-agent" element={<DeliveryAgent />} />
-                <Route path="payments" element={<Payments />} />
-                <Route path="payments/:id" element={<PaymentDetail />} />
-                <Route path="settings" element={<Settings />} />
-                <Route path="notifications" element={<Notifications />} />
-                <Route path="profile" element={<Profile />} />
-                <Route path="seller-approvals" element={<SellerApprovals />} />
-                <Route path="products-customer" element={<ProductsCustomer />} />
-                <Route path="customer-products/:id" element={<CustomerProductDetail />} />
-                <Route path="cart" element={<Cart />} />
-                <Route path="checkout" element={<Checkout />} />
-              </Route>
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </ProtectedRoute>
-        </HashRouter>
+          <AppContent />
         </CartProvider>
       </AuthProvider>
     </TooltipProvider>
