@@ -155,7 +155,7 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
 
   return (
     <div 
-      className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4"
+      className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-2 sm:p-4"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -167,15 +167,15 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
             style={{
               boxShadow: '0 0 50px rgba(239, 68, 68, 0.5), inset 0 0 20px rgba(239, 68, 68, 0.1)'
             }}>
-        <div className="p-6 space-y-4 relative z-10">
+        <div className="p-3 sm:p-6 space-y-3 sm:space-y-4 relative z-10">
           {/* Timer and Emergency Header */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between bg-red-100 dark:bg-red-900/20 p-3 rounded-lg border-2 border-red-500">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-red-100 dark:bg-red-900/20 p-3 rounded-lg border-2 border-red-500">
               <div className="flex items-center gap-2">
-                <Phone className="h-8 w-8 text-red-600" />
+                <Phone className="h-6 w-6 sm:h-8 sm:w-8 text-red-600 flex-shrink-0" />
                 <div>
-                  <h2 className="text-2xl font-bold text-red-600">🚨 NEW ORDER!</h2>
-                  <p className="text-sm text-red-500 font-medium">IMMEDIATE ACTION REQUIRED</p>
+                  <h2 className="text-xl sm:text-2xl font-bold text-red-600">🚨 NEW ORDER!</h2>
+                  <p className="text-xs sm:text-sm text-red-500 font-medium">ACTION REQUIRED</p>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1">
@@ -197,44 +197,44 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
           </div>
 
           {/* Order Details */}
-          <div className="space-y-3 bg-muted/30 p-4 rounded-lg">
-            <div className="flex justify-between">
-              <span className="font-medium">Order ID:</span>
+          <div className="space-y-2 sm:space-y-3 bg-muted/30 p-3 sm:p-4 rounded-lg text-sm sm:text-base">
+            <div className="flex justify-between items-center">
+              <span className="font-medium text-foreground">Order ID:</span>
               <span className="text-primary font-mono">#{order.id.slice(-6)}</span>
             </div>
             
             {order.customer_name && (
-              <div className="flex justify-between">
-                <span className="font-medium">Customer:</span>
-                <span>{order.customer_name}</span>
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-foreground">Customer:</span>
+                <span className="text-foreground">{order.customer_name}</span>
               </div>
             )}
             
-            <div className="flex justify-between">
-              <span className="font-medium">Your Items Total:</span>
-              <span className="text-primary font-bold text-lg">
+            <div className="flex justify-between items-center">
+              <span className="font-medium text-foreground">Your Items Total:</span>
+              <span className="text-primary font-bold text-base sm:text-lg">
                 {formatAmount(calculateSellerTotal())}
               </span>
             </div>
 
             {order.customer_phone && (
-              <div className="flex justify-between">
-                <span className="font-medium">Phone:</span>
-                <span className="font-mono">{order.customer_phone}</span>
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-foreground">Phone:</span>
+                <span className="font-mono text-foreground">{order.customer_phone}</span>
               </div>
             )}
 
             {order.payment_method && (
-              <div className="flex justify-between">
-                <span className="font-medium">Payment:</span>
-                <span>{order.payment_method}</span>
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-foreground">Payment:</span>
+                <span className="text-foreground">{order.payment_method}</span>
               </div>
             )}
 
             {order.delivery_address && (
               <div className="space-y-1">
-                <span className="font-medium">Address:</span>
-                <p className="text-sm text-muted-foreground line-clamp-2">
+                <span className="font-medium text-foreground">Address:</span>
+                <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
                   {order.delivery_address}
                 </p>
               </div>
@@ -243,72 +243,73 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
 
           {/* Products Section */}
           {order.items && order.items.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="font-bold text-lg text-center border-b pb-2">
+            <div className="space-y-2 sm:space-y-3">
+              <h3 className="font-bold text-base sm:text-lg text-center text-foreground border-b pb-2">
                 Your Products ({order.items.length})
               </h3>
               
-              <div className="space-y-3 max-h-60 overflow-y-auto">
+              <div className="space-y-2 sm:space-y-3 max-h-48 sm:max-h-60 overflow-y-auto">
                 {order.items.map((item) => {
                   const status = getProductStatus(item.id);
                   const isProcessingThisProduct = isProcessing === `${order.id}-${item.id}`;
                   
                   return (
-                    <Card key={item.id} className={`p-3 border-2 ${
-                      status === 'accepted' ? 'border-green-500 bg-green-50' :
-                      status === 'rejected' ? 'border-red-500 bg-red-50' :
-                      'border-orange-500 bg-orange-50'
+                    <Card key={item.id} className={`p-2 sm:p-3 border-2 ${
+                      status === 'accepted' ? 'border-green-500 bg-green-50 dark:bg-green-950/20' :
+                      status === 'rejected' ? 'border-red-500 bg-red-50 dark:bg-red-950/20' :
+                      'border-orange-500 bg-orange-50 dark:bg-orange-950/20'
                     }`}>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 sm:gap-3">
                         {item.image_url && (
                           <img 
                             src={item.image_url} 
                             alt={item.name}
-                            className="w-12 h-12 object-cover rounded-lg"
+                            className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0"
                           />
                         )}
-                        <div className="flex-1">
-                          <h4 className="font-medium">{item.name}</h4>
-                          <p className="text-sm text-muted-foreground">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-sm sm:text-base text-foreground truncate">{item.name}</h4>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             Qty: {item.quantity} × {formatAmount(item.price)} = {formatAmount(item.total_price)}
                           </p>
                         </div>
                         
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                           {status === 'pending' && (
                             <>
                               <Button
                                 size="sm"
                                 onClick={() => handleProductAccept(item.id)}
                                 disabled={isProcessingThisProduct}
-                                className="bg-green-600 hover:bg-green-700 text-white"
+                                className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm px-2 sm:px-3 h-7 sm:h-8"
                               >
-                                <Check className="h-4 w-4" />
-                                Accept
+                                <Check className="h-3 w-3 sm:h-4 sm:w-4" />
+                                <span className="hidden sm:inline ml-1">Accept</span>
                               </Button>
                               <Button
                                 size="sm"
                                 variant="destructive"
                                 onClick={() => handleProductReject(item.id)}
                                 disabled={isProcessingThisProduct}
+                                className="text-xs sm:text-sm px-2 sm:px-3 h-7 sm:h-8"
                               >
-                                <X className="h-4 w-4" />
-                                Reject
+                                <X className="h-3 w-3 sm:h-4 sm:w-4" />
+                                <span className="hidden sm:inline ml-1">Reject</span>
                               </Button>
                             </>
                           )}
                           
                           {status === 'accepted' && (
-                            <Badge variant="default" className="bg-green-600 text-white">
+                            <Badge variant="default" className="bg-green-600 text-white text-xs">
                               <Check className="h-3 w-3 mr-1" />
-                              Accepted
+                              <span className="hidden sm:inline">Accepted</span>
                             </Badge>
                           )}
                           
                           {status === 'rejected' && (
-                            <Badge variant="destructive">
+                            <Badge variant="destructive" className="text-xs">
                               <X className="h-3 w-3 mr-1" />
-                              Rejected
+                              <span className="hidden sm:inline">Rejected</span>
                             </Badge>
                           )}
                         </div>
@@ -322,22 +323,23 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
 
 
           {/* PRIMARY ACTION BUTTONS */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <Button
               onClick={() => handleAction(onViewOrder)}
               variant="outline"
-              className="flex items-center gap-2 text-lg py-6 border-2 border-blue-500 text-blue-600 hover:bg-blue-50 font-bold"
+              className="flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-lg py-4 sm:py-6 border-2 border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 font-bold"
               type="button"
             >
-              <Eye className="h-6 w-6" />
-              VIEW FULL ORDER
+              <Eye className="h-4 w-4 sm:h-6 sm:w-6" />
+              <span className="hidden sm:inline">VIEW FULL ORDER</span>
+              <span className="sm:hidden">VIEW ORDER</span>
             </Button>
             <Button
               onClick={() => handleAction(onDismiss)}
-              className="bg-gray-600 hover:bg-gray-700 text-white flex items-center gap-2 text-lg py-6 font-bold"
+              className="bg-gray-600 hover:bg-gray-700 text-white flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-lg py-4 sm:py-6 font-bold"
               type="button"
             >
-              <CheckCircle className="h-6 w-6" />
+              <CheckCircle className="h-4 w-4 sm:h-6 sm:w-6" />
               DONE
             </Button>
           </div>

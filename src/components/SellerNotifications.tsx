@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -10,6 +11,7 @@ import { RefreshCw, Wifi, WifiOff } from 'lucide-react';
 export const SellerNotifications = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [newOrderModal, setNewOrderModal] = useState<{
     visible: boolean;
     order: any;
@@ -695,13 +697,29 @@ export const SellerNotifications = () => {
   const handleViewOrder = () => {
     console.log('👀 Viewing order details - stopping notifications');
     
-    // Stop continuous ringing
-    notificationSound.stopContinuousRinging();
+    if (!newOrderModal.order?.id) {
+      toast({
+        title: "Error",
+        description: "Order ID not found",
+        variant: "destructive"
+      });
+      return;
+    }
     
+    // Stop continuous ringing and escalation
+    notificationSound.stopContinuousRinging();
+    setEscalationLevel(0);
+    if (escalationTimerRef.current) {
+      clearInterval(escalationTimerRef.current);
+      escalationTimerRef.current = null;
+    }
+    
+    // Close modal first
     setNewOrderModal({ visible: false, order: null });
     localStorage.removeItem('zaago_active_modal');
-    // Here you would typically navigate to the order details page
-    window.location.href = `/orders/${newOrderModal.order?.id}`;
+    
+    // Navigate using React Router
+    navigate(`/orders/${newOrderModal.order.id}`);
   };
 
   // Add test notification function for debugging
