@@ -138,12 +138,20 @@ export const SellerNotifications = () => {
   // Handle notification processing (extracted for reuse)
   const handleNotification = useCallback(async (notification: any) => {
     console.log('🔔 Processing notification:', notification);
+    console.log('🔔 Notification metadata:', notification.metadata);
     
     // Handle new order notifications with MAXIMUM URGENCY
     if (notification.type === 'new_order') {
       console.log('🚨 CRITICAL: NEW ORDER NOTIFICATION! Initiating emergency alert sequence');
-      console.log('🚨 Order ID:', notification.reference_id);
+      
+      // Extract order ID from multiple possible sources
+      const orderId = notification.order_id || notification.reference_id || notification.metadata?.order_id;
+      console.log('🚨 Order ID:', orderId);
       console.log('🚨 Message:', notification.message);
+      
+      // Extract metadata for immediate display
+      const metadata = notification.metadata || {};
+      console.log('📦 Metadata:', metadata);
       
       // IMMEDIATE VISUAL FEEDBACK - Show modal state change
       console.log('🚨 Setting modal visible state to TRUE');
@@ -203,7 +211,7 @@ export const SellerNotifications = () => {
           
           if (Notification.permission === 'granted') {
             const notif = new Notification('🚨🚨 EMERGENCY: NEW ORDER! 🚨🚨', {
-              body: `URGENT ACTION REQUIRED: Customer order #${notification.reference_id?.slice(-6) || 'Unknown'}`,
+              body: `URGENT ACTION REQUIRED: ${metadata.customer_name || 'Customer'} - Order #${orderId?.slice(-6) || 'Unknown'}`,
               icon: '/zaago-logo.png',
               badge: '/zaago-logo.png',
               tag: 'emergency-order',
@@ -226,32 +234,42 @@ export const SellerNotifications = () => {
         navigator.vibrate([500, 200, 500, 200, 500, 200, 1000]);
       }
       
-      // Try to fetch order details for the modal
+      // Initialize order details with metadata as immediate fallback
       let orderDetails = {
-        id: notification.reference_id || 'N/A',
-        customer_name: 'New Customer',
-        customer_phone: '',
-        total_amount: 0,
-        items: [],
-        delivery_address: '',
-        payment_method: 'COD',
-        payment_status: 'pending',
-        seller_id: ''
+        id: orderId || 'unknown',
+        customer_name: metadata.customer_name || 'New Customer',
+        customer_phone: metadata.customer_phone || '',
+        total_amount: metadata.total_amount || 0,
+        items: metadata.items || [],
+        delivery_address: metadata.delivery_address || metadata.address || '',
+        payment_method: metadata.payment_method || 'COD',
+        payment_status: metadata.payment_status || 'pending',
+        seller_id: metadata.seller_id || ''
       };
+      
+      console.log('📦 Initial order details from metadata:', orderDetails);
 
-      if (notification.reference_id) {
+      // Try to fetch complete order details from database
+      if (orderId && orderId !== 'unknown') {
         try {
+          console.log('🔍 Fetching complete order details for ID:', orderId);
+          
           // Fetch complete order details with all products
-          const { data: order } = await supabase
+          const { data: order, error: orderError } = await supabase
             .from('orders')
             .select(`
               *,
               address
             `)
-            .eq('id', notification.reference_id)
+            .eq('id', orderId)
             .single();
 
-          if (order) {
+          if (orderError) {
+            console.error('❌ Error fetching order:', orderError);
+            console.log('📦 Using metadata fallback for order display');
+          } else if (order) {
+            console.log('✅ Order fetched successfully:', order);
+            
             // Parse the items JSON to get detailed product information
             const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items || [];
             
@@ -264,53 +282,79 @@ export const SellerNotifications = () => {
               .from('sellers')
               .select('id, user_id, name, email')
               .eq('user_id', authUser?.id)
-              .single();
+              .maybeSingle();
             
             console.log('🔍 Seller record:', sellerRecord);
-            console.log('🔍 Seller error:', sellerError);
             
-            if (!sellerRecord) {
-              console.log('❌ No seller record found for user:', authUser?.id);
-              console.log('📋 This might be the issue - user is not registered as a seller');
-              return;
+            if (sellerError) {
+              console.error('❌ Error fetching seller record:', sellerError);
             }
             
-            // Use the seller's user_id for filtering
-            const sellerUserId = sellerRecord.user_id;
-            console.log('🔍 Filtering products for seller:', sellerRecord.name, '(', sellerRecord.email, ')');
-            console.log('🔍 Using seller user ID for filtering:', sellerUserId);
+            if (!sellerRecord) {
+              console.warn('⚠️ No seller record found for user:', authUser?.id);
+              console.log('📦 Using all items from order (no seller filtering)');
+              
+              // Use all items if no seller record found
+              orderDetails = {
+                ...orderDetails,
+                id: order.id,
+                customer_name: order.customer_name || orderDetails.customer_name,
+                customer_phone: order.customer_phone || orderDetails.customer_phone,
+                total_amount: order.total || orderDetails.total_amount,
+                items: items.length > 0 ? items : orderDetails.items,
+                delivery_address: order.address ? 
+                  (typeof order.address === 'string' ? order.address : 
+                   `${(order.address as any)?.full_address || ''}, ${(order.address as any)?.city || ''}`.trim()) 
+                  : orderDetails.delivery_address,
+                payment_method: (order as any).payment_method || orderDetails.payment_method,
+                payment_status: (order as any).payment_status || orderDetails.payment_status
+              };
+            } else {
+              // Use the seller's user_id for filtering
+              const sellerUserId = sellerRecord.user_id;
+              console.log('🔍 Filtering products for seller:', sellerRecord.name, '(', sellerRecord.email, ')');
+              console.log('🔍 Using seller user ID for filtering:', sellerUserId);
 
-            // Filter items to only include products from this seller
-            const sellerItems = items.filter((item: any) => {
-              console.log('🔍 Item:', item.name, 'seller_id:', item.seller_id);
-              console.log('🔍 Does', item.seller_id, '===', sellerUserId, '?', item.seller_id === sellerUserId);
-              return item.seller_id === sellerUserId;
-            });
+              // Filter items to only include products from this seller
+              const sellerItems = items.filter((item: any) => {
+                console.log('🔍 Item:', item.name, 'seller_id:', item.seller_id);
+                console.log('🔍 Does', item.seller_id, '===', sellerUserId, '?', item.seller_id === sellerUserId);
+                return item.seller_id === sellerUserId;
+              });
 
-            console.log('🔍 Total items in order:', items.length);
-            console.log('🔍 Items for current seller:', sellerItems.length);
-            console.log('🔍 Seller items:', sellerItems);
+              console.log('🔍 Total items in order:', items.length);
+              console.log('🔍 Items for current seller:', sellerItems.length);
+              console.log('🔍 Seller items:', sellerItems);
 
-            orderDetails = {
-              id: order.id,
-              customer_name: order.customer_name || 'Customer',
-              customer_phone: order.customer_phone || '',
-              total_amount: order.total || 0,
-              items: sellerItems, // Only seller's products
-              delivery_address: order.address ? 
-                (typeof order.address === 'string' ? order.address : 
-                 `${(order.address as any)?.full_address || ''}, ${(order.address as any)?.city || ''}`.trim()) 
-                : 'Address not available',
-              payment_method: (order as any).payment_method || 'COD',
-              payment_status: (order as any).payment_status || 'pending',
-              seller_id: sellerUserId
-            };
+              // Calculate seller's portion of the total
+              const sellerTotal = sellerItems.reduce((sum: number, item: any) => 
+                sum + (item.price || 0) * (item.quantity || 1), 0
+              );
 
-            console.log('📦 Final order details for modal:', orderDetails);
+              orderDetails = {
+                id: order.id,
+                customer_name: order.customer_name || orderDetails.customer_name,
+                customer_phone: order.customer_phone || orderDetails.customer_phone,
+                total_amount: sellerTotal || orderDetails.total_amount,
+                items: sellerItems.length > 0 ? sellerItems : orderDetails.items,
+                delivery_address: order.address ? 
+                  (typeof order.address === 'string' ? order.address : 
+                   `${(order.address as any)?.full_address || ''}, ${(order.address as any)?.city || ''}`.trim()) 
+                  : orderDetails.delivery_address,
+                payment_method: (order as any).payment_method || orderDetails.payment_method,
+                payment_status: (order as any).payment_status || orderDetails.payment_status,
+                seller_id: sellerUserId
+              };
+            }
+
+            console.log('📦 Enhanced order details from database:', orderDetails);
           }
         } catch (error) {
-          console.error('Error fetching order details:', error);
+          console.error('❌ Exception while fetching order details:', error);
+          console.log('📦 Continuing with metadata fallback');
         }
+      } else {
+        console.warn('⚠️ No valid order ID found, using metadata only');
       }
 
       // SHOW MODAL with enhanced logging and persistence
