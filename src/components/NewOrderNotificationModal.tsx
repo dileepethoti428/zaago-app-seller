@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Phone, PhoneOff, Eye, CheckCircle, X, Check } from 'lucide-react';
+import { Phone, Eye, CheckCircle, X, Check, Timer } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useProductActions } from '@/hooks/useProductActions';
+import './ui/emergency-styles.css';
 
 interface OrderItem {
   id: string;
@@ -43,6 +45,63 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
   const { acceptProduct, rejectProduct, isProcessing } = useProductActions();
   const [acceptedProducts, setAcceptedProducts] = useState<Set<string>>(new Set());
   const [rejectedProducts, setRejectedProducts] = useState<Set<string>>(new Set());
+  const [timeLeft, setTimeLeft] = useState(30); // 30 second countdown
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // Countdown timer
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      onDismiss();
+      return;
+    }
+    
+    const timer = setInterval(() => {
+      setTimeLeft(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft, onDismiss]);
+
+  // Vibration on mount and escalating
+  useEffect(() => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate([200, 100, 200]); // Initial vibration
+      
+      const vibrationInterval = setInterval(() => {
+        if (timeLeft > 0 && timeLeft % 10 === 0) {
+          navigator.vibrate([300, 100, 300, 100, 300]); // Escalating pattern
+        }
+      }, 1000);
+
+      return () => clearInterval(vibrationInterval);
+    }
+  }, [timeLeft]);
+
+  // Swipe gesture handling
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isRightSwipe) {
+      onAccept();
+    }
+    if (isLeftSwipe) {
+      onDismiss();
+    }
+  };
 
   const handleAction = (action: () => void) => {
     action();
@@ -91,26 +150,50 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
     return order.items?.reduce((total, item) => total + (item.total_price || 0), 0) || 0;
   };
 
+  const progressPercentage = (timeLeft / 30) * 100;
+  const isUrgent = timeLeft <= 10;
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
-      <Card className="w-full max-w-md bg-background border-4 border-red-500 shadow-2xl"
+    <div 
+      className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Pulsating background overlay */}
+      <div className="pulsating-overlay fixed inset-0" />
+      
+      <Card className={`w-full max-w-md bg-background border-4 border-red-500 shadow-2xl emergency-modal relative ${isUrgent ? 'emergency-urgent' : ''}`}
             style={{
               boxShadow: '0 0 50px rgba(239, 68, 68, 0.5), inset 0 0 20px rgba(239, 68, 68, 0.1)'
             }}>
-        <div className="p-6 space-y-4 relative">
-          {/* Emergency Header */}
-          <div className="flex items-center justify-between bg-red-100 dark:bg-red-900/20 p-3 rounded-lg border-2 border-red-500">
-            <div className="flex items-center gap-2">
-              <Phone className="h-8 w-8 text-red-600" />
-              <div>
-                <h2 className="text-2xl font-bold text-red-600">🚨 NEW ORDER!</h2>
-                <p className="text-sm text-red-500 font-medium">IMMEDIATE ACTION REQUIRED</p>
+        <div className="p-6 space-y-4 relative z-10">
+          {/* Timer and Emergency Header */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between bg-red-100 dark:bg-red-900/20 p-3 rounded-lg border-2 border-red-500">
+              <div className="flex items-center gap-2">
+                <Phone className="h-8 w-8 text-red-600" />
+                <div>
+                  <h2 className="text-2xl font-bold text-red-600">🚨 NEW ORDER!</h2>
+                  <p className="text-sm text-red-500 font-medium">IMMEDIATE ACTION REQUIRED</p>
+                </div>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <div className="flex items-center gap-2 bg-red-600 text-white px-3 py-1 rounded-full">
+                  <Timer className="h-4 w-4" />
+                  <span className={`font-bold text-lg ${isUrgent ? 'animate-pulse' : ''}`}>
+                    {timeLeft}s
+                  </span>
+                </div>
+                <Badge variant="destructive" className="text-xs px-2 py-0.5">
+                  AUTO-CLOSE
+                </Badge>
               </div>
             </div>
-            <Badge variant="destructive" className="text-lg px-4 py-2">
-              EMERGENCY
-            </Badge>
+            <Progress value={progressPercentage} className="h-2 bg-red-100" />
+            <p className="text-center text-xs text-muted-foreground">
+              💡 Swipe right to accept • Swipe left to dismiss
+            </p>
           </div>
 
           {/* Order Details */}

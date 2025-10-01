@@ -17,8 +17,38 @@
   }
 }
 
+@keyframes pulsateBackground {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
 .emergency-modal {
   animation: emergencyPulse 1s infinite, glow 2s ease-in-out infinite alternate;
+  position: relative;
+}
+
+.emergency-modal.emergency-urgent {
+  animation: emergencyPulse 0.5s infinite, glow 1s ease-in-out infinite alternate, shake 0.5s infinite;
+}
+
+.pulsating-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, rgba(239, 68, 68, 0.4), rgba(220, 38, 38, 0.4));
+  animation: pulsateBackground 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
 }
 
 .emergency-alert {

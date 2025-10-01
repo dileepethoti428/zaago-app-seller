@@ -14,6 +14,7 @@ export const SellerNotifications = () => {
     visible: boolean;
     order: any;
   }>({ visible: false, order: null });
+  const [escalationLevel, setEscalationLevel] = useState(0);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [lastChecked, setLastChecked] = useState<Date>(new Date());
   const [isPolling, setIsPolling] = useState(false);
@@ -28,6 +29,61 @@ export const SellerNotifications = () => {
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 10;
+  const escalationTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Progressive escalation effect - Rapido style
+  useEffect(() => {
+    if (!newOrderModal.visible) {
+      setEscalationLevel(0);
+      if (escalationTimerRef.current) {
+        clearTimeout(escalationTimerRef.current);
+        escalationTimerRef.current = null;
+      }
+      notificationSound.stopContinuousRinging();
+      return;
+    }
+
+    // Stage 1: Initial notification (0-10s)
+    console.log('🚨 Stage 1: Initial notification');
+    setEscalationLevel(1);
+    notificationSound.playNotificationSound('urgent');
+
+    // Stage 2: Increase urgency after 10s
+    const stage2Timer = setTimeout(() => {
+      console.log('🚨 Stage 2: Increased urgency');
+      setEscalationLevel(2);
+      notificationSound.setVolume(0.9);
+      if ('vibrate' in navigator) {
+        navigator.vibrate([300, 100, 300, 100, 300]);
+      }
+    }, 10000);
+
+    // Stage 3: Maximum urgency after 20s
+    const stage3Timer = setTimeout(() => {
+      console.log('🚨 Stage 3: MAXIMUM URGENCY - Continuous ringing');
+      setEscalationLevel(3);
+      notificationSound.setVolume(1.0);
+      notificationSound.startContinuousRinging('rapido_ringtone');
+      
+      if ('vibrate' in navigator) {
+        // Continuous vibration pattern
+        const vibrateInterval = setInterval(() => {
+          navigator.vibrate([500, 200, 500]);
+        }, 2000);
+        
+        escalationTimerRef.current = vibrateInterval as any;
+      }
+    }, 20000);
+
+    return () => {
+      clearTimeout(stage2Timer);
+      clearTimeout(stage3Timer);
+      if (escalationTimerRef.current) {
+        clearInterval(escalationTimerRef.current);
+        escalationTimerRef.current = null;
+      }
+    };
+  }, [newOrderModal.visible]);
 
   // Enhanced session initialization - check for missed notifications on first load
   const initializeSession = useCallback(async () => {
@@ -624,8 +680,13 @@ export const SellerNotifications = () => {
   const handleDismissOrder = () => {
     console.log('❌ Order notification dismissed');
     
-    // Stop continuous ringing
+    // Stop continuous ringing and all escalation
     notificationSound.stopContinuousRinging();
+    setEscalationLevel(0);
+    if (escalationTimerRef.current) {
+      clearInterval(escalationTimerRef.current);
+      escalationTimerRef.current = null;
+    }
     
     setNewOrderModal({ visible: false, order: null });
     localStorage.removeItem('zaago_active_modal');
