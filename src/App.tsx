@@ -37,8 +37,6 @@ import Checkout from "./pages/Checkout";
 import { CustomerNotifications } from "@/components/CustomerNotifications";
 import { AgentNotifications } from "@/components/AgentNotifications";
 import { SellerNotifications } from "@/components/SellerNotifications";
-import { OfflineIndicator } from "@/components/OfflineIndicator";
-import { CacheStatus } from "@/components/CacheStatus";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 
 const AppContent = () => {
@@ -48,8 +46,6 @@ const AppContent = () => {
     <>
       <Toaster />
       <Sonner />
-      <OfflineIndicator />
-      <CacheStatus />
       <CustomerNotifications />
       <AgentNotifications />
       <SellerNotifications />
