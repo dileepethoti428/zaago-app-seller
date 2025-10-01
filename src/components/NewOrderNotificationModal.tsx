@@ -164,12 +164,9 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Pulsating background overlay */}
-      <div className="pulsating-overlay fixed inset-0" />
-      
-      <Card className={`w-full max-w-md bg-background border-4 border-red-500 shadow-2xl emergency-modal relative ${isUrgent ? 'emergency-urgent' : ''}`}
+      <Card className={`w-full max-w-md bg-background border-4 border-red-500 shadow-2xl relative ${isUrgent ? 'border-red-600' : ''}`}
             style={{
-              boxShadow: '0 0 50px rgba(239, 68, 68, 0.5), inset 0 0 20px rgba(239, 68, 68, 0.1)'
+              boxShadow: '0 0 50px rgba(239, 68, 68, 0.5)'
             }}>
         <div className="p-3 sm:p-6 space-y-3 sm:space-y-4 relative z-10">
           {/* Timer and Emergency Header */}
