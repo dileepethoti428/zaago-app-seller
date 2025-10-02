@@ -588,7 +588,7 @@ const CustomerOrders: React.FC = () => {
                                       <Package className="w-6 h-6 text-zaago-muted-foreground" />
                                     </div>
                                     <div>
-                                      <p className="font-medium text-foreground">{item.product_name}</p>
+                                      <p className="font-medium text-foreground">{item.name || item.product_name || 'Product'}</p>
                                       <p className="text-zaago-muted-foreground text-sm">
                                         Qty: {item.quantity} × ₹{item.price?.toFixed(2)}
                                       </p>
