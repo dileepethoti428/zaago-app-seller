@@ -6,6 +6,7 @@ import { Phone, Eye, CheckCircle, X, Check, Timer } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useProductActions } from '@/hooks/useProductActions';
+import { stopContinuousRinging, stopAllSounds } from '@/utils/notificationSound';
 import './ui/emergency-styles.css';
 
 interface OrderItem {
@@ -104,6 +105,9 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
   };
 
   const handleAction = (action: () => void) => {
+    // Stop all sounds when any primary action is taken
+    stopContinuousRinging();
+    stopAllSounds();
     action();
   };
 
@@ -114,6 +118,10 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
 
   const handleProductAccept = async (productId: string) => {
     if (!order.seller_id) return;
+    
+    // Stop all sounds immediately when user interacts
+    stopContinuousRinging();
+    stopAllSounds();
     
     const success = await acceptProduct(order.id, productId, order.seller_id);
     if (success) {
@@ -130,6 +138,10 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
 
   const handleProductReject = async (productId: string) => {
     if (!order.seller_id) return;
+    
+    // Stop all sounds immediately when user interacts
+    stopContinuousRinging();
+    stopAllSounds();
     
     const success = await rejectProduct(order.id, productId, order.seller_id);
     if (success) {

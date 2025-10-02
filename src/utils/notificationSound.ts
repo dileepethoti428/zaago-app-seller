@@ -327,9 +327,62 @@ export class NotificationSoundManager {
   }
 
   public async playNotificationSound(type: NotificationSoundType = 'system') {
-    console.log('🔊 Audio disabled - notification sound skipped:', type);
-    // Audio functionality disabled
-    return;
+    if (!this.isEnabled) {
+      console.log('🔊 Notification sound disabled');
+      return;
+    }
+
+    await this.ensureAudioContext();
+    
+    console.log('🔊 Playing notification sound:', type, 'Audio status:', this.audioStatus);
+
+    if (type === 'new_order_ringtone' || type === 'rapido_ringtone') {
+      await this.playNewOrderRingtone();
+      return;
+    }
+
+    if (this.audioStatus !== 'ready') {
+      console.log('🔊 Audio not ready, trying fallback');
+      const fallbackSuccess = await this.playFallbackSound();
+      if (!fallbackSuccess) {
+        this.showAudioPermissionPrompt();
+      }
+      return;
+    }
+
+    try {
+      const oscillator = this.audioContext!.createOscillator();
+      const gainNode = this.audioContext!.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(this.audioContext!.destination);
+
+      switch (type) {
+        case 'order':
+          this.playOrderSound(oscillator, gainNode);
+          break;
+        case 'delivery':
+          this.playDeliverySound(oscillator, gainNode);
+          break;
+        case 'payment':
+          this.playPaymentSound(oscillator, gainNode);
+          break;
+        case 'urgent':
+          this.playUrgentSound(oscillator, gainNode);
+          break;
+        case 'success':
+          this.playSuccessSound(oscillator, gainNode);
+          break;
+        case 'system':
+        default:
+          this.playSystemSound(oscillator, gainNode);
+      }
+
+      console.log('🔊 Notification sound played successfully');
+    } catch (error) {
+      console.warn('🔊 Error playing notification sound:', error);
+      await this.playFallbackSound();
+    }
   }
 
   private playOrderSound(oscillator: OscillatorNode, gainNode: GainNode) {
@@ -718,3 +771,4 @@ export const playRapidoRingtone = () => notificationSound.playNotificationSound(
 export const stopRingtone = () => notificationSound.stopRingtone();
 export const startContinuousRinging = () => notificationSound.startContinuousRinging();
 export const stopContinuousRinging = () => notificationSound.stopContinuousRinging();
+export const stopAllSounds = () => notificationSound.stopAllSounds();
