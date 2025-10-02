@@ -294,6 +294,15 @@ export const SellerNotifications = () => {
               console.warn('⚠️ No seller record found for user:', authUser?.id);
               console.log('📦 Using all items from order (no seller filtering)');
               
+              // Map items to ensure they have all required fields
+              const mappedItems = items.map((item: any) => ({
+                id: item.id || item.product_id,
+                name: item.name || item.product_name || 'Unknown Product',
+                quantity: item.quantity || 1,
+                price: item.price || item.unit_price || 0,
+                total_price: (item.price || item.unit_price || 0) * (item.quantity || 1)
+              }));
+              
               // Use all items if no seller record found
               orderDetails = {
                 ...orderDetails,
@@ -301,7 +310,7 @@ export const SellerNotifications = () => {
                 customer_name: order.customer_name || orderDetails.customer_name,
                 customer_phone: order.customer_phone || orderDetails.customer_phone,
                 total_amount: order.total || orderDetails.total_amount,
-                items: items.length > 0 ? items : orderDetails.items,
+                items: mappedItems.length > 0 ? mappedItems : orderDetails.items,
                 delivery_address: order.address ? 
                   (typeof order.address === 'string' ? order.address : 
                    `${(order.address as any)?.full_address || ''}, ${(order.address as any)?.city || ''}`.trim()) 
@@ -316,19 +325,27 @@ export const SellerNotifications = () => {
               console.log('🔍 Using seller user ID for filtering:', sellerUserId);
 
               // Filter items to only include products from this seller
-              const sellerItems = items.filter((item: any) => {
-                console.log('🔍 Item:', item.name, 'seller_id:', item.seller_id);
-                console.log('🔍 Does', item.seller_id, '===', sellerUserId, '?', item.seller_id === sellerUserId);
-                return item.seller_id === sellerUserId;
-              });
+              const sellerItems = items
+                .filter((item: any) => {
+                  console.log('🔍 Item:', item.name, 'seller_id:', item.seller_id);
+                  console.log('🔍 Does', item.seller_id, '===', sellerUserId, '?', item.seller_id === sellerUserId);
+                  return item.seller_id === sellerUserId;
+                })
+                .map((item: any) => ({
+                  id: item.id || item.product_id,
+                  name: item.name || item.product_name || 'Unknown Product',
+                  quantity: item.quantity || 1,
+                  price: item.price || item.unit_price || 0,
+                  total_price: (item.price || item.unit_price || 0) * (item.quantity || 1)
+                }));
 
               console.log('🔍 Total items in order:', items.length);
               console.log('🔍 Items for current seller:', sellerItems.length);
-              console.log('🔍 Seller items:', sellerItems);
+              console.log('🔍 Seller items with calculated totals:', sellerItems);
 
               // Calculate seller's portion of the total
               const sellerTotal = sellerItems.reduce((sum: number, item: any) => 
-                sum + (item.price || 0) * (item.quantity || 1), 0
+                sum + (item.total_price || 0), 0
               );
 
               orderDetails = {
