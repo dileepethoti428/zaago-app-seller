@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -11,7 +10,6 @@ import { RefreshCw, Wifi, WifiOff } from 'lucide-react';
 export const SellerNotifications = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
   const [newOrderModal, setNewOrderModal] = useState<{
     visible: boolean;
     order: any;
@@ -762,8 +760,8 @@ export const SellerNotifications = () => {
     setNewOrderModal({ visible: false, order: null });
     localStorage.removeItem('zaago_active_modal');
     
-    // Navigate to order details
-    navigate(`/orders/${newOrderModal.order.id}`);
+    // Navigate to order details using hash navigation
+    window.location.hash = `/orders/${newOrderModal.order.id}`;
   };
 
   // Add test notification function for debugging
