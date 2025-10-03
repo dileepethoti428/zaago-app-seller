@@ -32,6 +32,7 @@ export const SellerNotifications = () => {
   const escalationTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Progressive escalation effect - Rapido style
+  // NOTE: Ringtone is already playing from handleNotification, this just manages escalation
   useEffect(() => {
     if (!newOrderModal.visible) {
       setEscalationLevel(0);
@@ -43,27 +44,23 @@ export const SellerNotifications = () => {
       return;
     }
 
-    // Stage 1: Initial notification (0-10s)
-    console.log('🚨 Stage 1: Initial notification');
+    // Stage 1: Ringtone already playing (from handleNotification)
+    console.log('🚨 Stage 1: Monitoring notification (ringtone already active)');
     setEscalationLevel(1);
-    notificationSound.playNotificationSound('urgent');
 
-    // Stage 2: Increase urgency after 10s
+    // Stage 2: Increase vibration urgency after 10s
     const stage2Timer = setTimeout(() => {
-      console.log('🚨 Stage 2: Increased urgency');
+      console.log('🚨 Stage 2: Increased vibration urgency');
       setEscalationLevel(2);
-      notificationSound.setVolume(0.9);
       if ('vibrate' in navigator) {
         navigator.vibrate([300, 100, 300, 100, 300]);
       }
     }, 10000);
 
-    // Stage 3: Maximum urgency after 20s
+    // Stage 3: Maximum urgency after 20s (just vibration, audio already playing)
     const stage3Timer = setTimeout(() => {
-      console.log('🚨 Stage 3: MAXIMUM URGENCY - Continuous ringing');
+      console.log('🚨 Stage 3: MAXIMUM URGENCY - Enhanced vibration');
       setEscalationLevel(3);
-      notificationSound.setVolume(1.0);
-      notificationSound.startContinuousRinging('rapido_ringtone');
       
       if ('vibrate' in navigator) {
         // Continuous vibration pattern
