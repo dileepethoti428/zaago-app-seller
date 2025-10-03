@@ -38,11 +38,9 @@ import { CustomerNotifications } from "@/components/CustomerNotifications";
 import { AgentNotifications } from "@/components/AgentNotifications";
 import { SellerNotifications } from "@/components/SellerNotifications";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
-import { useOneSignalInit } from "@/hooks/useOneSignalInit";
 
 const AppContent = () => {
   useRealtimeSync();
-  useOneSignalInit();
   
   return (
     <>

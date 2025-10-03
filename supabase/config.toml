@@ -2,6 +2,3 @@ project_id = "amhpjsmubciahslghobw"
 
 [functions.get-mapbox-token]
 verify_jwt = false
-
-[functions.send-seller-push-notification]
-verify_jwt = false
