@@ -5081,7 +5081,7 @@ export type Database = {
         }[]
       }
       get_seller_order_items: {
-        Args: { order_items: Json; p_seller_id: string }
+        Args: { order_items: Json; target_seller_id: string }
         Returns: Json
       }
       get_seller_orders: {

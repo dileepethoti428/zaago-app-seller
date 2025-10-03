@@ -137,21 +137,42 @@ export const SellerNotifications = () => {
 
   // Handle notification processing (extracted for reuse)
   const handleNotification = useCallback(async (notification: any) => {
-    console.log('🔔 Processing notification:', notification);
-    console.log('🔔 Notification metadata:', notification.metadata);
+    console.log('🔔 ========== HANDLE NOTIFICATION CALLED ==========');
+    console.log('📦 Full notification object:', notification);
+    console.log('📦 Notification ID:', notification.id);
+    console.log('📦 Notification type:', notification.type);
+    console.log('📦 Notification role:', notification.role);
+    console.log('📦 Order ID:', notification.order_id);
+    console.log('📦 Created at:', notification.created_at);
+    console.log('📦 Metadata:', notification.metadata);
     
     // Handle new order notifications with MAXIMUM URGENCY
     if (notification.type === 'new_order') {
-      console.log('🚨 CRITICAL: NEW ORDER NOTIFICATION! Initiating emergency alert sequence');
+      console.log('🚨🚨🚨 CRITICAL: NEW ORDER NOTIFICATION DETECTED! 🚨🚨🚨');
+      console.log('🚨 Initiating EMERGENCY ALERT SEQUENCE');
       
       // Extract order ID from multiple possible sources
       const orderId = notification.order_id || notification.reference_id || notification.metadata?.order_id;
-      console.log('🚨 Order ID:', orderId);
-      console.log('🚨 Message:', notification.message);
+      console.log('🚨 Order ID extracted:', orderId);
+      console.log('🚨 Notification message:', notification.message);
+      console.log('🚨 Notification title:', notification.title);
       
       // Extract metadata for immediate display
       const metadata = notification.metadata || {};
-      console.log('📦 Metadata:', metadata);
+      console.log('📦 ========== METADATA ANALYSIS ==========');
+      console.log('📦 Has metadata:', !!metadata);
+      console.log('📦 Metadata keys:', Object.keys(metadata));
+      console.log('📦 seller_total:', metadata.seller_total);
+      console.log('📦 seller_items:', metadata.seller_items);
+      console.log('📦 seller_items length:', metadata.seller_items?.length);
+      console.log('📦 total_items_count:', metadata.total_items_count);
+      console.log('📦 item_names:', metadata.item_names);
+      console.log('📦 customer_name:', metadata.customer_name);
+      console.log('📦 customer_phone:', metadata.customer_phone);
+      console.log('📦 delivery_address:', metadata.delivery_address);
+      console.log('📦 payment_method:', metadata.payment_method);
+      console.log('📦 payment_status:', metadata.payment_status);
+      console.log('📦 ========================================');
       
       // IMMEDIATE VISUAL FEEDBACK - Show modal state change
       console.log('🚨 Setting modal visible state to TRUE');
@@ -568,7 +589,14 @@ export const SellerNotifications = () => {
   const setupSubscription = useCallback(() => {
     if (!user) return null;
 
-    console.log('🔔 Setting up enhanced notification subscription for user:', user.id);
+    console.log('🔔 Setting up ENHANCED notification subscription for user:', user.id);
+    console.log('📊 Current state:', {
+      isPolling,
+      connectionStatus,
+      reconnectAttempts: reconnectAttempts.current,
+      lastChecked,
+      notificationDeliveryCount
+    });
     setConnectionStatus('connecting');
 
     // Initialize audio context early and request permissions
@@ -590,7 +618,7 @@ export const SellerNotifications = () => {
 
     // Subscribe to notifications for this seller - ONLY NEW ORDERS
     const notificationsChannel = supabase
-      .channel(`seller-notifications-${user.id}-${Date.now()}`) // Unique channel name
+      .channel(`seller-notifications-${user.id}-${Date.now()}`) // Unique channel name with timestamp
       .on(
         'postgres_changes',
         {
@@ -601,7 +629,17 @@ export const SellerNotifications = () => {
         },
         async (payload) => {
           const notification = payload.new;
-          console.log('🔔 Real-time notification received:', notification);
+          console.log('🔔 ========== REAL-TIME NOTIFICATION RECEIVED ==========');
+          console.log('📦 Notification data:', {
+            id: notification.id,
+            type: notification.type,
+            role: notification.role,
+            title: notification.title,
+            order_id: notification.order_id,
+            created_at: notification.created_at,
+            metadata_keys: notification.metadata ? Object.keys(notification.metadata) : [],
+            full_metadata: notification.metadata
+          });
           
           // Update delivery metrics
           setNotificationDeliveryCount(prev => prev + 1);
@@ -609,42 +647,71 @@ export const SellerNotifications = () => {
           
           // Filter for new_order only at the application level
           if (notification.type === 'new_order') {
-            console.log('🚨 NEW ORDER notification received via real-time:', notification);
+            console.log('🚨🚨🚨 NEW ORDER notification detected via REAL-TIME! 🚨🚨🚨');
+            console.log('📊 Metadata check:', {
+              has_metadata: !!notification.metadata,
+              seller_total: notification.metadata?.seller_total,
+              seller_items_count: notification.metadata?.seller_items?.length,
+              item_names: notification.metadata?.item_names,
+              customer_phone: notification.metadata?.customer_phone,
+              delivery_address: notification.metadata?.delivery_address,
+              payment_method: notification.metadata?.payment_method
+            });
+            
+            // Update last check time to prevent duplicate polling
+            setLastChecked(new Date(notification.created_at));
+            
             await handleNotification(notification);
             
-            // Show success toast for real-time delivery
-            console.log('✅ Real-time notification delivered successfully');
+            console.log('✅✅✅ Real-time NEW ORDER notification handled successfully! ✅✅✅');
           } else {
-            console.log('🔇 Ignoring non-new-order notification:', notification.type);
+            console.log('🔇 Ignoring non-new-order notification type:', notification.type);
           }
         }
       )
       .subscribe((status) => {
-        console.log('🔔 Subscription status changed:', status);
+        console.log('🔔 ========== SUBSCRIPTION STATUS CHANGED ==========');
+        console.log('📡 New status:', status);
+        console.log('📊 Channel state:', {
+          status,
+          user_id: user.id,
+          reconnect_attempts: reconnectAttempts.current,
+          is_polling: isPolling,
+          timestamp: new Date().toISOString()
+        });
         
         if (status === 'SUBSCRIBED') {
           setConnectionStatus('connected');
           reconnectAttempts.current = 0;
           setLastChecked(new Date());
-          console.log('🔔 Successfully connected to notifications');
+          console.log('✅✅✅ Successfully SUBSCRIBED to real-time notifications! ✅✅✅');
+          console.log('🔊 Audio and notification systems ready');
           
-          // Start heartbeat to maintain connection
+          // Start heartbeat to maintain connection ACTIVELY
           if (heartbeatIntervalRef.current) {
             clearInterval(heartbeatIntervalRef.current);
           }
-          heartbeatIntervalRef.current = setInterval(sendHeartbeat, 30000); // Every 30 seconds
+          heartbeatIntervalRef.current = setInterval(() => {
+            console.log('💓 Sending heartbeat to keep connection alive...');
+            sendHeartbeat();
+          }, 20000); // Every 20 seconds for more active connection
           
-          // Reduce polling frequency when real-time is working, but keep it active
+          // Keep aggressive polling even when real-time is working (belt and suspenders)
           if (pollingIntervalRef.current) {
             clearInterval(pollingIntervalRef.current);
           }
-          pollingIntervalRef.current = setInterval(checkForNewNotifications, 30000); // Every 30 seconds as backup
+          pollingIntervalRef.current = setInterval(() => {
+            console.log('🔄 Backup polling check (real-time is active)...');
+            checkForNewNotifications();
+          }, 15000); // Every 15 seconds as aggressive backup
           setIsPolling(true);
           
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           setConnectionStatus('disconnected');
           setHeartbeatActive(false);
-          console.error('🔔 Channel error/timeout/closed - initiating recovery');
+          console.error('❌❌❌ REAL-TIME CONNECTION FAILED! ❌❌❌');
+          console.error('🔴 Status:', status);
+          console.error('🔴 Falling back to AGGRESSIVE polling mode');
           
           // Stop heartbeat
           if (heartbeatIntervalRef.current) {
@@ -652,15 +719,26 @@ export const SellerNotifications = () => {
             heartbeatIntervalRef.current = null;
           }
           
-          // Start aggressive polling as backup
-          if (!isPolling) {
+          // Start VERY aggressive polling as backup
+          if (!isPolling || !pollingIntervalRef.current) {
             setIsPolling(true);
-            pollingIntervalRef.current = setInterval(checkForNewNotifications, 5000); // Every 5 seconds
-            console.log('🔄 Started aggressive backup polling');
+            if (pollingIntervalRef.current) {
+              clearInterval(pollingIntervalRef.current);
+            }
+            pollingIntervalRef.current = setInterval(() => {
+              console.log('🔄🔄🔄 AGGRESSIVE FALLBACK POLLING (real-time failed)');
+              checkForNewNotifications();
+            }, 3000); // Every 3 seconds when real-time fails
+            console.log('🔄 Started AGGRESSIVE backup polling (3s interval)');
           }
           
-          // Attempt reconnection
-          attemptReconnection();
+          // Attempt reconnection with exponential backoff
+          const backoffTime = Math.min(reconnectAttempts.current * 2000, 10000);
+          console.log(`⏳ Scheduling reconnection attempt in ${backoffTime}ms...`);
+          setTimeout(() => {
+            console.log('🔄 Attempting to reconnect real-time subscription...');
+            attemptReconnection();
+          }, backoffTime);
         }
       });
 
