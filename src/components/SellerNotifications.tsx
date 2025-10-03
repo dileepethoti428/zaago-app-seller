@@ -210,8 +210,14 @@ export const SellerNotifications = () => {
           }
           
           if (Notification.permission === 'granted') {
+            // Create enhanced notification with seller-specific details
+            const itemInfo = metadata.item_names 
+              ? `${metadata.total_items_count} item(s): ${metadata.item_names}` 
+              : `Order #${orderId?.slice(-6) || 'Unknown'}`;
+            const totalInfo = metadata.seller_total ? ` - ₹${metadata.seller_total}` : '';
+            
             const notif = new Notification('🚨🚨 EMERGENCY: NEW ORDER! 🚨🚨', {
-              body: `URGENT ACTION REQUIRED: ${metadata.customer_name || 'Customer'} - Order #${orderId?.slice(-6) || 'Unknown'}`,
+              body: `URGENT: ${metadata.customer_name || 'Customer'}\n${itemInfo}${totalInfo}`,
               icon: '/zaago-logo.png',
               badge: '/zaago-logo.png',
               tag: 'emergency-order',
@@ -234,20 +240,22 @@ export const SellerNotifications = () => {
         navigator.vibrate([500, 200, 500, 200, 500, 200, 1000]);
       }
       
-      // Initialize order details with metadata as immediate fallback
+      // Initialize order details with seller-specific metadata from backend
       let orderDetails = {
         id: orderId || 'unknown',
         customer_name: metadata.customer_name || 'New Customer',
         customer_phone: metadata.customer_phone || '',
-        total_amount: metadata.total_amount || 0,
-        items: metadata.items || [],
+        total_amount: metadata.seller_total || metadata.total_amount || 0, // Use seller-specific total
+        items: metadata.seller_items || metadata.items || [], // Use seller-specific items
         delivery_address: metadata.delivery_address || metadata.address || '',
         payment_method: metadata.payment_method || 'COD',
         payment_status: metadata.payment_status || 'pending',
-        seller_id: metadata.seller_id || ''
+        seller_id: metadata.seller_id || '',
+        seller_item_names: metadata.item_names || '', // Comma-separated item names
+        seller_item_count: metadata.total_items_count || 0 // Count of seller items
       };
       
-      console.log('📦 Initial order details from metadata:', orderDetails);
+      console.log('📦 Initial order details with seller-specific metadata:', orderDetails);
 
       // Try to fetch complete order details from database
       if (orderId && orderId !== 'unknown') {
@@ -316,52 +324,88 @@ export const SellerNotifications = () => {
                    `${(order.address as any)?.full_address || ''}, ${(order.address as any)?.city || ''}`.trim()) 
                   : orderDetails.delivery_address,
                 payment_method: (order as any).payment_method || orderDetails.payment_method,
-                payment_status: (order as any).payment_status || orderDetails.payment_status
+                payment_status: (order as any).payment_status || orderDetails.payment_status,
+                seller_item_names: orderDetails.seller_item_names || '',
+                seller_item_count: orderDetails.seller_item_count || 0
               };
             } else {
-              // Use the seller's user_id for filtering
-              const sellerUserId = sellerRecord.user_id;
-              console.log('🔍 Filtering products for seller:', sellerRecord.name, '(', sellerRecord.email, ')');
-              console.log('🔍 Using seller user ID for filtering:', sellerUserId);
-
-              // Filter items to only include products from this seller
-              const sellerItems = items
-                .filter((item: any) => {
-                  console.log('🔍 Item:', item.name, 'seller_id:', item.seller_id);
-                  console.log('🔍 Does', item.seller_id, '===', sellerUserId, '?', item.seller_id === sellerUserId);
-                  return item.seller_id === sellerUserId;
-                })
-                .map((item: any) => ({
+              // Use seller-specific metadata if available (backend already filtered)
+              if (metadata.seller_items && metadata.seller_items.length > 0) {
+                console.log('✅ Using backend-filtered seller items from metadata');
+                
+                // Map metadata items to ensure consistent format
+                const sellerItems = metadata.seller_items.map((item: any) => ({
                   id: item.id || item.product_id,
                   name: item.name || item.product_name || 'Unknown Product',
                   quantity: item.quantity || 1,
                   price: item.price || item.unit_price || 0,
                   total_price: (item.price || item.unit_price || 0) * (item.quantity || 1)
                 }));
+                
+                orderDetails = {
+                  id: order.id,
+                  customer_name: order.customer_name || orderDetails.customer_name,
+                  customer_phone: order.customer_phone || orderDetails.customer_phone,
+                  total_amount: metadata.seller_total || orderDetails.total_amount,
+                  items: sellerItems,
+                  delivery_address: order.address ? 
+                    (typeof order.address === 'string' ? order.address : 
+                     `${(order.address as any)?.full_address || ''}, ${(order.address as any)?.city || ''}`.trim()) 
+                    : orderDetails.delivery_address,
+                  payment_method: (order as any).payment_method || orderDetails.payment_method,
+                  payment_status: (order as any).payment_status || orderDetails.payment_status,
+                  seller_id: sellerRecord.user_id,
+                  seller_item_names: metadata.item_names,
+                  seller_item_count: metadata.total_items_count
+                };
+              } else {
+                // Fallback: Filter items manually if metadata not available
+                console.log('⚠️ Metadata seller_items not available, using fallback filtering');
+                const sellerUserId = sellerRecord.user_id;
+                console.log('🔍 Filtering products for seller:', sellerRecord.name, '(', sellerRecord.email, ')');
+                console.log('🔍 Using seller user ID for filtering:', sellerUserId);
 
-              console.log('🔍 Total items in order:', items.length);
-              console.log('🔍 Items for current seller:', sellerItems.length);
-              console.log('🔍 Seller items with calculated totals:', sellerItems);
+                // Filter items to only include products from this seller
+                const sellerItems = items
+                  .filter((item: any) => {
+                    console.log('🔍 Item:', item.name, 'seller_id:', item.seller_id);
+                    console.log('🔍 Does', item.seller_id, '===', sellerUserId, '?', item.seller_id === sellerUserId);
+                    return item.seller_id === sellerUserId;
+                  })
+                  .map((item: any) => ({
+                    id: item.id || item.product_id,
+                    name: item.name || item.product_name || 'Unknown Product',
+                    quantity: item.quantity || 1,
+                    price: item.price || item.unit_price || 0,
+                    total_price: (item.price || item.unit_price || 0) * (item.quantity || 1)
+                  }));
 
-              // Calculate seller's portion of the total
-              const sellerTotal = sellerItems.reduce((sum: number, item: any) => 
-                sum + (item.total_price || 0), 0
-              );
+                console.log('🔍 Total items in order:', items.length);
+                console.log('🔍 Items for current seller:', sellerItems.length);
+                console.log('🔍 Seller items with calculated totals:', sellerItems);
 
-              orderDetails = {
-                id: order.id,
-                customer_name: order.customer_name || orderDetails.customer_name,
-                customer_phone: order.customer_phone || orderDetails.customer_phone,
-                total_amount: sellerTotal || orderDetails.total_amount,
-                items: sellerItems.length > 0 ? sellerItems : orderDetails.items,
-                delivery_address: order.address ? 
-                  (typeof order.address === 'string' ? order.address : 
-                   `${(order.address as any)?.full_address || ''}, ${(order.address as any)?.city || ''}`.trim()) 
-                  : orderDetails.delivery_address,
-                payment_method: (order as any).payment_method || orderDetails.payment_method,
-                payment_status: (order as any).payment_status || orderDetails.payment_status,
-                seller_id: sellerUserId
-              };
+                // Calculate seller's portion of the total
+                const sellerTotal = sellerItems.reduce((sum: number, item: any) => 
+                  sum + (item.total_price || 0), 0
+                );
+
+                orderDetails = {
+                  id: order.id,
+                  customer_name: order.customer_name || orderDetails.customer_name,
+                  customer_phone: order.customer_phone || orderDetails.customer_phone,
+                  total_amount: sellerTotal || orderDetails.total_amount,
+                  items: sellerItems.length > 0 ? sellerItems : orderDetails.items,
+                  delivery_address: order.address ? 
+                    (typeof order.address === 'string' ? order.address : 
+                     `${(order.address as any)?.full_address || ''}, ${(order.address as any)?.city || ''}`.trim()) 
+                    : orderDetails.delivery_address,
+                  payment_method: (order as any).payment_method || orderDetails.payment_method,
+                  payment_status: (order as any).payment_status || orderDetails.payment_status,
+                  seller_id: sellerUserId,
+                  seller_item_names: sellerItems.map((item: any) => item.name).join(', '),
+                  seller_item_count: sellerItems.length
+                };
+              }
             }
 
             console.log('📦 Enhanced order details from database:', orderDetails);

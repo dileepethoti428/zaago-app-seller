@@ -1153,6 +1153,7 @@ export type Database = {
           onesignal_player_id: string | null
           performance_score: number | null
           phone: string | null
+          push_subscription: Json | null
           total_deliveries: number | null
           total_earnings: number | null
           updated_at: string | null
@@ -1173,6 +1174,7 @@ export type Database = {
           onesignal_player_id?: string | null
           performance_score?: number | null
           phone?: string | null
+          push_subscription?: Json | null
           total_deliveries?: number | null
           total_earnings?: number | null
           updated_at?: string | null
@@ -1193,6 +1195,7 @@ export type Database = {
           onesignal_player_id?: string | null
           performance_score?: number | null
           phone?: string | null
+          push_subscription?: Json | null
           total_deliveries?: number | null
           total_earnings?: number | null
           updated_at?: string | null
@@ -5076,6 +5079,10 @@ export type Database = {
           total_reviews: number
           viewed_at: string
         }[]
+      }
+      get_seller_order_items: {
+        Args: { order_items: Json; p_seller_id: string }
+        Returns: Json
       }
       get_seller_orders: {
         Args: { seller_user_id: string; status_filter?: string[] }
