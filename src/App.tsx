@@ -48,7 +48,6 @@ const AppContent = () => {
       <Sonner />
       <CustomerNotifications />
       <AgentNotifications />
-      <SellerNotifications />
       <HashRouter>
         <ProtectedRoute>
           <Routes>
