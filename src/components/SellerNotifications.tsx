@@ -151,6 +151,17 @@ export const SellerNotifications = () => {
       console.log('🚨🚨🚨 CRITICAL: NEW ORDER NOTIFICATION DETECTED! 🚨🚨🚨');
       console.log('🚨 Initiating EMERGENCY ALERT SEQUENCE');
       
+      // 🔊 CRITICAL FIX: Play ringtone IMMEDIATELY - Don't wait!
+      console.log('🔊 PLAYING RINGTONE IMMEDIATELY');
+      try {
+        await notificationSound.ensureAudioContext();
+        notificationSound.setVolume(1.0); // Maximum volume
+        notificationSound.startContinuousRinging('rapido_ringtone');
+        console.log('✅ Ringtone started successfully');
+      } catch (error) {
+        console.error('❌ Failed to play ringtone:', error);
+      }
+      
       // Extract order ID from multiple possible sources
       const orderId = notification.order_id || notification.reference_id || notification.metadata?.order_id;
       console.log('🚨 Order ID extracted:', orderId);
@@ -176,52 +187,6 @@ export const SellerNotifications = () => {
       
       // IMMEDIATE VISUAL FEEDBACK - Show modal state change
       console.log('🚨 Setting modal visible state to TRUE');
-      
-      // IMMEDIATE AUDIO with multiple fallbacks
-      const playEmergencyAudio = async () => {
-        try {
-          console.log('🚨 EMERGENCY AUDIO: Forcing audio context initialization');
-          await notificationSound.ensureAudioContext();
-          
-          const audioStatus = notificationSound.getAudioStatus();
-          console.log('🔊 Emergency audio status:', audioStatus);
-          
-          // Force maximum volume for emergency
-          notificationSound.setVolume(0.8);
-          
-          // Start continuous high-volume ringing IMMEDIATELY
-          console.log('🚨 STARTING MAXIMUM VOLUME CONTINUOUS RINGING');
-          notificationSound.startContinuousRinging('rapido_ringtone');
-          
-          // Also play immediate urgent sound
-          await notificationSound.playNotificationSound('urgent');
-          
-          // If audio is blocked, show urgent prompt
-          if (!audioStatus.canPlay) {
-            console.warn('🚨 AUDIO BLOCKED - SHOWING URGENT INTERACTION PROMPT');
-            toast({
-              title: "🚨 URGENT: ENABLE SOUND!",
-              description: "NEW ORDER ALERT - Click to enable emergency audio!",
-              duration: 30000,
-              className: "bg-red-600 text-white border-red-600 text-xl font-bold animate-pulse cursor-pointer",
-              onClick: async () => {
-                await notificationSound.ensureAudioContext();
-                notificationSound.startContinuousRinging('rapido_ringtone');
-              }
-            });
-          }
-          
-        } catch (error) {
-          console.error('🚨 EMERGENCY AUDIO FAILED:', error);
-          // Fallback: at least try vibration
-          if ('vibrate' in navigator) {
-            navigator.vibrate([1000, 500, 1000, 500, 1000, 500, 1000]);
-          }
-        }
-      };
-      
-      // Execute emergency audio immediately
-      playEmergencyAudio();
       
       // BROWSER NOTIFICATION with maximum urgency
       const showEmergencyNotification = async () => {

@@ -5082,7 +5082,12 @@ export type Database = {
       }
       get_seller_order_items: {
         Args: { order_items: Json; target_seller_id: string }
-        Returns: Json
+        Returns: {
+          item_count: number
+          item_names: Json
+          seller_items: Json
+          total_price: number
+        }[]
       }
       get_seller_orders: {
         Args: { seller_user_id: string; status_filter?: string[] }
