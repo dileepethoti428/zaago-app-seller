@@ -129,11 +129,11 @@ export class NotificationSoundManager {
       this.fallbackAudio.preload = 'auto';
       this.fallbackAudio.volume = this.volume;
       
-      // Use the same MP3 file as the new order ringtone for better quality
-      this.fallbackAudio.src = '/audio/new-order-ringtone.mp3';
+      // Use the iPhone 6 ringtone for better quality
+      this.fallbackAudio.src = '/audio/iphone-6-ringtone.mp3';
 
-      // Setup new order ringtone audio
-      this.newOrderAudio = new Audio('/audio/new-order-ringtone.mp3');
+      // Setup new order ringtone audio with iPhone 6 ringtone
+      this.newOrderAudio = new Audio('/audio/iphone-6-ringtone.mp3');
       this.newOrderAudio.preload = 'auto';
       this.newOrderAudio.volume = this.volume;
       this.newOrderAudio.loop = false;
