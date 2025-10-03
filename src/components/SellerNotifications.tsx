@@ -891,6 +891,45 @@ export const SellerNotifications = () => {
 
   return (
     <>
+      {/* Connection Status Indicator (only visible when disconnected or connecting) */}
+      {connectionStatus !== 'connected' && (
+        <div className="fixed bottom-4 right-4 z-40 flex items-center gap-2 bg-background border border-border rounded-lg p-3 shadow-lg">
+          {connectionStatus === 'connecting' ? (
+            <>
+              <RefreshCw className="h-4 w-4 animate-spin text-yellow-500" />
+              <span className="text-sm">Connecting...</span>
+            </>
+          ) : (
+            <>
+              <WifiOff className="h-4 w-4 text-red-500" />
+              <span className="text-sm text-red-500">Connection Lost</span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={manualRefresh}
+                disabled={manualRefreshing}
+                className="ml-2"
+              >
+                {manualRefreshing ? (
+                  <RefreshCw className="h-3 w-3 animate-spin" />
+                ) : (
+                  'Retry'
+                )}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Connection healthy indicator (appears briefly) */}
+      {connectionStatus === 'connected' && notificationDeliveryCount > 0 && (
+        <div className="fixed bottom-4 right-4 z-40 bg-green-500 text-white rounded-lg p-2 shadow-lg animate-fade-in">
+          <div className="flex items-center gap-2">
+            <Wifi className="h-4 w-4" />
+            <span className="text-sm">Connected</span>
+          </div>
+        </div>
+      )}
 
       {/* Enhanced Modal with debugging */}
       {newOrderModal.visible && newOrderModal.order && (
