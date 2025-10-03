@@ -131,8 +131,6 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
         newSet.delete(productId);
         return newSet;
       });
-      // Close modal after successful acceptance
-      setTimeout(() => onDismiss(), 500);
     }
   };
 
@@ -151,8 +149,6 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
         newSet.delete(productId);
         return newSet;
       });
-      // Close modal after successful rejection
-      setTimeout(() => onDismiss(), 500);
     }
   };
 
