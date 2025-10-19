@@ -28,6 +28,7 @@ interface Order {
   order_type: string;
   seller_total?: number;
   seller_items?: number;
+  payment_status?: string;
 }
 
 const CustomerOrders: React.FC = () => {
@@ -608,7 +609,7 @@ const CustomerOrders: React.FC = () => {
                         {/* Simple action buttons based on order status */}
                         {user?.id && order.items?.some((item: any) => item.seller_id === user.id) && (
                           <div className="flex gap-3 pt-3 border-t border-zaago-border/30 mt-3">
-                            {order.status === 'pending' && (
+                            {(order.status === 'pending' || order.status === 'placed') && (
                               <>
                                 <Button
                                   onClick={() => handleAcceptOrder(order.id, user.id)}
