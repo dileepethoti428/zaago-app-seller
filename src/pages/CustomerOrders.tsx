@@ -210,9 +210,7 @@ const CustomerOrders: React.FC = () => {
   };
 
   const handlePackOrder = async (orderId: string, sellerId: string) => {
-    console.log('Pack order clicked:', { orderId, sellerId });
     const success = await packOrder(orderId, sellerId);
-    console.log('Pack order result:', success);
     if (success) {
       fetchOrders();
     }

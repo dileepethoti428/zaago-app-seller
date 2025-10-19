@@ -28,6 +28,42 @@ export const useSellerOrderActions = () => {
     }));
 
     try {
+      // Use simpler function for pack action
+      if (action === 'pack') {
+        const { data, error } = await supabase.rpc('mark_order_as_packed_simple', {
+          order_id: orderId
+        });
+
+        if (error) throw error;
+
+        const result = data as { success: boolean; message?: string; error?: string };
+
+        if (result.success) {
+          // Clear optimistic update since real update succeeded
+          setOptimisticUpdates(prev => {
+            const updated = { ...prev };
+            delete updated[orderId];
+            return updated;
+          });
+
+          toast({
+            title: "Success",
+            description: result.message || 'Order packed successfully',
+            variant: "default"
+          });
+          
+          // Confirm the update with real data
+          window.dispatchEvent(new CustomEvent('orderStatusUpdated', { 
+            detail: { orderId, action, status: newStatus, confirmed: true } 
+          }));
+          
+          return true;
+        } else {
+          throw new Error(result.error || 'Failed to pack order');
+        }
+      }
+
+      // For other actions, use the original function
       const { data, error } = await supabase.rpc('update_seller_order_status', {
         p_order_id: orderId,
         p_seller_user_id: sellerUserId,
