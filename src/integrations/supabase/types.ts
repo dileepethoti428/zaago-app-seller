@@ -218,6 +218,55 @@ export type Database = {
           },
         ]
       }
+      agent_order_rejections: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          order_id: string
+          rejection_reason: string | null
+          rejection_type: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          order_id: string
+          rejection_reason?: string | null
+          rejection_type?: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          order_id?: string
+          rejection_reason?: string | null
+          rejection_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_order_rejections_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_order_rejections_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_order_rejections_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders_with_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_settings: {
         Row: {
           agent_id: string
@@ -1701,6 +1750,53 @@ export type Database = {
           },
         ]
       }
+      flexible_payments: {
+        Row: {
+          agent_id: string
+          amount: number
+          created_at: string
+          expires_at: string
+          id: string
+          payment_received_at: string | null
+          qr_code_url: string
+          razorpay_qr_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          amount: number
+          created_at?: string
+          expires_at: string
+          id?: string
+          payment_received_at?: string | null
+          qr_code_url: string
+          razorpay_qr_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          amount?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          payment_received_at?: string | null
+          qr_code_url?: string
+          razorpay_qr_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flexible_payments_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       milk_transactions: {
         Row: {
           created_at: string
@@ -2186,11 +2282,19 @@ export type Database = {
           delivered_at: string | null
           delivery_address_id: string | null
           delivery_date: string | null
+          delivery_otp: string | null
           delivery_time: string | null
           delivery_time_slot: string | null
           id: string
           items: Json
+          notification_count: number
+          otp_attempts: number | null
+          otp_expires_at: string | null
+          otp_verified: boolean | null
+          otp_verified_at: string | null
+          otp_verified_by: string | null
           payment_id: string | null
+          payment_method: string | null
           payment_status: string | null
           pickup_address: string | null
           pickup_location: Json | null
@@ -2219,11 +2323,19 @@ export type Database = {
           delivered_at?: string | null
           delivery_address_id?: string | null
           delivery_date?: string | null
+          delivery_otp?: string | null
           delivery_time?: string | null
           delivery_time_slot?: string | null
           id?: string
           items: Json
+          notification_count?: number
+          otp_attempts?: number | null
+          otp_expires_at?: string | null
+          otp_verified?: boolean | null
+          otp_verified_at?: string | null
+          otp_verified_by?: string | null
           payment_id?: string | null
+          payment_method?: string | null
           payment_status?: string | null
           pickup_address?: string | null
           pickup_location?: Json | null
@@ -2252,11 +2364,19 @@ export type Database = {
           delivered_at?: string | null
           delivery_address_id?: string | null
           delivery_date?: string | null
+          delivery_otp?: string | null
           delivery_time?: string | null
           delivery_time_slot?: string | null
           id?: string
           items?: Json
+          notification_count?: number
+          otp_attempts?: number | null
+          otp_expires_at?: string | null
+          otp_verified?: boolean | null
+          otp_verified_at?: string | null
+          otp_verified_by?: string | null
           payment_id?: string | null
+          payment_method?: string | null
           payment_status?: string | null
           pickup_address?: string | null
           pickup_location?: Json | null
@@ -2286,6 +2406,13 @@ export type Database = {
             columns: ["delivery_address_id"]
             isOneToOne: false
             referencedRelation: "delivery_addresses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_otp_verified_by_fkey"
+            columns: ["otp_verified_by"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
             referencedColumns: ["id"]
           },
           {
@@ -4655,7 +4782,7 @@ export type Database = {
         Args:
           | { p_user_id?: string; p_vacation_id: string }
           | { p_vacation_id: string }
-        Returns: Json
+        Returns: boolean
       }
       check_rate_limit: {
         Args: {
@@ -4709,7 +4836,7 @@ export type Database = {
               p_payment_method?: string
             }
           | { p_order_id: string; p_payment_method?: string }
-        Returns: undefined
+        Returns: Json
       }
       complete_delivery_minimal_update: {
         Args: { p_order_id: string; p_payment_method?: string }
@@ -4720,6 +4847,14 @@ export type Database = {
           p_agent_id: string
           p_order_id: string
           p_payment_method?: string
+        }
+        Returns: Json
+      }
+      complete_delivery_safe_wrapper: {
+        Args: {
+          p_agent_id: string
+          p_order_id: string
+          p_payment_method: string
         }
         Returns: Json
       }
@@ -4884,12 +5019,10 @@ export type Database = {
       get_agent_performance: {
         Args: Record<PropertyKey, never> | { limit_count?: number }
         Returns: {
-          agent_id: string
-          agent_name: string
-          average_rating: number
-          success_rate: number
-          total_deliveries: number
-          total_earnings: number
+          avg_rating: number
+          deliveries_today: number
+          online_agents: number
+          total_agents: number
         }[]
       }
       get_agent_profile_with_metrics: {
@@ -5059,10 +5192,7 @@ export type Database = {
           | { customer_lat: number; customer_lon: number; range_km?: number }
           | { customer_lat: number; customer_lon: number; range_km?: number }
         Returns: {
-          discount_percentage: number
-          discounted_price: number
           distance_km: number
-          original_price: number
           product_description: string
           product_id: string
           product_image_url: string
@@ -5149,12 +5279,9 @@ export type Database = {
       get_top_products: {
         Args: Record<PropertyKey, never> | { limit_count?: number }
         Returns: {
-          image_url: string
-          product_id: string
-          product_name: string
-          seller_name: string
-          total_revenue: number
-          total_sold: number
+          name: string
+          qty_sold: number
+          revenue: number
         }[]
       }
       get_top_products_analytics: {
@@ -5241,6 +5368,23 @@ export type Database = {
         }
         Returns: boolean
       }
+      insert_delivery_history_safe: {
+        Args: {
+          p_agent_id: string
+          p_customer_name: string
+          p_customer_phone: string
+          p_delivery_address: Json
+          p_delivery_date: string
+          p_delivery_payout: number
+          p_delivery_time_slot?: string
+          p_items: Json
+          p_order_id: string
+          p_payment_method: string
+          p_payment_status: string
+          p_total_amount: number
+        }
+        Returns: string
+      }
       is_admin: {
         Args: { user_email: string }
         Returns: boolean
@@ -5300,6 +5444,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      manual_complete_delivery: {
+        Args: {
+          p_agent_id: string
+          p_order_id: string
+          p_payment_method: string
+        }
+        Returns: Json
+      }
       manual_process_subscriptions: {
         Args: { p_processing_date?: string }
         Returns: Json
@@ -5327,6 +5479,14 @@ export type Database = {
       notify_nearby_delivery_agents: {
         Args: { p_order_id: string }
         Returns: number
+      }
+      nuclear_complete_delivery_bypass: {
+        Args: {
+          p_agent_id: string
+          p_order_id: string
+          p_payment_method: string
+        }
+        Returns: Json
       }
       process_daily_subscriptions_with_notifications: {
         Args: { p_scheduled_time?: string }
@@ -5359,11 +5519,14 @@ export type Database = {
         Returns: number
       }
       qr_complete_delivery_v3: {
-        Args: {
-          p_agent_id: string
-          p_order_id: string
-          p_payment_method?: string
-        }
+        Args:
+          | { p_agent_id: string; p_order_id: string; p_payment_method: string }
+          | { p_agent_id: string; p_order_id: string; p_payment_method: string }
+          | {
+              p_agent_id: string
+              p_payment_method: string
+              p_qr_code_data: string
+            }
         Returns: Json
       }
       reconcile_completed_orders: {
@@ -5411,6 +5574,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      safe_complete_delivery: {
+        Args: {
+          p_agent_id: string
+          p_order_id: string
+          p_payment_method: string
+        }
+        Returns: Json
+      }
       sanitize_input: {
         Args: { input_text: string }
         Returns: string
@@ -5449,6 +5620,14 @@ export type Database = {
       }
       simple_complete_delivery_final: {
         Args: { p_order_id: string; p_payment_method?: string }
+        Returns: Json
+      }
+      simple_mark_delivered: {
+        Args: {
+          p_agent_id: string
+          p_order_id: string
+          p_payment_method?: string
+        }
         Returns: Json
       }
       sync_special_offers_from_products: {
@@ -5527,6 +5706,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      validate_order_for_completion: {
+        Args: { p_order_id: string }
+        Returns: Json
+      }
       validate_reset_token: {
         Args: { token: string }
         Returns: boolean
@@ -5534,6 +5717,10 @@ export type Database = {
       validate_secret_code: {
         Args: { input_code: string }
         Returns: boolean
+      }
+      verify_order_otp: {
+        Args: { p_agent_id: string; p_order_id: string; p_otp_code: string }
+        Returns: Json
       }
     }
     Enums: {
