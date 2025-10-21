@@ -190,7 +190,7 @@ const CustomerOrders: React.FC = () => {
   // Calculate counts for each status (with fallback for empty orders)
   const orderCounts = {
     all: orders?.length || 0,
-    new: orders?.filter(o => o.status === 'new')?.length || 0,
+    new: orders?.filter(o => o.status === 'new' || o.status === 'pending')?.length || 0,
     accepted: orders?.filter(o => o.status === 'accepted')?.length || 0,
     in_transit: orders?.filter(o => o.status === 'in_transit')?.length || 0,
     delivered: orders?.filter(o => o.status === 'delivered')?.length || 0,
