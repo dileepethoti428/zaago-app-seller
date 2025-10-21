@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,10 +6,20 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Bell } from 'lucide-react';
 
+interface Order {
+  id: string;
+  created_at: string;
+  status: string;
+  total: number;
+  user_id: string;
+}
+
 export const TestOrderNotification = () => {
+  const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [fetchingOrders, setFetchingOrders] = useState(true);
   const { toast } = useToast();
   
   const testStatuses = [
@@ -23,6 +33,33 @@ export const TestOrderNotification = () => {
     { value: 'delivered', label: 'Delivered' },
     { value: 'cancelled', label: 'Cancelled' },
   ];
+  
+  useEffect(() => {
+    fetchRecentOrders();
+  }, []);
+  
+  const fetchRecentOrders = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('id, created_at, status, total, user_id')
+        .order('created_at', { ascending: false })
+        .limit(10);
+        
+      if (error) throw error;
+      
+      setOrders(data || []);
+    } catch (error: any) {
+      console.error('Error fetching orders:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch orders',
+        variant: 'destructive',
+      });
+    } finally {
+      setFetchingOrders(false);
+    }
+  };
   
   const handleTestNotification = async () => {
     if (!selectedOrderId || !selectedStatus) {
@@ -38,13 +75,9 @@ export const TestOrderNotification = () => {
     
     try {
       // Get the order to find the user_id
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .select('user_id')
-        .eq('id', selectedOrderId)
-        .single();
-        
-      if (orderError || !order) {
+      const selectedOrder = orders.find(o => o.id === selectedOrderId);
+      
+      if (!selectedOrder) {
         throw new Error('Order not found');
       }
       
@@ -53,7 +86,7 @@ export const TestOrderNotification = () => {
         body: {
           orderId: selectedOrderId,
           status: selectedStatus,
-          userId: order.user_id,
+          userId: selectedOrder.user_id,
         },
       });
       
@@ -63,7 +96,7 @@ export const TestOrderNotification = () => {
       
       toast({
         title: 'Test Notification Sent!',
-        description: `Notification sent for order ${selectedOrderId.slice(0, 8)}`,
+        description: `Notification sent for order ${selectedOrderId.slice(0, 8)}... with status: ${selectedStatus}`,
       });
       
       console.log('Test notification response:', data);
@@ -93,14 +126,25 @@ export const TestOrderNotification = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium">Order ID</label>
-          <input
-            type="text"
-            placeholder="Enter order UUID"
-            value={selectedOrderId}
-            onChange={(e) => setSelectedOrderId(e.target.value)}
-            className="w-full px-3 py-2 border rounded-md"
-          />
+          <label className="text-sm font-medium">Select Order</label>
+          {fetchingOrders ? (
+            <p className="text-sm text-muted-foreground">Loading orders...</p>
+          ) : orders.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No orders found</p>
+          ) : (
+            <Select value={selectedOrderId} onValueChange={setSelectedOrderId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select an order" />
+              </SelectTrigger>
+              <SelectContent>
+                {orders.map((order) => (
+                  <SelectItem key={order.id} value={order.id}>
+                    Order {order.id.slice(0, 8)}... - ₹{order.total} ({order.status})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
         
         <div className="space-y-2">
@@ -121,7 +165,7 @@ export const TestOrderNotification = () => {
         
         <Button 
           onClick={handleTestNotification} 
-          disabled={loading || !selectedOrderId || !selectedStatus}
+          disabled={loading || !selectedOrderId || !selectedStatus || fetchingOrders}
           className="w-full"
         >
           {loading ? 'Sending...' : 'Send Test Notification'}
