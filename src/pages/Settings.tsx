@@ -28,6 +28,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from 'next-themes';
+import { TestOrderNotification } from '@/components/TestOrderNotification';
 
 
 const Settings = () => {
@@ -584,6 +585,19 @@ const Settings = () => {
                   </div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Test Order Notification - Admin/Seller Only */}
+          <Card className="zaago-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="w-5 h-5 text-zaago-green" />
+                Developer Tools
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TestOrderNotification />
             </CardContent>
           </Card>
 

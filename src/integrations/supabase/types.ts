@@ -5572,7 +5572,7 @@ export type Database = {
       }
       resume_expired_vacations: {
         Args: Record<PropertyKey, never>
-        Returns: number
+        Returns: Json
       }
       safe_complete_delivery: {
         Args: {
@@ -5613,6 +5613,10 @@ export type Database = {
       settle_cod_to_admin: {
         Args: { p_agent_id: string; p_amount: number }
         Returns: Json
+      }
+      should_create_same_day_order: {
+        Args: { p_subscription_id: string }
+        Returns: boolean
       }
       should_skip_delivery_for_vacation_v3: {
         Args: { p_delivery_date: string; p_subscription_id: string }
