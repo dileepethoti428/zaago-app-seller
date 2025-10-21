@@ -144,7 +144,12 @@ const Orders = () => {
 
     // Filter by tab
     if (activeTab !== 'all') {
-      filtered = filtered.filter(order => order.status === activeTab);
+      // Treat 'new' tab as showing both 'new' and 'pending' statuses
+      if (activeTab === 'new') {
+        filtered = filtered.filter(order => order.status === 'new' || order.status === 'pending');
+      } else {
+        filtered = filtered.filter(order => order.status === activeTab);
+      }
     }
 
     // Filter by search term
@@ -207,6 +212,7 @@ const Orders = () => {
     switch (status) {
       case 'delivered':
         return <CheckCircle2 className="w-4 h-4 text-primary" />;
+      case 'pending':
       case 'new':
         return <Clock className="w-4 h-4 text-yellow-500" />;
       case 'accepted':
@@ -224,6 +230,7 @@ const Orders = () => {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
+      pending: { label: 'New', variant: 'destructive' as const, className: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
       new: { label: 'New', variant: 'destructive' as const, className: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
       accepted: { label: 'Accepted', variant: 'default' as const, className: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
       rejected: { label: 'Rejected', variant: 'destructive' as const, className: 'bg-red-500/20 text-red-400 border-red-500/30' },
@@ -251,7 +258,11 @@ const Orders = () => {
   // Calculate tab counts
   const tabCounts = orderTabs.map(tab => ({
     ...tab,
-    count: tab.value === 'all' ? orders.length : orders.filter(order => order.status === tab.value).length
+    count: tab.value === 'all' 
+      ? orders.length 
+      : tab.value === 'new'
+        ? orders.filter(order => order.status === 'new' || order.status === 'pending').length
+        : orders.filter(order => order.status === tab.value).length
   }));
 
   return (
@@ -373,7 +384,7 @@ const Orders = () => {
                                   className={`${
                                     order.status === 'delivered' 
                                       ? 'bg-zaago-green/20 text-zaago-green border-zaago-green/30' 
-                                      : order.status === 'new' || order.status === 'accepted'
+                                      : order.status === 'new' || order.status === 'accepted' || order.status === 'pending'
                                       ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
                                       : order.status === 'in_transit'
                                       ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
@@ -381,7 +392,7 @@ const Orders = () => {
                                   } text-sm font-medium px-3 py-1`}
                                 >
                                   {order.status === 'in_transit' ? 'In Transit' : 
-                                   order.status === 'new' ? 'New' :
+                                   order.status === 'new' || order.status === 'pending' ? 'New' :
                                    order.status === 'accepted' ? 'Accepted' :
                                    order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                                 </Badge>
@@ -423,7 +434,7 @@ const Orders = () => {
                           {/* Action Buttons */}
                           <div className="flex flex-col sm:flex-row gap-2 justify-center sm:justify-end">
                             {/* Seller Action Buttons */}
-                            {order.status === 'new' && (
+                            {(order.status === 'new' || order.status === 'pending') && (
                               <>
                                 <Button
                                   onClick={() => acceptOrder(order.id, user?.id || '')}
