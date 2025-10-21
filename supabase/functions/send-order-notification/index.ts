@@ -51,9 +51,25 @@ serve(async (req) => {
     
     if (!profile?.onesignal_player_id) {
       console.log('No OneSignal player ID found for user:', userId);
+      
+      // Still create a notification record in database even without push
+      await supabase.from('notifications').insert({
+        user_id: userId,
+        title: 'Order Update',
+        message: `Your order status has been updated to: ${status}`,
+        type: 'order_update',
+        order_id: orderId,
+        role: 'user',
+        metadata: { status, note: 'Push notification skipped - no player ID' }
+      });
+      
+      // Return success even without player ID - don't block order updates
       return new Response(
-        JSON.stringify({ error: 'No player ID found for user' }), 
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ 
+          success: true,
+          message: 'Notification created in database (push skipped - no OneSignal player ID)' 
+        }), 
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
