@@ -2275,6 +2275,7 @@ export type Database = {
           agent_id: string | null
           agent_notification_sent: boolean | null
           agent_notification_sent_at: string | null
+          assigned_agent_id: string | null
           created_at: string
           customer_name: string | null
           customer_phone: string | null
@@ -2316,6 +2317,7 @@ export type Database = {
           agent_id?: string | null
           agent_notification_sent?: boolean | null
           agent_notification_sent_at?: string | null
+          assigned_agent_id?: string | null
           created_at?: string
           customer_name?: string | null
           customer_phone?: string | null
@@ -2357,6 +2359,7 @@ export type Database = {
           agent_id?: string | null
           agent_notification_sent?: boolean | null
           agent_notification_sent_at?: string | null
+          assigned_agent_id?: string | null
           created_at?: string
           customer_name?: string | null
           customer_phone?: string | null
@@ -2397,6 +2400,13 @@ export type Database = {
           {
             foreignKeyName: "orders_agent_id_fkey"
             columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_assigned_agent_id_fkey"
+            columns: ["assigned_agent_id"]
             isOneToOne: false
             referencedRelation: "delivery_agents"
             referencedColumns: ["id"]
