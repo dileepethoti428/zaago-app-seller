@@ -61,8 +61,20 @@ const getStatusColor = (status: string) => {
 };
 
 export const DeliveryStatusTimeline = ({ timeline, currentStatus }: DeliveryStatusTimelineProps) => {
-  // Filter out any null or invalid items
-  const validTimeline = timeline.filter(item => item && item.status && item.timestamp && item.label);
+  // Ensure timeline is an array and filter out any null or invalid items
+  const safeTimeline = Array.isArray(timeline) ? timeline : [];
+  const validTimeline = safeTimeline.filter(
+    (item): item is TimelineItem => 
+      item !== null && 
+      item !== undefined && 
+      typeof item === 'object' &&
+      'status' in item && 
+      'timestamp' in item && 
+      'label' in item &&
+      typeof item.status === 'string' &&
+      typeof item.timestamp === 'string' &&
+      typeof item.label === 'string'
+  );
 
   if (validTimeline.length === 0) {
     return (
