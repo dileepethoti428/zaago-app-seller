@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CustomerLookupDialog } from '@/components/CustomerLookupDialog';
 
 
 const Dashboard = () => {
@@ -232,7 +233,7 @@ const Dashboard = () => {
             <CardHeader>
               <CardTitle className="text-xl font-bold text-foreground">Quick Actions</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <Link 
                 to="/products/new" 
                 className="p-6 text-left group flex flex-col items-center text-center hover:bg-zaago-accent/50 rounded-lg transition-colors focus:outline-none focus:bg-zaago-accent/50 active:bg-zaago-accent/70"
@@ -250,6 +251,10 @@ const Dashboard = () => {
                 <h3 className="font-semibold text-foreground mb-1">View Orders</h3>
                 <p className="text-zaago-muted-foreground text-sm">Manage your orders</p>
               </Link>
+
+              <div className="sm:col-span-2 lg:col-span-1">
+                <CustomerLookupDialog />
+              </div>
             </CardContent>
           </Card>
         </motion.div>

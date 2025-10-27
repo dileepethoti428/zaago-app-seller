@@ -96,11 +96,19 @@ const Checkout = () => {
         landmark: formData.landmark
       };
 
+      // Generate tracking ID
+      const { data: trackingIdData, error: trackingIdError } = await supabase.rpc('generate_tracking_id');
+      
+      if (trackingIdError) {
+        throw trackingIdError;
+      }
+
       // Insert order into database
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
-        .insert({
+        .insert([{
           user_id: user.id,
+          tracking_id: trackingIdData as string,
           customer_name: formData.customerName,
           customer_phone: formData.customerPhone,
           address: addressObj,
@@ -108,9 +116,8 @@ const Checkout = () => {
           total: totalAmount,
           status: 'placed',
           payment_status: formData.paymentMethod === 'cod' ? 'pending_cod' : 'pending',
-          special_instructions: formData.specialInstructions || null,
-          delivery_fee: deliveryFee
-        })
+          special_instructions: formData.specialInstructions || null
+        }])
         .select()
         .single();
 
