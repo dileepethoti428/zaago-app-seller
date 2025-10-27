@@ -61,16 +61,27 @@ const getStatusColor = (status: string) => {
 };
 
 export const DeliveryStatusTimeline = ({ timeline, currentStatus }: DeliveryStatusTimelineProps) => {
+  // Filter out any null or invalid items
+  const validTimeline = timeline.filter(item => item && item.status && item.timestamp && item.label);
+
+  if (validTimeline.length === 0) {
+    return (
+      <div className="text-center py-4 text-muted-foreground">
+        No delivery status information available
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      {timeline.map((item, index) => {
+      {validTimeline.map((item, index) => {
         const isActive = item.status === currentStatus.toLowerCase().replace(/ /g, '_');
         const colorClass = getStatusColor(item.status);
         
         return (
           <div key={index} className="flex gap-4 items-start relative">
             {/* Connector line */}
-            {index < timeline.length - 1 && (
+            {index < validTimeline.length - 1 && (
               <div className="absolute left-[18px] top-10 w-0.5 h-8 bg-border" />
             )}
             
