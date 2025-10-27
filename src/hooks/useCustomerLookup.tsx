@@ -14,12 +14,25 @@ interface OrderInfo {
   delivery_time_slot: string;
   special_instructions: string;
   items: any;
+  delivered_at: string | null;
+  pickup_status: string | null;
+  otp_verified: boolean | null;
+  otp_verified_at: string | null;
+  otp_masked: string | null;
+  agent_notification_sent_at: string | null;
 }
 
 interface CustomerInfo {
   name: string;
   phone: string;
   delivery_address: any;
+  address_label: string | null;
+  full_address: string | null;
+  landmark: string | null;
+  city: string | null;
+  state: string | null;
+  pincode: string | null;
+  coordinates: any;
 }
 
 interface SellerInfo {
@@ -36,6 +49,24 @@ interface AgentInfo {
   email: string | null;
   is_online: boolean | null;
   assigned: boolean;
+  average_rating: number | null;
+  total_deliveries: number | null;
+  deliveries_today: number | null;
+  performance_score: number | null;
+  last_delivery_at: string | null;
+  is_active: boolean | null;
+  last_status_change: string | null;
+}
+
+interface TimelineItem {
+  status: string;
+  timestamp: string;
+  label: string;
+}
+
+interface DeliveryStatus {
+  current_status: string;
+  timeline: TimelineItem[];
 }
 
 export interface LookupResult {
@@ -43,6 +74,7 @@ export interface LookupResult {
   customer_info: CustomerInfo;
   seller_info: SellerInfo;
   agent_info: AgentInfo;
+  delivery_status: DeliveryStatus;
 }
 
 export const useCustomerLookup = () => {
