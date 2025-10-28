@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -6,9 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useProductSuggestions } from '@/hooks/useProductSuggestions';
 import { useAuth } from '@/context/AuthContext';
-import { Lightbulb, Upload, X, MapPin } from 'lucide-react';
+import { Lightbulb, Upload, X, MapPin, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useLocation } from '@/hooks/useLocation';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ProductSuggestionFormProps {
   onSuccess?: () => void;
@@ -17,7 +18,7 @@ interface ProductSuggestionFormProps {
 export const ProductSuggestionForm = ({ onSuccess }: ProductSuggestionFormProps) => {
   const { user } = useAuth();
   const { submitSuggestion, loading } = useProductSuggestions();
-  const { location, loading: locationLoading, getCurrentLocation } = useLocation();
+  const { location, loading: locationLoading, error: locationError, getCurrentLocation } = useLocation();
   
   const [productName, setProductName] = useState('');
   const [description, setDescription] = useState('');
@@ -26,6 +27,26 @@ export const ProductSuggestionForm = ({ onSuccess }: ProductSuggestionFormProps)
   const [additionalNotes, setAdditionalNotes] = useState('');
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [locationFetched, setLocationFetched] = useState(false);
+
+  // Fetch location when component mounts
+  useEffect(() => {
+    if (!locationFetched && !location && !locationLoading) {
+      getCurrentLocation(true);
+      setLocationFetched(true);
+    }
+  }, [locationFetched, location, locationLoading, getCurrentLocation]);
+
+  const handleRetryLocation = () => {
+    getCurrentLocation(true);
+  };
+
+  const canSubmit = !locationLoading && 
+                    location?.latitude && 
+                    location?.longitude && 
+                    !loading &&
+                    productName.trim() &&
+                    description.trim();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -77,15 +98,7 @@ export const ProductSuggestionForm = ({ onSuccess }: ProductSuggestionFormProps)
       return;
     }
 
-    // Get location if not already available
-    if (!location) {
-      toast({
-        title: 'Location Required',
-        description: 'Getting your location...',
-      });
-      await getCurrentLocation(true);
-    }
-
+    // Double-check location is available
     if (!location?.latitude || !location?.longitude) {
       toast({
         title: 'Location Required',
@@ -135,16 +148,37 @@ export const ProductSuggestionForm = ({ onSuccess }: ProductSuggestionFormProps)
       </div>
 
       {/* Location Status */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <MapPin className="h-4 w-4" />
-        {locationLoading ? (
-          <span>Getting your location...</span>
-        ) : location ? (
-          <span>Location: {location.city || 'Detected'}</span>
-        ) : (
-          <span className="text-destructive">Location required for submission</span>
-        )}
-      </div>
+      {locationLoading ? (
+        <Alert>
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <AlertDescription>
+            Getting your location... Please wait.
+          </AlertDescription>
+        </Alert>
+      ) : location?.latitude && location?.longitude ? (
+        <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
+          <MapPin className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-700 dark:text-green-300">
+            Location detected: {location.city || location.state || 'Ready'}
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>Location required to submit. Please enable location access.</span>
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm"
+              onClick={handleRetryLocation}
+              className="ml-2"
+            >
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="productName">Product Name *</Label>
@@ -252,9 +286,15 @@ export const ProductSuggestionForm = ({ onSuccess }: ProductSuggestionFormProps)
         )}
       </div>
 
-      <Button type="submit" disabled={loading} className="w-full">
-        {loading ? 'Submitting...' : 'Submit Suggestion'}
+      <Button type="submit" disabled={!canSubmit} className="w-full">
+        {loading ? 'Submitting...' : locationLoading ? 'Getting Location...' : 'Submit Suggestion'}
       </Button>
+      
+      {!canSubmit && !locationLoading && (
+        <p className="text-sm text-muted-foreground text-center">
+          {!location ? 'Location is required to submit' : 'Please fill in all required fields'}
+        </p>
+      )}
     </form>
   );
 };
