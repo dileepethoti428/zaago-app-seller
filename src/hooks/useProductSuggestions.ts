@@ -14,8 +14,8 @@ export interface ProductSuggestion {
   suggested_images?: string[];
   status: 'pending' | 'reviewed' | 'approved' | 'rejected';
   admin_notes?: string;
-  customer_latitude?: number;
-  customer_longitude?: number;
+  customer_latitude: number;  // Now required due to NOT NULL constraint
+  customer_longitude: number; // Now required due to NOT NULL constraint
   customer_location?: any;
   distance_km?: number;
   created_at: string;
@@ -142,9 +142,13 @@ export const useProductSuggestions = () => {
   ) => {
     setLoading(true);
     try {
-      // CRITICAL: Validate location data before submission
+      // CRITICAL: Triple-check location data before submission
       if (!suggestion.customer_latitude || !suggestion.customer_longitude) {
-        console.error('❌ Cannot submit suggestion without location data:', suggestion);
+        console.error('❌ SUBMISSION BLOCKED: Missing location data:', {
+          latitude: suggestion.customer_latitude,
+          longitude: suggestion.customer_longitude,
+          suggestion
+        });
         toast({
           title: 'Location Required',
           description: 'Please enable location to submit suggestions',
@@ -153,7 +157,26 @@ export const useProductSuggestions = () => {
         return false;
       }
 
-      console.log('✅ Location validated:', {
+      // Validate coordinates are valid numbers
+      if (typeof suggestion.customer_latitude !== 'number' || 
+          typeof suggestion.customer_longitude !== 'number' ||
+          isNaN(suggestion.customer_latitude) || 
+          isNaN(suggestion.customer_longitude)) {
+        console.error('❌ SUBMISSION BLOCKED: Invalid coordinate types:', {
+          latitude: suggestion.customer_latitude,
+          longitude: suggestion.customer_longitude,
+          latType: typeof suggestion.customer_latitude,
+          lngType: typeof suggestion.customer_longitude
+        });
+        toast({
+          title: 'Invalid Location',
+          description: 'Location data is invalid. Please try again.',
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      console.log('✅ Location validated successfully:', {
         latitude: suggestion.customer_latitude,
         longitude: suggestion.customer_longitude,
         location: suggestion.customer_location,

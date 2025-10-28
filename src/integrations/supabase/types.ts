@@ -2955,9 +2955,9 @@ export type Database = {
         Row: {
           admin_notes: string | null
           created_at: string
-          customer_latitude: number | null
+          customer_latitude: number
           customer_location: Json | null
-          customer_longitude: number | null
+          customer_longitude: number
           description: string
           id: string
           image_url: string | null
@@ -2970,9 +2970,9 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           created_at?: string
-          customer_latitude?: number | null
+          customer_latitude: number
           customer_location?: Json | null
-          customer_longitude?: number | null
+          customer_longitude: number
           description: string
           id?: string
           image_url?: string | null
@@ -2985,9 +2985,9 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           created_at?: string
-          customer_latitude?: number | null
+          customer_latitude?: number
           customer_location?: Json | null
-          customer_longitude?: number | null
+          customer_longitude?: number
           description?: string
           id?: string
           image_url?: string | null

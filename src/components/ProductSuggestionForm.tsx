@@ -32,9 +32,17 @@ export const ProductSuggestionForm = ({ onSuccess }: ProductSuggestionFormProps)
 
   // Confirm location when we have valid coordinates
   useEffect(() => {
+    console.log('🔍 Location state changed:', location);
     if (location?.latitude && location?.longitude) {
-      console.log('✅ Location confirmed:', location);
+      console.log('✅ Location confirmed with coordinates:', {
+        lat: location.latitude,
+        lng: location.longitude,
+        city: location.city,
+        state: location.state
+      });
       setLocationConfirmed(true);
+    } else {
+      console.warn('⚠️ Location object exists but missing coordinates:', location);
     }
   }, [location]);
 
@@ -161,6 +169,37 @@ export const ProductSuggestionForm = ({ onSuccess }: ProductSuggestionFormProps)
     }
   };
 
+  // Don't render form until location is confirmed
+  if (!locationConfirmed && locationLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <div className="text-center">
+          <p className="text-lg font-semibold">Getting your location...</p>
+          <p className="text-sm text-muted-foreground">This is required to submit product suggestions</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!locationConfirmed && !locationLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+        <AlertCircle className="h-12 w-12 text-destructive" />
+        <div className="text-center">
+          <p className="text-lg font-semibold">Location Required</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            We need your location to connect you with nearby sellers
+          </p>
+          <Button onClick={handleRetryLocation} variant="default">
+            <MapPin className="h-4 w-4 mr-2" />
+            Enable Location
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
@@ -168,38 +207,13 @@ export const ProductSuggestionForm = ({ onSuccess }: ProductSuggestionFormProps)
         <h3 className="text-lg font-semibold">Suggest a Product</h3>
       </div>
 
-      {/* Location Status */}
-      {locationLoading ? (
-        <Alert>
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <AlertDescription>
-            Getting your location... Please wait.
-          </AlertDescription>
-        </Alert>
-      ) : location?.latitude && location?.longitude ? (
-        <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
-          <MapPin className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-700 dark:text-green-300">
-            Location detected: {location.city || location.state || 'Ready'}
-          </AlertDescription>
-        </Alert>
-      ) : (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
-            <span>Location required to submit. Please enable location access.</span>
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm"
-              onClick={handleRetryLocation}
-              className="ml-2"
-            >
-              Retry
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Location Status - Show success state */}
+      <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
+        <MapPin className="h-4 w-4 text-green-600" />
+        <AlertDescription className="text-green-700 dark:text-green-300">
+          ✓ Location confirmed: {location.city || location.state || 'Ready'}
+        </AlertDescription>
+      </Alert>
 
       <div className="space-y-2">
         <Label htmlFor="productName">Product Name *</Label>
