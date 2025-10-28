@@ -6,6 +6,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CustomerLookupDialog } from '@/components/CustomerLookupDialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ProductSuggestionForm } from '@/components/ProductSuggestionForm';
+import { ProductSuggestionsPanel } from '@/components/ProductSuggestionsPanel';
 
 const Index = () => {
   const { user } = useAuth();
@@ -196,6 +199,16 @@ const Index = () => {
           
           <CustomerLookupDialog />
         </div>
+      </motion.div>
+
+      {/* Product Suggestions Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="bg-zaago-card p-6 rounded-lg border border-zaago-border"
+      >
+        <ProductSuggestionsPanel />
       </motion.div>
 
       {/* Recent Activity */}

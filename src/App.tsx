@@ -34,6 +34,7 @@ import CustomerOrders from "./pages/CustomerOrders";
 import DeliveryAgent from "./pages/DeliveryAgent";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import ProductSuggestions from "./pages/ProductSuggestions";
 import { CustomerNotifications } from "@/components/CustomerNotifications";
 import { AgentNotifications } from "@/components/AgentNotifications";
 import { SellerNotifications } from "@/components/SellerNotifications";
@@ -79,6 +80,7 @@ const AppContent = () => {
               <Route path="customer-products/:id" element={<CustomerProductDetail />} />
               <Route path="cart" element={<Cart />} />
               <Route path="checkout" element={<Checkout />} />
+              <Route path="product-suggestions" element={<ProductSuggestions />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
