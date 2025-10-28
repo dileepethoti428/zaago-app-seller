@@ -62,10 +62,12 @@ export const useLocation = () => {
       });
 
       const { latitude, longitude } = position.coords;
+      console.log('🌍 Got GPS coordinates:', { latitude, longitude });
       
       // Use Google Places API for reverse geocoding
       let addressData = {};
       try {
+        console.log('📍 Calling google-places API for reverse geocoding...');
         const { data, error } = await supabase.functions.invoke('google-places', {
           body: {
             type: 'reverse_geocode',
@@ -75,8 +77,11 @@ export const useLocation = () => {
         });
 
         if (error) {
+          console.error('❌ Google Places API error:', error);
           throw new Error(`Failed to fetch location details: ${error.message}`);
         }
+
+        console.log('✅ Google Places API response:', data);
 
         if (data.status === 'OK' && data.results && data.results.length > 0) {
           const result = data.results[0];
@@ -96,9 +101,10 @@ export const useLocation = () => {
             state: getComponent('administrative_area_level_1'),
             pincode: getComponent('postal_code'),
           };
+          console.log('📍 Extracted address data:', addressData);
         }
       } catch (addressError) {
-        console.warn('Failed to get address from coordinates:', addressError);
+        console.warn('⚠️ Failed to get address from coordinates:', addressError);
         // Continue without address data
       }
 
@@ -108,6 +114,7 @@ export const useLocation = () => {
         ...addressData,
       };
 
+      console.log('✅ Setting location state with data:', locationData);
       setLocation(locationData);
 
       // Save to database if user is logged in
