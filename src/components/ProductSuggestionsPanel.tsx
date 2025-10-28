@@ -5,75 +5,29 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { useProductSuggestions, ProductSuggestion } from '@/hooks/useProductSuggestions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Check, X, Eye, Lightbulb, MapPin } from 'lucide-react';
+import { Check, X, Eye, Lightbulb } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 
 export const ProductSuggestionsPanel = () => {
   const { user } = useAuth();
-  const { fetchAllSuggestions, fetchSuggestionsInRange, updateSuggestionStatus, loading } = useProductSuggestions();
+  const { fetchAllSuggestions, updateSuggestionStatus, loading } = useProductSuggestions();
   const [suggestions, setSuggestions] = useState<ProductSuggestion[]>([]);
   const [filter, setFilter] = useState('pending');
   const [selectedSuggestion, setSelectedSuggestion] = useState<ProductSuggestion | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [sellerLocation, setSellerLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    checkUserRole();
-    loadSellerLocation();
-  }, [user]);
 
   useEffect(() => {
     loadSuggestions();
-  }, [filter, sellerLocation, isAdmin]);
-
-  const checkUserRole = async () => {
-    if (!user) return;
-    
-    const { data, error } = await supabase.rpc('is_current_user_admin');
-    
-    if (!error && data) {
-      setIsAdmin(true);
-    }
-  };
-
-  const loadSellerLocation = async () => {
-    if (!user) return;
-
-    const { data } = await supabase
-      .from('sellers')
-      .select('latitude, longitude')
-      .eq('user_id', user.id)
-      .single();
-
-    if (data?.latitude && data?.longitude) {
-      setSellerLocation({
-        latitude: data.latitude,
-        longitude: data.longitude,
-      });
-    }
-  };
+  }, [filter, user]);
 
   const loadSuggestions = async () => {
-    if (isAdmin) {
-      // Admins see all suggestions
-      const data = await fetchAllSuggestions(filter);
-      setSuggestions(data);
-    } else if (sellerLocation) {
-      // Sellers see only nearby suggestions (within 15km)
-      const data = await fetchSuggestionsInRange(
-        sellerLocation.latitude,
-        sellerLocation.longitude,
-        filter,
-        15
-      );
-      setSuggestions(data);
-    } else {
-      setSuggestions([]);
-    }
+    if (!user) return;
+    
+    // Both admins and sellers see all suggestions
+    const data = await fetchAllSuggestions(filter);
+    setSuggestions(data);
   };
 
   const handleStatusUpdate = async (
@@ -103,20 +57,10 @@ export const ProductSuggestionsPanel = () => {
 
   return (
     <div className="space-y-4">
-      {!isAdmin && !sellerLocation && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-          <p className="text-sm text-yellow-800">
-            Please set up your store location to view nearby product suggestions.
-          </p>
-        </div>
-      )}
-
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Lightbulb className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-semibold">
-            Product Suggestions {!isAdmin && '(Within 15 km)'}
-          </h2>
+          <h2 className="text-xl font-semibold">Product Suggestions</h2>
         </div>
         <Select value={filter} onValueChange={setFilter}>
           <SelectTrigger className="w-40">
@@ -143,12 +87,6 @@ export const ProductSuggestionsPanel = () => {
                     <Badge className={getStatusColor(suggestion.status)}>
                       {suggestion.status}
                     </Badge>
-                    {suggestion.distance_km !== undefined && (
-                      <Badge variant="outline" className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {suggestion.distance_km.toFixed(1)} km away
-                      </Badge>
-                    )}
                   </div>
                   <CardDescription className="mt-1">
                     {new Date(suggestion.created_at).toLocaleDateString()}
