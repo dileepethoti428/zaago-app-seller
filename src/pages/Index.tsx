@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CustomerLookupDialog } from '@/components/CustomerLookupDialog';
 
 const Index = () => {
   const { user } = useAuth();
@@ -193,6 +194,7 @@ const Index = () => {
             <p className="text-zaago-muted-foreground text-sm">View and edit your inventory</p>
           </Link>
           
+          <CustomerLookupDialog />
         </div>
       </motion.div>
 
