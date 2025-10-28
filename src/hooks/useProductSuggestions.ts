@@ -14,6 +14,10 @@ export interface ProductSuggestion {
   suggested_images?: string[];
   status: 'pending' | 'reviewed' | 'approved' | 'rejected';
   admin_notes?: string;
+  customer_latitude?: number;
+  customer_longitude?: number;
+  customer_location?: any;
+  distance_km?: number;
   created_at: string;
   updated_at: string;
 }
@@ -55,6 +59,38 @@ export const useProductSuggestions = () => {
       const { data, error } = await query;
       if (error) throw error;
       return data as ProductSuggestion[];
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return [];
+    }
+  };
+
+  const fetchSuggestionsInRange = async (
+    sellerLat: number,
+    sellerLon: number,
+    status?: string,
+    maxDistance = 15
+  ) => {
+    try {
+      const { data, error } = await supabase.rpc('get_suggestions_within_range', {
+        seller_lat: sellerLat,
+        seller_lon: sellerLon,
+        range_km: maxDistance,
+      });
+
+      if (error) throw error;
+
+      let filteredData = data as ProductSuggestion[];
+      
+      if (status && status !== 'all') {
+        filteredData = filteredData.filter(s => s.status === status);
+      }
+
+      return filteredData;
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -217,6 +253,7 @@ export const useProductSuggestions = () => {
     loading,
     fetchUserSuggestions,
     fetchAllSuggestions,
+    fetchSuggestionsInRange,
     submitSuggestion,
     updateSuggestionStatus,
     deleteSuggestion,

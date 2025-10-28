@@ -6,8 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useProductSuggestions } from '@/hooks/useProductSuggestions';
 import { useAuth } from '@/context/AuthContext';
-import { Lightbulb, Upload, X } from 'lucide-react';
+import { Lightbulb, Upload, X, MapPin } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useLocation } from '@/hooks/useLocation';
 
 interface ProductSuggestionFormProps {
   onSuccess?: () => void;
@@ -16,6 +17,7 @@ interface ProductSuggestionFormProps {
 export const ProductSuggestionForm = ({ onSuccess }: ProductSuggestionFormProps) => {
   const { user } = useAuth();
   const { submitSuggestion, loading } = useProductSuggestions();
+  const { location, loading: locationLoading, getCurrentLocation } = useLocation();
   
   const [productName, setProductName] = useState('');
   const [description, setDescription] = useState('');
@@ -75,6 +77,24 @@ export const ProductSuggestionForm = ({ onSuccess }: ProductSuggestionFormProps)
       return;
     }
 
+    // Get location if not already available
+    if (!location) {
+      toast({
+        title: 'Location Required',
+        description: 'Getting your location...',
+      });
+      await getCurrentLocation(true);
+    }
+
+    if (!location?.latitude || !location?.longitude) {
+      toast({
+        title: 'Location Required',
+        description: 'Please enable location access to submit a product suggestion.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const success = await submitSuggestion(
       {
         user_id: user.id,
@@ -83,6 +103,13 @@ export const ProductSuggestionForm = ({ onSuccess }: ProductSuggestionFormProps)
         category: category || undefined,
         estimated_price_range: priceRange || undefined,
         additional_notes: additionalNotes || undefined,
+        customer_latitude: location.latitude,
+        customer_longitude: location.longitude,
+        customer_location: {
+          address: location.address,
+          city: location.city,
+          state: location.state,
+        },
       },
       images
     );
@@ -105,6 +132,18 @@ export const ProductSuggestionForm = ({ onSuccess }: ProductSuggestionFormProps)
       <div className="flex items-center gap-2 mb-4">
         <Lightbulb className="h-5 w-5 text-primary" />
         <h3 className="text-lg font-semibold">Suggest a Product</h3>
+      </div>
+
+      {/* Location Status */}
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <MapPin className="h-4 w-4" />
+        {locationLoading ? (
+          <span>Getting your location...</span>
+        ) : location ? (
+          <span>Location: {location.city || 'Detected'}</span>
+        ) : (
+          <span className="text-destructive">Location required for submission</span>
+        )}
       </div>
 
       <div className="space-y-2">

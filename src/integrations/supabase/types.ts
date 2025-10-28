@@ -1136,6 +1136,7 @@ export type Database = {
           pincode: string
           state: string
           updated_at: string
+          usage_count: number
           user_id: string
           user_name: string | null
         }
@@ -1152,6 +1153,7 @@ export type Database = {
           pincode: string
           state: string
           updated_at?: string
+          usage_count?: number
           user_id: string
           user_name?: string | null
         }
@@ -1168,6 +1170,7 @@ export type Database = {
           pincode?: string
           state?: string
           updated_at?: string
+          usage_count?: number
           user_id?: string
           user_name?: string | null
         }
@@ -2952,6 +2955,9 @@ export type Database = {
         Row: {
           admin_notes: string | null
           created_at: string
+          customer_latitude: number | null
+          customer_location: Json | null
+          customer_longitude: number | null
           description: string
           id: string
           image_url: string | null
@@ -2964,6 +2970,9 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           created_at?: string
+          customer_latitude?: number | null
+          customer_location?: Json | null
+          customer_longitude?: number | null
           description: string
           id?: string
           image_url?: string | null
@@ -2976,6 +2985,9 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           created_at?: string
+          customer_latitude?: number | null
+          customer_location?: Json | null
+          customer_longitude?: number | null
           description?: string
           id?: string
           image_url?: string | null
@@ -4857,6 +4869,16 @@ export type Database = {
           status: string
         }[]
       }
+      check_duplicate_address: {
+        Args: {
+          p_city: string
+          p_exclude_id?: string
+          p_full_address: string
+          p_pincode: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       check_rate_limit: {
         Args: {
           action_type: string
@@ -5387,6 +5409,28 @@ export type Database = {
         Args: { seller_user_id: string; time_period?: string }
         Returns: Json
       }
+      get_suggestions_within_range: {
+        Args: { range_km?: number; seller_lat: number; seller_lon: number }
+        Returns: {
+          additional_notes: string
+          admin_notes: string
+          category: string
+          created_at: string
+          customer_latitude: number
+          customer_location: Json
+          customer_longitude: number
+          description: string
+          distance_km: number
+          estimated_price_range: string
+          id: string
+          image_url: string
+          product_name: string
+          status: string
+          suggested_images: string[]
+          updated_at: string
+          user_id: string
+        }[]
+      }
       get_top_products:
         | {
             Args: never
@@ -5617,15 +5661,7 @@ export type Database = {
       process_due_existing_subscriptions: { Args: never; Returns: number }
       process_due_subscriptions: { Args: never; Returns: number }
       process_subscriptions_update_dates_only: { Args: never; Returns: Json }
-      process_subscriptions_with_order_creation: {
-        Args: never
-        Returns: {
-          errors_count: number
-          orders_created: number
-          processed_count: number
-          processing_details: Json
-        }[]
-      }
+      process_subscriptions_with_order_creation: { Args: never; Returns: Json }
       qr_complete_delivery_v3:
         | {
             Args: {
