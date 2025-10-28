@@ -59,7 +59,7 @@ export const CustomerLookupDialog = () => {
           <p className="text-sm text-muted-foreground">Track orders by ID</p>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
         <DialogHeader>
           <DialogTitle>Customer Lookup</DialogTitle>
           <DialogDescription>
@@ -118,7 +118,7 @@ export const CustomerLookupDialog = () => {
                   </CardHeader>
                   <CollapsibleContent>
                     <CardContent className="space-y-3">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm text-muted-foreground">Tracking ID</p>
                           <p className="font-medium">{result.order_info.tracking_id}</p>
@@ -131,7 +131,7 @@ export const CustomerLookupDialog = () => {
                         </div>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm text-muted-foreground">Total Amount</p>
                           <p className="font-medium">₹{result.order_info.total_amount}</p>
@@ -142,7 +142,7 @@ export const CustomerLookupDialog = () => {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm text-muted-foreground">Payment Status</p>
                           <Badge variant={result.order_info.payment_status === 'Paid' ? 'default' : 'secondary'}>
@@ -159,7 +159,7 @@ export const CustomerLookupDialog = () => {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm text-muted-foreground">Created At</p>
                           <p className="text-sm">{format(new Date(result.order_info.created_at), 'PPp')}</p>
@@ -172,7 +172,7 @@ export const CustomerLookupDialog = () => {
                         )}
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {result.order_info.delivery_date && (
                           <div>
                             <p className="text-sm text-muted-foreground">Delivery Date</p>
@@ -188,7 +188,7 @@ export const CustomerLookupDialog = () => {
                       </div>
 
                       {result.order_info.otp_verified !== null && (
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
                             <p className="text-sm text-muted-foreground">OTP Verification</p>
                             <div className="flex items-center gap-2">
@@ -323,7 +323,7 @@ export const CustomerLookupDialog = () => {
                   </CardHeader>
                   <CollapsibleContent>
                     <CardContent className="space-y-2">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm text-muted-foreground">Name</p>
                           <p className="font-medium">{result.seller_info.name}</p>
@@ -364,7 +364,7 @@ export const CustomerLookupDialog = () => {
                     <CardContent className="space-y-4">
                       {result.agent_info.assigned ? (
                         <>
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                               <p className="text-sm text-muted-foreground">Name</p>
                               <p className="font-medium">{result.agent_info.name}</p>
