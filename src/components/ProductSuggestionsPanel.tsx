@@ -8,35 +8,67 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Check, X, Eye, Lightbulb } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 export const ProductSuggestionsPanel = () => {
   const { user } = useAuth();
-  const { fetchAllSuggestions, updateSuggestionStatus, loading } = useProductSuggestions();
+  const { fetchSuggestionsWithSellerStatus, updateSellerSuggestionStatus, fetchAllSuggestions, updateSuggestionStatus, loading } = useProductSuggestions();
   const [suggestions, setSuggestions] = useState<ProductSuggestion[]>([]);
   const [filter, setFilter] = useState('pending');
   const [selectedSuggestion, setSelectedSuggestion] = useState<ProductSuggestion | null>(null);
-  const [adminNotes, setAdminNotes] = useState('');
+  const [sellerNotes, setSellerNotes] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    checkUserRole();
+  }, [user]);
 
   useEffect(() => {
     loadSuggestions();
-  }, [filter, user]);
+  }, [filter, user, isAdmin]);
+
+  const checkUserRole = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase.rpc('is_current_user_admin');
+    
+    if (!error && data) {
+      setIsAdmin(true);
+    }
+  };
 
   const loadSuggestions = async () => {
     if (!user) return;
     
-    // Both admins and sellers see all suggestions
-    const data = await fetchAllSuggestions(filter);
-    setSuggestions(data);
+    if (isAdmin) {
+      // Admins see all suggestions with global status
+      const data = await fetchAllSuggestions(filter);
+      setSuggestions(data);
+    } else {
+      // Sellers see all suggestions with their individual status
+      const data = await fetchSuggestionsWithSellerStatus(user.id, filter);
+      setSuggestions(data);
+    }
   };
 
   const handleStatusUpdate = async (
     id: string,
     status: 'approved' | 'rejected' | 'reviewed'
   ) => {
-    const success = await updateSuggestionStatus(id, status, adminNotes);
+    if (!user) return;
+
+    let success;
+    if (isAdmin) {
+      // Admins update global status
+      success = await updateSuggestionStatus(id, status, sellerNotes);
+    } else {
+      // Sellers update their individual status
+      success = await updateSellerSuggestionStatus(user.id, id, status, sellerNotes);
+    }
+
     if (success) {
-      setAdminNotes('');
+      setSellerNotes('');
       setSelectedSuggestion(null);
       loadSuggestions();
     }
@@ -84,8 +116,8 @@ export const ProductSuggestionsPanel = () => {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <CardTitle className="text-lg">{suggestion.product_name}</CardTitle>
-                    <Badge className={getStatusColor(suggestion.status)}>
-                      {suggestion.status}
+                    <Badge className={getStatusColor(isAdmin ? suggestion.status : (suggestion.seller_status || 'pending'))}>
+                      {isAdmin ? `Global: ${suggestion.status}` : `Your Status: ${suggestion.seller_status || 'pending'}`}
                     </Badge>
                   </div>
                   <CardDescription className="mt-1">
@@ -140,13 +172,19 @@ export const ProductSuggestionsPanel = () => {
                 </div>
               )}
 
-              {suggestion.admin_notes && (
+              {isAdmin && suggestion.admin_notes && (
                 <div className="bg-muted p-3 rounded">
                   <p className="text-sm"><strong>Admin Notes:</strong> {suggestion.admin_notes}</p>
                 </div>
               )}
 
-              {suggestion.status === 'pending' && (
+              {!isAdmin && suggestion.seller_notes && (
+                <div className="bg-muted p-3 rounded">
+                  <p className="text-sm"><strong>Your Notes:</strong> {suggestion.seller_notes}</p>
+                </div>
+              )}
+
+              {(isAdmin ? suggestion.status === 'pending' : (suggestion.seller_status === 'pending' || !suggestion.seller_status)) && (
                 <div className="flex gap-2 pt-2">
                   <Button
                     size="sm"
@@ -200,10 +238,10 @@ export const ProductSuggestionsPanel = () => {
                 <p className="text-sm text-muted-foreground">{selectedSuggestion.description}</p>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Admin Notes</label>
+                <label className="text-sm font-medium">{isAdmin ? 'Admin Notes' : 'Your Notes'}</label>
                 <Textarea
-                  value={adminNotes}
-                  onChange={(e) => setAdminNotes(e.target.value)}
+                  value={sellerNotes}
+                  onChange={(e) => setSellerNotes(e.target.value)}
                   placeholder="Add notes for the customer..."
                   rows={3}
                 />

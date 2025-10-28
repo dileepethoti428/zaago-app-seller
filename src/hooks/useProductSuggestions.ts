@@ -20,6 +20,8 @@ export interface ProductSuggestion {
   distance_km?: number;
   created_at: string;
   updated_at: string;
+  seller_status?: 'pending' | 'approved' | 'rejected' | 'reviewed';
+  seller_notes?: string;
 }
 
 export const useProductSuggestions = () => {
@@ -299,11 +301,128 @@ export const useProductSuggestions = () => {
     }
   };
 
+  const fetchSuggestionsWithSellerStatus = async (userId: string, status?: string): Promise<ProductSuggestion[]> => {
+    try {
+      setLoading(true);
+      
+      // First get seller_id from user_id
+      const { data: sellerData, error: sellerError } = await supabase
+        .from('sellers')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (sellerError) throw sellerError;
+
+      // Fetch all suggestions
+      let query = supabase
+        .from('product_suggestions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      const { data: suggestionsData, error: suggestionsError } = await query;
+
+      if (suggestionsError) throw suggestionsError;
+
+      // Fetch seller's statuses
+      const { data: statusData, error: statusError } = await supabase
+        .from('seller_product_suggestion_status')
+        .select('*')
+        .eq('seller_id', sellerData.id);
+
+      if (statusError) throw statusError;
+
+      // Map statuses to suggestions
+      const suggestions = (suggestionsData || []).map((suggestion: any) => {
+        const sellerStatus = statusData?.find(
+          (s: any) => s.suggestion_id === suggestion.id
+        );
+        
+        return {
+          ...suggestion,
+          seller_status: sellerStatus?.status || 'pending',
+          seller_notes: sellerStatus?.seller_notes,
+        };
+      });
+
+      // Filter by seller status if provided
+      if (status && status !== 'all') {
+        return suggestions.filter((s: ProductSuggestion) => s.seller_status === status);
+      }
+
+      return suggestions;
+    } catch (error: any) {
+      console.error('Error fetching suggestions with seller status:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch suggestions',
+        variant: 'destructive',
+      });
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateSellerSuggestionStatus = async (
+    userId: string,
+    suggestionId: string,
+    status: 'approved' | 'rejected' | 'reviewed',
+    sellerNotes?: string
+  ): Promise<boolean> => {
+    try {
+      setLoading(true);
+      
+      // Get seller_id from user_id
+      const { data: sellerData, error: sellerError } = await supabase
+        .from('sellers')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (sellerError) throw sellerError;
+
+      // Upsert seller's status for this suggestion
+      const { error } = await supabase
+        .from('seller_product_suggestion_status')
+        .upsert({
+          seller_id: sellerData.id,
+          suggestion_id: suggestionId,
+          status,
+          seller_notes: sellerNotes,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'seller_id,suggestion_id'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: `Suggestion ${status} successfully`,
+      });
+
+      return true;
+    } catch (error: any) {
+      console.error('Error updating seller suggestion status:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update suggestion status',
+        variant: 'destructive',
+      });
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     fetchUserSuggestions,
     fetchAllSuggestions,
     fetchSuggestionsInRange,
+    fetchSuggestionsWithSellerStatus,
+    updateSellerSuggestionStatus,
     submitSuggestion,
     updateSuggestionStatus,
     deleteSuggestion,

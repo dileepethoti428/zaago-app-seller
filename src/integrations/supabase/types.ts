@@ -2955,9 +2955,9 @@ export type Database = {
         Row: {
           admin_notes: string | null
           created_at: string
-          customer_latitude: number
+          customer_latitude: number | null
           customer_location: Json | null
-          customer_longitude: number
+          customer_longitude: number | null
           description: string
           id: string
           image_url: string | null
@@ -2970,9 +2970,9 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           created_at?: string
-          customer_latitude: number
+          customer_latitude?: number | null
           customer_location?: Json | null
-          customer_longitude: number
+          customer_longitude?: number | null
           description: string
           id?: string
           image_url?: string | null
@@ -2985,9 +2985,9 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           created_at?: string
-          customer_latitude?: number
+          customer_latitude?: number | null
           customer_location?: Json | null
-          customer_longitude?: number
+          customer_longitude?: number | null
           description?: string
           id?: string
           image_url?: string | null
@@ -3476,6 +3476,58 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      seller_product_suggestion_status: {
+        Row: {
+          created_at: string
+          id: string
+          seller_id: string
+          seller_notes: string | null
+          status: string
+          suggestion_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          seller_id: string
+          seller_notes?: string | null
+          status?: string
+          suggestion_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          seller_id?: string
+          seller_notes?: string | null
+          status?: string
+          suggestion_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_product_suggestion_status_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "seller_analytics_view"
+            referencedColumns: ["seller_id"]
+          },
+          {
+            foreignKeyName: "seller_product_suggestion_status_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_product_suggestion_status_suggestion_id_fkey"
+            columns: ["suggestion_id"]
+            isOneToOne: false
+            referencedRelation: "product_suggestions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sellers: {
         Row: {
