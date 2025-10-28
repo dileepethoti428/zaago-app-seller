@@ -142,21 +142,47 @@ export const useProductSuggestions = () => {
   ) => {
     setLoading(true);
     try {
+      // CRITICAL: Validate location data before submission
+      if (!suggestion.customer_latitude || !suggestion.customer_longitude) {
+        console.error('❌ Cannot submit suggestion without location data:', suggestion);
+        toast({
+          title: 'Location Required',
+          description: 'Please enable location to submit suggestions',
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      console.log('✅ Location validated:', {
+        latitude: suggestion.customer_latitude,
+        longitude: suggestion.customer_longitude,
+        location: suggestion.customer_location,
+      });
+
       let imageUrls: string[] = [];
       
       if (images.length > 0) {
         imageUrls = await uploadImages(images, suggestion.user_id);
       }
 
+      const dataToInsert = {
+        ...suggestion,
+        suggested_images: imageUrls,
+        status: 'pending' as const,
+      };
+
+      console.log('📤 Inserting suggestion into database:', dataToInsert);
+
       const { error } = await supabase
         .from('product_suggestions')
-        .insert({
-          ...suggestion,
-          suggested_images: imageUrls,
-          status: 'pending',
-        });
+        .insert(dataToInsert);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Database insert error:', error);
+        throw error;
+      }
+
+      console.log('✅ Suggestion submitted successfully');
 
       toast({
         title: 'Success!',
@@ -165,6 +191,7 @@ export const useProductSuggestions = () => {
 
       return true;
     } catch (error: any) {
+      console.error('❌ Submit suggestion error:', error);
       toast({
         title: 'Error',
         description: error.message,

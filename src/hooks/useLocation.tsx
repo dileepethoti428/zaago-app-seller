@@ -149,7 +149,7 @@ export const useLocation = () => {
     if (user && !location) {
       getCurrentLocation(false); // Use cache for initial load
     }
-  }, [user]); // Removed getCurrentLocation from dependencies to prevent re-runs
+  }, [user, getCurrentLocation, location]);
 
   return {
     location,

@@ -27,23 +27,36 @@ export const ProductSuggestionForm = ({ onSuccess }: ProductSuggestionFormProps)
   const [additionalNotes, setAdditionalNotes] = useState('');
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [locationFetched, setLocationFetched] = useState(false);
+  const [locationAttempts, setLocationAttempts] = useState(0);
+  const [locationConfirmed, setLocationConfirmed] = useState(false);
 
-  // Fetch location when component mounts
+  // Confirm location when we have valid coordinates
   useEffect(() => {
-    if (!locationFetched && !location && !locationLoading) {
-      getCurrentLocation(true);
-      setLocationFetched(true);
+    if (location?.latitude && location?.longitude) {
+      console.log('✅ Location confirmed:', location);
+      setLocationConfirmed(true);
     }
-  }, [locationFetched, location, locationLoading, getCurrentLocation]);
+  }, [location]);
+
+  // Auto-retry location fetch up to 3 times
+  useEffect(() => {
+    if (!locationConfirmed && locationAttempts < 3 && !locationLoading) {
+      console.log(`🔄 Attempting to get location (attempt ${locationAttempts + 1}/3)`);
+      getCurrentLocation(true);
+      setLocationAttempts(prev => prev + 1);
+    } else if (locationAttempts >= 3 && !locationConfirmed) {
+      console.error('❌ Failed to get location after 3 attempts');
+    }
+  }, [locationConfirmed, locationAttempts, locationLoading, getCurrentLocation]);
 
   const handleRetryLocation = () => {
+    console.log('🔄 Manual location retry');
+    setLocationAttempts(0);
+    setLocationConfirmed(false);
     getCurrentLocation(true);
   };
 
-  const canSubmit = !locationLoading && 
-                    location?.latitude && 
-                    location?.longitude && 
+  const canSubmit = locationConfirmed && 
                     !loading &&
                     productName.trim() &&
                     description.trim();
@@ -98,8 +111,9 @@ export const ProductSuggestionForm = ({ onSuccess }: ProductSuggestionFormProps)
       return;
     }
 
-    // Double-check location is available
-    if (!location?.latitude || !location?.longitude) {
+    // Block submission if location not confirmed
+    if (!locationConfirmed || !location?.latitude || !location?.longitude) {
+      console.error('❌ Submission blocked - location not confirmed:', { locationConfirmed, location });
       toast({
         title: 'Location Required',
         description: 'Please enable location access to submit a product suggestion.',
@@ -107,6 +121,13 @@ export const ProductSuggestionForm = ({ onSuccess }: ProductSuggestionFormProps)
       });
       return;
     }
+
+    console.log('📤 Submitting suggestion with location:', {
+      latitude: location.latitude,
+      longitude: location.longitude,
+      city: location.city,
+      state: location.state,
+    });
 
     const success = await submitSuggestion(
       {
