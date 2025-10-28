@@ -156,7 +156,7 @@ export const useLocation = () => {
     if (user && !location) {
       getCurrentLocation(false); // Use cache for initial load
     }
-  }, [user, getCurrentLocation, location]);
+  }, [user, getCurrentLocation]); // Removed 'location' from deps to prevent stopping after first load
 
   return {
     location,

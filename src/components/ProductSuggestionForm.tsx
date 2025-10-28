@@ -30,19 +30,41 @@ export const ProductSuggestionForm = ({ onSuccess }: ProductSuggestionFormProps)
   const [locationAttempts, setLocationAttempts] = useState(0);
   const [locationConfirmed, setLocationConfirmed] = useState(false);
 
-  // Confirm location when we have valid coordinates
+  // Monitor location state with comprehensive validation
   useEffect(() => {
-    console.log('🔍 Location state changed:', location);
-    if (location?.latitude && location?.longitude) {
-      console.log('✅ Location confirmed with coordinates:', {
+    const locationStatus = {
+      hasLocation: !!location,
+      hasCoordinates: !!(location?.latitude && location?.longitude),
+      latitude: location?.latitude,
+      longitude: location?.longitude,
+      latitudeType: typeof location?.latitude,
+      longitudeType: typeof location?.longitude,
+      latitudeValid: typeof location?.latitude === 'number' && !isNaN(location.latitude) && location.latitude !== 0,
+      longitudeValid: typeof location?.longitude === 'number' && !isNaN(location.longitude) && location.longitude !== 0,
+      timestamp: new Date().toISOString()
+    };
+    console.log('🔍 LOCATION STATE:', locationStatus);
+    
+    // Only confirm if we have valid numeric coordinates
+    const isValid = location && 
+                   typeof location.latitude === 'number' && 
+                   typeof location.longitude === 'number' &&
+                   !isNaN(location.latitude) &&
+                   !isNaN(location.longitude) &&
+                   location.latitude !== 0 &&
+                   location.longitude !== 0;
+    
+    if (isValid) {
+      console.log('✅ Location confirmed with validated coordinates:', {
         lat: location.latitude,
         lng: location.longitude,
         city: location.city,
         state: location.state
       });
       setLocationConfirmed(true);
-    } else {
-      console.warn('⚠️ Location object exists but missing coordinates:', location);
+    } else if (location) {
+      console.error('❌ INVALID LOCATION STATE: Has location object but invalid coordinates!', location);
+      setLocationConfirmed(false);
     }
   }, [location]);
 
@@ -119,12 +141,31 @@ export const ProductSuggestionForm = ({ onSuccess }: ProductSuggestionFormProps)
       return;
     }
 
-    // Block submission if location not confirmed
-    if (!locationConfirmed || !location?.latitude || !location?.longitude) {
-      console.error('❌ Submission blocked - location not confirmed:', { locationConfirmed, location });
+    // CRITICAL VALIDATION: Triple-check location before submission
+    const hasValidLocation = locationConfirmed && 
+                            location && 
+                            typeof location.latitude === 'number' && 
+                            typeof location.longitude === 'number' &&
+                            !isNaN(location.latitude) &&
+                            !isNaN(location.longitude) &&
+                            location.latitude !== 0 &&
+                            location.longitude !== 0;
+
+    if (!hasValidLocation) {
+      console.error('❌ SUBMISSION BLOCKED - Invalid location:', {
+        locationConfirmed,
+        location,
+        validation: {
+          hasLocation: !!location,
+          latitudeType: typeof location?.latitude,
+          longitudeType: typeof location?.longitude,
+          latitudeValue: location?.latitude,
+          longitudeValue: location?.longitude
+        }
+      });
       toast({
         title: 'Location Required',
-        description: 'Please enable location access to submit a product suggestion.',
+        description: 'Please wait for your location to be detected. If this persists, try refreshing.',
         variant: 'destructive',
       });
       return;
