@@ -29,6 +29,7 @@ export const queryClient = new QueryClient({
       // Background refetch settings
       refetchOnWindowFocus: true,
       refetchOnReconnect: true,
+      refetchOnMount: false, // Prevent refetch on component mount
       // Network-aware refetching
       networkMode: 'online',
     },

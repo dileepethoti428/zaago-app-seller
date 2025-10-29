@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -37,17 +37,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   // Load cart items on user change
-  useEffect(() => {
-    if (user) {
-      loadCartItems();
-    } else {
-      setCartItems([]);
-    }
-  }, [user]);
+  const loadCartItems = useCallback(async () => {
+    if (!user?.id) return;
 
-  const loadCartItems = async () => {
-    if (!user) return;
-    
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -65,16 +57,18 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) throw error;
 
-      const formattedItems: CartItem[] = data?.map(item => ({
+      const formattedItems: CartItem[] = (data || []).map((item: any) => ({
         id: item.id,
         product_id: item.product_id,
         product_name: item.products?.name || 'Unknown Product',
         product_image_url: item.products?.image_url,
         price: item.unit_price,
         quantity: item.quantity,
-        seller_id: item.products?.seller_id || '',
-        stock_quantity: item.products?.stock_quantity || 0
-      })) || [];
+        seller_id: item.products?.seller_id,
+        stock_quantity: item.products?.stock_quantity || 0,
+        variant_id: item.variant_id,
+        variant_name: item.variant_name
+      }));
 
       setCartItems(formattedItems);
     } catch (error) {
@@ -87,7 +81,15 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, toast]);
+
+  useEffect(() => {
+    if (user) {
+      loadCartItems();
+    } else {
+      setCartItems([]);
+    }
+  }, [user, loadCartItems]);
 
   const addToCart = async (product: any, quantity = 1, variant?: any) => {
     if (!user) {

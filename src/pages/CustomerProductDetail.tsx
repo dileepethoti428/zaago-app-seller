@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -41,13 +41,7 @@ const CustomerProductDetail = () => {
   const [finalPrice, setFinalPrice] = useState(0);
   const [sellerName, setSellerName] = useState('');
 
-  useEffect(() => {
-    if (id) {
-      fetchProduct();
-    }
-  }, [id]);
-
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     if (!id) return;
     
     setLoading(true);
@@ -98,7 +92,13 @@ const CustomerProductDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, navigate, toast]);
+
+  useEffect(() => {
+    if (id) {
+      fetchProduct();
+    }
+  }, [id, fetchProduct]);
 
   const handleVariantSelect = (variant: any, price: number) => {
     setSelectedVariant(variant);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ProductVariant {
@@ -18,13 +18,7 @@ export const useProductVariants = (productId?: string) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (productId) {
-      fetchVariants();
-    }
-  }, [productId]);
-
-  const fetchVariants = async () => {
+  const fetchVariants = useCallback(async () => {
     if (!productId) return;
 
     setLoading(true);
@@ -48,7 +42,13 @@ export const useProductVariants = (productId?: string) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [productId]);
+
+  useEffect(() => {
+    if (productId) {
+      fetchVariants();
+    }
+  }, [productId, fetchVariants]);
 
   const getDefaultVariant = () => {
     return variants.find(variant => variant.is_default) || variants[0] || null;

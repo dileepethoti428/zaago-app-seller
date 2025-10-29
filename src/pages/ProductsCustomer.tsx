@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useProductsWithLocation } from "@/hooks/useProductsWithLocation";
+import { useProductsNearby } from "@/hooks/useProductsNearby";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/context/CartContext";
 import ProductVariantSelector from "@/components/ProductVariantSelector";
@@ -14,7 +14,7 @@ import ProductVariantSelector from "@/components/ProductVariantSelector";
 const ProductsCustomer = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [maxDistance, setMaxDistance] = useState(15);
-  const { products, loading, error, customerLocation } = useProductsWithLocation(maxDistance);
+  const { products, loading, error, customerLocation } = useProductsNearby(maxDistance);
   const { toast } = useToast();
   const { addToCart } = useCart();
 
