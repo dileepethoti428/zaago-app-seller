@@ -14,13 +14,13 @@ export const useRealtimeSync = () => {
 
     const channels: any[] = [];
 
-    // Cart items real-time sync
+    // Cart items real-time sync - only UPDATE events
     const cartChannel = supabase
       .channel('cart-changes')
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'UPDATE',
           schema: 'public',
           table: 'cart_items',
           filter: `user_id=eq.${user.id}`,
@@ -34,13 +34,13 @@ export const useRealtimeSync = () => {
 
     channels.push(cartChannel);
 
-    // Orders real-time sync
+    // Orders real-time sync - only UPDATE events for status changes
     const ordersChannel = supabase
       .channel('orders-changes')
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'UPDATE',
           schema: 'public',
           table: 'orders',
           filter: `customer_phone=eq.${user.phone}`,
@@ -50,7 +50,7 @@ export const useRealtimeSync = () => {
           queryClient.invalidateQueries({ queryKey: ['orders'] });
           
           // Show toast for order status changes
-          if (payload.eventType === 'UPDATE' && payload.new.status !== payload.old?.status) {
+          if (payload.new.status !== payload.old?.status) {
             const statusMessages: Record<string, string> = {
               'confirmed': 'Your order has been confirmed!',
               'preparing': 'Your order is being prepared',
@@ -74,33 +74,8 @@ export const useRealtimeSync = () => {
 
     channels.push(ordersChannel);
 
-    // Products real-time sync (for stock updates)
-    const productsChannel = supabase
-      .channel('products-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'products',
-        },
-        (payload) => {
-          // Invalidate product-related queries
-          queryClient.invalidateQueries({ queryKey: ['products'] });
-          queryClient.invalidateQueries({ queryKey: ['product', payload.new.id] });
-          
-          // Show toast if a product in user's wishlist is back in stock
-          if (payload.old?.stock_quantity === 0 && payload.new.stock_quantity > 0) {
-            toast({
-              title: "Back in Stock!",
-              description: `${payload.new.name} is now available`,
-            });
-          }
-        }
-      )
-      .subscribe();
-
-    channels.push(productsChannel);
+    // Products are now handled by React Query refetchOnWindowFocus
+    // No need for real-time subscription - reduces 500+ events/hour
 
     // Notifications real-time sync
     const notificationsChannel = supabase

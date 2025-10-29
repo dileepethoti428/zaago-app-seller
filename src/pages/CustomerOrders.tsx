@@ -59,16 +59,20 @@ const CustomerOrders: React.FC = () => {
   }, [user?.id]);
 
   const setupRealtimeSubscription = () => {
+    if (!user?.id) return null;
+    
     return supabase
       .channel('seller-orders-channel')
       .on('postgres_changes', 
         { 
-          event: '*', 
+          event: 'UPDATE', 
           schema: 'public', 
-          table: 'orders' 
+          table: 'orders'
         }, 
         (payload) => {
           console.log('Real-time order update:', payload);
+          // Only refetch if this order contains seller's products
+          // The RPC function will filter appropriately
           fetchOrders();
         }
       )
