@@ -1,13 +1,22 @@
 import { QueryClient } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 
-// Enhanced query client with optimized caching
+// Create persister for localStorage
+export const persister = createSyncStoragePersister({
+  storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+  key: 'REACT_QUERY_CACHE',
+  throttleTime: 1000,
+});
+
+// Enhanced query client with optimized caching and persistence
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Cache for 5 minutes
-      staleTime: 5 * 60 * 1000,
-      // Keep in cache for 10 minutes
-      gcTime: 10 * 60 * 1000,
+      // Extended cache times for better performance
+      staleTime: 10 * 60 * 1000, // 10 minutes
+      // Keep in cache for 30 minutes
+      gcTime: 30 * 60 * 1000,
       // Retry failed requests
       retry: (failureCount, error: any) => {
         // Don't retry on 4xx errors (client errors)

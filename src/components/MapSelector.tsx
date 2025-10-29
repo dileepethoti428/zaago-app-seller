@@ -3,7 +3,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { useMapboxToken } from '@/hooks/useMapboxToken';
 
 interface MapSelectorProps {
   onLocationSelect: (location: { latitude: number; longitude: number; address: string }) => void;
@@ -18,48 +18,24 @@ export const MapSelector = ({ onLocationSelect, onClose, initialLocation }: MapS
   const [selectedLocation, setSelectedLocation] = useState<{ latitude: number; longitude: number } | null>(
     initialLocation || null
   );
-  const [mapboxToken, setMapboxToken] = useState('');
-  const [loading, setLoading] = useState(true);
+  
+  // Use cached Mapbox token
+  const { token: mapboxToken, loading, error: tokenError } = useMapboxToken();
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Fetch Mapbox token from Supabase secrets
+  // Initialize map when token is available
   useEffect(() => {
-    const fetchMapboxToken = async () => {
-      try {
-        setLoading(true);
-        console.log('Fetching Mapbox token...');
-        
-        const { data, error } = await supabase.functions.invoke('get-mapbox-token', {
-          method: 'POST'
-        });
-        
-        console.log('Response:', { data, error });
-        
-        if (error) {
-          console.error('Error fetching Mapbox token:', error);
-          setError('Failed to load map. Please check your Mapbox token configuration.');
-          return;
-        }
-        
-        if (data?.token) {
-          console.log('Token received, initializing map...');
-          setMapboxToken(data.token);
-          initializeMap(data.token);
-        } else {
-          console.error('No token in response:', data);
-          setError('Mapbox token not configured. Please contact your administrator.');
-        }
-      } catch (error) {
-        console.error('Error fetching Mapbox token:', error);
-        setError('Failed to load map configuration.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMapboxToken();
-  }, []);
+    if (tokenError) {
+      setError('Failed to load map. Please check your Mapbox token configuration.');
+      return;
+    }
+    
+    if (mapboxToken) {
+      console.log('Token received, initializing map...');
+      initializeMap(mapboxToken);
+    }
+  }, [mapboxToken, tokenError]);
 
   const initializeMap = (token: string) => {
     if (!mapContainer.current || !token) return;

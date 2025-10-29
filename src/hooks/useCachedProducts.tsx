@@ -55,8 +55,8 @@ export const useCachedProducts = (maxDistance: number = 15) => {
       }));
     },
     enabled: !!location && !!user && isOnline,
-    staleTime: 2 * 60 * 1000, // 2 minutes for location-based data
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    staleTime: 15 * 60 * 1000, // 15 minutes - products don't change frequently
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
     refetchOnWindowFocus: false, // Prevent excessive refetching
     refetchOnReconnect: true,
     retry: (failureCount, error: any) => {
@@ -92,8 +92,8 @@ export const useCachedProduct = (productId: string) => {
       return data;
     },
     enabled: !!productId && isOnline,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    staleTime: 20 * 60 * 1000, // 20 minutes - product details rarely change
+    gcTime: 60 * 60 * 1000, // Keep in cache for 1 hour
     retry: (failureCount, error: any) => {
       if (!navigator.onLine) return false;
       return failureCount < 2;
@@ -121,7 +121,7 @@ export const useCachedSellerProducts = (sellerId?: string) => {
       return data || [];
     },
     enabled: !!sellerId && isOnline,
-    staleTime: 3 * 60 * 1000, // 3 minutes
-    gcTime: 8 * 60 * 1000, // Keep in cache for 8 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 20 * 60 * 1000, // Keep in cache for 20 minutes
   });
 };

@@ -79,7 +79,8 @@ export const PlaceAutocomplete: React.FC<PlaceAutocompleteProps> = ({
       }
     };
 
-    const debounceTimer = setTimeout(searchPlaces, 300);
+    // Increased debounce to 500ms to reduce edge function calls
+    const debounceTimer = setTimeout(searchPlaces, 500);
     return () => clearTimeout(debounceTimer);
   }, [query]);
 
