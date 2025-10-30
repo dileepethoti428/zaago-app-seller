@@ -9,6 +9,7 @@ import { useProductSuggestions, ProductSuggestion } from '@/hooks/useProductSugg
 import { useAuth } from '@/context/AuthContext';
 import { Lightbulb, Plus } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const ProductSuggestions = () => {
   const { user } = useAuth();
@@ -98,93 +99,95 @@ const ProductSuggestions = () => {
           </Select>
         </div>
 
-        <div className="grid gap-4">
-          {suggestions.map((suggestion) => (
-            <Card key={suggestion.id}>
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  {getProductImage(suggestion) && (
-                    <img
-                      src={getProductImage(suggestion)}
-                      alt={suggestion.product_name}
-                      className="w-24 h-24 object-cover rounded cursor-pointer"
-                      onClick={() => setSelectedImage(getProductImage(suggestion)!)}
-                    />
-                  )}
-                  
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-semibold">{suggestion.product_name}</h3>
-                      <Badge className={getStatusColor(suggestion.status)}>
-                        {suggestion.status}
-                      </Badge>
-                    </div>
-                    
-                    <p className="text-sm text-muted-foreground">{suggestion.description}</p>
-                    
-                    {suggestion.category && (
-                      <p className="text-sm">
-                        <strong>Category:</strong> {suggestion.category}
-                      </p>
+        <ScrollArea className="h-[calc(100vh-280px)]">
+          <div className="grid gap-4 pr-4">
+            {suggestions.map((suggestion) => (
+              <Card key={suggestion.id}>
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    {getProductImage(suggestion) && (
+                      <img
+                        src={getProductImage(suggestion)}
+                        alt={suggestion.product_name}
+                        className="w-24 h-24 object-cover rounded cursor-pointer"
+                        onClick={() => setSelectedImage(getProductImage(suggestion)!)}
+                      />
                     )}
                     
-                    {suggestion.estimated_price_range && (
-                      <p className="text-sm">
-                        <strong>Price Range:</strong> {suggestion.estimated_price_range}
-                      </p>
-                    )}
-
-                    {suggestion.suggested_images && suggestion.suggested_images.length > 1 && (
-                      <div className="flex gap-2 flex-wrap pt-2">
-                        {suggestion.suggested_images.slice(1).map((img, idx) => (
-                          <img
-                            key={idx}
-                            src={img}
-                            alt={`${suggestion.product_name} ${idx + 2}`}
-                            className="w-16 h-16 object-cover rounded cursor-pointer"
-                            onClick={() => setSelectedImage(img)}
-                          />
-                        ))}
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-semibold">{suggestion.product_name}</h3>
+                        <Badge className={getStatusColor(suggestion.status)}>
+                          {suggestion.status}
+                        </Badge>
                       </div>
-                    )}
-                    
-                    {suggestion.admin_notes && (
-                      <div className="bg-muted p-3 rounded mt-2">
+                      
+                      <p className="text-sm text-muted-foreground">{suggestion.description}</p>
+                      
+                      {suggestion.category && (
                         <p className="text-sm">
-                          <strong>Admin Response:</strong> {suggestion.admin_notes}
+                          <strong>Category:</strong> {suggestion.category}
                         </p>
-                      </div>
-                    )}
-                    
-                    <p className="text-xs text-muted-foreground">
-                      Submitted on {new Date(suggestion.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                      )}
+                      
+                      {suggestion.estimated_price_range && (
+                        <p className="text-sm">
+                          <strong>Price Range:</strong> {suggestion.estimated_price_range}
+                        </p>
+                      )}
 
-          {suggestions.length === 0 && (
-            <Card>
-              <CardContent className="text-center py-12">
-                <Lightbulb className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">
-                  {filter === 'all' 
-                    ? "You haven't submitted any product suggestions yet."
-                    : `No ${filter} suggestions found.`
-                  }
-                </p>
-                <Button 
-                  onClick={() => setDialogOpen(true)}
-                  className="mt-4"
-                >
-                  Submit Your First Suggestion
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+                      {suggestion.suggested_images && suggestion.suggested_images.length > 1 && (
+                        <div className="flex gap-2 flex-wrap pt-2">
+                          {suggestion.suggested_images.slice(1).map((img, idx) => (
+                            <img
+                              key={idx}
+                              src={img}
+                              alt={`${suggestion.product_name} ${idx + 2}`}
+                              className="w-16 h-16 object-cover rounded cursor-pointer"
+                              onClick={() => setSelectedImage(img)}
+                            />
+                          ))}
+                        </div>
+                      )}
+                      
+                      {suggestion.admin_notes && (
+                        <div className="bg-muted p-3 rounded mt-2">
+                          <p className="text-sm">
+                            <strong>Admin Response:</strong> {suggestion.admin_notes}
+                          </p>
+                        </div>
+                      )}
+                      
+                      <p className="text-xs text-muted-foreground">
+                        Submitted on {new Date(suggestion.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+
+            {suggestions.length === 0 && (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <Lightbulb className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">
+                    {filter === 'all' 
+                      ? "You haven't submitted any product suggestions yet."
+                      : `No ${filter} suggestions found.`
+                    }
+                  </p>
+                  <Button 
+                    onClick={() => setDialogOpen(true)}
+                    className="mt-4"
+                  >
+                    Submit Your First Suggestion
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </ScrollArea>
       </motion.div>
 
       <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
