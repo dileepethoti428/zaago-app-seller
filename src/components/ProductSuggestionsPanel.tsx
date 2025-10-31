@@ -9,6 +9,7 @@ import { Check, X, Eye, Lightbulb } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export const ProductSuggestionsPanel = () => {
   const { user } = useAuth();
@@ -108,123 +109,125 @@ export const ProductSuggestionsPanel = () => {
         </Select>
       </div>
 
-      <div className="grid gap-4">
-        {suggestions.map((suggestion) => (
-          <Card key={suggestion.id}>
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <CardTitle className="text-lg">{suggestion.product_name}</CardTitle>
-                    <Badge className={getStatusColor(isAdmin ? suggestion.status : (suggestion.seller_status || 'pending'))}>
-                      {isAdmin ? `Global: ${suggestion.status}` : `Your Status: ${suggestion.seller_status || 'pending'}`}
-                    </Badge>
+      <ScrollArea className="h-[400px]">
+        <div className="grid gap-4 pr-4">
+          {suggestions.map((suggestion) => (
+            <Card key={suggestion.id}>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <CardTitle className="text-lg">{suggestion.product_name}</CardTitle>
+                      <Badge className={getStatusColor(isAdmin ? suggestion.status : (suggestion.seller_status || 'pending'))}>
+                        {isAdmin ? `Global: ${suggestion.status}` : `Your Status: ${suggestion.seller_status || 'pending'}`}
+                      </Badge>
+                    </div>
+                    <CardDescription className="mt-1">
+                      {new Date(suggestion.created_at).toLocaleDateString()}
+                      {suggestion.customer_location?.city && (
+                        <span className="ml-2">• {suggestion.customer_location.city}</span>
+                      )}
+                    </CardDescription>
                   </div>
-                  <CardDescription className="mt-1">
-                    {new Date(suggestion.created_at).toLocaleDateString()}
-                    {suggestion.customer_location?.city && (
-                      <span className="ml-2">• {suggestion.customer_location.city}</span>
-                    )}
-                  </CardDescription>
-                </div>
-                {getProductImage(suggestion) && (
-                  <img
-                    src={getProductImage(suggestion)}
-                    alt={suggestion.product_name}
-                    className="w-20 h-20 object-cover rounded cursor-pointer"
-                    onClick={() => setSelectedImage(getProductImage(suggestion)!)}
-                  />
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm">{suggestion.description}</p>
-              
-              {suggestion.category && (
-                <p className="text-sm text-muted-foreground">
-                  <strong>Category:</strong> {suggestion.category}
-                </p>
-              )}
-              
-              {suggestion.estimated_price_range && (
-                <p className="text-sm text-muted-foreground">
-                  <strong>Price Range:</strong> {suggestion.estimated_price_range}
-                </p>
-              )}
-              
-              {suggestion.additional_notes && (
-                <p className="text-sm text-muted-foreground">
-                  <strong>Notes:</strong> {suggestion.additional_notes}
-                </p>
-              )}
-
-              {suggestion.suggested_images && suggestion.suggested_images.length > 1 && (
-                <div className="flex gap-2 flex-wrap">
-                  {suggestion.suggested_images.map((img, idx) => (
+                  {getProductImage(suggestion) && (
                     <img
-                      key={idx}
-                      src={img}
-                      alt={`${suggestion.product_name} ${idx + 1}`}
-                      className="w-16 h-16 object-cover rounded cursor-pointer"
-                      onClick={() => setSelectedImage(img)}
+                      src={getProductImage(suggestion)}
+                      alt={suggestion.product_name}
+                      className="w-20 h-20 object-cover rounded cursor-pointer"
+                      onClick={() => setSelectedImage(getProductImage(suggestion)!)}
                     />
-                  ))}
+                  )}
                 </div>
-              )}
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-sm">{suggestion.description}</p>
+                
+                {suggestion.category && (
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Category:</strong> {suggestion.category}
+                  </p>
+                )}
+                
+                {suggestion.estimated_price_range && (
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Price Range:</strong> {suggestion.estimated_price_range}
+                  </p>
+                )}
+                
+                {suggestion.additional_notes && (
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Notes:</strong> {suggestion.additional_notes}
+                  </p>
+                )}
 
-              {isAdmin && suggestion.admin_notes && (
-                <div className="bg-muted p-3 rounded">
-                  <p className="text-sm"><strong>Admin Notes:</strong> {suggestion.admin_notes}</p>
-                </div>
-              )}
+                {suggestion.suggested_images && suggestion.suggested_images.length > 1 && (
+                  <div className="flex gap-2 flex-wrap">
+                    {suggestion.suggested_images.map((img, idx) => (
+                      <img
+                        key={idx}
+                        src={img}
+                        alt={`${suggestion.product_name} ${idx + 1}`}
+                        className="w-16 h-16 object-cover rounded cursor-pointer"
+                        onClick={() => setSelectedImage(img)}
+                      />
+                    ))}
+                  </div>
+                )}
 
-              {!isAdmin && suggestion.seller_notes && (
-                <div className="bg-muted p-3 rounded">
-                  <p className="text-sm"><strong>Your Notes:</strong> {suggestion.seller_notes}</p>
-                </div>
-              )}
+                {isAdmin && suggestion.admin_notes && (
+                  <div className="bg-muted p-3 rounded">
+                    <p className="text-sm"><strong>Admin Notes:</strong> {suggestion.admin_notes}</p>
+                  </div>
+                )}
 
-              {(isAdmin ? suggestion.status === 'pending' : (suggestion.seller_status === 'pending' || !suggestion.seller_status)) && (
-                <div className="flex gap-2 pt-2">
-                  <Button
-                    size="sm"
-                    onClick={() => setSelectedSuggestion(suggestion)}
-                    variant="outline"
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    Review
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleStatusUpdate(suggestion.id, 'approved')}
-                    disabled={loading}
-                  >
-                    <Check className="h-4 w-4 mr-1" />
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleStatusUpdate(suggestion.id, 'rejected')}
-                    disabled={loading}
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    Reject
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+                {!isAdmin && suggestion.seller_notes && (
+                  <div className="bg-muted p-3 rounded">
+                    <p className="text-sm"><strong>Your Notes:</strong> {suggestion.seller_notes}</p>
+                  </div>
+                )}
 
-        {suggestions.length === 0 && (
-          <Card>
-            <CardContent className="text-center py-8">
-              <p className="text-muted-foreground">No suggestions found</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+                {(isAdmin ? suggestion.status === 'pending' : (suggestion.seller_status === 'pending' || !suggestion.seller_status)) && (
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      size="sm"
+                      onClick={() => setSelectedSuggestion(suggestion)}
+                      variant="outline"
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Review
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleStatusUpdate(suggestion.id, 'approved')}
+                      disabled={loading}
+                    >
+                      <Check className="h-4 w-4 mr-1" />
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleStatusUpdate(suggestion.id, 'rejected')}
+                      disabled={loading}
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Reject
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+
+          {suggestions.length === 0 && (
+            <Card>
+              <CardContent className="text-center py-8">
+                <p className="text-muted-foreground">No suggestions found</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </ScrollArea>
 
       <Dialog open={!!selectedSuggestion} onOpenChange={() => setSelectedSuggestion(null)}>
         <DialogContent>
