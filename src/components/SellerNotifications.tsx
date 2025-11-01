@@ -5,12 +5,12 @@ import { useToast } from '@/hooks/use-toast';
 import { notificationSound } from '@/utils/notificationSound';
 import { NewOrderNotificationModal } from './NewOrderNotificationModal';
 import { Badge } from '@/components/ui/badge';
-import { useDelayedNotification } from '@/hooks/useDelayedNotification';
+
 
 export const SellerNotifications = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { scheduleNotification, cancelNotification, cancelAllNotifications, getPendingCount, pendingNotifications } = useDelayedNotification();
+  
   const [newOrderModal, setNewOrderModal] = useState<{
     visible: boolean;
     order: any;
@@ -107,112 +107,104 @@ export const SellerNotifications = () => {
     }
   }, [user]);
 
-  // Handle showing the modal after delay
-  const showDelayedModal = useCallback(async (notification: any) => {
-    const orderId = notification.order_id || notification.metadata?.order_id;
-    const metadata = notification.metadata || {};
-    
-    let orderDetails = {
-      id: orderId || 'unknown',
-      customer_name: metadata.customer_name || 'New Customer',
-      customer_phone: metadata.customer_phone || '',
-      total_amount: metadata.seller_total || metadata.total_amount || 0,
-      items: metadata.seller_items || metadata.items || [],
-      delivery_address: metadata.delivery_address || metadata.address || '',
-      payment_method: metadata.payment_method || 'COD',
-      payment_status: metadata.payment_status || 'pending',
-    };
-    
-    // Fetch complete order if possible
-    if (orderId && orderId !== 'unknown') {
-      try {
-        const { data: order } = await supabase
-          .from('orders')
-          .select('*')
-          .eq('id', orderId)
-          .single();
-
-        if (order) {
-          const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items || [];
-          
-          orderDetails = {
-            id: order.id,
-            customer_name: order.customer_name || orderDetails.customer_name,
-            customer_phone: order.customer_phone || orderDetails.customer_phone,
-            total_amount: order.total || orderDetails.total_amount,
-            items: items.length > 0 ? items : orderDetails.items,
-            delivery_address: typeof order.address === 'string' ? order.address : 
-              `${(order.address as any)?.full_address || ''}, ${(order.address as any)?.city || ''}`.trim(),
-            payment_method: (order as any).payment_method || orderDetails.payment_method,
-            payment_status: (order as any).payment_status || orderDetails.payment_status,
-          };
-        }
-      } catch (error) {
-        console.error('❌ Error fetching order:', error);
-      }
-    }
-    
-    // NOW play sound and show alerts (after 10 second delay)
-    console.log('🚨 10 SECONDS PASSED - SHOWING URGENT NOTIFICATION');
-    
-    try {
-      await notificationSound.ensureAudioContext();
-      notificationSound.setVolume(1.0);
-      notificationSound.startContinuousRinging('rapido_ringtone');
-    } catch (error) {
-      console.error('❌ Audio error:', error);
-    }
-    
-    // Browser notification
-    if ('Notification' in window) {
-      if (Notification.permission === 'default') {
-        await Notification.requestPermission();
-      }
-      
-      if (Notification.permission === 'granted') {
-        const notif = new Notification('🚨 NEW ORDER - RESPOND NOW!', {
-          body: 'New Order Received! Please respond to the order request.',
-          icon: '/zaago-logo.png',
-          tag: 'new-order-urgent',
-          requireInteraction: true,
-        });
-        
-        notif.onclick = () => {
-          window.focus();
-          notif.close();
-        };
-      }
-    }
-    
-    // Vibration
-    if ('vibrate' in navigator) {
-      navigator.vibrate([500, 200, 500, 200, 500, 200, 1000]);
-    }
-    
-    console.log('📦 Showing modal with order:', orderDetails);
-    setNewOrderModal({ visible: true, order: orderDetails });
-    
-    // Mark as read
-    if (notification.id) {
-      supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('id', notification.id)
-        .then(() => console.log('✅ Notification marked as read'));
-    }
-  }, []);
-
-  // Handle notification - schedule for delayed display
+  // Handle notification - show immediately
   const handleNotification = useCallback(async (notification: any) => {
     console.log('🔔 Processing notification:', notification);
     
     if (notification.type === 'new_order') {
-      console.log('🚨 NEW ORDER NOTIFICATION - Scheduling for 10 seconds');
+      console.log('🚨 NEW ORDER NOTIFICATION');
       
-      // Schedule to show after 10 seconds
-      scheduleNotification(notification, showDelayedModal, 10000);
+      const orderId = notification.order_id || notification.metadata?.order_id;
+      const metadata = notification.metadata || {};
+      
+      let orderDetails = {
+        id: orderId || 'unknown',
+        customer_name: metadata.customer_name || 'New Customer',
+        customer_phone: metadata.customer_phone || '',
+        total_amount: metadata.seller_total || metadata.total_amount || 0,
+        items: metadata.seller_items || metadata.items || [],
+        delivery_address: metadata.delivery_address || metadata.address || '',
+        payment_method: metadata.payment_method || 'COD',
+        payment_status: metadata.payment_status || 'pending',
+      };
+      
+      // Fetch complete order if possible
+      if (orderId && orderId !== 'unknown') {
+        try {
+          const { data: order } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('id', orderId)
+            .single();
+
+          if (order) {
+            const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items || [];
+            
+            orderDetails = {
+              id: order.id,
+              customer_name: order.customer_name || orderDetails.customer_name,
+              customer_phone: order.customer_phone || orderDetails.customer_phone,
+              total_amount: order.total || orderDetails.total_amount,
+              items: items.length > 0 ? items : orderDetails.items,
+              delivery_address: typeof order.address === 'string' ? order.address : 
+                `${(order.address as any)?.full_address || ''}, ${(order.address as any)?.city || ''}`.trim(),
+              payment_method: (order as any).payment_method || orderDetails.payment_method,
+              payment_status: (order as any).payment_status || orderDetails.payment_status,
+            };
+          }
+        } catch (error) {
+          console.error('❌ Error fetching order:', error);
+        }
+      }
+      
+      // Play sound and show alerts immediately
+      try {
+        await notificationSound.ensureAudioContext();
+        notificationSound.setVolume(1.0);
+        notificationSound.startContinuousRinging('rapido_ringtone');
+      } catch (error) {
+        console.error('❌ Audio error:', error);
+      }
+      
+      // Browser notification
+      if ('Notification' in window) {
+        if (Notification.permission === 'default') {
+          await Notification.requestPermission();
+        }
+        
+        if (Notification.permission === 'granted') {
+          const notif = new Notification('🚨 NEW ORDER - RESPOND NOW!', {
+            body: 'New Order Received! Please respond to the order request.',
+            icon: '/zaago-logo.png',
+            tag: 'new-order-urgent',
+            requireInteraction: true,
+          });
+          
+          notif.onclick = () => {
+            window.focus();
+            notif.close();
+          };
+        }
+      }
+      
+      // Vibration
+      if ('vibrate' in navigator) {
+        navigator.vibrate([500, 200, 500, 200, 500, 200, 1000]);
+      }
+      
+      console.log('📦 Showing modal with order:', orderDetails);
+      setNewOrderModal({ visible: true, order: orderDetails });
+      
+      // Mark as read
+      if (notification.id) {
+        supabase
+          .from('notifications')
+          .update({ is_read: true })
+          .eq('id', notification.id)
+          .then(() => console.log('✅ Notification marked as read'));
+      }
     }
-  }, [scheduleNotification, showDelayedModal]);
+  }, []);
 
   // Polling function - check every 5 seconds
   const checkForNewNotifications = useCallback(async () => {
@@ -284,44 +276,6 @@ export const SellerNotifications = () => {
     channelRef.current = channel;
   }, [user, handleNotification]);
 
-  // Setup order status monitoring to cancel delayed notifications
-  const setupOrderStatusMonitoring = useCallback(async () => {
-    if (!user) return;
-    
-    console.log('🔔 Setting up order status monitoring');
-    
-    if (orderStatusChannelRef.current) {
-      await supabase.removeChannel(orderStatusChannelRef.current);
-      orderStatusChannelRef.current = null;
-    }
-    
-    const channel = supabase.channel('order-status-updates');
-    
-    channel
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'orders'
-      }, (payload) => {
-        const orderId = payload.new.id;
-        const newStatus = (payload.new as any).status;
-        
-        console.log('📝 Order status updated:', orderId, newStatus);
-        
-        // Cancel pending notification if order status changed from 'placed'
-        if (newStatus !== 'placed') {
-          const cancelled = cancelNotification(orderId);
-          if (cancelled) {
-            console.log('✅ Cancelled delayed notification for order:', orderId);
-          }
-        }
-      })
-      .subscribe((status) => {
-        console.log('📡 Order status subscription status:', status);
-      });
-    
-    orderStatusChannelRef.current = channel;
-  }, [user, cancelNotification]);
 
   // Main effect - start both real-time and immediate polling
   useEffect(() => {
@@ -351,7 +305,6 @@ export const SellerNotifications = () => {
 
     startPolling();
     setupSubscription();
-    setupOrderStatusMonitoring();
 
     return () => {
       if (pollingIntervalRef.current) {
@@ -364,25 +317,12 @@ export const SellerNotifications = () => {
         channelRef.current = null;
       }
       
-      if (orderStatusChannelRef.current) {
-        supabase.removeChannel(orderStatusChannelRef.current);
-        orderStatusChannelRef.current = null;
-      }
-      
-      // Cancel all pending notifications on unmount
-      cancelAllNotifications();
     };
-  }, [user, setupSubscription, setupOrderStatusMonitoring, checkForNewNotifications, checkForUnreadNotifications, cancelAllNotifications]);
+  }, [user, setupSubscription, checkForNewNotifications, checkForUnreadNotifications]);
 
   const handleAcceptOrder = () => {
     console.log('✅ Order accepted');
     notificationSound.stopContinuousRinging();
-    
-    // Cancel any pending delayed notifications for this order
-    if (newOrderModal.order?.id) {
-      cancelNotification(newOrderModal.order.id);
-    }
-    
     setNewOrderModal({ visible: false, order: null });
     
     toast({
@@ -395,24 +335,12 @@ export const SellerNotifications = () => {
   const handleDismissOrder = () => {
     console.log('❌ Order dismissed');
     notificationSound.stopContinuousRinging();
-    
-    // Cancel any pending delayed notifications for this order
-    if (newOrderModal.order?.id) {
-      cancelNotification(newOrderModal.order.id);
-    }
-    
     setNewOrderModal({ visible: false, order: null });
   };
 
   const handleViewOrder = () => {
     console.log('👁️ View order');
     notificationSound.stopContinuousRinging();
-    
-    // Cancel any pending delayed notifications for this order
-    if (newOrderModal.order?.id) {
-      cancelNotification(newOrderModal.order.id);
-    }
-    
     setNewOrderModal({ visible: false, order: null });
     
     if (newOrderModal.order?.id) {
@@ -420,19 +348,8 @@ export const SellerNotifications = () => {
     }
   };
 
-  const pendingCount = getPendingCount();
-
   return (
     <>
-      {/* Pending notifications indicator */}
-      {pendingCount > 0 && (
-        <div className="fixed bottom-20 right-4 z-50">
-          <Badge variant="outline" className="text-sm px-3 py-2 bg-orange-500/20 border-orange-500 animate-pulse">
-            ⏰ {pendingCount} pending notification{pendingCount > 1 ? 's' : ''}
-          </Badge>
-        </div>
-      )}
-
       {/* Missed notification badge */}
       {missedNotificationCount > 0 && (
         <div className="fixed top-20 right-4 z-50 animate-pulse">
