@@ -184,7 +184,7 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
                 <Phone className="h-6 w-6 sm:h-8 sm:w-8 text-red-600 flex-shrink-0" />
                 <div>
                   <h2 className="text-xl sm:text-2xl font-bold text-red-600">🚨 NEW ORDER!</h2>
-                  <p className="text-xs sm:text-sm text-red-500 font-medium">ACTION REQUIRED</p>
+                  <p className="text-xs sm:text-sm text-red-500 font-medium">Please respond to the order request</p>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1">
