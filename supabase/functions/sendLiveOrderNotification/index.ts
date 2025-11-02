@@ -74,20 +74,21 @@ Deno.serve(async (req) => {
         try {
           console.log('Processing notification for seller:', sellerId);
 
-          // Get seller's user_id
+          // The sellerId in items is actually the user_id, so query by user_id
           const { data: seller, error: sellerError } = await supabase
             .from('sellers')
-            .select('user_id')
-            .eq('id', sellerId)
+            .select('id, user_id')
+            .eq('user_id', sellerId)
             .single();
 
           if (sellerError || !seller) {
-            console.error('Seller not found:', sellerId, sellerError);
+            console.error('Seller not found for user_id:', sellerId, sellerError);
             return { sellerId, success: false, error: 'Seller not found' };
           }
 
           const sellerUserId = seller.user_id;
-          console.log('Seller user_id:', sellerUserId);
+          const actualSellerId = seller.id;
+          console.log('Found seller - user_id:', sellerUserId, 'seller_id:', actualSellerId);
 
           // Get seller's OneSignal player ID
           const { data: profile, error: profileError } = await supabase
