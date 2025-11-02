@@ -135,6 +135,23 @@ Deno.serve(async (req) => {
               contents: {
                 en: `New order received! Check the order details to process delivery.\nOrder #${orderShortId} - ₹${order.total} (${itemCount} item${itemCount > 1 ? 's' : ''})`,
               },
+              
+              // Priority and visibility settings for lock screen
+              priority: 10,  // High priority (scale 1-10)
+              
+              // iOS specific settings
+              ios_badgeType: "Increase",
+              ios_badgeCount: 1,
+              ios_sound: "default",
+              
+              // Android specific settings
+              android_channel_id: "new_orders",
+              android_visibility: 1,  // Public - show on lock screen
+              android_sound: "default",
+              
+              // Time to live (how long to keep trying to deliver)
+              ttl: 3600,  // 1 hour
+              
               data: {
                 orderId: orderId,
                 type: 'new_order',

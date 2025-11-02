@@ -30,6 +30,30 @@ export const useOneSignal = () => {
           enable: true,
         },
         allowLocalhostAsSecureOrigin: true,
+        
+        // Android notification channel configuration for lock screen
+        android: {
+          notificationChannels: [
+            {
+              id: "new_orders",
+              name: "New Orders",
+              description: "Notifications for new orders from customers",
+              importance: 5,  // Max importance for lock screen
+              vibration: true,
+              sound: true,
+              lockScreen: true  // Explicitly show on lock screen
+            },
+            {
+              id: "order_updates",
+              name: "Order Updates",
+              description: "Status updates for your orders",
+              importance: 5,  // Max importance for lock screen
+              vibration: true,
+              sound: true,
+              lockScreen: true  // Explicitly show on lock screen
+            }
+          ]
+        }
       });
       
       // Set external user ID to link with Supabase user

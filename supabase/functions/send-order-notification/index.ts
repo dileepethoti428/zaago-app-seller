@@ -115,6 +115,23 @@ serve(async (req) => {
       contents: { 
         en: `${statusInfo.message}\nOrder #${orderIdShort} - ₹${orderTotal}` 
       },
+      
+      // Priority and visibility settings for lock screen
+      priority: 10,  // High priority (scale 1-10)
+      
+      // iOS specific settings
+      ios_badgeType: "Increase",
+      ios_badgeCount: 1,
+      ios_sound: "default",
+      
+      // Android specific settings
+      android_channel_id: "order_updates",
+      android_visibility: 1,  // Public - show on lock screen
+      android_sound: "default",
+      
+      // Time to live (how long to keep trying to deliver)
+      ttl: 3600,  // 1 hour
+      
       data: {
         orderId,
         status,
