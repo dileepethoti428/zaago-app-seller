@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
               title: 'New Order Received!',
               message: 'New order received! Check the order details to process delivery.',
               order_id: orderId,
-              read: false,
+              is_read: false,
             });
 
           if (notificationError) {
