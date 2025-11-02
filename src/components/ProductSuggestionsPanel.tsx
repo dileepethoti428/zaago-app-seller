@@ -32,11 +32,8 @@ export const ProductSuggestionsPanel = () => {
   const checkUserRole = async () => {
     if (!user) return;
     
-    const { data, error } = await supabase.rpc('is_current_user_admin');
-    
-    if (!error && data) {
-      setIsAdmin(true);
-    }
+    // For now, set isAdmin to false - admin check will be implemented later
+    setIsAdmin(false);
   };
 
   const loadSuggestions = async () => {
