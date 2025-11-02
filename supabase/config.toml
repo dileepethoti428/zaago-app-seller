@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.send-order-notification]
 verify_jwt = false
+
+[functions.sendLiveOrderNotification]
+verify_jwt = false
