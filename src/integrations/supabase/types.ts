@@ -168,6 +168,156 @@ export type Database = {
           },
         ]
       }
+      agent_documents: {
+        Row: {
+          aadhar_back_url: string | null
+          aadhar_front_url: string | null
+          aadhar_number: string | null
+          aadhar_verified: boolean | null
+          agent_id: string | null
+          created_at: string | null
+          dl_back_url: string | null
+          dl_expiry_date: string | null
+          dl_front_url: string | null
+          dl_number: string | null
+          dl_verified: boolean | null
+          id: string
+          profile_photo_url: string | null
+          rejection_reason: string | null
+          updated_at: string | null
+          uploaded_at: string | null
+          user_id: string
+          verification_notes: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          aadhar_back_url?: string | null
+          aadhar_front_url?: string | null
+          aadhar_number?: string | null
+          aadhar_verified?: boolean | null
+          agent_id?: string | null
+          created_at?: string | null
+          dl_back_url?: string | null
+          dl_expiry_date?: string | null
+          dl_front_url?: string | null
+          dl_number?: string | null
+          dl_verified?: boolean | null
+          id?: string
+          profile_photo_url?: string | null
+          rejection_reason?: string | null
+          updated_at?: string | null
+          uploaded_at?: string | null
+          user_id: string
+          verification_notes?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          aadhar_back_url?: string | null
+          aadhar_front_url?: string | null
+          aadhar_number?: string | null
+          aadhar_verified?: boolean | null
+          agent_id?: string | null
+          created_at?: string | null
+          dl_back_url?: string | null
+          dl_expiry_date?: string | null
+          dl_front_url?: string | null
+          dl_number?: string | null
+          dl_verified?: boolean | null
+          id?: string
+          profile_photo_url?: string | null
+          rejection_reason?: string | null
+          updated_at?: string | null
+          uploaded_at?: string | null
+          user_id?: string
+          verification_notes?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_documents_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_earnings_tracking: {
+        Row: {
+          accepted_at: string
+          actual_payout: number | null
+          agent_id: string
+          completed_at: string | null
+          created_at: string | null
+          distance_km: number | null
+          expected_payout: number
+          id: string
+          is_peak_hour: boolean | null
+          order_id: string
+          payment_method: string | null
+          payout_breakdown: Json | null
+          payout_status: string
+          updated_at: string | null
+        }
+        Insert: {
+          accepted_at: string
+          actual_payout?: number | null
+          agent_id: string
+          completed_at?: string | null
+          created_at?: string | null
+          distance_km?: number | null
+          expected_payout?: number
+          id?: string
+          is_peak_hour?: boolean | null
+          order_id: string
+          payment_method?: string | null
+          payout_breakdown?: Json | null
+          payout_status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          accepted_at?: string
+          actual_payout?: number | null
+          agent_id?: string
+          completed_at?: string | null
+          created_at?: string | null
+          distance_km?: number | null
+          expected_payout?: number
+          id?: string
+          is_peak_hour?: boolean | null
+          order_id?: string
+          payment_method?: string | null
+          payout_breakdown?: Json | null
+          payout_status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_earnings_tracking_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_earnings_tracking_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_earnings_tracking_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders_with_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_notifications: {
         Row: {
           agent_id: string
@@ -957,6 +1107,7 @@ export type Database = {
           high_spenders_only: boolean | null
           id: string
           is_active: boolean
+          is_hidden: boolean
           low_spenders_only: boolean | null
           maximum_discount_amount: number | null
           maximum_user_spending: number | null
@@ -982,6 +1133,7 @@ export type Database = {
           high_spenders_only?: boolean | null
           id?: string
           is_active?: boolean
+          is_hidden?: boolean
           low_spenders_only?: boolean | null
           maximum_discount_amount?: number | null
           maximum_user_spending?: number | null
@@ -1007,6 +1159,7 @@ export type Database = {
           high_spenders_only?: boolean | null
           id?: string
           is_active?: boolean
+          is_hidden?: boolean
           low_spenders_only?: boolean | null
           maximum_discount_amount?: number | null
           maximum_user_spending?: number | null
@@ -1222,6 +1375,7 @@ export type Database = {
           created_at: string | null
           deliveries_today: number | null
           device_info: Json | null
+          documents_verified: boolean | null
           email: string
           id: string
           is_active: boolean | null
@@ -1232,10 +1386,12 @@ export type Database = {
           onesignal_player_id: string | null
           performance_score: number | null
           phone: string | null
+          profile_image: string | null
           push_subscription: Json | null
           total_deliveries: number | null
           total_earnings: number | null
           updated_at: string | null
+          verification_status: string | null
         }
         Insert: {
           agent_id: string
@@ -1243,6 +1399,7 @@ export type Database = {
           created_at?: string | null
           deliveries_today?: number | null
           device_info?: Json | null
+          documents_verified?: boolean | null
           email: string
           id?: string
           is_active?: boolean | null
@@ -1253,10 +1410,12 @@ export type Database = {
           onesignal_player_id?: string | null
           performance_score?: number | null
           phone?: string | null
+          profile_image?: string | null
           push_subscription?: Json | null
           total_deliveries?: number | null
           total_earnings?: number | null
           updated_at?: string | null
+          verification_status?: string | null
         }
         Update: {
           agent_id?: string
@@ -1264,6 +1423,7 @@ export type Database = {
           created_at?: string | null
           deliveries_today?: number | null
           device_info?: Json | null
+          documents_verified?: boolean | null
           email?: string
           id?: string
           is_active?: boolean | null
@@ -1274,10 +1434,12 @@ export type Database = {
           onesignal_player_id?: string | null
           performance_score?: number | null
           phone?: string | null
+          profile_image?: string | null
           push_subscription?: Json | null
           total_deliveries?: number | null
           total_earnings?: number | null
           updated_at?: string | null
+          verification_status?: string | null
         }
         Relationships: []
       }
@@ -1872,6 +2034,13 @@ export type Database = {
             foreignKeyName: "milk_transactions_seller_id_fkey"
             columns: ["seller_id"]
             isOneToOne: false
+            referencedRelation: "public_sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "milk_transactions_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
             referencedRelation: "seller_analytics_view"
             referencedColumns: ["seller_id"]
           },
@@ -2301,6 +2470,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          accepted_at: string | null
           address: Json
           agent_id: string | null
           agent_notification_sent: boolean | null
@@ -2344,6 +2514,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          accepted_at?: string | null
           address: Json
           agent_id?: string | null
           agent_notification_sent?: boolean | null
@@ -2387,6 +2558,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          accepted_at?: string | null
           address?: Json
           agent_id?: string | null
           agent_notification_sent?: boolean | null
@@ -2496,6 +2668,41 @@ export type Database = {
           last_attempt?: string
         }
         Relationships: []
+      }
+      otp_verification_attempts: {
+        Row: {
+          attempt_count: number | null
+          created_at: string | null
+          id: string
+          last_attempt_at: string | null
+          otp_id: string | null
+          phone: string
+        }
+        Insert: {
+          attempt_count?: number | null
+          created_at?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          otp_id?: string | null
+          phone: string
+        }
+        Update: {
+          attempt_count?: number | null
+          created_at?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          otp_id?: string | null
+          phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "otp_verification_attempts_otp_id_fkey"
+            columns: ["otp_id"]
+            isOneToOne: false
+            referencedRelation: "phone_otps"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       password_reset_logs: {
         Row: {
@@ -3159,6 +3366,8 @@ export type Database = {
           date_of_birth: string | null
           default_address: Json | null
           device_info: Json | null
+          documents_submitted: boolean | null
+          documents_verified: boolean | null
           emergency_contact: string | null
           full_name: string | null
           id: string
@@ -3169,6 +3378,7 @@ export type Database = {
           photo_url: string | null
           photo_verified: boolean | null
           rejection_reason: string | null
+          submission_date: string | null
           updated_at: string
           user_id: string
         }
@@ -3184,6 +3394,8 @@ export type Database = {
           date_of_birth?: string | null
           default_address?: Json | null
           device_info?: Json | null
+          documents_submitted?: boolean | null
+          documents_verified?: boolean | null
           emergency_contact?: string | null
           full_name?: string | null
           id?: string
@@ -3194,6 +3406,7 @@ export type Database = {
           photo_url?: string | null
           photo_verified?: boolean | null
           rejection_reason?: string | null
+          submission_date?: string | null
           updated_at?: string
           user_id: string
         }
@@ -3209,6 +3422,8 @@ export type Database = {
           date_of_birth?: string | null
           default_address?: Json | null
           device_info?: Json | null
+          documents_submitted?: boolean | null
+          documents_verified?: boolean | null
           emergency_contact?: string | null
           full_name?: string | null
           id?: string
@@ -3219,8 +3434,51 @@ export type Database = {
           photo_url?: string | null
           photo_verified?: boolean | null
           rejection_reason?: string | null
+          submission_date?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      push_notification_logs: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          id: string
+          message: string
+          notification_id: string | null
+          recipients_count: number | null
+          sent_by_user_id: string | null
+          success: boolean | null
+          target_type: string | null
+          target_user_id: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          message: string
+          notification_id?: string | null
+          recipients_count?: number | null
+          sent_by_user_id?: string | null
+          success?: boolean | null
+          target_type?: string | null
+          target_user_id?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          message?: string
+          notification_id?: string | null
+          recipients_count?: number | null
+          sent_by_user_id?: string | null
+          success?: boolean | null
+          target_type?: string | null
+          target_user_id?: string | null
+          title?: string
         }
         Relationships: []
       }
@@ -3510,6 +3768,13 @@ export type Database = {
             foreignKeyName: "seller_product_suggestion_status_seller_id_fkey"
             columns: ["seller_id"]
             isOneToOne: false
+            referencedRelation: "public_sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_product_suggestion_status_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
             referencedRelation: "seller_analytics_view"
             referencedColumns: ["seller_id"]
           },
@@ -3619,6 +3884,30 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      service_config: {
+        Row: {
+          created_at: string | null
+          encrypted: boolean | null
+          key: string
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          created_at?: string | null
+          encrypted?: boolean | null
+          key: string
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          created_at?: string | null
+          encrypted?: boolean | null
+          key?: string
+          updated_at?: string | null
+          value?: string
         }
         Relationships: []
       }
@@ -3974,7 +4263,22 @@ export type Database = {
           vacation_days_used?: number | null
           vacation_extension_days?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_sellers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       support_tickets: {
         Row: {
@@ -4644,6 +4948,30 @@ export type Database = {
         }
         Relationships: []
       }
+      public_sellers: {
+        Row: {
+          business_name: string | null
+          created_at: string | null
+          id: string | null
+          name: string | null
+          status: string | null
+        }
+        Insert: {
+          business_name?: string | null
+          created_at?: string | null
+          id?: string | null
+          name?: string | null
+          status?: string | null
+        }
+        Update: {
+          business_name?: string | null
+          created_at?: string | null
+          id?: string | null
+          name?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       seller_analytics_view: {
         Row: {
           business_name: string | null
@@ -4805,6 +5133,19 @@ export type Database = {
         Args: { p_coupon_code: string; p_order_total?: number }
         Returns: Json
       }
+      approve_agent_direct: {
+        Args: {
+          p_admin_id?: string
+          p_approved: boolean
+          p_rejection_reason?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      approve_delivery_agent: {
+        Args: { p_admin_user_id: string; p_agent_id: string }
+        Returns: Json
+      }
       approve_user: {
         Args: { admin_user_id: string; target_user_id: string }
         Returns: Json
@@ -4951,6 +5292,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      check_subscription_automation_health: { Args: never; Returns: Json }
       check_subscription_delivery_anomalies: {
         Args: never
         Returns: {
@@ -5067,19 +5409,10 @@ export type Database = {
         }
         Returns: string
       }
-      create_order_from_existing_subscription:
-        | {
-            Args: {
-              p_delivery_date?: string
-              p_order_type?: string
-              p_subscription_id: string
-            }
-            Returns: string
-          }
-        | {
-            Args: { p_order_type?: string; p_subscription_id: string }
-            Returns: string
-          }
+      create_order_from_existing_subscription: {
+        Args: { p_order_type?: string; p_subscription_id: string }
+        Returns: string
+      }
       create_order_from_subscription: {
         Args: { p_order_type?: string; p_subscription_id: string }
         Returns: string
@@ -5199,6 +5532,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_auth_user_phone: { Args: { user_email: string }; Returns: string }
       get_available_orders_for_agent: {
         Args: { p_agent_id: string }
         Returns: {
@@ -5461,6 +5795,7 @@ export type Database = {
         Args: { seller_user_id: string; time_period?: string }
         Returns: Json
       }
+      get_service_config: { Args: { config_key: string }; Returns: string }
       get_suggestions_within_range: {
         Args: { range_km?: number; seller_lat: number; seller_lon: number }
         Returns: {
@@ -5529,29 +5864,37 @@ export type Database = {
       }
       get_user_category_stats: { Args: never; Returns: Json }
       get_user_eligible_coupons: {
-        Args: { p_user_id?: string }
+        Args: { p_user_id: string }
         Returns: {
           birthday_month_target: boolean
           code: string
+          created_at: string
           description: string
           discount_type: string
           discount_value: number
           high_spenders_only: boolean
           id: string
           is_active: boolean
-          is_eligible: boolean
+          is_hidden: boolean
           low_spenders_only: boolean
           maximum_discount_amount: number
           maximum_user_spending: number
+          minimum_order_amount: number
           minimum_user_spending: number
           name: string
           new_users_only: boolean
           returning_users_only: boolean
-          targeting_reason: string
+          updated_at: string
+          usage_count: number
           usage_limit: number
-          used_count: number
           valid_from: string
           valid_until: string
+        }[]
+      }
+      get_user_phone_from_metadata: {
+        Args: { user_email: string }
+        Returns: {
+          phone: string
         }[]
       }
       get_user_player_ids: {
@@ -5606,9 +5949,7 @@ export type Database = {
         }
         Returns: string
       }
-      is_admin: { Args: { user_email: string }; Returns: boolean }
       is_approved_seller: { Args: { user_uuid?: string }; Returns: boolean }
-      is_current_user_admin: { Args: never; Returns: boolean }
       is_current_user_admin_v2: { Args: never; Returns: boolean }
       is_location_serviceable: {
         Args: {
@@ -5689,6 +6030,7 @@ export type Database = {
         }
         Returns: Json
       }
+      populate_daily_deals_and_offers: { Args: never; Returns: Json }
       process_daily_subscriptions_with_notifications:
         | { Args: never; Returns: Json }
         | { Args: { p_scheduled_time?: string }; Returns: Json }
@@ -5741,6 +6083,10 @@ export type Database = {
           }
       reconcile_completed_orders: { Args: never; Returns: Json }
       refresh_todays_best_deals: { Args: never; Returns: undefined }
+      reject_delivery_agent: {
+        Args: { p_admin_user_id: string; p_agent_id: string; p_reason?: string }
+        Returns: Json
+      }
       reject_order: {
         Args: { p_agent_id: string; p_order_id: string; p_reason?: string }
         Returns: Json
@@ -5758,6 +6104,7 @@ export type Database = {
         Args: { admin_user_id: string; reason?: string; target_user_id: string }
         Returns: Json
       }
+      repair_subscription_dates: { Args: never; Returns: Json }
       request_secret_code_reset: {
         Args: {
           requester_email: string
@@ -5904,6 +6251,14 @@ export type Database = {
       }
       validate_reset_token: { Args: { token: string }; Returns: boolean }
       validate_secret_code: { Args: { input_code: string }; Returns: boolean }
+      verify_agent_document: {
+        Args: {
+          p_agent_id: string
+          p_document_type: string
+          p_verified_by: string
+        }
+        Returns: Json
+      }
       verify_order_otp: {
         Args: { p_agent_id: string; p_order_id: string; p_otp_code: string }
         Returns: Json
