@@ -48,14 +48,18 @@ const CustomerOrders: React.FC = () => {
 
 
   useEffect(() => {
-    if (user?.id) {
-      fetchOrders();
-      const subscription = setupRealtimeSubscription();
-      
-      return () => {
-        subscription?.unsubscribe?.();
-      };
+    if (!user?.id) {
+      console.warn('CustomerOrders: No user ID available');
+      setLoading(false);
+      return;
     }
+
+    fetchOrders();
+    const subscription = setupRealtimeSubscription();
+    
+    return () => {
+      subscription?.unsubscribe?.();
+    };
   }, [user?.id]);
 
   const setupRealtimeSubscription = () => {

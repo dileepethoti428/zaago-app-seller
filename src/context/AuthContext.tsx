@@ -43,28 +43,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        console.error('Error getting session:', error);
-        toast({
-          variant: "destructive",
-          title: "Session Error",
-          description: "Your session has expired. Please log in again.",
-        });
-        setSession(null);
-        setUser(null);
-      } else {
-        setSession(session);
-        setUser(session?.user ?? null);
+    // THEN check for existing session with retry logic
+    const getSessionWithRetry = async (retries = 3) => {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const { data: { session }, error } = await supabase.auth.getSession();
+          if (!error) {
+            setSession(session);
+            setUser(session?.user ?? null);
+            setLoading(false);
+            return;
+          }
+          if (i < retries - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        } catch (err) {
+          if (i < retries - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
       }
-      setLoading(false);
-    }).catch((error) => {
-      console.error('Unexpected error getting session:', error);
+      // All retries failed
+      console.error('Failed to get session after retries');
       setSession(null);
       setUser(null);
       setLoading(false);
-    });
+    };
+
+    getSessionWithRetry();
 
     return () => subscription.unsubscribe();
   }, [toast]);

@@ -16,17 +16,22 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     if (!loading && !user && location.pathname !== '/login') {
       navigate('/login');
     } else if (!loading && user) {
-      // Always check approval status for authenticated users
+      // Only check bank details on initial login, not on every route change
       checkBankDetailsAndRedirect();
     }
-  }, [user, loading, navigate, location.pathname]);
+  }, [user, loading, location.pathname]);
 
   const checkBankDetailsAndRedirect = async () => {
     if (!user) return;
 
-    // Don't redirect if already on special approval pages
+    // Whitelist of pages that don't need seller approval checks
+    const publicRoutes = ['/login'];
     const approvalPages = ['/bank-details', '/pending-approval', '/application-rejected'];
-    if (approvalPages.includes(location.pathname)) {
+    const customerRoutes = ['/customer-orders', '/products-customer', '/cart', '/checkout'];
+    const protectedRoutes = [...publicRoutes, ...approvalPages, ...customerRoutes];
+    
+    // Don't redirect if already on a protected route or customer-facing route
+    if (protectedRoutes.includes(location.pathname)) {
       return;
     }
 
@@ -39,37 +44,39 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error checking seller details:', error);
+        // Don't redirect on error - allow user to stay on current page
         return;
       }
 
       if (!data) {
-        // User doesn't have seller record, show bank details page
-        navigate('/bank-details');
+        // Only redirect to bank details if coming from login
+        if (location.pathname === '/login') {
+          navigate('/bank-details');
+        }
         return;
       }
 
-      // Check approval status
-      if (data.approval_status === 'pending') {
+      // Only enforce approval status for new sessions (from login)
+      if (data.approval_status === 'pending' && location.pathname === '/login') {
         navigate('/pending-approval');
         return;
       }
 
-      if (data.approval_status === 'rejected') {
+      if (data.approval_status === 'rejected' && location.pathname === '/login') {
         navigate('/application-rejected');
         return;
       }
 
-      if (data.approval_status === 'approved') {
-        // User is approved, can access the app
-        // Show bank details page only if they haven't seen it and don't have bank details
-        if (!data.bank_name && location.pathname !== '/bank-details' && location.pathname === '/login') {
+      if (data.approval_status === 'approved' && location.pathname === '/login') {
+        if (!data.bank_name) {
           navigate('/bank-details');
-        } else if (location.pathname === '/login') {
+        } else {
           navigate('/');
         }
       }
     } catch (error) {
       console.error('Error checking seller details:', error);
+      // Fail open - allow access on error
     }
   };
 
