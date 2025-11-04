@@ -49,52 +49,53 @@ const AppContent = () => {
       <Sonner />
       <CustomerNotifications />
       <AgentNotifications />
-      <HashRouter>
-        <ProtectedRoute>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/bank-details" element={<BankDetails />} />
-            <Route path="/pending-approval" element={<PendingApproval />} />
-            <Route path="/application-rejected" element={<ApplicationRejected />} />
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Index />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="orders" element={<Orders />} />
-              <Route path="customer-orders" element={<CustomerOrders />} />
-              <Route path="orders/:id" element={<OrderDetail />} />
-              <Route path="products" element={<Products />} />
-              <Route path="products/:id" element={<ProductDetail />} />
-              <Route path="products/new" element={<AddProduct />} />
-              <Route path="products/:id/edit" element={<EditProduct />} />
-              <Route path="deliveries" element={<Deliveries />} />
-              <Route path="delivery-agent" element={<DeliveryAgent />} />
-              <Route path="payments" element={<Payments />} />
-              <Route path="payments/:id" element={<PaymentDetail />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="notifications" element={<Notifications />} />
-              <Route path="profile" element={<Profile />} />
-              <Route path="seller-approvals" element={<SellerApprovals />} />
-              <Route path="products-customer" element={<ProductsCustomer />} />
-              <Route path="customer-products/:id" element={<CustomerProductDetail />} />
-              <Route path="cart" element={<Cart />} />
-              <Route path="checkout" element={<Checkout />} />
-              <Route path="product-suggestions" element={<ProductSuggestions />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </ProtectedRoute>
-      </HashRouter>
+      <SellerNotifications />
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/bank-details" element={<BankDetails />} />
+        <Route path="/pending-approval" element={<PendingApproval />} />
+        <Route path="/application-rejected" element={<ApplicationRejected />} />
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Index />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="customer-orders" element={<CustomerOrders />} />
+          <Route path="orders/:id" element={<OrderDetail />} />
+          <Route path="products" element={<Products />} />
+          <Route path="products/:id" element={<ProductDetail />} />
+          <Route path="products/new" element={<AddProduct />} />
+          <Route path="products/:id/edit" element={<EditProduct />} />
+          <Route path="deliveries" element={<Deliveries />} />
+          <Route path="delivery-agent" element={<DeliveryAgent />} />
+          <Route path="payments" element={<Payments />} />
+          <Route path="payments/:id" element={<PaymentDetail />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="notifications" element={<Notifications />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="seller-approvals" element={<SellerApprovals />} />
+          <Route path="products-customer" element={<ProductsCustomer />} />
+          <Route path="customer-products/:id" element={<CustomerProductDetail />} />
+          <Route path="cart" element={<Cart />} />
+          <Route path="checkout" element={<Checkout />} />
+          <Route path="product-suggestions" element={<ProductSuggestions />} />
+        </Route>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </>
   );
 };
 
 const App = () => (
   <TooltipProvider>
-    <AuthProvider>
-      <CartProvider>
-        <AppContent />
-      </CartProvider>
-    </AuthProvider>
+    <HashRouter>
+      <AuthProvider>
+        <CartProvider>
+          <ProtectedRoute>
+            <AppContent />
+          </ProtectedRoute>
+        </CartProvider>
+      </AuthProvider>
+    </HashRouter>
   </TooltipProvider>
 );
 
