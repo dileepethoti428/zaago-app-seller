@@ -37,11 +37,12 @@ export const useSellerSubscriptions = () => {
         .from('subscriptions')
         .select(`
           *,
-          profiles!subscriptions_user_id_fkey(full_name, phone),
+          profiles!inner(full_name, phone),
           products!subscriptions_product_id_fkey(name, price),
           vacation:subscription_vacation_periods(start_date, end_date, status)
         `)
         .eq('products.seller_id', user.id)
+        .eq('profiles.user_id', 'subscriptions.user_id')
         .order('created_at', { ascending: false });
 
       if (error) {
