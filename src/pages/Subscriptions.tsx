@@ -11,10 +11,12 @@ import {
   useSellerSubscriptions,
   useAcceptSubscriptionDelivery,
   useRejectSubscriptionDelivery,
+  useSubscriptionDeliveryStatus,
 } from '@/hooks/useSubscriptions';
-import { format, parseISO, isBefore, isAfter, isWithinInterval } from 'date-fns';
+import { format, parseISO, isBefore, isAfter, isWithinInterval, isSameDay } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { isAfter11_30PM_IST, getTodayDateIST, getTomorrowDateIST } from '@/utils/timeZone';
 
 const Subscriptions = () => {
   const { user } = useAuth();
@@ -109,10 +111,18 @@ const Subscriptions = () => {
 
     if (activeVacation) return false;
 
-    // Check if next delivery is upcoming
+    // NEW LOGIC: Check time-based conditions
+    const isAfterCutoff = isAfter11_30PM_IST();
     const nextDelivery = parseISO(subscription.next_delivery_date);
-    const today = new Date();
-    return !isBefore(nextDelivery, today);
+    const tomorrow = getTomorrowDateIST();
+    
+    // Show actions only after 11:30 PM IST and only if next delivery is tomorrow
+    if (isAfterCutoff) {
+      return isSameDay(nextDelivery, tomorrow);
+    }
+    
+    // Before 11:30 PM IST, don't show actions
+    return false;
   };
 
   const getVacationInfo = (subscription: any) => {
@@ -125,6 +135,50 @@ const Subscriptions = () => {
     });
 
     return activeVacation;
+  };
+
+  // Component to show today's delivery status
+  const TodayDeliveryStatus = ({ subscriptionId, deliveryDate }: { subscriptionId: string; deliveryDate: string }) => {
+    const { data: todayOrder, isLoading } = useSubscriptionDeliveryStatus(subscriptionId, deliveryDate);
+
+    if (isLoading) {
+      return (
+        <div className="flex items-center text-sm text-muted-foreground lg:min-w-[160px]">
+          <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+          Checking status...
+        </div>
+      );
+    }
+
+    if (!todayOrder) {
+      return (
+        <div className="flex flex-col gap-2 lg:min-w-[160px]">
+          <Badge variant="outline" className="bg-gray-500/20 text-gray-400 border-gray-500/30">
+            No delivery today
+          </Badge>
+          <p className="text-xs text-muted-foreground">
+            Actions available after 11:30 PM
+          </p>
+        </div>
+      );
+    }
+
+    const statusColors: Record<string, string> = {
+      accepted: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+      placed: 'bg-green-500/20 text-green-400 border-green-500/30',
+      delivered: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+    };
+
+    return (
+      <div className="flex flex-col gap-2 lg:min-w-[160px]">
+        <Badge className={statusColors[todayOrder.status] || 'bg-gray-500/20 text-gray-400'}>
+          Today: {todayOrder.status}
+        </Badge>
+        <p className="text-xs text-muted-foreground">
+          Actions available after 11:30 PM
+        </p>
+      </div>
+    );
   };
 
   return (
@@ -323,6 +377,15 @@ const Subscriptions = () => {
                     )}
                   </div>
 
+                  {/* Show status before 11:30 PM IST */}
+                  {!isAfter11_30PM_IST() && subscription.is_active && !vacationInfo && (
+                    <TodayDeliveryStatus 
+                      subscriptionId={subscription.id} 
+                      deliveryDate={format(getTodayDateIST(), 'yyyy-MM-dd')}
+                    />
+                  )}
+
+                  {/* Show action buttons after 11:30 PM IST */}
                   {showActions && (
                     <div className="flex flex-col gap-2 lg:min-w-[160px]">
                       <Button
@@ -330,7 +393,7 @@ const Subscriptions = () => {
                         disabled={acceptDelivery.isPending}
                         className="bg-zaago-green hover:bg-zaago-green/90 w-full"
                       >
-                        Accept Delivery
+                        Accept Delivery (Tomorrow)
                       </Button>
                       <Button
                         onClick={() => handleReject(subscription.id)}
@@ -338,16 +401,20 @@ const Subscriptions = () => {
                         variant="outline"
                         className="w-full"
                       >
-                        Skip Delivery
+                        Skip Delivery (Tomorrow)
                       </Button>
                     </div>
                   )}
 
-                  {!showActions && subscription.is_active && (
+                  {!showActions && !isAfter11_30PM_IST() && subscription.is_active && vacationInfo && (
                     <div className="flex items-center text-sm text-muted-foreground lg:min-w-[160px]">
-                      {vacationInfo
-                        ? 'Actions disabled during vacation'
-                        : 'No upcoming delivery'}
+                      Actions disabled during vacation
+                    </div>
+                  )}
+
+                  {isAfter11_30PM_IST() && !showActions && subscription.is_active && !vacationInfo && (
+                    <div className="flex items-center text-sm text-muted-foreground lg:min-w-[160px]">
+                      No delivery scheduled for tomorrow
                     </div>
                   )}
                 </div>

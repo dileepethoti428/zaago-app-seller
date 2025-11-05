@@ -86,6 +86,26 @@ export const useSellerSubscriptions = () => {
   });
 };
 
+export const useSubscriptionDeliveryStatus = (subscriptionId: string, deliveryDate: string) => {
+  return useQuery({
+    queryKey: ['subscription-delivery-status', subscriptionId, deliveryDate],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('id, status, delivery_date, created_at')
+        .eq('subscription_id', subscriptionId)
+        .eq('delivery_date', deliveryDate)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!subscriptionId && !!deliveryDate,
+  });
+};
+
 interface CreateSubscriptionData {
   customerId: string;
   productId: string;
