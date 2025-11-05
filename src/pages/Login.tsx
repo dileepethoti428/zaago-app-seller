@@ -1,12 +1,14 @@
 import { ArrowRight, UserPlus, Mail, Lock, Phone, Building } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 export default function LoginPage() {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [formData, setFormData] = useState({
@@ -15,6 +17,13 @@ export default function LoginPage() {
     phone: '',
     businessName: ''
   });
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && !authLoading) {
+      navigate('/');
+    }
+  }, [user, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,10 +93,16 @@ export default function LoginPage() {
           throw error;
         }
 
+        // Wait a moment for auth state to update, then redirect
         toast({
           title: "Welcome back!",
           description: "Logged in successfully.",
         });
+        
+        // Small delay to ensure auth state is updated
+        setTimeout(() => {
+          navigate('/');
+        }, 100);
       }
     } catch (error: any) {
       console.error('Auth error:', error);
@@ -214,10 +229,10 @@ export default function LoginPage() {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || authLoading}
               className="w-full bg-green-500 text-white py-4 rounded-xl font-semibold text-base hover:bg-green-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-8"
             >
-              {loading 
+              {loading || authLoading
                 ? (isSignUp ? 'Creating Account...' : 'Signing In...') 
                 : (isSignUp ? 'Create Account' : 'Sign In')
               }
