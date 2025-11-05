@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { compressImage } from '@/lib/imageCompression';
 
 export interface ProductSuggestion {
   id: string;
@@ -108,12 +109,13 @@ export const useProductSuggestions = () => {
 
     for (const file of files) {
       try {
-        const fileExt = file.name.split('.').pop();
+        const compressedFile = await compressImage(file);
+        const fileExt = compressedFile.name.split('.').pop();
         const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         
         const { error: uploadError, data } = await supabase.storage
           .from('product-images')
-          .upload(fileName, file, {
+          .upload(fileName, compressedFile, {
             cacheControl: '3600',
             upsert: false
           });

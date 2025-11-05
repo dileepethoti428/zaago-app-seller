@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import ProductVariants from '@/components/ProductVariants';
 import { useSellerLocation } from '@/hooks/useSellerLocation';
 import { MapPin, Navigation } from 'lucide-react';
+import { compressImage } from '@/lib/imageCompression';
 
 export default function AddProductPage() {
   const { user } = useAuth();
@@ -115,13 +116,14 @@ export default function AddProductPage() {
 
     try {
       for (const file of imageFiles) {
-        const fileExt = file.name.split('.').pop();
+        const compressedFile = await compressImage(file);
+        const fileExt = compressedFile.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('product-images')
-          .upload(filePath, file);
+          .upload(filePath, compressedFile);
 
         if (uploadError) {
           console.error('Upload error for file:', file.name, uploadError);

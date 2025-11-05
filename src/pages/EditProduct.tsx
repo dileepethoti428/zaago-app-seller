@@ -9,6 +9,7 @@ import { useSellerLocation } from '@/hooks/useSellerLocation';
 import { useProductVariants } from '@/hooks/useProductVariants';
 import ProductVariants from '@/components/ProductVariants';
 import { MapPin, Navigation } from 'lucide-react';
+import { compressImage } from '@/lib/imageCompression';
 
 interface Product {
   id: string;
@@ -229,13 +230,14 @@ export default function EditProductPage() {
 
     try {
       for (const file of newImageFiles) {
-        const fileExt = file.name.split('.').pop();
+        const compressedFile = await compressImage(file);
+        const fileExt = compressedFile.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('product-images')
-          .upload(filePath, file);
+          .upload(filePath, compressedFile);
 
         if (uploadError) {
           console.error('Upload error for file:', file.name, uploadError);
