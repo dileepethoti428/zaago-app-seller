@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Search, ShoppingCart, Heart, MapPin } from "lucide-react";
+import { Search, ShoppingCart, Heart, MapPin, Flame, Package } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useProductsNearby } from "@/hooks/useProductsNearby";
+import { useActiveOffersNearby } from "@/hooks/useSpecialOffers";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/context/CartContext";
-import ProductVariantSelector from "@/components/ProductVariantSelector";
+import { formatDistance } from 'date-fns';
 
 const ProductsCustomer = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -17,6 +18,24 @@ const ProductsCustomer = () => {
   const { products, loading, error, customerLocation } = useProductsNearby(maxDistance);
   const { toast } = useToast();
   const { addToCart } = useCart();
+
+  // Get product IDs for offers query
+  const productIds = useMemo(() => products.map((p: any) => p.product_id), [products]);
+  const { data: activeOffers = [] } = useActiveOffersNearby(productIds);
+
+  // Create a map of product ID to active offer
+  const offerMap = useMemo(() => {
+    const map = new Map();
+    activeOffers.forEach((offer: any) => {
+      map.set(offer.product_id, offer);
+    });
+    return map;
+  }, [activeOffers]);
+
+  // Get products with active offers for special section
+  const productsWithOffers = useMemo(() => {
+    return products.filter((p: any) => offerMap.has(p.product_id)).slice(0, 8);
+  }, [products, offerMap]);
 
   const filteredProducts = products.filter(product =>
     product.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -73,6 +92,73 @@ const ProductsCustomer = () => {
         )}
       </motion.div>
 
+      {/* Special Offers Section */}
+      {productsWithOffers.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-gradient-to-r from-orange-500/10 via-red-500/10 to-pink-500/10 border border-orange-500/20 rounded-xl p-6"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Flame className="w-6 h-6 text-orange-500" />
+            <h2 className="text-2xl font-bold">🔥 Special Offers & Deals</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {productsWithOffers.map((product: any) => {
+              const offer = offerMap.get(product.product_id);
+              if (!offer) return null;
+
+              const timeUntilExpiry = formatDistance(new Date(offer.valid_until), new Date(), { addSuffix: true });
+
+              return (
+                <Link
+                  key={product.product_id}
+                  to={`/customer-products/${product.product_id}`}
+                  className="group"
+                >
+                  <Card className="h-full hover:shadow-lg transition-all bg-card/80 backdrop-blur border-orange-500/30">
+                    <CardHeader className="p-0 relative">
+                      <div className="aspect-square w-full overflow-hidden rounded-t-lg relative">
+                        {product.product_image_url ? (
+                          <img
+                            src={product.product_image_url}
+                            alt={product.product_name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-muted flex items-center justify-center">
+                            <Package className="w-12 h-12 text-muted-foreground" />
+                          </div>
+                        )}
+                        <Badge className="absolute top-2 right-2 bg-orange-500 hover:bg-orange-600 text-white font-bold">
+                          {offer.discount_percentage}% OFF
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 space-y-2">
+                      <h3 className="font-semibold text-lg line-clamp-1">{product.product_name}</h3>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-sm text-muted-foreground line-through">
+                          ₹{offer.original_price.toFixed(2)}
+                        </span>
+                        <span className="text-xl font-bold text-orange-500">
+                          ₹{offer.offer_price.toFixed(2)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Expires {timeUntilExpiry}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+
       {/* Search and filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
@@ -115,39 +201,48 @@ const ProductsCustomer = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProducts.map((product) => (
-            <motion.div
-              key={product.product_id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Card className="h-full flex flex-col group hover:shadow-lg transition-all duration-300">
-                <Link to={`/customer-products/${product.product_id}`} className="block">
-                  <div className="relative">
-                    {product.product_image_url ? (
-                      <img
-                        src={product.product_image_url}
-                        alt={product.product_name}
-                        className="w-full h-48 object-cover rounded-t-lg group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div className="w-full h-48 bg-muted rounded-t-lg flex items-center justify-center">
-                        <span className="text-muted-foreground">No image</span>
-                      </div>
-                    )}
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        toggleFavorite(product);
-                      }}
-                      className="absolute top-2 right-2 p-2 bg-white/80 rounded-full hover:bg-white transition-colors z-10"
-                    >
-                      <Heart className="h-4 w-4" />
-                    </button>
-                  </div>
-                </Link>
+          {filteredProducts.map((product: any) => {
+            const offer = offerMap.get(product.product_id);
+            const hasOffer = !!offer;
+
+            return (
+              <motion.div
+                key={product.product_id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Card className="h-full flex flex-col group hover:shadow-lg transition-all duration-300">
+                  <Link to={`/customer-products/${product.product_id}`} className="block">
+                    <div className="relative">
+                      {product.product_image_url ? (
+                        <img
+                          src={product.product_image_url}
+                          alt={product.product_name}
+                          className="w-full h-48 object-cover rounded-t-lg group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-48 bg-muted rounded-t-lg flex items-center justify-center">
+                          <span className="text-muted-foreground">No image</span>
+                        </div>
+                      )}
+                      {hasOffer && (
+                        <Badge className="absolute top-2 left-2 bg-orange-500 hover:bg-orange-600 text-white">
+                          {offer.discount_percentage}% OFF
+                        </Badge>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          toggleFavorite(product);
+                        }}
+                        className="absolute top-2 right-2 p-2 bg-white/80 rounded-full hover:bg-white transition-colors z-10"
+                      >
+                        <Heart className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </Link>
                 
                 <CardContent className="flex-1 flex flex-col p-4">
                   <Link to={`/customer-products/${product.product_id}`} className="flex-1">
@@ -171,7 +266,18 @@ const ProductsCustomer = () => {
                     
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col">
-                        {product.discount_percentage > 0 ? (
+                        {hasOffer ? (
+                          <>
+                            <div className="flex items-center gap-2">
+                              <span className="text-2xl font-bold text-orange-500">
+                                ₹{offer.offer_price.toFixed(2)}
+                              </span>
+                              <span className="text-sm text-muted-foreground line-through">
+                                ₹{offer.original_price.toFixed(2)}
+                              </span>
+                            </div>
+                          </>
+                        ) : product.discount_percentage > 0 ? (
                           <>
                             <div className="flex items-center gap-2">
                               <span className="text-2xl font-bold text-primary">
@@ -212,7 +318,8 @@ const ProductsCustomer = () => {
                 </CardContent>
               </Card>
             </motion.div>
-          ))}
+            );
+          })}
         </div>
       )}
 

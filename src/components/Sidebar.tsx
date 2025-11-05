@@ -12,7 +12,8 @@ import {
   LogOut, 
   Menu, 
   User,
-  Users
+  Users,
+  Tag
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -36,6 +37,7 @@ const navigationLinks = [
   { href: '/customer-orders', label: 'Orders', icon: ShoppingCart },
   { href: '/products', label: 'Products', icon: Package },
   { href: '/products/new', label: 'Add Product', icon: PlusCircle },
+  { href: '/special-offers', label: 'Special Offers', icon: Tag },
   { href: '/notifications', label: 'Notifications', icon: Bell },
   { href: '/settings', label: 'Settings', icon: Settings },
   { href: '/profile', label: 'Profile', icon: User },

@@ -7,14 +7,17 @@ import {
   ShoppingCart, 
   MapPin,
   Package,
-  Share2
+  Share2,
+  Flame
 } from 'lucide-react';
+import { formatDistance } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/context/CartContext';
+import { useActiveOffersNearby } from '@/hooks/useSpecialOffers';
 import ProductVariantSelector from '@/components/ProductVariantSelector';
 
 interface ProductWithSeller {
@@ -40,6 +43,10 @@ const CustomerProductDetail = () => {
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [finalPrice, setFinalPrice] = useState(0);
   const [sellerName, setSellerName] = useState('');
+
+  // Get active offer for this product
+  const { data: activeOffers = [] } = useActiveOffersNearby(product ? [product.id] : []);
+  const activeOffer = activeOffers[0];
 
   const fetchProduct = useCallback(async () => {
     if (!id) return;
@@ -68,11 +75,7 @@ const CustomerProductDetail = () => {
       }
 
       setProduct(data);
-      // Calculate discounted price if discount exists
-      const discountedPrice = (data.discount_percentage && data.discount_percentage > 0) 
-        ? data.price * (1 - data.discount_percentage / 100)
-        : data.price;
-      setFinalPrice(discountedPrice);
+      setFinalPrice(data.price);
       
       // Fetch seller info separately
       if (data.seller_id) {
@@ -99,6 +102,19 @@ const CustomerProductDetail = () => {
       fetchProduct();
     }
   }, [id, fetchProduct]);
+
+  // Update final price when offer or product changes
+  useEffect(() => {
+    if (!product) return;
+    
+    if (activeOffer) {
+      setFinalPrice(activeOffer.offer_price);
+    } else if (product.discount_percentage > 0) {
+      setFinalPrice(product.price * (1 - product.discount_percentage / 100));
+    } else {
+      setFinalPrice(product.price);
+    }
+  }, [product, activeOffer]);
 
   const handleVariantSelect = (variant: any, price: number) => {
     setSelectedVariant(variant);
@@ -208,9 +224,22 @@ const CustomerProductDetail = () => {
         {/* Product Details */}
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
+            <div className="flex items-start gap-3">
+              <h1 className="text-3xl font-bold mb-2 flex-1">{product.name}</h1>
+              {activeOffer && (
+                <Badge className="bg-orange-500 hover:bg-orange-600 text-white flex items-center gap-1">
+                  <Flame className="w-4 h-4" />
+                  {activeOffer.discount_percentage}% OFF
+                </Badge>
+              )}
+            </div>
             {product.description && (
               <p className="text-muted-foreground text-lg">{product.description}</p>
+            )}
+            {activeOffer && (
+              <p className="text-sm text-orange-500 mt-2">
+                Offer expires {formatDistance(new Date(activeOffer.valid_until), new Date(), { addSuffix: true })}
+              </p>
             )}
           </div>
 
@@ -277,18 +306,23 @@ const CustomerProductDetail = () => {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-muted-foreground">
-                    {product.discount_percentage > 0 ? "Original Price:" : "Price:"}
-                  </span>
-                  <p className={`font-medium ${product.discount_percentage > 0 ? 'line-through text-muted-foreground' : ''}`}>
+                  <span className="text-muted-foreground">Original Price:</span>
+                  <p className={`font-medium ${(activeOffer || product.discount_percentage > 0) ? 'line-through text-muted-foreground' : ''}`}>
                     ₹{product.price}
                   </p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Current Price:</span>
                   <div className="flex items-center gap-2">
-                    <p className="font-bold text-lg text-primary">₹{finalPrice.toFixed(2)}</p>
-                    {product.discount_percentage > 0 && (
+                    <p className={`font-bold text-lg ${activeOffer ? 'text-orange-500' : 'text-primary'}`}>
+                      ₹{finalPrice.toFixed(2)}
+                    </p>
+                    {activeOffer && (
+                      <span className="text-xs text-orange-600 bg-orange-100 px-2 py-0.5 rounded">
+                        {activeOffer.discount_percentage}% off
+                      </span>
+                    )}
+                    {!activeOffer && product.discount_percentage > 0 && (
                       <span className="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded">
                         {product.discount_percentage}% off
                       </span>
