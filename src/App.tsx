@@ -16,6 +16,7 @@ import ProductDetail from "./pages/ProductDetail";
 import AddProduct from "./pages/AddProduct";
 import EditProduct from "./pages/EditProduct";
 import SpecialOffers from "./pages/SpecialOffers";
+import Subscriptions from "./pages/Subscriptions";
 import Payments from "./pages/Payments";
 import PaymentDetail from "./pages/PaymentDetail";
 import Settings from "./pages/Settings";
@@ -67,6 +68,7 @@ const AppContent = () => {
           <Route path="products/new" element={<AddProduct />} />
           <Route path="products/:id/edit" element={<EditProduct />} />
           <Route path="special-offers" element={<SpecialOffers />} />
+          <Route path="subscriptions" element={<Subscriptions />} />
           <Route path="deliveries" element={<Deliveries />} />
           <Route path="delivery-agent" element={<DeliveryAgent />} />
           <Route path="payments" element={<Payments />} />

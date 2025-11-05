@@ -13,7 +13,8 @@ import {
   Menu, 
   User,
   Users,
-  Tag
+  Tag,
+  CalendarClock
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -35,6 +36,7 @@ import {
 const navigationLinks = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/customer-orders', label: 'Orders', icon: ShoppingCart },
+  { href: '/subscriptions', label: 'Subscriptions', icon: CalendarClock },
   { href: '/products', label: 'Products', icon: Package },
   { href: '/products/new', label: 'Add Product', icon: PlusCircle },
   { href: '/special-offers', label: 'Special Offers', icon: Tag },
