@@ -17,7 +17,6 @@ import { useAuth } from '@/context/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomerLookupDialog } from '@/components/CustomerLookupDialog';
-import { TestLockScreenNotification } from '@/components/TestLockScreenNotification';
 
 
 const Dashboard = () => {
@@ -223,14 +222,6 @@ const Dashboard = () => {
       </div>
 
 
-      {/* Test Lock Screen Notifications - Development Only */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, duration: 0.3 }}
-      >
-        <TestLockScreenNotification />
-      </motion.div>
 
       {/* Quick Actions & Recent Orders */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
