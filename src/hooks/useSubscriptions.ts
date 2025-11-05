@@ -41,7 +41,7 @@ export const useSellerSubscriptions = () => {
           products!subscriptions_product_id_fkey(name, price),
           vacation:subscription_vacation_periods(start_date, end_date, status)
         `)
-        .eq('products.user_id', user.id)
+        .eq('products.seller_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {

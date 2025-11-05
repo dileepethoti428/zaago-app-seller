@@ -39,13 +39,15 @@ export const AddSubscriptionDialog = () => {
       fetchProducts();
       fetchCustomers();
     }
-  }, [open, user?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const fetchProducts = async () => {
-    const { data } = await supabase
+    if (!user?.id) return;
+    const { data } = await (supabase as any)
       .from('products')
       .select('id, name, price, stock_quantity')
-      .eq('user_id', user?.id)
+      .eq('user_id', user.id)
       .eq('is_active', true)
       .gt('stock_quantity', 0)
       .order('name');
@@ -53,7 +55,7 @@ export const AddSubscriptionDialog = () => {
   };
 
   const fetchCustomers = async () => {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from('profiles')
       .select('user_id, full_name, phone')
       .not('full_name', 'is', null)
@@ -120,7 +122,7 @@ export const AddSubscriptionDialog = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Customer *</Label>
-              <Select value={customerId} onValueChange={setCustomerId} required>
+              <Select value={customerId} onValueChange={(val: string) => setCustomerId(val)} required>
                 <SelectTrigger><SelectValue placeholder="Select customer" /></SelectTrigger>
                 <SelectContent>
                   {customers.map((c) => (
@@ -134,7 +136,7 @@ export const AddSubscriptionDialog = () => {
 
             <div className="space-y-2">
               <Label>Product *</Label>
-              <Select value={productId} onValueChange={setProductId} required>
+              <Select value={productId} onValueChange={(val: string) => setProductId(val)} required>
                 <SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger>
                 <SelectContent>
                   {products.map((p) => (
@@ -153,7 +155,7 @@ export const AddSubscriptionDialog = () => {
 
             <div className="space-y-2">
               <Label>Delivery Type *</Label>
-              <Select value={deliveryType} onValueChange={setDeliveryType} required>
+              <Select value={deliveryType} onValueChange={(val: string) => setDeliveryType(val)} required>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="everyday">Everyday</SelectItem>
@@ -165,7 +167,7 @@ export const AddSubscriptionDialog = () => {
 
             <div className="space-y-2">
               <Label>Time Slot *</Label>
-              <Select value={timeSlot} onValueChange={setTimeSlot} required>
+              <Select value={timeSlot} onValueChange={(val: string) => setTimeSlot(val)} required>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="morning-early">Morning (Early)</SelectItem>
