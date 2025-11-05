@@ -33,7 +33,31 @@ export const useSellerSubscriptions = () => {
     queryFn: async () => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      // Step 1: Fetch subscriptions with product data
+      // Step 1: Fetch seller's product IDs FIRST
+      const { data: sellerProducts, error: productsError } = await supabase
+        .from('products')
+        .select('id')
+        .eq('seller_id', user.id);
+
+      if (productsError) {
+        console.error('Error fetching seller products:', productsError);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to fetch seller products',
+        });
+        throw productsError;
+      }
+
+      // If seller has no products, return empty array
+      if (!sellerProducts || sellerProducts.length === 0) {
+        return [];
+      }
+
+      // Extract product IDs
+      const productIds = sellerProducts.map(p => p.id);
+
+      // Step 2: Fetch subscriptions with explicit product_id filtering
       const { data: subscriptions, error } = await supabase
         .from('subscriptions')
         .select(`
@@ -41,7 +65,7 @@ export const useSellerSubscriptions = () => {
           products!subscriptions_product_id_fkey(name, price, seller_id),
           vacation:subscription_vacation_periods(start_date, end_date, status)
         `)
-        .eq('products.seller_id', user.id)
+        .in('product_id', productIds)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -58,7 +82,7 @@ export const useSellerSubscriptions = () => {
         return [];
       }
 
-      // Step 2: Fetch all unique customer profiles
+      // Step 3: Fetch all unique customer profiles
       const userIds = [...new Set(subscriptions.map(s => s.user_id))];
       
       const { data: profiles, error: profileError } = await supabase
@@ -70,7 +94,7 @@ export const useSellerSubscriptions = () => {
         console.error('Error fetching profiles:', profileError);
       }
 
-      // Step 3: Merge profiles into subscriptions
+      // Step 4: Merge profiles into subscriptions
       const profileMap = new Map(
         (profiles || []).map(p => [p.user_id, p])
       );
