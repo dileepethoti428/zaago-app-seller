@@ -33,16 +33,15 @@ export const useSellerSubscriptions = () => {
     queryFn: async () => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase
+      // Step 1: Fetch subscriptions with product data
+      const { data: subscriptions, error } = await supabase
         .from('subscriptions')
         .select(`
           *,
-          profiles!inner(full_name, phone),
-          products!subscriptions_product_id_fkey(name, price),
+          products!subscriptions_product_id_fkey(name, price, seller_id),
           vacation:subscription_vacation_periods(start_date, end_date, status)
         `)
         .eq('products.seller_id', user.id)
-        .eq('profiles.user_id', 'subscriptions.user_id')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -55,7 +54,33 @@ export const useSellerSubscriptions = () => {
         throw error;
       }
 
-      return (data || []) as unknown as SubscriptionWithDetails[];
+      if (!subscriptions || subscriptions.length === 0) {
+        return [];
+      }
+
+      // Step 2: Fetch all unique customer profiles
+      const userIds = [...new Set(subscriptions.map(s => s.user_id))];
+      
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, phone')
+        .in('user_id', userIds);
+
+      if (profileError) {
+        console.error('Error fetching profiles:', profileError);
+      }
+
+      // Step 3: Merge profiles into subscriptions
+      const profileMap = new Map(
+        (profiles || []).map(p => [p.user_id, p])
+      );
+
+      const enrichedData = subscriptions.map(sub => ({
+        ...sub,
+        profiles: profileMap.get(sub.user_id) || null
+      }));
+
+      return enrichedData as unknown as SubscriptionWithDetails[];
     },
     enabled: !!user?.id,
   });
