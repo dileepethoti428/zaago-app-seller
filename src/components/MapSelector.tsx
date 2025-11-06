@@ -119,7 +119,7 @@ export const MapSelector = ({ onLocationSelect, onClose, initialLocation }: MapS
       // Use Google Places edge function for reverse geocoding
       const { data: addressData } = await supabase.functions.invoke('google-places', {
         body: { 
-          action: 'reverse_geocode',
+          type: 'reverse_geocode',
           lat: selectedLocation.latitude,
           lng: selectedLocation.longitude
         }
