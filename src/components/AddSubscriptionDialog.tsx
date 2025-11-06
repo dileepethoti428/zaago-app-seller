@@ -32,6 +32,7 @@ export const AddSubscriptionDialog = () => {
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [vacationFrom, setVacationFrom] = useState('');
   const [vacationTo, setVacationTo] = useState('');
+  const [subscriptionDuration, setSubscriptionDuration] = useState<'week' | 'month' | '6months'>('month');
 
   const [showNewCustomerForm, setShowNewCustomerForm] = useState(false);
   const [newCustomerName, setNewCustomerName] = useState('');
@@ -69,6 +70,67 @@ export const AddSubscriptionDialog = () => {
       .eq('seller_id', user.id)
       .order('full_name');
     if (data) setCustomers(data);
+  };
+
+  const calculatePricing = () => {
+    if (!productId || !quantity) {
+      return { subtotal: 0, discount: 0, discountPercentage: 0, finalPrice: 0, deliveryCount: 0, pricePerDelivery: 0 };
+    }
+    
+    const selectedProduct = products.find(p => p.id === productId);
+    if (!selectedProduct) return { subtotal: 0, discount: 0, discountPercentage: 0, finalPrice: 0, deliveryCount: 0, pricePerDelivery: 0 };
+    
+    const pricePerDelivery = selectedProduct.price * quantity;
+    
+    // Calculate number of deliveries based on duration and delivery type
+    let deliveryCount = 0;
+    
+    switch (subscriptionDuration) {
+      case 'week':
+        deliveryCount = deliveryType === 'everyday' ? 7 : 
+                       deliveryType === 'weekend' ? 2 : 
+                       deliveryType === 'alternate' ? 3 : 7;
+        break;
+      case 'month':
+        deliveryCount = deliveryType === 'everyday' ? 30 : 
+                       deliveryType === 'weekend' ? 8 : 
+                       deliveryType === 'alternate' ? 15 : 30;
+        break;
+      case '6months':
+        deliveryCount = deliveryType === 'everyday' ? 180 : 
+                       deliveryType === 'weekend' ? 48 : 
+                       deliveryType === 'alternate' ? 90 : 180;
+        break;
+    }
+    
+    const subtotal = pricePerDelivery * deliveryCount;
+    
+    // Apply discount based on duration
+    const discountPercentage = subscriptionDuration === 'week' ? 4 : 
+                                subscriptionDuration === 'month' ? 7 : 15;
+    
+    const discount = (subtotal * discountPercentage) / 100;
+    const finalPrice = subtotal - discount;
+    
+    return { subtotal, discount, discountPercentage, finalPrice, deliveryCount, pricePerDelivery };
+  };
+
+  const calculateEndDate = (startDate: string, duration: 'week' | 'month' | '6months') => {
+    const start = new Date(startDate);
+    
+    switch (duration) {
+      case 'week':
+        start.setDate(start.getDate() + 7);
+        break;
+      case 'month':
+        start.setMonth(start.getMonth() + 1);
+        break;
+      case '6months':
+        start.setMonth(start.getMonth() + 6);
+        break;
+    }
+    
+    return start.toISOString().split('T')[0];
   };
 
   const createNewCustomer = async () => {
@@ -120,6 +182,8 @@ export const AddSubscriptionDialog = () => {
     setLoading(true);
 
     try {
+      const calculatedEndDate = calculateEndDate(startDate, subscriptionDuration);
+      
       await createSubscription.mutateAsync({
         customerId,
         productId,
@@ -127,7 +191,7 @@ export const AddSubscriptionDialog = () => {
         deliveryType: deliveryType as any,
         timeSlot,
         startDate: new Date(startDate),
-        endDate: endDate ? new Date(endDate) : undefined,
+        endDate: new Date(calculatedEndDate),
         address: { full_address: address, city, pincode, landmark },
         specialInstructions: specialInstructions || undefined,
         vacationFrom: vacationFrom ? new Date(vacationFrom) : undefined,
@@ -157,6 +221,7 @@ export const AddSubscriptionDialog = () => {
     setSpecialInstructions('');
     setVacationFrom('');
     setVacationTo('');
+    setSubscriptionDuration('month');
     setShowNewCustomerForm(false);
     setNewCustomerName('');
     setNewCustomerPhone('');
@@ -311,6 +376,18 @@ export const AddSubscriptionDialog = () => {
             </div>
 
             <div className="space-y-2">
+              <Label>Subscription Duration *</Label>
+              <Select value={subscriptionDuration} onValueChange={(val: 'week' | 'month' | '6months') => setSubscriptionDuration(val)} required>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">1 Week (4% discount)</SelectItem>
+                  <SelectItem value="month">1 Month (7% discount)</SelectItem>
+                  <SelectItem value="6months">6 Months (15% discount)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
               <Label>Start Date *</Label>
               <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} min={new Date().toISOString().split('T')[0]} required />
             </div>
@@ -335,6 +412,48 @@ export const AddSubscriptionDialog = () => {
               <Input value={landmark} onChange={(e) => setLandmark(e.target.value)} />
             </div>
           </div>
+
+          {productId && quantity > 0 && (
+            <div className="mt-6 p-4 border rounded-lg bg-muted/50 space-y-3">
+              <h3 className="font-semibold text-lg">Pricing Summary</h3>
+              
+              {(() => {
+                const pricing = calculatePricing();
+                return (
+                  <>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Price per delivery:</span>
+                        <span className="font-medium">₹{pricing.pricePerDelivery.toFixed(2)}</span>
+                      </div>
+                      
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Total deliveries ({subscriptionDuration === 'week' ? '1 week' : subscriptionDuration === 'month' ? '1 month' : '6 months'}):</span>
+                        <span className="font-medium">{pricing.deliveryCount}</span>
+                      </div>
+                      
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Subtotal:</span>
+                        <span className="font-medium">₹{pricing.subtotal.toFixed(2)}</span>
+                      </div>
+                      
+                      <div className="flex justify-between text-green-600 dark:text-green-500">
+                        <span>Discount ({pricing.discountPercentage}%):</span>
+                        <span className="font-medium">-₹{pricing.discount.toFixed(2)}</span>
+                      </div>
+                      
+                      <div className="border-t pt-2"></div>
+                      
+                      <div className="flex justify-between text-lg font-bold">
+                        <span>Final Price:</span>
+                        <span className="text-primary">₹{pricing.finalPrice.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          )}
 
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
