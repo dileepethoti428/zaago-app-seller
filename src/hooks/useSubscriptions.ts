@@ -175,7 +175,7 @@ export const useSubscriptionDeliveryStatus = (subscriptionId: string, deliveryDa
   });
 };
 
-interface CreateSubscriptionData {
+export interface CreateSubscriptionData {
   customerId: string;
   productId: string;
   quantity: number;
