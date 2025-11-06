@@ -4,6 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MapSelectorProps {
   onLocationSelect: (location: { latitude: number; longitude: number; address: string }) => void;
@@ -115,8 +116,17 @@ export const MapSelector = ({ onLocationSelect, onClose, initialLocation }: MapS
     }
 
     try {
-      // In a real app, you'd reverse geocode to get the address
-      const address = `Location: ${selectedLocation.latitude.toFixed(4)}, ${selectedLocation.longitude.toFixed(4)}`;
+      // Use Google Places edge function for reverse geocoding
+      const { data: addressData } = await supabase.functions.invoke('google-places', {
+        body: { 
+          action: 'reverse_geocode',
+          lat: selectedLocation.latitude,
+          lng: selectedLocation.longitude
+        }
+      });
+
+      const address = addressData?.result?.address || 
+        `${selectedLocation.latitude.toFixed(4)}, ${selectedLocation.longitude.toFixed(4)}`;
       
       onLocationSelect({
         latitude: selectedLocation.latitude,
@@ -124,10 +134,12 @@ export const MapSelector = ({ onLocationSelect, onClose, initialLocation }: MapS
         address,
       });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to confirm location. Please try again.",
-        variant: "destructive",
+      console.error('Error getting address:', error);
+      // Still allow confirmation with coordinates if geocoding fails
+      onLocationSelect({
+        latitude: selectedLocation.latitude,
+        longitude: selectedLocation.longitude,
+        address: `${selectedLocation.latitude.toFixed(4)}, ${selectedLocation.longitude.toFixed(4)}`,
       });
     }
   };

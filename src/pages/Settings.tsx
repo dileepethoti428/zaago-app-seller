@@ -14,7 +14,9 @@ import {
   Palette,
   Monitor,
   Sun,
-  Moon
+  Moon,
+  MapPin,
+  AlertCircle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -24,11 +26,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from 'next-themes';
 import { TestOrderNotification } from '@/components/TestOrderNotification';
+import { MapSelector } from '@/components/MapSelector';
 
 
 const Settings = () => {
@@ -55,11 +60,26 @@ const Settings = () => {
     push_orders: true,
     email_promotions: false
   });
+  const [sellerLocation, setSellerLocation] = useState<{
+    latitude: number | null;
+    longitude: number | null;
+    address: string;
+  }>({ latitude: null, longitude: null, address: '' });
+  const [showMapSelector, setShowMapSelector] = useState(false);
+  const [hasProducts, setHasProducts] = useState(false);
+  const [showLocationWarning, setShowLocationWarning] = useState(false);
+  const [pendingLocation, setPendingLocation] = useState<{
+    latitude: number;
+    longitude: number;
+    address: string;
+  } | null>(null);
 
   useEffect(() => {
     if (user) {
       fetchUserProfile();
       fetchBankDetails();
+      fetchSellerLocation();
+      checkProducts();
     }
   }, [user]);
 
@@ -206,6 +226,117 @@ const Settings = () => {
     }
   };
 
+  const fetchSellerLocation = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('sellers')
+        .select('latitude, longitude, address')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching seller location:', error);
+        return;
+      }
+
+      if (data) {
+        const addressData = data.address as any;
+        setSellerLocation({
+          latitude: data.latitude,
+          longitude: data.longitude,
+          address: addressData?.address || ''
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching seller location:', error);
+    }
+  };
+
+  const checkProducts = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { count, error } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .eq('seller_id', user.id);
+
+      if (error) {
+        console.error('Error checking products:', error);
+        return;
+      }
+
+      setHasProducts((count ?? 0) > 0);
+    } catch (error) {
+      console.error('Error checking products:', error);
+    }
+  };
+
+  const handleLocationUpdate = async (location: { latitude: number; longitude: number; address: string }) => {
+    // If seller has products, show warning first
+    if (hasProducts) {
+      setPendingLocation(location);
+      setShowLocationWarning(true);
+      setShowMapSelector(false);
+      return;
+    }
+
+    // No products, update directly
+    await updateLocation(location);
+  };
+
+  const updateLocation = async (location: { latitude: number; longitude: number; address: string }) => {
+    if (!user?.id) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('sellers')
+        .update({
+          latitude: location.latitude,
+          longitude: location.longitude,
+          address: {
+            address: location.address,
+            city: '',
+            state: '',
+            pincode: ''
+          },
+          location_verified: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setSellerLocation(location);
+      setShowMapSelector(false);
+      setPendingLocation(null);
+      
+      toast({
+        title: 'Location Updated',
+        description: 'Your store location has been updated successfully.',
+      });
+    } catch (error) {
+      console.error('Error updating location:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update location. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const confirmLocationChange = async () => {
+    if (pendingLocation) {
+      await updateLocation(pendingLocation);
+      setShowLocationWarning(false);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -322,6 +453,56 @@ const Settings = () => {
                 <Save className="w-4 h-4 mr-2" />
                 {loading ? 'Saving...' : 'Save Business Info'}
               </Button>
+            </CardContent>
+          </Card>
+
+          {/* Store Location */}
+          <Card className="zaago-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-primary" />
+                Store Location
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-4 bg-muted rounded-lg space-y-2">
+                <div className="flex items-start gap-2">
+                  <MapPin className="w-4 h-4 mt-0.5 text-primary" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Current Location</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {sellerLocation.address || 'No location set'}
+                    </p>
+                    {sellerLocation.latitude && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Coordinates: {sellerLocation.latitude.toFixed(4)}, {sellerLocation.longitude.toFixed(4)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {hasProducts && (
+                <div className="flex items-start gap-2 p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                  <AlertCircle className="w-4 h-4 mt-0.5 text-orange-600" />
+                  <p className="text-xs text-orange-800 dark:text-orange-200">
+                    Changing your location will affect which customers can see your products
+                  </p>
+                </div>
+              )}
+
+              <Button 
+                onClick={() => setShowMapSelector(true)}
+                variant="outline"
+                className="w-full"
+              >
+                <MapPin className="w-4 h-4 mr-2" />
+                {sellerLocation.latitude ? 'Change Location' : 'Set Location'}
+              </Button>
+
+              <p className="text-xs text-muted-foreground">
+                Your products are visible to customers within 15km of your store location
+              </p>
             </CardContent>
           </Card>
         </motion.div>
@@ -603,6 +784,45 @@ const Settings = () => {
 
         </motion.div>
       </div>
+
+      {/* Map Selector Dialog */}
+      <Dialog open={showMapSelector} onOpenChange={setShowMapSelector}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Select Store Location</DialogTitle>
+            <DialogDescription>
+              Click on the map to select your store's exact location
+            </DialogDescription>
+          </DialogHeader>
+          <MapSelector
+            initialLocation={sellerLocation.latitude && sellerLocation.longitude ? {
+              latitude: sellerLocation.latitude,
+              longitude: sellerLocation.longitude
+            } : undefined}
+            onLocationSelect={handleLocationUpdate}
+            onClose={() => setShowMapSelector(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Location Change Warning Dialog */}
+      <AlertDialog open={showLocationWarning} onOpenChange={setShowLocationWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Location Change</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have products listed in your store. Changing your location will affect which customers can see your products. 
+              Only customers within 15km of your new location will be able to view your products. Are you sure you want to continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingLocation(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmLocationChange}>
+              Yes, Change Location
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Floating WhatsApp Button */}
       <motion.div

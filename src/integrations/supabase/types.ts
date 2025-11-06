@@ -2692,6 +2692,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "orders_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "orders_assigned_agent_id_fkey"
             columns: ["assigned_agent_id"]
             isOneToOne: false
@@ -5003,6 +5010,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "orders_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "orders_delivery_address_id_fkey"
             columns: ["delivery_address_id"]
             isOneToOne: false
@@ -5317,6 +5331,14 @@ export type Database = {
             }
             Returns: string
           }
+      calculate_next_delivery_date_v2: {
+        Args: {
+          p_current_date: string
+          p_delivery_days: string[]
+          p_subscription_type: string
+        }
+        Returns: string
+      }
       calculate_next_delivery_with_vacation_skip: {
         Args: { p_current_date?: string; p_subscription_id: string }
         Returns: string
@@ -6112,7 +6134,7 @@ export type Database = {
         Args: {
           p_agent_id: string
           p_order_id: string
-          p_payment_method: string
+          p_payment_method?: string
         }
         Returns: Json
       }
@@ -6170,24 +6192,24 @@ export type Database = {
         | {
             Args: {
               p_agent_id: string
+              p_order_id: string
               p_payment_method: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_agent_id: string
+              p_order_id: string
+              p_payment_method: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_agent_id: string
+              p_payment_method?: string
               p_qr_code_data: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_agent_id: string
-              p_order_id: string
-              p_payment_method: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_agent_id: string
-              p_order_id: string
-              p_payment_method: string
             }
             Returns: Json
           }
@@ -6225,13 +6247,7 @@ export type Database = {
       }
       reset_daily_delivery_counts: { Args: never; Returns: undefined }
       resolve_agent_email: { Args: { identifier: string }; Returns: string }
-      resume_expired_vacations: {
-        Args: never
-        Returns: {
-          resumed_count: number
-          subscription_ids: string[]
-        }[]
-      }
+      resume_expired_vacations: { Args: never; Returns: Json }
       safe_complete_delivery: {
         Args: {
           p_agent_id: string
@@ -6282,16 +6298,14 @@ export type Database = {
         Args: { p_order_id: string; p_payment_method?: string }
         Returns: Json
       }
-      simple_mark_delivered:
-        | { Args: { p_agent_id: string; p_order_id: string }; Returns: Json }
-        | {
-            Args: {
-              p_agent_id: string
-              p_order_id: string
-              p_payment_method?: string
-            }
-            Returns: Json
-          }
+      simple_mark_delivered: {
+        Args: {
+          p_agent_id: string
+          p_order_id: string
+          p_payment_method?: string
+        }
+        Returns: Json
+      }
       sync_special_offers_from_products: { Args: never; Returns: undefined }
       sync_user_player_id: {
         Args: { device_info?: Json; player_id: string; target_user_id: string }
