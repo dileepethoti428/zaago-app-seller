@@ -169,16 +169,25 @@ export default function AddProductPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check if seller location is verified, if not, prompt for location update
+    // Check if seller location is verified ONLY if they have no products yet
     if (!sellerLocation?.location_verified) {
-      const updateSuccess = await updateLocationFromCurrent();
-      if (!updateSuccess) {
-        toast({
-          title: "Location Required",
-          description: "Please update your business location to continue adding products.",
-          variant: "destructive",
-        });
-        return;
+      // Check if this is their first product
+      const { count: existingProductsCount } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .eq('seller_id', user?.id);
+      
+      // Only allow location update if no products exist
+      if (!existingProductsCount || existingProductsCount === 0) {
+        const updateSuccess = await updateLocationFromCurrent();
+        if (!updateSuccess) {
+          toast({
+            title: "Location Required",
+            description: "Please update your business location to add your first product.",
+            variant: "destructive",
+          });
+          return;
+        }
       }
     }
     

@@ -1942,6 +1942,53 @@ export type Database = {
           },
         ]
       }
+      flexible_payment_requests: {
+        Row: {
+          agent_id: string
+          amount: number
+          created_at: string
+          error_message: string | null
+          expires_at: string
+          id: string
+          payment_id: string | null
+          qr_url: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          amount: number
+          created_at?: string
+          error_message?: string | null
+          expires_at: string
+          id?: string
+          payment_id?: string | null
+          qr_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          amount?: number
+          created_at?: string
+          error_message?: string | null
+          expires_at?: string
+          id?: string
+          payment_id?: string | null
+          qr_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flexible_payment_requests_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flexible_payments: {
         Row: {
           agent_id: string
@@ -2602,13 +2649,6 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "orders_agent_id_fkey"
-            columns: ["agent_id"]
-            isOneToOne: false
-            referencedRelation: "delivery_agents"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "orders_assigned_agent_id_fkey"
             columns: ["assigned_agent_id"]
@@ -4905,13 +4945,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "orders_agent_id_fkey"
-            columns: ["agent_id"]
-            isOneToOne: false
-            referencedRelation: "delivery_agents"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "orders_delivery_address_id_fkey"
             columns: ["delivery_address_id"]
             isOneToOne: false
@@ -5281,6 +5314,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_seller_has_products: {
+        Args: { seller_user_id: string }
+        Returns: boolean
+      }
       check_stuck_subscriptions: {
         Args: never
         Returns: {
@@ -5573,7 +5610,7 @@ export type Database = {
       }
       get_dashboard_stats: { Args: never; Returns: Json }
       get_delivery_agent_analytics: {
-        Args: { time_period?: string }
+        Args: { time_period: string }
         Returns: {
           agent_email: string
           agent_id: string
@@ -5644,6 +5681,21 @@ export type Database = {
           delivered: number
           pending: number
           revenue: number
+        }[]
+      }
+      get_pending_delivery_agents: {
+        Args: never
+        Returns: {
+          agent_documents: Json
+          agent_id: string
+          created_at: string
+          documents_verified: boolean
+          email: string
+          id: string
+          is_active: boolean
+          name: string
+          phone: string
+          verification_status: string
         }[]
       }
       get_player_ids_by_type: {

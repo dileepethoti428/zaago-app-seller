@@ -176,6 +176,29 @@ export const useSellerLocation = () => {
     });
   };
 
+  // Check if location is locked (seller has products)
+  const checkIfLocationLocked = async (): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const { count, error } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .eq('seller_id', user.id);
+
+      if (error) {
+        console.error('Error checking products:', error);
+        return false;
+      }
+
+      // If seller has any products, location is locked
+      return (count ?? 0) > 0;
+    } catch (err) {
+      console.error('Error checking location lock:', err);
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchSellerLocation();
   }, [user]);
@@ -187,5 +210,6 @@ export const useSellerLocation = () => {
     fetchSellerLocation,
     updateSellerLocation,
     updateLocationFromCurrent,
+    checkIfLocationLocked,
   };
 };

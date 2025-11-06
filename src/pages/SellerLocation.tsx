@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import { MapPin, Navigation } from 'lucide-react';
+import { MapPin, Navigation, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const SellerLocation = () => {
@@ -17,6 +17,7 @@ const SellerLocation = () => {
   });
   const [loading, setLoading] = useState(false);
   const [fetchingLocation, setFetchingLocation] = useState(false);
+  const [isLocationLocked, setIsLocationLocked] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -47,7 +48,19 @@ const SellerLocation = () => {
       }
     };
 
+    const checkLockStatus = async () => {
+      if (!user) return;
+      
+      const { count } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .eq('seller_id', user.id);
+      
+      setIsLocationLocked((count ?? 0) > 0);
+    };
+
     fetchSellerLocation();
+    checkLockStatus();
   }, [user]);
 
   const getCurrentLocation = async () => {
@@ -173,6 +186,19 @@ const SellerLocation = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {isLocationLocked && (
+              <div className="bg-orange-50 p-4 rounded-lg dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
+                <h4 className="font-medium text-orange-900 dark:text-orange-100 mb-2 flex items-center gap-2">
+                  <Lock className="h-4 w-4" />
+                  Location Locked
+                </h4>
+                <p className="text-sm text-orange-800 dark:text-orange-200">
+                  Your location cannot be changed because you have already added products. 
+                  This ensures customers can consistently find your products at your registered location.
+                </p>
+              </div>
+            )}
+
             <div className="flex justify-between items-center">
               <p className="text-sm text-muted-foreground">
                 Your current location helps customers find products near them
@@ -180,7 +206,7 @@ const SellerLocation = () => {
               <Button
                 variant="outline"
                 onClick={getCurrentLocation}
-                disabled={fetchingLocation}
+                disabled={fetchingLocation || isLocationLocked}
                 className="flex items-center gap-2"
               >
                 <Navigation className="h-4 w-4" />
@@ -198,6 +224,7 @@ const SellerLocation = () => {
                   placeholder="e.g., 28.6139"
                   value={location.latitude}
                   onChange={(e) => setLocation({ ...location, latitude: e.target.value })}
+                  disabled={isLocationLocked}
                 />
               </div>
               <div className="space-y-2">
@@ -209,6 +236,7 @@ const SellerLocation = () => {
                   placeholder="e.g., 77.2090"
                   value={location.longitude}
                   onChange={(e) => setLocation({ ...location, longitude: e.target.value })}
+                  disabled={isLocationLocked}
                 />
               </div>
             </div>
@@ -220,6 +248,7 @@ const SellerLocation = () => {
                 placeholder="e.g., New Delhi, India"
                 value={location.address}
                 onChange={(e) => setLocation({ ...location, address: e.target.value })}
+                disabled={isLocationLocked}
               />
             </div>
 
@@ -234,10 +263,10 @@ const SellerLocation = () => {
 
             <Button
               onClick={handleSave}
-              disabled={loading || !location.latitude || !location.longitude}
+              disabled={loading || isLocationLocked || !location.latitude || !location.longitude}
               className="w-full"
             >
-              {loading ? 'Saving...' : 'Save Location'}
+              {isLocationLocked ? 'Location Locked' : (loading ? 'Saving...' : 'Save Location')}
             </Button>
           </CardContent>
         </Card>

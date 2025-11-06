@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ export const SellerLocationSetup = ({ onLocationSaved }: SellerLocationSetupProp
   const [loading, setLoading] = useState(false);
   const [address, setAddress] = useState('');
   const [manualCoords, setManualCoords] = useState({ lat: '', lng: '' });
+  const [isLocked, setIsLocked] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -111,6 +112,18 @@ export const SellerLocationSetup = ({ onLocationSaved }: SellerLocationSetupProp
     setLoading(false);
   };
 
+  useEffect(() => {
+    const checkLock = async () => {
+      if (!user) return;
+      const { count } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .eq('seller_id', user.id);
+      setIsLocked((count ?? 0) > 0);
+    };
+    checkLock();
+  }, [user]);
+
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
@@ -135,7 +148,7 @@ export const SellerLocationSetup = ({ onLocationSaved }: SellerLocationSetupProp
 
         <Button 
           onClick={getCurrentLocation} 
-          disabled={loading}
+          disabled={loading || isLocked}
           className="w-full"
         >
           {loading ? (
@@ -183,7 +196,7 @@ export const SellerLocationSetup = ({ onLocationSaved }: SellerLocationSetupProp
 
         <Button 
           onClick={handleManualSave} 
-          disabled={loading || !manualCoords.lat || !manualCoords.lng}
+          disabled={loading || isLocked || !manualCoords.lat || !manualCoords.lng}
           variant="outline"
           className="w-full"
         >
