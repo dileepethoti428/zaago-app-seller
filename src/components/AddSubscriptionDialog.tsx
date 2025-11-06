@@ -9,6 +9,7 @@ import { Plus } from 'lucide-react';
 import { useCreateSubscription } from '@/hooks/useSubscriptions';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 export const AddSubscriptionDialog = () => {
   const { user } = useAuth();
@@ -32,6 +33,11 @@ export const AddSubscriptionDialog = () => {
   const [vacationFrom, setVacationFrom] = useState('');
   const [vacationTo, setVacationTo] = useState('');
 
+  const [showNewCustomerForm, setShowNewCustomerForm] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [newCustomerEmail, setNewCustomerEmail] = useState('');
+
   const createSubscription = useCreateSubscription();
 
   useEffect(() => {
@@ -47,7 +53,7 @@ export const AddSubscriptionDialog = () => {
     const { data } = await (supabase as any)
       .from('products')
       .select('id, name, price, stock_quantity')
-      .eq('user_id', user.id)
+      .eq('seller_id', user.id)
       .eq('is_active', true)
       .gt('stock_quantity', 0)
       .order('name');
@@ -61,6 +67,38 @@ export const AddSubscriptionDialog = () => {
       .not('full_name', 'is', null)
       .order('full_name');
     if (data) setCustomers(data);
+  };
+
+  const createNewCustomer = async () => {
+    if (!newCustomerName || !newCustomerPhone) {
+      toast.error('Name and phone are required');
+      return null;
+    }
+
+    const { data: newProfile, error } = await (supabase as any)
+      .from('profiles')
+      .insert({
+        full_name: newCustomerName,
+        phone: newCustomerPhone,
+        email: newCustomerEmail || null,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast.error('Failed to create customer');
+      return null;
+    }
+
+    toast.success('Customer created successfully');
+    await fetchCustomers();
+    
+    setNewCustomerName('');
+    setNewCustomerPhone('');
+    setNewCustomerEmail('');
+    setShowNewCustomerForm(false);
+
+    return newProfile.user_id;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -104,6 +142,10 @@ export const AddSubscriptionDialog = () => {
     setSpecialInstructions('');
     setVacationFrom('');
     setVacationTo('');
+    setShowNewCustomerForm(false);
+    setNewCustomerName('');
+    setNewCustomerPhone('');
+    setNewCustomerEmail('');
   };
 
   return (
@@ -122,16 +164,91 @@ export const AddSubscriptionDialog = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Customer *</Label>
-              <Select value={customerId} onValueChange={(val: string) => setCustomerId(val)} required>
-                <SelectTrigger><SelectValue placeholder="Select customer" /></SelectTrigger>
-                <SelectContent>
-                  {customers.map((c) => (
-                    <SelectItem key={c.user_id} value={c.user_id}>
-                      {c.full_name} ({c.phone})
+              {!showNewCustomerForm ? (
+                <Select 
+                  value={customerId} 
+                  onValueChange={(val: string) => {
+                    if (val === 'new_customer') {
+                      setShowNewCustomerForm(true);
+                    } else {
+                      setCustomerId(val);
+                    }
+                  }} 
+                  required
+                >
+                  <SelectTrigger><SelectValue placeholder="Select customer" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new_customer">
+                      <div className="flex items-center gap-2 text-primary font-medium">
+                        <Plus className="w-4 h-4" />
+                        Add New Customer
+                      </div>
                     </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    {customers.map((c) => (
+                      <SelectItem key={c.user_id} value={c.user_id}>
+                        {c.full_name} ({c.phone})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="space-y-3 p-4 border rounded-lg bg-muted/50">
+                  <div className="flex justify-between items-center">
+                    <h4 className="font-medium text-sm">New Customer Details</h4>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setShowNewCustomerForm(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label className="text-xs">Full Name *</Label>
+                    <Input 
+                      value={newCustomerName} 
+                      onChange={(e) => setNewCustomerName(e.target.value)}
+                      placeholder="Enter customer name"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label className="text-xs">Phone Number *</Label>
+                    <Input 
+                      value={newCustomerPhone} 
+                      onChange={(e) => setNewCustomerPhone(e.target.value)}
+                      placeholder="Enter phone number"
+                      type="tel"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label className="text-xs">Email (Optional)</Label>
+                    <Input 
+                      value={newCustomerEmail} 
+                      onChange={(e) => setNewCustomerEmail(e.target.value)}
+                      placeholder="Enter email"
+                      type="email"
+                    />
+                  </div>
+                  
+                  <Button 
+                    type="button"
+                    onClick={async () => {
+                      const newUserId = await createNewCustomer();
+                      if (newUserId) {
+                        setCustomerId(newUserId);
+                      }
+                    }}
+                    className="w-full"
+                    size="sm"
+                  >
+                    Create Customer
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
