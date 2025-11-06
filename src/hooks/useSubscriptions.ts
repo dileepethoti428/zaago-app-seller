@@ -9,9 +9,10 @@ type Subscription = Database['public']['Tables']['subscriptions']['Row'];
 type OrderInsert = Database['public']['Tables']['orders']['Insert'];
 
 interface SubscriptionWithDetails extends Subscription {
-  profiles: {
+  customers: {
     full_name: string;
     phone: string;
+    email: string | null;
   } | null;
   products: {
     name: string;
@@ -82,26 +83,48 @@ export const useSellerSubscriptions = () => {
         return [];
       }
 
-      // Step 3: Fetch all unique customer profiles
-      const userIds = [...new Set(subscriptions.map(s => s.user_id))];
+      // Step 3: Fetch all unique customers (using customer_id, fallback to user_id for old data)
+      const customerIds = [...new Set(subscriptions.map(s => s.customer_id).filter(Boolean))];
+      const userIds = [...new Set(subscriptions.map(s => !s.customer_id && s.user_id).filter(Boolean))];
       
-      const { data: profiles, error: profileError } = await supabase
-        .from('profiles')
-        .select('user_id, full_name, phone')
-        .in('user_id', userIds);
+      let customerMap = new Map();
 
-      if (profileError) {
-        console.error('Error fetching profiles:', profileError);
+      // Fetch from customers table
+      if (customerIds.length > 0) {
+        const { data: customersData, error: customersError } = await supabase
+          .from('customers')
+          .select('id, full_name, phone, email')
+          .in('id', customerIds);
+
+        if (customersError) {
+          console.error('Error fetching customers:', customersError);
+        }
+
+        if (customersData) {
+          customersData.forEach(c => customerMap.set(c.id, c));
+        }
       }
 
-      // Step 4: Merge profiles into subscriptions
-      const profileMap = new Map(
-        (profiles || []).map(p => [p.user_id, p])
-      );
+      // Fetch from profiles for legacy data
+      if (userIds.length > 0) {
+        const { data: profiles, error: profileError } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, phone')
+          .in('user_id', userIds);
 
+        if (profileError) {
+          console.error('Error fetching profiles:', profileError);
+        }
+
+        if (profiles) {
+          profiles.forEach(p => customerMap.set(p.user_id, { ...p, email: null }));
+        }
+      }
+
+      // Step 4: Merge customer data into subscriptions
       const enrichedData = subscriptions.map(sub => ({
         ...sub,
-        profiles: profileMap.get(sub.user_id) || null
+        customers: customerMap.get(sub.customer_id || sub.user_id) || null
       }));
 
       return enrichedData as unknown as SubscriptionWithDetails[];
@@ -182,6 +205,7 @@ export const useCreateSubscription = () => {
 
       const subscriptionData: Database['public']['Tables']['subscriptions']['Insert'] = {
         user_id: data.customerId,
+        customer_id: data.customerId,
         product_id: data.productId,
         subscription_type: data.deliveryType,
         delivery_time_slot: data.timeSlot,

@@ -1236,6 +1236,48 @@ export type Database = {
         }
         Relationships: []
       }
+      customers: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          phone: string
+          pincode: string | null
+          seller_id: string
+          state: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          phone: string
+          pincode?: string | null
+          seller_id: string
+          state?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          phone?: string
+          pincode?: string | null
+          seller_id?: string
+          state?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       daily_subscription_processing: {
         Row: {
           completed_at: string | null
@@ -4237,6 +4279,7 @@ export type Database = {
         Row: {
           available_credit: number | null
           created_at: string
+          customer_id: string | null
           delivery_address: Json | null
           delivery_days: string[] | null
           delivery_time: string | null
@@ -4260,6 +4303,7 @@ export type Database = {
         Insert: {
           available_credit?: number | null
           created_at?: string
+          customer_id?: string | null
           delivery_address?: Json | null
           delivery_days?: string[] | null
           delivery_time?: string | null
@@ -4283,6 +4327,7 @@ export type Database = {
         Update: {
           available_credit?: number | null
           created_at?: string
+          customer_id?: string | null
           delivery_address?: Json | null
           delivery_days?: string[] | null
           delivery_time?: string | null
@@ -4304,6 +4349,13 @@ export type Database = {
           vacation_extension_days?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "subscriptions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "subscriptions_product_id_fkey"
             columns: ["product_id"]
@@ -6224,14 +6276,16 @@ export type Database = {
         Args: { p_order_id: string; p_payment_method?: string }
         Returns: Json
       }
-      simple_mark_delivered: {
-        Args: {
-          p_agent_id: string
-          p_order_id: string
-          p_payment_method?: string
-        }
-        Returns: Json
-      }
+      simple_mark_delivered:
+        | { Args: { p_agent_id: string; p_order_id: string }; Returns: Json }
+        | {
+            Args: {
+              p_agent_id: string
+              p_order_id: string
+              p_payment_method?: string
+            }
+            Returns: Json
+          }
       sync_special_offers_from_products: { Args: never; Returns: undefined }
       sync_user_player_id: {
         Args: { device_info?: Json; player_id: string; target_user_id: string }

@@ -61,10 +61,12 @@ export const AddSubscriptionDialog = () => {
   };
 
   const fetchCustomers = async () => {
+    if (!user?.id) return;
+    
     const { data } = await (supabase as any)
-      .from('profiles')
-      .select('user_id, full_name, phone')
-      .not('full_name', 'is', null)
+      .from('customers')
+      .select('id, full_name, phone, email')
+      .eq('seller_id', user.id)
       .order('full_name');
     if (data) setCustomers(data);
   };
@@ -75,9 +77,15 @@ export const AddSubscriptionDialog = () => {
       return null;
     }
 
-    const { data: newProfile, error } = await (supabase as any)
-      .from('profiles')
+    if (!user?.id) {
+      toast.error('User not authenticated');
+      return null;
+    }
+
+    const { data: newCustomer, error } = await (supabase as any)
+      .from('customers')
       .insert({
+        seller_id: user.id,
         full_name: newCustomerName,
         phone: newCustomerPhone,
         email: newCustomerEmail || null,
@@ -86,7 +94,13 @@ export const AddSubscriptionDialog = () => {
       .single();
 
     if (error) {
-      toast.error('Failed to create customer');
+      console.error('Error creating customer:', error);
+      
+      if (error.code === '23505') {
+        toast.error('Customer with this phone number already exists');
+      } else {
+        toast.error('Failed to create customer');
+      }
       return null;
     }
 
@@ -98,7 +112,7 @@ export const AddSubscriptionDialog = () => {
     setNewCustomerEmail('');
     setShowNewCustomerForm(false);
 
-    return newProfile.user_id;
+    return newCustomer.id;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -185,7 +199,7 @@ export const AddSubscriptionDialog = () => {
                       </div>
                     </SelectItem>
                     {customers.map((c) => (
-                      <SelectItem key={c.user_id} value={c.user_id}>
+                      <SelectItem key={c.id} value={c.id}>
                         {c.full_name} ({c.phone})
                       </SelectItem>
                     ))}

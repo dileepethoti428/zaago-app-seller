@@ -71,9 +71,10 @@ const Subscriptions = () => {
       const searchLower = searchTerm.toLowerCase();
       const matchesSearch =
         !searchTerm ||
-        sub.profiles?.full_name?.toLowerCase().includes(searchLower) ||
-        sub.profiles?.phone?.includes(searchTerm) ||
-        sub.user_id.includes(searchTerm);
+        sub.customers?.full_name?.toLowerCase().includes(searchLower) ||
+        sub.customers?.phone?.includes(searchTerm) ||
+        (sub.customer_id && sub.customer_id.includes(searchTerm)) ||
+        (sub.user_id && sub.user_id.includes(searchTerm));
 
       // Status filter
       let matchesStatus = true;
@@ -274,14 +275,14 @@ const Subscriptions = () => {
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <h3 className="text-lg font-semibold">
-                          {subscription.profiles?.full_name || 'Unknown Customer'}
+                          {subscription.customers?.full_name || 'Unknown Customer'}
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          ID: {subscription.user_id.slice(0, 8)}...
+                          ID: {(subscription.customer_id || subscription.user_id).slice(0, 8)}...
                         </p>
-                        {subscription.profiles?.phone && (
+                        {subscription.customers?.phone && (
                           <p className="text-sm text-muted-foreground">
-                            📱 {subscription.profiles.phone}
+                            📱 {subscription.customers.phone}
                           </p>
                         )}
                       </div>
