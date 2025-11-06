@@ -14,6 +14,11 @@ interface SubscriptionWithDetails extends Subscription {
     phone: string;
     email: string | null;
   } | null;
+  profiles?: {
+    full_name: string;
+    phone: string;
+    email: string | null;
+  } | null;
   products: {
     name: string;
     price: number;
@@ -23,6 +28,11 @@ interface SubscriptionWithDetails extends Subscription {
     end_date: string;
     status: string;
   }[];
+  customer_info?: {
+    full_name: string;
+    phone: string;
+    email: string;
+  };
 }
 
 export const useSellerSubscriptions = () => {
@@ -88,6 +98,7 @@ export const useSellerSubscriptions = () => {
       const userIds = [...new Set(subscriptions.map(s => !s.customer_id && s.user_id).filter(Boolean))];
       
       let customerMap = new Map();
+      let profileMap = new Map();
 
       // Fetch from customers table
       if (customerIds.length > 0) {
@@ -117,15 +128,26 @@ export const useSellerSubscriptions = () => {
         }
 
         if (profiles) {
-          profiles.forEach(p => customerMap.set(p.user_id, { ...p, email: null }));
+          profiles.forEach(p => profileMap.set(p.user_id, { ...p, email: null }));
         }
       }
 
-      // Step 4: Merge customer data into subscriptions
-      const enrichedData = subscriptions.map(sub => ({
-        ...sub,
-        customers: customerMap.get(sub.customer_id || sub.user_id) || null
-      }));
+      // Step 4: Merge customer data into subscriptions with computed customer_info
+      const enrichedData = subscriptions.map(sub => {
+        const customerData = customerMap.get(sub.customer_id);
+        const profileData = profileMap.get(sub.user_id);
+        
+        return {
+          ...sub,
+          customers: customerData || null,
+          profiles: profileData || null,
+          customer_info: {
+            full_name: customerData?.full_name || profileData?.full_name || 'Unknown Customer',
+            phone: customerData?.phone || profileData?.phone || '',
+            email: customerData?.email || profileData?.email || '',
+          }
+        };
+      });
 
       return enrichedData as unknown as SubscriptionWithDetails[];
     },
@@ -165,6 +187,7 @@ interface CreateSubscriptionData {
   specialInstructions?: string;
   vacationFrom?: Date;
   vacationTo?: Date;
+  source?: 'seller_manual' | 'customer_app';
 }
 
 const calculateNextDeliveryDate = (
@@ -204,8 +227,12 @@ export const useCreateSubscription = () => {
       );
 
       const subscriptionData: Database['public']['Tables']['subscriptions']['Insert'] = {
-        user_id: data.customerId,
+        // For seller-created: customer_id from customers table, user_id is null
+        // For customer-created: both set (customer auto-created)
         customer_id: data.customerId,
+        user_id: data.source === 'seller_manual' ? null : data.customerId,
+        created_by: user.id,
+        source: data.source || 'seller_manual',
         product_id: data.productId,
         subscription_type: data.deliveryType,
         delivery_time_slot: data.timeSlot,

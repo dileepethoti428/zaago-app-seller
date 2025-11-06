@@ -4279,6 +4279,7 @@ export type Database = {
         Row: {
           available_credit: number | null
           created_at: string
+          created_by: string | null
           customer_id: string | null
           delivery_address: Json | null
           delivery_days: string[] | null
@@ -4291,18 +4292,20 @@ export type Database = {
           notification_advance_hours: number | null
           product_id: string
           quantity: number
+          source: string | null
           special_instructions: string | null
           start_date: string
           subscription_type: string
           total_credit_earned: number | null
           updated_at: string
-          user_id: string
+          user_id: string | null
           vacation_days_used: number | null
           vacation_extension_days: number | null
         }
         Insert: {
           available_credit?: number | null
           created_at?: string
+          created_by?: string | null
           customer_id?: string | null
           delivery_address?: Json | null
           delivery_days?: string[] | null
@@ -4315,18 +4318,20 @@ export type Database = {
           notification_advance_hours?: number | null
           product_id: string
           quantity?: number
+          source?: string | null
           special_instructions?: string | null
           start_date?: string
           subscription_type: string
           total_credit_earned?: number | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           vacation_days_used?: number | null
           vacation_extension_days?: number | null
         }
         Update: {
           available_credit?: number | null
           created_at?: string
+          created_by?: string | null
           customer_id?: string | null
           delivery_address?: Json | null
           delivery_days?: string[] | null
@@ -4339,12 +4344,13 @@ export type Database = {
           notification_advance_hours?: number | null
           product_id?: string
           quantity?: number
+          source?: string | null
           special_instructions?: string | null
           start_date?: string
           subscription_type?: string
           total_credit_earned?: number | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           vacation_days_used?: number | null
           vacation_extension_days?: number | null
         }

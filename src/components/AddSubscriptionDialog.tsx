@@ -132,6 +132,7 @@ export const AddSubscriptionDialog = () => {
         specialInstructions: specialInstructions || undefined,
         vacationFrom: vacationFrom ? new Date(vacationFrom) : undefined,
         vacationTo: vacationTo ? new Date(vacationTo) : undefined,
+        source: 'seller_manual',
       });
 
       setOpen(false);

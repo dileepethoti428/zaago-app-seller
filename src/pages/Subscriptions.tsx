@@ -71,8 +71,9 @@ const Subscriptions = () => {
       const searchLower = searchTerm.toLowerCase();
       const matchesSearch =
         !searchTerm ||
-        sub.customers?.full_name?.toLowerCase().includes(searchLower) ||
-        sub.customers?.phone?.includes(searchTerm) ||
+        sub.customer_info?.full_name?.toLowerCase().includes(searchLower) ||
+        sub.customer_info?.phone?.includes(searchTerm) ||
+        sub.customer_info?.email?.toLowerCase().includes(searchLower) ||
         (sub.customer_id && sub.customer_id.includes(searchTerm)) ||
         (sub.user_id && sub.user_id.includes(searchTerm));
 
@@ -275,14 +276,14 @@ const Subscriptions = () => {
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <h3 className="text-lg font-semibold">
-                          {subscription.customers?.full_name || 'Unknown Customer'}
+                          {subscription.customer_info?.full_name || 'Unknown Customer'}
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          ID: {(subscription.customer_id || subscription.user_id).slice(0, 8)}...
+                          ID: {(subscription.customer_id || subscription.user_id || '').slice(0, 8)}...
                         </p>
-                        {subscription.customers?.phone && (
+                        {subscription.customer_info?.phone && (
                           <p className="text-sm text-muted-foreground">
-                            📱 {subscription.customers.phone}
+                            📱 {subscription.customer_info.phone}
                           </p>
                         )}
                       </div>
