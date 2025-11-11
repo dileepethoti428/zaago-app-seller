@@ -137,12 +137,11 @@ export default function BankDetails() {
 
     setSubmitting(true);
     try {
+      // Update bank details without changing approval_status
       const { error } = await supabase
         .from('sellers')
-        .upsert({
-          user_id: user.id,
+        .update({
           name: formData.account_holder_name || user.email?.split('@')[0] || 'Unknown',
-          email: user.email || '',
           bank_name: formData.bank_name,
           ifsc_code: formData.ifsc_code,
           account_number: formData.account_number,
@@ -151,16 +150,31 @@ export default function BankDetails() {
           account_type: formData.account_type,
           business_name: formData.business_name,
           phone: formData.phone
-        }, { onConflict: 'user_id' });
+          // DO NOT include approval_status here
+        })
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
+      // Check approval status before navigating
+      const { data: sellerData } = await supabase
+        .from('sellers')
+        .select('approval_status')
+        .eq('user_id', user.id)
+        .single();
+
       toast({
         title: "Bank Details Saved",
-        description: "Your bank details have been saved successfully. You can now start selling!"
+        description: sellerData?.approval_status === 'approved' 
+          ? "Your bank details have been saved successfully. You can now start selling!"
+          : "Your application is under review. You'll be notified once approved."
       });
 
-      navigate('/products');
+      if (sellerData?.approval_status === 'approved') {
+        navigate('/products');
+      } else {
+        navigate('/pending-approval');
+      }
     } catch (error) {
       console.error('Error saving bank details:', error);
       toast({

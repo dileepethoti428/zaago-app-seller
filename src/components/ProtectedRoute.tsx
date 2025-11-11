@@ -56,21 +56,30 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         return;
       }
 
-      // Only enforce approval status for new sessions (from login)
-      if (data.approval_status === 'pending' && location.pathname === '/login') {
-        navigate('/pending-approval');
-        return;
+      // Check approval status on any route (not just login)
+      if (data.approval_status === 'pending') {
+        // Don't redirect if already on approval pages
+        if (!approvalPages.includes(location.pathname)) {
+          navigate('/pending-approval');
+          return;
+        }
       }
 
-      if (data.approval_status === 'rejected' && location.pathname === '/login') {
-        navigate('/application-rejected');
-        return;
+      if (data.approval_status === 'rejected') {
+        if (!approvalPages.includes(location.pathname)) {
+          navigate('/application-rejected');
+          return;
+        }
       }
 
-      if (data.approval_status === 'approved' && location.pathname === '/login') {
-        if (!data.bank_name) {
+      // If approved, allow access to bank-details if needed
+      if (data.approval_status === 'approved') {
+        if (!data.bank_name && location.pathname !== '/bank-details') {
           navigate('/bank-details');
-        } else {
+          return;
+        }
+        // If coming from login and bank details are complete, go to home
+        if (location.pathname === '/login' && data.bank_name) {
           navigate('/');
         }
       }
