@@ -20,3 +20,9 @@ export const getTodayDateIST = (): Date => {
 export const getTomorrowDateIST = (): Date => {
   return addDays(getCurrentISTTime(), 1);
 };
+
+export const getNextMidnightIST = (): Date => {
+  const now = getCurrentISTTime();
+  const midnight = setSeconds(setMinutes(setHours(addDays(now, 1), 0), 0), 0);
+  return midnight;
+};

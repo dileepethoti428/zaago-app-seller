@@ -172,15 +172,29 @@ serve(async (req) => {
         ordersCreated++;
         console.log(`✅ Created order ${newOrder.id} for subscription ${subscription.id}`);
 
-        // Calculate next delivery date based on subscription type
-        let nextDeliveryDate = new Date(subscription.next_delivery_date);
-        
-        if (subscription.subscription_type === 'daily') {
-          nextDeliveryDate.setDate(nextDeliveryDate.getDate() + 1);
-        } else if (subscription.subscription_type === 'alternate') {
-          nextDeliveryDate.setDate(nextDeliveryDate.getDate() + 2);
-        } else if (subscription.subscription_type === 'weekly') {
-          nextDeliveryDate.setDate(nextDeliveryDate.getDate() + 7);
+        // Fetch vacation periods for this subscription
+        const { data: vacations } = await supabase
+          .from('subscription_vacation_periods')
+          .select('start_date, end_date, status')
+          .eq('subscription_id', subscription.id)
+          .eq('status', 'active');
+
+        // Calculate tomorrow's date
+        let nextDeliveryDate = new Date();
+        nextDeliveryDate.setDate(nextDeliveryDate.getDate() + 1);
+
+        // Skip vacation dates
+        if (vacations && vacations.length > 0) {
+          for (const vacation of vacations) {
+            const start = new Date(vacation.start_date);
+            const end = new Date(vacation.end_date);
+            
+            if (nextDeliveryDate >= start && nextDeliveryDate <= end) {
+              // Jump to day after vacation ends
+              nextDeliveryDate = new Date(end);
+              nextDeliveryDate.setDate(nextDeliveryDate.getDate() + 1);
+            }
+          }
         }
 
         // Update subscription's next_delivery_date

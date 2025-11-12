@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { format, addDays, parseISO } from 'date-fns';
 import { Database } from '@/integrations/supabase/types';
+import { getNextDeliveryDateIST, skipVacationDates } from '@/utils/subscriptionDateCalculator';
 
 type Subscription = Database['public']['Tables']['subscriptions']['Row'];
 type OrderInsert = Database['public']['Tables']['orders']['Insert'];
@@ -337,11 +338,15 @@ export const useAcceptSubscriptionDelivery = () => {
 
       if (orderError) throw orderError;
 
-      // Update next delivery date
-      const nextDelivery = calculateNextDeliveryDate(
-        subscription.subscription_type,
-        parseISO(subscription.next_delivery_date)
-      );
+      // Fetch vacation periods
+      const { data: vacations } = await supabase
+        .from('subscription_vacation_periods')
+        .select('start_date, end_date, status')
+        .eq('subscription_id', subscriptionId)
+        .eq('status', 'active');
+
+      // Calculate next delivery skipping vacations - always tomorrow in IST
+      const nextDelivery = getNextDeliveryDateIST(vacations || []);
 
       const { error: updateError } = await supabase
         .from('subscriptions')
@@ -388,11 +393,15 @@ export const useRejectSubscriptionDelivery = () => {
 
       if (fetchError || !subscription) throw new Error('Subscription not found');
 
-      // Calculate next delivery date (skip current)
-      const nextDelivery = calculateNextDeliveryDate(
-        subscription.subscription_type,
-        parseISO(subscription.next_delivery_date)
-      );
+      // Fetch vacation periods
+      const { data: vacations } = await supabase
+        .from('subscription_vacation_periods')
+        .select('start_date, end_date, status')
+        .eq('subscription_id', subscriptionId)
+        .eq('status', 'active');
+
+      // Calculate next delivery skipping vacations - always tomorrow in IST
+      const nextDelivery = getNextDeliveryDateIST(vacations || []);
 
       const { error: updateError } = await supabase
         .from('subscriptions')

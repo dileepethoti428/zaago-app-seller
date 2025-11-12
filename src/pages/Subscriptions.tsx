@@ -13,10 +13,12 @@ import {
   useRejectSubscriptionDelivery,
   useSubscriptionDeliveryStatus,
 } from '@/hooks/useSubscriptions';
-import { format, parseISO, isBefore, isAfter, isWithinInterval, isSameDay } from 'date-fns';
+import { format, parseISO, isBefore, isAfter, isWithinInterval, isSameDay, differenceInMinutes, setHours, setMinutes, setSeconds } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import { isAfter11_30PM_IST, getTodayDateIST, getTomorrowDateIST } from '@/utils/timeZone';
+import { isAfter11_30PM_IST, getTodayDateIST, getTomorrowDateIST, getCurrentISTTime } from '@/utils/timeZone';
+import { getNextDeliveryDateIST, formatDateForDisplay } from '@/utils/subscriptionDateCalculator';
+import { ISTTimeDisplay } from '@/components/ISTTimeDisplay';
 
 const Subscriptions = () => {
   const { user } = useAuth();
@@ -51,6 +53,22 @@ const Subscriptions = () => {
       supabase.removeChannel(channel);
     };
   }, [user?.id, refetch]);
+
+  // Auto-refresh at midnight IST
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = getCurrentISTTime();
+      const midnight = setHours(setMinutes(setSeconds(now, 0), 0), 0);
+      
+      // If we just passed midnight (within 1 minute)
+      if (differenceInMinutes(now, midnight) <= 1 && differenceInMinutes(now, midnight) >= 0) {
+        console.log('🌙 Midnight IST reached, refreshing subscriptions...');
+        refetch();
+      }
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [refetch]);
 
   const filteredSubscriptions = useMemo(() => {
     if (!subscriptions) return [];
@@ -189,22 +207,25 @@ const Subscriptions = () => {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Subscriptions</h1>
-          <p className="text-muted-foreground">Manage recurring customer deliveries</p>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">Subscriptions</h1>
+            <p className="text-muted-foreground">Manage recurring customer deliveries</p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => refetch()}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
+            <AddSubscriptionDialog />
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => refetch()}
-            disabled={isLoading}
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-          </Button>
-          <AddSubscriptionDialog />
-        </div>
+        <ISTTimeDisplay />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
@@ -346,14 +367,12 @@ const Subscriptions = () => {
                           </span>
                         </div>
 
-                        {subscription.next_delivery_date && (
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span>
-                              Next: {format(parseISO(subscription.next_delivery_date), 'MMM d, yyyy')}
-                            </span>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">
+                            Next Delivery: {formatDateForDisplay(getNextDeliveryDateIST(subscription.vacation || []))}
+                          </span>
+                        </div>
 
                         <div className="text-muted-foreground">
                           Created: {format(parseISO(subscription.created_at), 'MMM d, yyyy')}
