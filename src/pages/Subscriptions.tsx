@@ -19,6 +19,7 @@ import { useAuth } from '@/context/AuthContext';
 import { isAfter11_30PM_IST, getTodayDateIST, getTomorrowDateIST, getCurrentISTTime } from '@/utils/timeZone';
 import { getNextDeliveryDateIST, formatDateForDisplay } from '@/utils/subscriptionDateCalculator';
 import { ISTTimeDisplay } from '@/components/ISTTimeDisplay';
+import { AcceptanceDeadlineTimer } from '@/components/AcceptanceDeadlineTimer';
 
 const Subscriptions = () => {
   const { user } = useAuth();
@@ -184,19 +185,37 @@ const Subscriptions = () => {
     }
 
     const statusColors: Record<string, string> = {
+      pending: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
       accepted: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+      not_accepted: 'bg-red-500/20 text-red-400 border-red-500/30',
       placed: 'bg-green-500/20 text-green-400 border-green-500/30',
       delivered: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+    };
+
+    const getStatusLabel = (status: string) => {
+      switch (status) {
+        case 'pending': return 'Pending Acceptance';
+        case 'accepted': return 'Accepted';
+        case 'not_accepted': return 'Not Accepted';
+        case 'placed': return 'Placed';
+        case 'delivered': return 'Delivered';
+        default: return status;
+      }
     };
 
     return (
       <div className="flex flex-col gap-2 lg:min-w-[160px]">
         <Badge className={statusColors[todayOrder.status] || 'bg-gray-500/20 text-gray-400'}>
-          Today: {todayOrder.status}
+          Today: {getStatusLabel(todayOrder.status)}
         </Badge>
-        <p className="text-xs text-muted-foreground">
-          Actions available after 11:30 PM
-        </p>
+        {todayOrder.status === 'pending' && (
+          <AcceptanceDeadlineTimer deliveryDate={todayOrder.delivery_date} />
+        )}
+        {todayOrder.status !== 'pending' && (
+          <p className="text-xs text-muted-foreground">
+            Actions available after 11:30 PM
+          </p>
+        )}
       </div>
     );
   };

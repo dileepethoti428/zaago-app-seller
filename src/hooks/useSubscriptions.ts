@@ -325,6 +325,7 @@ export const useAcceptSubscriptionDelivery = () => {
         total: 0, // Will be calculated by backend
         tracking_id: `SUB-${subscriptionId.slice(0, 8)}-${Date.now()}`,
         status: 'accepted',
+        accepted_at: new Date().toISOString(), // Timestamp when seller accepted
         delivery_date: subscription.next_delivery_date,
         delivery_time_slot: subscription.delivery_time_slot,
         subscription_id: subscriptionId,
