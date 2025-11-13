@@ -150,6 +150,7 @@ serve(async (req) => {
           customer_phone: profile?.phone || null,
           payment_method: 'subscription',
           payment_status: 'pending',
+          accepted_at: null, // Will be set when seller accepts before 11:00 PM IST
           created_at: new Date().toISOString()
         };
 
