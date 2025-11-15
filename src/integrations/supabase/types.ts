@@ -5828,15 +5828,19 @@ export type Database = {
       get_pending_delivery_agents: {
         Args: never
         Returns: {
-          agent_documents: Json
+          aadhar_number: string
+          aadhar_verified: boolean
           agent_id: string
           created_at: string
-          documents_verified: boolean
+          dl_number: string
+          dl_verified: boolean
           email: string
-          id: string
+          full_name: string
           is_active: boolean
-          name: string
           phone: string
+          user_id: string
+          vehicle_number: string
+          vehicle_type: string
           verification_status: string
         }[]
       }

@@ -1,25 +1,30 @@
 import { useState, useMemo, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { CalendarClock, Search, RefreshCw, MapPin, Clock, Package, Calendar } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { useSellerSubscriptions, useAcceptSubscriptionDelivery, useRejectSubscriptionDelivery } from '@/hooks/useSubscriptions';
+import { useTodaySubscriptionOrder } from '@/hooks/useSubscriptionOrders';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { AddSubscriptionDialog } from '@/components/AddSubscriptionDialog';
+import { AcceptanceDeadlineTimer } from '@/components/AcceptanceDeadlineTimer';
+import { SubscriptionOrderCard } from '@/components/SubscriptionOrderCard';
+import { ISTTimeDisplay } from '@/components/ISTTimeDisplay';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getCurrentISTTime, isAfter11_30PM_IST, getTomorrowDateIST } from '@/utils/timeZone';
+import { formatDateForDisplay } from '@/utils/subscriptionDateCalculator';
+import { Search, RefreshCw, Calendar, User, Phone, MapPin, Package, CheckCircle, XCircle, Clock, CalendarClock } from 'lucide-react';
+import { format, addDays, parseISO, isSameDay, isWithinInterval, differenceInMinutes, setHours, setMinutes, setSeconds } from 'date-fns';
+import { motion } from 'framer-motion';
 import {
-  useSellerSubscriptions,
-  useAcceptSubscriptionDelivery,
-  useRejectSubscriptionDelivery,
-  useSubscriptionDeliveryStatus,
-} from '@/hooks/useSubscriptions';
-import { format, parseISO, isBefore, isAfter, isWithinInterval, isSameDay, differenceInMinutes, setHours, setMinutes, setSeconds } from 'date-fns';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import { isAfter11_30PM_IST, getTodayDateIST, getTomorrowDateIST, getCurrentISTTime } from '@/utils/timeZone';
-import { getNextDeliveryDateIST, formatDateForDisplay } from '@/utils/subscriptionDateCalculator';
-import { ISTTimeDisplay } from '@/components/ISTTimeDisplay';
-import { AcceptanceDeadlineTimer } from '@/components/AcceptanceDeadlineTimer';
 
 const Subscriptions = () => {
   const { user } = useAuth();
@@ -159,62 +164,50 @@ const Subscriptions = () => {
   };
 
   // Component to show today's delivery status
-  const TodayDeliveryStatus = ({ subscriptionId, deliveryDate }: { subscriptionId: string; deliveryDate: string }) => {
-    const { data: todayOrder, isLoading } = useSubscriptionDeliveryStatus(subscriptionId, deliveryDate);
-
-    if (isLoading) {
-      return (
-        <div className="flex items-center text-sm text-muted-foreground lg:min-w-[160px]">
-          <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-          Checking status...
-        </div>
-      );
-    }
+  const TodayDeliveryStatus = ({ subscription }: { subscription: any }) => {
+    const today = format(getCurrentISTTime(), 'yyyy-MM-dd');
+    const { data: todayOrder } = useTodaySubscriptionOrder(subscription.id);
 
     if (!todayOrder) {
-      return (
-        <div className="flex flex-col gap-2 lg:min-w-[160px]">
-          <Badge variant="outline" className="bg-gray-500/20 text-gray-400 border-gray-500/30">
-            No delivery today
-          </Badge>
-          <p className="text-xs text-muted-foreground">
-            Actions available after 11:30 PM
-          </p>
-        </div>
-      );
+      return null;
     }
 
-    const statusColors: Record<string, string> = {
-      pending: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-      accepted: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-      not_accepted: 'bg-red-500/20 text-red-400 border-red-500/30',
-      placed: 'bg-green-500/20 text-green-400 border-green-500/30',
-      delivered: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+    const statusConfig: Record<string, { icon: any; color: string; label: string }> = {
+      pending: { icon: Clock, color: 'text-yellow-500', label: 'Pending Acceptance' },
+      accepted: { icon: CheckCircle, color: 'text-green-500', label: 'Accepted - Will be delivered' },
+      assigned: { icon: CheckCircle, color: 'text-blue-500', label: 'Agent Assigned' },
+      not_accepted: { icon: XCircle, color: 'text-red-500', label: 'Not Accepted - Delivery Extended' },
+      delivered: { icon: CheckCircle, color: 'text-green-500', label: 'Delivered' },
+      cancelled: { icon: XCircle, color: 'text-red-500', label: 'Cancelled' }
     };
 
-    const getStatusLabel = (status: string) => {
-      switch (status) {
-        case 'pending': return 'Pending Acceptance';
-        case 'accepted': return 'Accepted';
-        case 'not_accepted': return 'Not Accepted';
-        case 'placed': return 'Placed';
-        case 'delivered': return 'Delivered';
-        default: return status;
-      }
-    };
+    const config = statusConfig[todayOrder.status] || statusConfig.pending;
+    const Icon = config.icon;
 
     return (
-      <div className="flex flex-col gap-2 lg:min-w-[160px]">
-        <Badge className={statusColors[todayOrder.status] || 'bg-gray-500/20 text-gray-400'}>
-          Today: {getStatusLabel(todayOrder.status)}
-        </Badge>
+      <div className="mt-3 pt-3 border-t border-border">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Icon className={`h-4 w-4 ${config.color}`} />
+            <span className="text-sm font-medium">Today's Status:</span>
+          </div>
+          <Badge variant={todayOrder.status === 'pending' ? 'secondary' : 
+                        todayOrder.status === 'accepted' || todayOrder.status === 'assigned' ? 'default' : 
+                        'destructive'}>
+            {config.label}
+          </Badge>
+        </div>
+        
+        {/* Show auto-created order card */}
+        <SubscriptionOrderCard 
+          subscriptionId={subscription.id}
+          deliveryDate={new Date(today)}
+        />
+        
         {todayOrder.status === 'pending' && (
-          <AcceptanceDeadlineTimer deliveryDate={todayOrder.delivery_date} />
-        )}
-        {todayOrder.status !== 'pending' && (
-          <p className="text-xs text-muted-foreground">
-            Actions available after 11:30 PM
-          </p>
+          <div className="mt-2">
+            <AcceptanceDeadlineTimer deliveryDate={today} />
+          </div>
         )}
       </div>
     );
@@ -389,7 +382,7 @@ const Subscriptions = () => {
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">
-                            Next Delivery: {formatDateForDisplay(getNextDeliveryDateIST(subscription.vacation || []))}
+                            Next Delivery: {formatDateForDisplay(parseISO(subscription.next_delivery_date))}
                           </span>
                         </div>
 
@@ -417,13 +410,8 @@ const Subscriptions = () => {
                     )}
                   </div>
 
-                  {/* Show status before 11:30 PM IST */}
-                  {!isAfter11_30PM_IST() && subscription.is_active && !vacationInfo && (
-                    <TodayDeliveryStatus 
-                      subscriptionId={subscription.id} 
-                      deliveryDate={format(getTodayDateIST(), 'yyyy-MM-dd')}
-                    />
-                  )}
+                  {/* Show today's delivery status */}
+                  <TodayDeliveryStatus subscription={subscription} />
 
                   {/* Show action buttons after 11:30 PM IST */}
                   {showActions && (

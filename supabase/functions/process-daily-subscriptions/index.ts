@@ -151,6 +151,7 @@ serve(async (req) => {
           payment_method: 'subscription',
           payment_status: 'pending',
           accepted_at: null, // Will be set when seller accepts before 11:00 PM IST
+          order_type: 'subscription',
           created_at: new Date().toISOString()
         };
 
@@ -271,6 +272,16 @@ serve(async (req) => {
       errorsCount,
       status: processingStatus
     });
+
+    // Trigger auto-assignment of delivery agents
+    if (ordersCreated > 0) {
+      console.log('🚀 Triggering auto-assignment...');
+      try {
+        await supabase.functions.invoke('auto-assign-delivery-agents');
+      } catch (e) {
+        console.error('⚠️ Auto-assignment error:', e);
+      }
+    }
 
     return new Response(
       JSON.stringify({
