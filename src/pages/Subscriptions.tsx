@@ -10,8 +10,8 @@ import { AcceptanceDeadlineTimer } from '@/components/AcceptanceDeadlineTimer';
 import { SubscriptionOrderCard } from '@/components/SubscriptionOrderCard';
 import { ISTTimeDisplay } from '@/components/ISTTimeDisplay';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getCurrentISTTime, isAfter11_30PM_IST, getTomorrowDateIST } from '@/utils/timeZone';
-import { formatDateForDisplay } from '@/utils/subscriptionDateCalculator';
+import { getCurrentISTTime, isAfter11_30PM_IST, getTomorrowDateIST, isDateTomorrow } from '@/utils/timeZone';
+import { formatDateForDisplay, formatDateWithLabel } from '@/utils/subscriptionDateCalculator';
 import { Search, RefreshCw, Calendar, User, Phone, MapPin, Package, CheckCircle, XCircle, Clock, CalendarClock } from 'lucide-react';
 import { format, addDays, parseISO, isSameDay, isWithinInterval, differenceInMinutes, setHours, setMinutes, setSeconds } from 'date-fns';
 import { motion } from 'framer-motion';
@@ -382,9 +382,24 @@ const Subscriptions = () => {
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">
-                            Next Delivery: {formatDateForDisplay(parseISO(subscription.next_delivery_date))}
+                            Next Delivery: {formatDateWithLabel(subscription.next_delivery_date)}
                           </span>
                         </div>
+
+                        {/* Show order creation context */}
+                        {isDateTomorrow(subscription.next_delivery_date) && !isAfter11_30PM_IST() && (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Clock className="h-3.5 w-3.5" />
+                            <span>Order creation tonight at 11:30 PM IST</span>
+                          </div>
+                        )}
+                        
+                        {isDateTomorrow(subscription.next_delivery_date) && isAfter11_30PM_IST() && (
+                          <div className="flex items-center gap-2 text-xs text-orange-400">
+                            <Clock className="h-3.5 w-3.5" />
+                            <span>Order created! Pending acceptance</span>
+                          </div>
+                        )}
 
                         <div className="text-muted-foreground">
                           Created: {format(parseISO(subscription.created_at), 'MMM d, yyyy')}
