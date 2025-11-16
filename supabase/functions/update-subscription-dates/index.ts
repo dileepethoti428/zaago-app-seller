@@ -42,37 +42,59 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get all active subscriptions
-    const { data: subscriptions, error: fetchError } = await supabase
-      .from('subscriptions')
+    // Get today's date
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    console.log(`📅 Processing subscriptions with orders for ${todayStr}`);
+
+    // Find all subscriptions that had an ACCEPTED or DELIVERED order today
+    const { data: completedOrders, error: fetchError } = await supabase
+      .from('orders')
       .select(`
         id,
-        subscription_type,
-        next_delivery_date,
-        vacation:subscription_vacation_periods(start_date, end_date, status)
+        subscription_id,
+        status,
+        delivery_date,
+        subscription:subscriptions!orders_subscription_id_fkey(
+          id,
+          subscription_type,
+          next_delivery_date,
+          vacation:subscription_vacation_periods(start_date, end_date, status)
+        )
       `)
-      .eq('is_active', true);
+      .eq('delivery_date', todayStr)
+      .in('status', ['accepted', 'delivered', 'out_for_delivery'])
+      .not('subscription_id', 'is', null);
 
     if (fetchError) {
-      throw new Error(`Failed to fetch subscriptions: ${fetchError.message}`);
+      throw new Error(`Failed to fetch completed orders: ${fetchError.message}`);
     }
 
-    console.log(`📦 Found ${subscriptions?.length || 0} active subscriptions to update`);
+    console.log(`📦 Found ${completedOrders?.length || 0} accepted/delivered orders to process`);
 
     let updatedCount = 0;
     let errorCount = 0;
+    const processedSubscriptions = new Set();
 
-    // Update each subscription
-    for (const sub of subscriptions || []) {
+    // Update each subscription (only once per subscription)
+    for (const order of completedOrders || []) {
       try {
-        // Calculate tomorrow's date (IST context - function runs at midnight IST)
+        // Skip if already processed this subscription
+        if (processedSubscriptions.has(order.subscription_id)) {
+          continue;
+        }
+        processedSubscriptions.add(order.subscription_id);
+
+        // Calculate tomorrow's date
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
 
         // Skip vacation dates
-        const nextDate = skipVacationDates(tomorrow, sub.vacation || []);
-        
+        const nextDate = skipVacationDates(tomorrow, order.subscription?.vacation || []);
         const nextDateStr = nextDate.toISOString().split('T')[0];
+
+        console.log(`✅ Updating subscription ${order.subscription_id} to next delivery: ${nextDateStr}`);
 
         // Update subscription
         const { error: updateError } = await supabase
@@ -81,17 +103,16 @@ serve(async (req) => {
             next_delivery_date: nextDateStr,
             updated_at: new Date().toISOString()
           })
-          .eq('id', sub.id);
+          .eq('id', order.subscription_id);
 
         if (updateError) {
-          console.error(`❌ Failed to update subscription ${sub.id}:`, updateError);
+          console.error(`❌ Failed to update subscription ${order.subscription_id}:`, updateError);
           errorCount++;
         } else {
-          console.log(`✅ Updated subscription ${sub.id} to next delivery: ${nextDateStr}`);
           updatedCount++;
         }
       } catch (error) {
-        console.error(`❌ Error processing subscription ${sub.id}:`, error);
+        console.error(`❌ Error processing order ${order.id}:`, error);
         errorCount++;
       }
     }
@@ -103,9 +124,10 @@ serve(async (req) => {
         success: true,
         message: 'Subscription dates updated successfully',
         summary: {
-          total: subscriptions?.length || 0,
+          total: completedOrders?.length || 0,
           updated: updatedCount,
           errors: errorCount,
+          date: todayStr
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
