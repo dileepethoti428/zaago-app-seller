@@ -199,18 +199,11 @@ serve(async (req) => {
           }
         }
 
-        // Update subscription's next_delivery_date
-        const { error: updateError } = await supabase
-          .from('subscriptions')
-          .update({ 
-            next_delivery_date: nextDeliveryDate.toISOString().split('T')[0],
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', subscription.id);
-
-        if (updateError) {
-          console.error(`⚠️ Failed to update subscription ${subscription.id}:`, updateError);
-        }
+        // DO NOT update next_delivery_date here
+        // It will be updated by:
+        // 1. check-unaccepted-orders at 11 AM if seller doesn't accept (+1 day compensation)
+        // 2. update-subscription-dates at midnight if seller accepts (normal +1 day)
+        console.log(`✅ Order created. Next delivery date will be updated after acceptance or at deadline.`);
 
         // Create notification for seller
         if (product.seller_id) {

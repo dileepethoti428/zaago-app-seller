@@ -33,58 +33,57 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  console.log('🕚 Checking unaccepted subscription orders at 11:00 PM IST...');
+  console.log('🔍 Checking unaccepted subscription orders at 11:00 AM IST...');
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get today's date in IST
-    const todayIST = new Date().toISOString().split('T')[0];
+    // Calculate today's date (orders were created yesterday at 11:30 PM for today's delivery)
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
 
-    // Find all pending subscription orders for today that were not accepted
+    console.log(`📅 Checking orders with delivery_date = ${todayStr}`);
+
+    // Find pending subscription orders for today that haven't been accepted
     const { data: pendingOrders, error: fetchError } = await supabase
       .from('orders')
       .select(`
         id,
         subscription_id,
-        product_id,
-        customer_id,
-        subscription:subscriptions(
+        delivery_date,
+        created_at,
+        status,
+        accepted_at,
+        subscription:subscriptions!orders_subscription_id_fkey(
           id,
           next_delivery_date,
+          subscription_type,
           vacation:subscription_vacation_periods(start_date, end_date, status)
         )
       `)
       .eq('status', 'pending')
-      .eq('expected_delivery_date', todayIST)
-      .not('subscription_id', 'is', null)
-      .is('accepted_at', null);
+      .eq('delivery_date', todayStr)
+      .is('accepted_at', null)
+      .not('subscription_id', 'is', null);
 
     if (fetchError) {
       throw new Error(`Failed to fetch pending orders: ${fetchError.message}`);
     }
 
-    console.log(`📋 Found ${pendingOrders?.length || 0} unaccepted orders to process`);
+    console.log(`📦 Found ${pendingOrders?.length || 0} unaccepted orders for today`);
 
     let processedCount = 0;
     let errorCount = 0;
 
+    // Process each unaccepted order
     for (const order of pendingOrders || []) {
       try {
-        const subscription = Array.isArray(order.subscription) 
-          ? order.subscription[0] 
-          : order.subscription;
+        console.log(`❌ Processing unaccepted order ${order.id} for subscription ${order.subscription_id}`);
 
-        if (!subscription) {
-          console.error(`❌ No subscription found for order ${order.id}`);
-          errorCount++;
-          continue;
-        }
-
-        // Mark order as "not_accepted"
-        const { error: updateOrderError } = await supabase
+        // Mark order as not_accepted
+        const { error: orderUpdateError } = await supabase
           .from('orders')
           .update({ 
             status: 'not_accepted',
@@ -92,20 +91,23 @@ serve(async (req) => {
           })
           .eq('id', order.id);
 
-        if (updateOrderError) {
-          console.error(`❌ Failed to update order ${order.id}:`, updateOrderError);
+        if (orderUpdateError) {
+          console.error(`Failed to update order ${order.id}:`, orderUpdateError);
           errorCount++;
           continue;
         }
 
-        // Calculate next delivery date (tomorrow + skip vacations)
+        // Calculate next delivery date: tomorrow + skip vacations (+1 day compensation)
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
-        const nextDate = skipVacationDates(tomorrow, subscription.vacation || []);
+        
+        const nextDate = skipVacationDates(tomorrow, order.subscription?.vacation || []);
         const nextDateStr = nextDate.toISOString().split('T')[0];
 
-        // Update subscription with extended date
-        const { error: updateSubError } = await supabase
+        console.log(`📅 Extending subscription ${order.subscription_id} to ${nextDateStr} (+1 day compensation)`);
+
+        // Update subscription with extended next_delivery_date
+        const { error: subUpdateError } = await supabase
           .from('subscriptions')
           .update({ 
             next_delivery_date: nextDateStr,
@@ -113,8 +115,8 @@ serve(async (req) => {
           })
           .eq('id', order.subscription_id);
 
-        if (updateSubError) {
-          console.error(`❌ Failed to update subscription ${order.subscription_id}:`, updateSubError);
+        if (subUpdateError) {
+          console.error(`Failed to update subscription ${order.subscription_id}:`, subUpdateError);
           errorCount++;
           continue;
         }

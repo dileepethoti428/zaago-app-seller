@@ -22,8 +22,8 @@ export const AcceptanceDeadlineTimer = ({ deliveryDate }: AcceptanceDeadlineTime
         return;
       }
 
-      // Set deadline to 11:00 PM IST today
-      const deadline = setSeconds(setMinutes(setHours(now, 23), 0), 0);
+      // Set deadline to 11:00 AM IST today
+      const deadline = setSeconds(setMinutes(setHours(now, 11), 0), 0);
       const secondsLeft = differenceInSeconds(deadline, now);
 
       if (secondsLeft <= 0) {
@@ -56,7 +56,7 @@ export const AcceptanceDeadlineTimer = ({ deliveryDate }: AcceptanceDeadlineTime
     }`}>
       <Clock className="h-3.5 w-3.5" />
       <span className="font-medium">
-        {isExpired ? 'Deadline Passed' : `Accept by 11:00 PM IST: ${timeLeft}`}
+        {isExpired ? 'Deadline Passed' : `Accept by 11:00 AM IST: ${timeLeft}`}
       </span>
     </div>
   );
