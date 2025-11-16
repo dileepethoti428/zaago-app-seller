@@ -26,3 +26,15 @@ export const getNextMidnightIST = (): Date => {
   const midnight = setSeconds(setMinutes(setHours(addDays(now, 1), 0), 0), 0);
   return midnight;
 };
+
+export const isDateToday = (dateString: string): boolean => {
+  const nowIST = getCurrentISTTime();
+  const todayStr = nowIST.toISOString().split('T')[0];
+  return dateString === todayStr;
+};
+
+export const isDateTomorrow = (dateString: string): boolean => {
+  const tomorrowIST = getTomorrowDateIST();
+  const tomorrowStr = tomorrowIST.toISOString().split('T')[0];
+  return dateString === tomorrowStr;
+};

@@ -54,12 +54,34 @@ export const skipVacationDates = (
 
 /**
  * Format date for display as DD-MM-YYYY
+ * Accepts both Date objects and ISO date strings
  */
-export const formatDateForDisplay = (date: Date): string => {
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
+export const formatDateForDisplay = (date: Date | string): string => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const year = dateObj.getFullYear();
   return `${day}-${month}-${year}`;
+};
+
+/**
+ * Format date with smart labels (Today/Tomorrow) in IST
+ */
+export const formatDateWithLabel = (dateString: string): string => {
+  const nowIST = getCurrentISTTime();
+  const todayStr = nowIST.toISOString().split('T')[0];
+  const tomorrowIST = addDays(nowIST, 1);
+  const tomorrowStr = tomorrowIST.toISOString().split('T')[0];
+
+  if (dateString === todayStr) {
+    return `Today (${formatDateForDisplay(dateString)})`;
+  }
+  
+  if (dateString === tomorrowStr) {
+    return `Tomorrow (${formatDateForDisplay(dateString)})`;
+  }
+  
+  return formatDateForDisplay(dateString);
 };
 
 /**
