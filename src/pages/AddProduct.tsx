@@ -7,8 +7,11 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import ProductVariants from '@/components/ProductVariants';
 import { useSellerLocation } from '@/hooks/useSellerLocation';
-import { MapPin, Navigation } from 'lucide-react';
+import { useProductLocation } from '@/hooks/useProductLocation';
+import { MapPin, Navigation, RefreshCw, AlertCircle, Loader } from 'lucide-react';
 import { compressImage } from '@/lib/imageCompression';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useEffect } from 'react';
 
 export default function AddProductPage() {
   const { user } = useAuth();
@@ -17,6 +20,20 @@ export default function AddProductPage() {
   const [loading, setLoading] = useState(false);
   const { sellerLocation, updateLocationFromCurrent, loading: locationLoading } = useSellerLocation();
   const [imageUploading, setImageUploading] = useState(false);
+  
+  // Product GPS location detection
+  const { 
+    location: productLocation, 
+    loading: locationDetecting, 
+    error: locationError,
+    detectLocation,
+    reDetectLocation 
+  } = useProductLocation();
+
+  // Auto-detect location on page load
+  useEffect(() => {
+    detectLocation();
+  }, []);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [formData, setFormData] = useState({
@@ -169,6 +186,25 @@ export default function AddProductPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to add products",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if GPS location is detected
+    if (!productLocation.latitude || !productLocation.longitude) {
+      toast({
+        title: "Location Required",
+        description: "Please detect GPS location before adding product",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Check if seller location is verified ONLY if they have no products yet
     if (!sellerLocation?.location_verified) {
       // Check if this is their first product
@@ -221,7 +257,10 @@ export default function AddProductPage() {
         benefits: benefits.length > 0 ? benefits : null,
         ingredients: ingredients.length > 0 ? ingredients : null,
         is_active: formData.is_active,
-        seller_id: user?.id // Add seller_id to track ownership
+        seller_id: user?.id, // Add seller_id to track ownership
+        // GPS coordinates
+        product_lat: productLocation.latitude,
+        product_lng: productLocation.longitude,
       };
 
       const { data: product, error } = await supabase
@@ -666,6 +705,81 @@ export default function AddProductPage() {
             </div>
           </div>
 
+          {/* Product Exact Location (GPS) Section */}
+          <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-foreground">
+              <Navigation className="h-5 w-5 text-primary" />
+              Product Exact Location (GPS)
+            </h2>
+            
+            {/* Loading State */}
+            {locationDetecting && (
+              <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-4">
+                <Loader className="h-4 w-4 animate-spin" />
+                <span>Detecting GPS location...</span>
+              </div>
+            )}
+            
+            {/* Error State */}
+            {locationError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{locationError}</AlertDescription>
+              </Alert>
+            )}
+            
+            {/* Detected Location Display */}
+            {productLocation.latitude && productLocation.longitude && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-2">
+                  <Check className="h-5 w-5" />
+                  <span className="font-medium">Location Detected</span>
+                </div>
+                
+                <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Latitude:</span>
+                    <span className="font-mono font-semibold text-foreground">
+                      {productLocation.latitude.toFixed(6)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Longitude:</span>
+                    <span className="font-mono font-semibold text-foreground">
+                      {productLocation.longitude.toFixed(6)}
+                    </span>
+                  </div>
+                </div>
+                
+                <button 
+                  type="button"
+                  onClick={reDetectLocation}
+                  disabled={locationDetecting}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw className={`h-4 w-4 ${locationDetecting ? 'animate-spin' : ''}`} />
+                  Re-detect Location
+                </button>
+              </div>
+            )}
+            
+            {/* Initial Detection Button */}
+            {!productLocation.latitude && !locationDetecting && (
+              <button 
+                type="button"
+                onClick={detectLocation}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                <Navigation className="h-4 w-4" />
+                Detect Current Location
+              </button>
+            )}
+            
+            <p className="text-xs text-muted-foreground mt-3">
+              This location will be used to show your product to nearby customers
+            </p>
+          </div>
+
           {/* Product Variants Section */}
           <div className="space-y-6">
             <ProductVariants
@@ -679,7 +793,7 @@ export default function AddProductPage() {
           <div className="flex gap-4 pt-8">
             <button
               type="submit"
-              disabled={loading || imageUploading}
+              disabled={loading || imageUploading || locationDetecting}
               className="bg-primary text-primary-foreground px-8 py-3 rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
             >
               {loading || imageUploading ? (
@@ -694,7 +808,7 @@ export default function AddProductPage() {
             <Link to="/products">
               <button
                 type="button"
-                disabled={loading || imageUploading}
+                disabled={loading || imageUploading || locationDetecting}
                 className="bg-secondary text-secondary-foreground px-8 py-3 rounded-lg font-medium hover:bg-secondary/90 disabled:opacity-50 transition-colors"
               >
                 Cancel
