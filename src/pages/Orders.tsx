@@ -25,6 +25,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useSellerOrderActions } from '@/hooks/useSellerOrderActions';
 import { LocationSetupModal } from '@/components/LocationSetupModal';
+import { OrderAcceptanceTimer } from '@/components/OrderAcceptanceTimer';
 
 const Orders = () => {
   const { user } = useAuth();
@@ -228,9 +229,13 @@ const Orders = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, acceptanceWindowExpired?: boolean) => {
     const statusConfig = {
       pending: { label: 'New', variant: 'destructive' as const, className: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
+      pending_seller_acceptance: { label: 'Pending Acceptance', variant: 'default' as const, className: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+      pending_after_cutoff: { label: 'Requires Escalation', variant: 'destructive' as const, className: 'bg-red-500/20 text-red-400 border-red-500/30' },
+      accepted_by_seller: { label: 'Accepted', variant: 'default' as const, className: 'bg-green-500/20 text-green-400 border-green-500/30' },
+      accepted_late: { label: 'Accepted (Late)', variant: 'default' as const, className: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
       new: { label: 'New', variant: 'destructive' as const, className: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
       accepted: { label: 'Accepted', variant: 'default' as const, className: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
       rejected: { label: 'Rejected', variant: 'destructive' as const, className: 'bg-red-500/20 text-red-400 border-red-500/30' },
@@ -380,32 +385,47 @@ const Orders = () => {
                                 <h3 className="font-semibold text-foreground text-lg">
                                   Order #{order.id.toString().slice(0, 8)}
                                 </h3>
-                                <Badge 
-                                  className={`${
-                                    order.status === 'delivered' 
-                                      ? 'bg-zaago-green/20 text-zaago-green border-zaago-green/30' 
-                                      : order.status === 'new' || order.status === 'accepted' || order.status === 'pending'
-                                      ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-                                      : order.status === 'in_transit'
-                                      ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-                                      : 'bg-zaago-muted/20 text-zaago-muted-foreground border-zaago-muted/30'
-                                  } text-sm font-medium px-3 py-1`}
-                                >
-                                  {order.status === 'in_transit' ? 'In Transit' : 
-                                   order.status === 'new' || order.status === 'pending' ? 'New' :
-                                   order.status === 'accepted' ? 'Accepted' :
-                                   order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                                </Badge>
+                                {getStatusBadge(order.status, order.acceptance_window_expired)}
+                                
+                                {/* Visibility Window Timer */}
+                                {order.visible_until && order.subscription_id && (
+                                  <OrderAcceptanceTimer 
+                                    visibleUntil={order.visible_until}
+                                    isExpired={order.acceptance_window_expired || false}
+                                  />
+                                )}
                               </div>
-                              <p className="text-zaago-muted-foreground text-sm">
-                                {new Date(order.created_at).toLocaleDateString('en-GB', {
-                                  day: 'numeric',
-                                  month: 'short',
-                                  year: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </p>
+                              
+                              {/* Timestamps */}
+                              <div className="space-y-0.5">
+                                <p className="text-zaago-muted-foreground text-sm">
+                                  Created: {new Date(order.created_at).toLocaleString('en-IN', {
+                                    timeZone: 'Asia/Kolkata',
+                                    dateStyle: 'medium',
+                                    timeStyle: 'short'
+                                  })}
+                                </p>
+                                
+                                {order.seller_accepted_at && (
+                                  <p className="text-green-400 text-sm">
+                                    Accepted: {new Date(order.seller_accepted_at).toLocaleString('en-IN', {
+                                      timeZone: 'Asia/Kolkata',
+                                      dateStyle: 'medium',
+                                      timeStyle: 'short'
+                                    })}
+                                  </p>
+                                )}
+                                
+                                {order.visible_until && !order.seller_accepted_at && (
+                                  <p className={`text-sm ${order.acceptance_window_expired ? 'text-red-400' : 'text-orange-400'}`}>
+                                    Deadline: {new Date(order.visible_until).toLocaleString('en-IN', {
+                                      timeZone: 'Asia/Kolkata',
+                                      dateStyle: 'medium',
+                                      timeStyle: 'short'
+                                    })}
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
