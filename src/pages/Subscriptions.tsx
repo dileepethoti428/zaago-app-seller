@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSellerSubscriptions, useAcceptSubscriptionDelivery, useRejectSubscriptionDelivery } from '@/hooks/useSubscriptions';
 import { useTodaySubscriptionOrder } from '@/hooks/useSubscriptionOrders';
+import { useSubscriptionDeliveryActions } from '@/hooks/useSubscriptionDeliveryActions';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -33,8 +34,7 @@ const Subscriptions = () => {
   const [deliveryTypeFilter, setDeliveryTypeFilter] = useState('all');
 
   const { data: subscriptions, isLoading, refetch } = useSellerSubscriptions();
-  const acceptDelivery = useAcceptSubscriptionDelivery();
-  const rejectDelivery = useRejectSubscriptionDelivery();
+  const { acceptDelivery, skipDelivery, isProcessing } = useSubscriptionDeliveryActions();
 
   // Set up real-time subscription
   useEffect(() => {
@@ -115,14 +115,6 @@ const Subscriptions = () => {
     });
   }, [subscriptions, searchTerm, statusFilter, deliveryTypeFilter]);
 
-  const handleAccept = async (subscriptionId: string) => {
-    await acceptDelivery.mutateAsync(subscriptionId);
-  };
-
-  const handleReject = async (subscriptionId: string) => {
-    await rejectDelivery.mutateAsync(subscriptionId);
-  };
-
   const shouldShowActions = (subscription: any) => {
     if (!subscription.is_active || !subscription.next_delivery_date) return false;
 
@@ -173,9 +165,14 @@ const Subscriptions = () => {
     }
 
     const statusConfig: Record<string, { icon: any; color: string; label: string }> = {
-      pending: { icon: Clock, color: 'text-yellow-500', label: 'Pending Acceptance' },
+      pending_seller_acceptance: { icon: Clock, color: 'text-yellow-500', label: 'Awaiting Acceptance' },
+      accepted_by_seller: { icon: CheckCircle, color: 'text-green-500', label: 'Accepted' },
+      accepted_late: { icon: CheckCircle, color: 'text-orange-500', label: 'Accepted (Late)' },
+      skipped_by_seller: { icon: XCircle, color: 'text-gray-500', label: 'Skipped for Today' },
+      pending: { icon: Clock, color: 'text-yellow-500', label: 'Pending' },
       accepted: { icon: CheckCircle, color: 'text-green-500', label: 'Accepted - Will be delivered' },
       assigned: { icon: CheckCircle, color: 'text-blue-500', label: 'Agent Assigned' },
+      packed: { icon: CheckCircle, color: 'text-green-500', label: 'Packed & Ready' },
       not_accepted: { icon: XCircle, color: 'text-red-500', label: 'Not Accepted - Delivery Extended' },
       delivered: { icon: CheckCircle, color: 'text-green-500', label: 'Delivered' },
       cancelled: { icon: XCircle, color: 'text-red-500', label: 'Cancelled' }
@@ -184,6 +181,8 @@ const Subscriptions = () => {
     const config = statusConfig[todayOrder.status] || statusConfig.pending;
     const Icon = config.icon;
 
+    const needsAction = todayOrder.status === 'pending_seller_acceptance';
+
     return (
       <div className="mt-3 pt-3 border-t border-border">
         <div className="flex items-center justify-between mb-3">
@@ -191,9 +190,12 @@ const Subscriptions = () => {
             <Icon className={`h-4 w-4 ${config.color}`} />
             <span className="text-sm font-medium">Today's Status:</span>
           </div>
-          <Badge variant={todayOrder.status === 'pending' ? 'secondary' : 
-                        todayOrder.status === 'accepted' || todayOrder.status === 'assigned' ? 'default' : 
-                        'destructive'}>
+          <Badge variant={
+            needsAction ? 'secondary' : 
+            todayOrder.status === 'skipped_by_seller' ? 'outline' :
+            todayOrder.status === 'accepted_by_seller' || todayOrder.status === 'assigned' || todayOrder.status === 'packed' ? 'default' : 
+            'destructive'
+          }>
             {config.label}
           </Badge>
         </div>
@@ -204,9 +206,28 @@ const Subscriptions = () => {
           deliveryDate={new Date(today)}
         />
         
-        {todayOrder.status === 'pending' && (
-          <div className="mt-2">
+        {needsAction && (
+          <div className="mt-3 space-y-2">
             <AcceptanceDeadlineTimer deliveryDate={today} />
+            <div className="flex gap-2">
+              <Button
+                onClick={() => acceptDelivery(todayOrder.id, subscription.id)}
+                disabled={isProcessing}
+                className="flex-1 bg-green-600 hover:bg-green-700"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Accept Delivery
+              </Button>
+              <Button
+                onClick={() => skipDelivery(todayOrder.id, subscription.id)}
+                disabled={isProcessing}
+                variant="outline"
+                className="flex-1"
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                Skip Delivery
+              </Button>
+            </div>
           </div>
         )}
       </div>
@@ -427,39 +448,6 @@ const Subscriptions = () => {
 
                   {/* Show today's delivery status */}
                   <TodayDeliveryStatus subscription={subscription} />
-
-                  {/* Show action buttons after 11:30 PM IST */}
-                  {showActions && (
-                    <div className="flex flex-col gap-2 lg:min-w-[160px]">
-                      <Button
-                        onClick={() => handleAccept(subscription.id)}
-                        disabled={acceptDelivery.isPending}
-                        className="bg-zaago-green hover:bg-zaago-green/90 w-full"
-                      >
-                        Accept Delivery (Tomorrow)
-                      </Button>
-                      <Button
-                        onClick={() => handleReject(subscription.id)}
-                        disabled={rejectDelivery.isPending}
-                        variant="outline"
-                        className="w-full"
-                      >
-                        Skip Delivery (Tomorrow)
-                      </Button>
-                    </div>
-                  )}
-
-                  {!showActions && !isAfter11_30PM_IST() && subscription.is_active && vacationInfo && (
-                    <div className="flex items-center text-sm text-muted-foreground lg:min-w-[160px]">
-                      Actions disabled during vacation
-                    </div>
-                  )}
-
-                  {isAfter11_30PM_IST() && !showActions && subscription.is_active && !vacationInfo && (
-                    <div className="flex items-center text-sm text-muted-foreground lg:min-w-[160px]">
-                      No delivery scheduled for tomorrow
-                    </div>
-                  )}
                 </div>
               </Card>
             );

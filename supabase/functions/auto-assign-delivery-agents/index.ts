@@ -54,7 +54,7 @@ serve(async (req) => {
     const { data: pendingOrders, error: ordersError } = await supabase
       .from('orders')
       .select('id, seller_id, delivery_address, subscription_id')
-      .eq('status', 'pending')
+      .in('status', ['pending', 'accepted_by_seller'])
       .not('subscription_id', 'is', null)
       .is('assigned_agent_id', null)
       .gte('created_at', thirtyMinutesAgo);
