@@ -46,7 +46,7 @@ serve(async (req) => {
 
     console.log(`📅 Checking orders with delivery_date = ${todayStr}`);
 
-    // Find pending subscription orders for today that haven't been accepted
+    // Find subscription orders where visible_until has passed and still not accepted
     const { data: pendingOrders, error: fetchError } = await supabase
       .from('orders')
       .select(`
@@ -54,8 +54,12 @@ serve(async (req) => {
         subscription_id,
         delivery_date,
         created_at,
+        visible_until,
         status,
         accepted_at,
+        seller_accepted_at,
+        visible,
+        acceptance_window_expired,
         subscription:subscriptions!orders_subscription_id_fkey(
           id,
           next_delivery_date,
@@ -63,10 +67,11 @@ serve(async (req) => {
           vacation:subscription_vacation_periods(start_date, end_date, status)
         )
       `)
-      .eq('status', 'pending')
+      .eq('status', 'pending_seller_acceptance')
       .eq('delivery_date', todayStr)
-      .is('accepted_at', null)
-      .not('subscription_id', 'is', null);
+      .is('seller_accepted_at', null)
+      .not('subscription_id', 'is', null)
+      .lte('visible_until', new Date().toISOString());
 
     if (fetchError) {
       throw new Error(`Failed to fetch pending orders: ${fetchError.message}`);
@@ -82,11 +87,13 @@ serve(async (req) => {
       try {
         console.log(`❌ Processing unaccepted order ${order.id} for subscription ${order.subscription_id}`);
 
-        // Mark order as not_accepted
+        // Mark order with expired acceptance window
         const { error: orderUpdateError } = await supabase
           .from('orders')
           .update({ 
-            status: 'not_accepted',
+            status: 'pending_after_cutoff',
+            acceptance_window_expired: true,
+            visible: true,
             updated_at: new Date().toISOString()
           })
           .eq('id', order.id);
@@ -121,6 +128,19 @@ serve(async (req) => {
           continue;
         }
 
+        // Send escalation notification to ops/admin
+        await supabase.from('admin_notifications').insert({
+          title: 'Subscription Order - Acceptance Window Expired',
+          message: `Order ${order.id} was not accepted by seller before 11:30 AM IST. Requires escalation.`,
+          type: 'order_escalation',
+          metadata: {
+            order_id: order.id,
+            subscription_id: order.subscription_id,
+            visible_until: order.visible_until,
+            current_time: new Date().toISOString()
+          }
+        });
+
         // Log the date shift
         const { error: logError } = await supabase
           .from('subscription_order_logs')
@@ -128,18 +148,30 @@ serve(async (req) => {
             subscription_id: order.subscription_id,
             order_id: order.id,
             event_type: 'not_accepted',
-            original_date: todayIST,
+            original_date: todayStr,
             new_date: nextDateStr,
-            reason: 'Seller did not accept by 11:00 PM IST deadline',
+            reason: 'Seller did not accept by 11:30 AM IST deadline',
             created_at: new Date().toISOString()
           });
+        
+        // Log acceptance window expiry
+        await supabase.from('order_visibility_logs').insert({
+          order_id: order.id,
+          event_type: 'expired',
+          status_before: 'pending_seller_acceptance',
+          status_after: 'pending_after_cutoff',
+          visible_until: order.visible_until,
+          metadata: {
+            subscription_id: order.subscription_id,
+            expired_at_ist: new Date().toISOString()
+          }
+        });
 
         if (logError) {
           console.error(`⚠️ Failed to log date shift for order ${order.id}:`, logError);
-          // Don't increment error count - logging failure shouldn't stop the process
         }
 
-        console.log(`✅ Processed order ${order.id}: marked not_accepted, extended subscription to ${nextDateStr}`);
+        console.log(`✅ Processed order ${order.id}: marked pending_after_cutoff, extended subscription to ${nextDateStr}`);
         processedCount++;
 
       } catch (error) {

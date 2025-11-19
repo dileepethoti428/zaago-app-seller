@@ -16,9 +16,103 @@ export const useSellerOrderActions = () => {
 
     setIsProcessing(orderId);
 
+    // For accept action, handle visibility window logic
+    if (action === 'accept') {
+      try {
+        // Get order details to check visible_until
+        const { data: order, error: fetchError } = await supabase
+          .from('orders')
+          .select('visible_until, status, subscription_id')
+          .eq('id', orderId)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        const now = new Date();
+        const visibleUntil = order.visible_until ? new Date(order.visible_until) : null;
+        const isLate = visibleUntil && now > visibleUntil;
+
+        // Determine new status based on timing
+        const newStatus = isLate ? 'accepted_late' : 'accepted_by_seller';
+
+        // Update order with acceptance details
+        const { error: updateError } = await supabase
+          .from('orders')
+          .update({
+            status: newStatus,
+            seller_accepted_at: now.toISOString(),
+            accepted_at: now.toISOString(),
+            visible: false,
+            acceptance_window_expired: false,
+            updated_at: now.toISOString()
+          })
+          .eq('id', orderId);
+
+        if (updateError) throw updateError;
+
+        // Log seller acceptance
+        await supabase.from('order_visibility_logs').insert({
+          order_id: orderId,
+          event_type: isLate ? 'late_acceptance' : 'accepted',
+          status_before: order.status,
+          status_after: newStatus,
+          visible_until: order.visible_until,
+          acceptance_time: now.toISOString(),
+          metadata: {
+            is_late: isLate,
+            time_diff_minutes: visibleUntil ? Math.floor((now.getTime() - visibleUntil.getTime()) / (1000 * 60)) : 0
+          }
+        });
+
+        // Show late acceptance warning if applicable
+        if (isLate) {
+          toast({
+            title: "Late Acceptance",
+            description: "This order was accepted after the 11:30 AM deadline. Operations team has been notified.",
+            variant: "default"
+          });
+
+          // Notify ops about late acceptance
+          await supabase.from('admin_notifications').insert({
+            title: 'Late Order Acceptance',
+            message: `Order ${orderId} was accepted after the deadline by seller.`,
+            type: 'late_acceptance',
+            metadata: {
+              order_id: orderId,
+              visible_until: order.visible_until,
+              accepted_at: now.toISOString()
+            }
+          });
+        } else {
+          toast({
+            title: "Success",
+            description: "Order accepted successfully",
+            variant: "default"
+          });
+        }
+
+        // Confirm the update
+        window.dispatchEvent(new CustomEvent('orderStatusUpdated', { 
+          detail: { orderId, action, status: newStatus, confirmed: true } 
+        }));
+
+        return true;
+      } catch (error) {
+        console.error('Error accepting order:', error);
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to accept order",
+          variant: "destructive"
+        });
+        return false;
+      } finally {
+        setIsProcessing(null);
+      }
+    }
+
+    // For other actions (reject, pack, notify_agents), use original logic
     // Optimistic update - immediately update UI state
-    const newStatus = action === 'accept' ? 'accepted' : 
-                      action === 'reject' ? 'rejected' : 
+    const newStatus = action === 'reject' ? 'rejected' : 
                       action === 'pack' ? 'packed' : 'assigned';
     setOptimisticUpdates(prev => ({ ...prev, [orderId]: newStatus }));
 

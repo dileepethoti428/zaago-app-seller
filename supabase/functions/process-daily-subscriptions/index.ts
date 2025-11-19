@@ -126,6 +126,12 @@ serve(async (req) => {
         // Calculate total
         const itemTotal = Number(product.price) * subscription.quantity;
 
+        // Calculate visible_until = next day 11:30 AM IST
+        const createdAtIST = new Date();
+        const nextDay = new Date(createdAtIST);
+        nextDay.setDate(nextDay.getDate() + 1);
+        nextDay.setHours(11, 30, 0, 0);
+
         // Create order record
         const orderData = {
           user_id: subscription.user_id,
@@ -139,7 +145,11 @@ serve(async (req) => {
             image_url: product.image_url
           }],
           total: itemTotal,
-          status: 'pending',
+          status: 'pending_seller_acceptance',
+          visible: true,
+          visible_until: nextDay.toISOString(),
+          acceptance_window_expired: false,
+          seller_accepted_at: null,
           address: subscription.delivery_address || {},
           delivery_address_id: null,
           delivery_date: today,
@@ -150,7 +160,7 @@ serve(async (req) => {
           customer_phone: profile?.phone || null,
           payment_method: 'subscription',
           payment_status: 'pending',
-          accepted_at: null, // Will be set when seller accepts before 11:00 PM IST
+          accepted_at: null,
           order_type: 'subscription',
           created_at: new Date().toISOString()
         };
@@ -172,6 +182,20 @@ serve(async (req) => {
         }
 
         ordersCreated++;
+        
+        // Log order creation
+        await supabase.from('order_visibility_logs').insert({
+          order_id: newOrder.id,
+          event_type: 'created',
+          status_before: null,
+          status_after: 'pending_seller_acceptance',
+          visible_until: nextDay.toISOString(),
+          metadata: {
+            subscription_id: subscription.id,
+            created_at_ist: createdAtIST.toISOString()
+          }
+        });
+        
         console.log(`✅ Created order ${newOrder.id} for subscription ${subscription.id}`);
 
         // Fetch vacation periods for this subscription
@@ -207,22 +231,24 @@ serve(async (req) => {
 
         // Create notification for seller
         if (product.seller_id) {
-          const { error: notifError } = await supabase
-            .from('notifications')
-            .insert({
-              user_id: product.seller_id,
-              title: 'New Subscription Order',
-              message: `You have a new subscription order for ${product.name}`,
-              type: 'new_order',
-              role: 'seller',
-              order_id: newOrder.id,
-              metadata: { 
-                subscription_id: subscription.id,
-                auto_generated: true,
-                product_name: product.name,
-                quantity: subscription.quantity
-              }
-            });
+        const { error: notifError } = await supabase
+          .from('notifications')
+          .insert({
+            user_id: product.seller_id,
+            title: 'New Subscription Order - Accept by 11:30 AM IST',
+            message: `You have a new subscription order for ${product.name}. Please accept before 11:30 AM IST tomorrow.`,
+            type: 'new_order',
+            role: 'seller',
+            order_id: newOrder.id,
+            metadata: { 
+              subscription_id: subscription.id,
+              auto_generated: true,
+              product_name: product.name,
+              quantity: subscription.quantity,
+              visible_until: nextDay.toISOString(),
+              acceptance_deadline: '11:30 AM IST (next day)'
+            }
+          });
 
           if (!notifError) {
             notificationsSent++;
