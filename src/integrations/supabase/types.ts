@@ -2142,6 +2142,33 @@ export type Database = {
           },
         ]
       }
+      non_delivery_days: {
+        Row: {
+          created_at: string | null
+          date: string
+          description: string | null
+          id: string
+          reason: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          description?: string | null
+          id?: string
+          reason: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          id?: string
+          reason?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           admin_notifications: boolean
@@ -3376,6 +3403,7 @@ export type Database = {
           product_lng: number | null
           seller_id: string | null
           stock_quantity: number | null
+          total_ratings: number | null
           total_reviews: number | null
           type: string | null
           unit: string | null
@@ -3401,6 +3429,7 @@ export type Database = {
           product_lng?: number | null
           seller_id?: string | null
           stock_quantity?: number | null
+          total_ratings?: number | null
           total_reviews?: number | null
           type?: string | null
           unit?: string | null
@@ -3426,6 +3455,7 @@ export type Database = {
           product_lng?: number | null
           seller_id?: string | null
           stock_quantity?: number | null
+          total_ratings?: number | null
           total_reviews?: number | null
           type?: string | null
           unit?: string | null
@@ -4599,6 +4629,57 @@ export type Database = {
           },
         ]
       }
+      upi_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          failure_reason: string | null
+          id: string
+          metadata: Json | null
+          order_id: string
+          razorpay_order_id: string
+          razorpay_payment_id: string | null
+          razorpay_signature: string | null
+          status: string | null
+          transaction_id: string
+          updated_at: string | null
+          upi_app: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          metadata?: Json | null
+          order_id: string
+          razorpay_order_id: string
+          razorpay_payment_id?: string | null
+          razorpay_signature?: string | null
+          status?: string | null
+          transaction_id: string
+          updated_at?: string | null
+          upi_app?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          metadata?: Json | null
+          order_id?: string
+          razorpay_order_id?: string
+          razorpay_payment_id?: string | null
+          razorpay_signature?: string | null
+          status?: string | null
+          transaction_id?: string
+          updated_at?: string | null
+          upi_app?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_devices: {
         Row: {
           created_at: string
@@ -5347,6 +5428,10 @@ export type Database = {
         }
         Returns: Json
       }
+      calculate_country_delight_next_delivery: {
+        Args: { p_current_date?: string; p_subscription_id: string }
+        Returns: string
+      }
       calculate_delivery_payout: {
         Args: {
           p_agent_id?: string
@@ -5416,6 +5501,10 @@ export type Database = {
           order_count: number
           seller_id: string
         }[]
+      }
+      calculate_simple_next_delivery_ist: {
+        Args: { p_subscription_id: string }
+        Returns: string
       }
       calculate_vacation_credit: {
         Args: {
@@ -5660,6 +5749,7 @@ export type Database = {
         Args: { order_items: Json }
         Returns: string[]
       }
+      fix_all_subscription_dates_ist: { Args: never; Returns: Json }
       fix_subscription_delivery_dates: { Args: never; Returns: Json }
       fix_uncategorized_products: { Args: never; Returns: Json }
       force_complete_delivery_bypass: {
@@ -6205,7 +6295,6 @@ export type Database = {
       manual_complete_delivery: {
         Args: {
           p_agent_id: string
-          p_live_distance_km?: number
           p_order_id: string
           p_payment_method: string
         }
@@ -6382,7 +6471,6 @@ export type Database = {
       simple_mark_delivered: {
         Args: {
           p_agent_id: string
-          p_live_distance_km?: number
           p_order_id: string
           p_payment_method: string
         }
@@ -6430,9 +6518,17 @@ export type Database = {
         Args: { p_action: string; p_order_id: string; p_seller_user_id: string }
         Returns: Json
       }
+      update_subscription_next_delivery: {
+        Args: { p_subscription_id: string }
+        Returns: Json
+      }
       update_subscription_next_delivery_dates: {
         Args: never
         Returns: undefined
+      }
+      update_subscription_next_delivery_ist: {
+        Args: { p_subscription_id: string }
+        Returns: Json
       }
       update_trending_products: { Args: never; Returns: undefined }
       upsert_delivery_agent: {
