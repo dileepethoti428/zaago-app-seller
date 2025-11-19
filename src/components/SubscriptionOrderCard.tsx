@@ -119,6 +119,10 @@ export const SubscriptionOrderCard = ({ subscriptionId, deliveryDate }: Subscrip
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: any; label: string }> = {
+      pending_seller_acceptance: { variant: 'secondary', label: 'Awaiting Acceptance' },
+      accepted_by_seller: { variant: 'default', label: 'Accepted' },
+      accepted_late: { variant: 'secondary', label: 'Accepted (Late)' },
+      skipped_by_seller: { variant: 'outline', label: 'Skipped for Today' },
       pending: { variant: 'secondary', label: 'Pending' },
       accepted: { variant: 'default', label: 'Accepted' },
       assigned: { variant: 'default', label: 'Agent Assigned' },
