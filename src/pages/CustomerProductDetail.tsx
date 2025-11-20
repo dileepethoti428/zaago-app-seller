@@ -260,7 +260,7 @@ const CustomerProductDetail = () => {
               <>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-bold text-primary">
-                    {formatPriceWithGST(activeOffer.offer_price, product.gst_percentage)}
+                    ₹{activeOffer.offer_price.toFixed(2)}
                   </span>
                   <Badge variant="destructive" className="text-sm">
                     <Flame className="w-3 h-3 mr-1" />
@@ -271,8 +271,12 @@ const CustomerProductDetail = () => {
                   <span className="text-lg text-muted-foreground line-through">
                     ₹{product.price.toFixed(2)}
                   </span>
-                  <Badge variant="secondary">{formatGSTBadge(product.gst_percentage)}</Badge>
                 </div>
+                {product.gst_percentage > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Price includes GST ({product.gst_percentage}%)
+                  </p>
+                )}
               </>
             )}
             
@@ -280,7 +284,7 @@ const CustomerProductDetail = () => {
               <>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-bold text-primary">
-                    {formatPriceWithGST(finalPrice, product.gst_percentage)}
+                    ₹{finalPrice.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -291,14 +295,24 @@ const CustomerProductDetail = () => {
                     {product.discount_percentage}% OFF
                   </Badge>
                 </div>
+                {product.gst_percentage > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Price includes GST ({product.gst_percentage}%)
+                  </p>
+                )}
               </>
             )}
             
             {!activeOffer && !product.discount_percentage && (
-              <div className="flex items-baseline gap-2">
+              <div className="flex flex-col gap-1">
                 <span className="text-3xl font-bold text-primary">
-                  {formatPriceWithGST(product.price, product.gst_percentage)}
+                  ₹{product.price.toFixed(2)}
                 </span>
+                {product.gst_percentage > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Price includes GST ({product.gst_percentage}%)
+                  </p>
+                )}
               </div>
             )}
           </div>

@@ -3451,6 +3451,7 @@ export type Database = {
       products: {
         Row: {
           average_rating: number | null
+          base_price: number
           benefits: string[] | null
           category: string | null
           category_id: string | null
@@ -3479,6 +3480,7 @@ export type Database = {
         }
         Insert: {
           average_rating?: number | null
+          base_price: number
           benefits?: string[] | null
           category?: string | null
           category_id?: string | null
@@ -3507,6 +3509,7 @@ export type Database = {
         }
         Update: {
           average_rating?: number | null
+          base_price?: number
           benefits?: string[] | null
           category?: string | null
           category_id?: string | null
