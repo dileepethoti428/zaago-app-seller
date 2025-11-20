@@ -6034,6 +6034,10 @@ export type Database = {
           subscriptions_processed: number
         }[]
       }
+      get_product_sales_count: {
+        Args: { product_uuid: string }
+        Returns: number
+      }
       get_product_special_offer: {
         Args: { p_product_id: string }
         Returns: {
