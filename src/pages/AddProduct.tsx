@@ -47,6 +47,7 @@ export default function AddProductPage() {
     unit: 'per litre',
     image_url: '',
     discount_percentage: '',
+    gst_percentage: '0',
     is_active: true,
     benefits: [''],
     ingredients: ['']
@@ -254,6 +255,7 @@ export default function AddProductPage() {
         image_url: allImages.length > 0 ? allImages[0] : null, // Keep backward compatibility
         images: allImages,
         discount_percentage: formData.discount_percentage ? parseFloat(formData.discount_percentage) : 0,
+        gst_percentage: formData.gst_percentage ? parseFloat(formData.gst_percentage) : 0,
         benefits: benefits.length > 0 ? benefits : null,
         ingredients: ingredients.length > 0 ? ingredients : null,
         is_active: formData.is_active,
@@ -636,6 +638,28 @@ export default function AddProductPage() {
                   </div>
                 )}
               </div>
+
+              {/* GST Percentage */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Tag className="w-4 h-4" />
+                  GST Percentage (%)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={formData.gst_percentage}
+                  onChange={(e) => handleInputChange('gst_percentage', e.target.value)}
+                  placeholder="Enter GST % (e.g., 5, 12, 18)"
+                  className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Common GST rates: 0%, 5%, 12%, 18%, 28%
+                </p>
+              </div>
+
 
               {/* Benefits */}
               <div className="space-y-2">
