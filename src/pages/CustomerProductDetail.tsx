@@ -20,6 +20,7 @@ import { useCart } from '@/context/CartContext';
 import { useActiveOffersNearby } from '@/hooks/useSpecialOffers';
 import ProductVariantSelector from '@/components/ProductVariantSelector';
 import { formatPriceWithGST, formatGSTBadge } from '@/utils/priceDisplay';
+import { ProductTags } from '@/components/ProductTags';
 
 interface ProductWithSeller {
   id: string;
@@ -32,6 +33,7 @@ interface ProductWithSeller {
   image_url: string | null;
   is_active: boolean;
   seller_id: string;
+  tags?: string[];
 }
 
 const CustomerProductDetail = () => {
@@ -59,7 +61,7 @@ const CustomerProductDetail = () => {
         .from('products')
         .select(`
           id, name, description, price, discount_percentage, 
-          gst_percentage, stock_quantity, 
+          gst_percentage, stock_quantity, tags,
           image_url, is_active, seller_id, unit, type
         `)
         .eq('id', id)
@@ -239,6 +241,12 @@ const CustomerProductDetail = () => {
             {product.description && (
               <p className="text-muted-foreground text-lg">{product.description}</p>
             )}
+            
+            {/* Product Tags */}
+            {product.tags && product.tags.length > 0 && (
+              <ProductTags tags={product.tags} className="mt-3" />
+            )}
+            
             {activeOffer && (
               <p className="text-sm text-orange-500 mt-2">
                 Offer expires {formatDistance(new Date(activeOffer.valid_until), new Date(), { addSuffix: true })}

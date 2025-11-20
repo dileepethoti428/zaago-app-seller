@@ -3470,6 +3470,7 @@ export type Database = {
           product_lng: number | null
           seller_id: string | null
           stock_quantity: number | null
+          tags: string[] | null
           total_ratings: number | null
           total_reviews: number | null
           type: string | null
@@ -3497,6 +3498,7 @@ export type Database = {
           product_lng?: number | null
           seller_id?: string | null
           stock_quantity?: number | null
+          tags?: string[] | null
           total_ratings?: number | null
           total_reviews?: number | null
           type?: string | null
@@ -3524,6 +3526,7 @@ export type Database = {
           product_lng?: number | null
           seller_id?: string | null
           stock_quantity?: number | null
+          tags?: string[] | null
           total_ratings?: number | null
           total_reviews?: number | null
           type?: string | null

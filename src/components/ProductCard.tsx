@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useProductVariants } from '@/hooks/useProductVariants';
 import ProductVariantSelector from './ProductVariantSelector';
 import { formatPriceWithGST } from '@/utils/priceDisplay';
+import { ProductTags } from './ProductTags';
 
 interface Product {
   id: string;
@@ -15,6 +16,7 @@ interface Product {
   stock_quantity?: number;
   created_at: string;
   gst_percentage?: number;
+  tags?: string[];
 }
 
 interface ProductCardProps {
@@ -88,6 +90,11 @@ export default function ProductCard({ product, onDelete }: ProductCardProps) {
           <p className="text-secondary text-sm line-clamp-2">
             {product.description}
           </p>
+        )}
+
+        {/* Product Tags */}
+        {product.tags && product.tags.length > 0 && (
+          <ProductTags tags={product.tags} maxTags={3} className="mt-2" />
         )}
 
         {/* Variant Selector or Basic Price */}
