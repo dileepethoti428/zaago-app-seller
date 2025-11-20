@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { PlusCircle, Upload, Tag, DollarSign, Package, Plus, Minus, Camera, X, Check } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/context/AuthContext';
@@ -11,7 +11,11 @@ import { useProductLocation } from '@/hooks/useProductLocation';
 import { MapPin, Navigation, RefreshCw, AlertCircle, Loader } from 'lucide-react';
 import { compressImage } from '@/lib/imageCompression';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useEffect } from 'react';
+import { TAG_CATEGORIES, generateAutoTags, AutoTaggingData } from '@/config/productTags';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 export default function AddProductPage() {
   const { user } = useAuth();
@@ -50,7 +54,8 @@ export default function AddProductPage() {
     gst_percentage: '0',
     is_active: true,
     benefits: [''],
-    ingredients: ['']
+    ingredients: [''],
+    selectedTags: [] as string[]
   });
 
   const [productVariants, setProductVariants] = useState<Array<{
@@ -87,6 +92,22 @@ export default function AddProductPage() {
       ...prev,
       [field]: prev[field].filter((_, i) => i !== index)
     }));
+  };
+
+  const handleTagToggle = (tag: string) => {
+    setFormData(prev => {
+      const isSelected = prev.selectedTags.includes(tag);
+      return {
+        ...prev,
+        selectedTags: isSelected
+          ? prev.selectedTags.filter(t => t !== tag)
+          : [...prev.selectedTags, tag]
+      };
+    });
+  };
+
+  const clearAllTags = () => {
+    setFormData(prev => ({ ...prev, selectedTags: [] }));
   };
 
   // Handle multiple image file selection
@@ -244,6 +265,23 @@ export default function AddProductPage() {
       const benefits = formData.benefits.filter(b => b.trim() !== '');
       const ingredients = formData.ingredients.filter(i => i.trim() !== '');
 
+      // Determine final tags: use manual if selected, otherwise auto-generate
+      let finalTags: string[] = [];
+
+      if (formData.selectedTags.length > 0) {
+        finalTags = formData.selectedTags;
+      } else {
+        const autoTagData: AutoTaggingData = {
+          categoryName: formData.category === 'other' ? formData.customCategory : formData.category,
+          stockQuantity: parseInt(formData.stock_quantity) || 0,
+          createdAt: new Date().toISOString(),
+          averageRating: 0,
+          totalOrders: 0,
+        };
+        
+        finalTags = generateAutoTags(autoTagData);
+      }
+
       const productData = {
         name: formData.name,
         description: formData.description || null,
@@ -252,15 +290,15 @@ export default function AddProductPage() {
         type: formData.type || null,
         category: formData.category === 'other' ? formData.customCategory : formData.category,
         unit: formData.unit,
-        image_url: allImages.length > 0 ? allImages[0] : null, // Keep backward compatibility
+        image_url: allImages.length > 0 ? allImages[0] : null,
         images: allImages,
         discount_percentage: formData.discount_percentage ? parseFloat(formData.discount_percentage) : 0,
         gst_percentage: formData.gst_percentage ? parseFloat(formData.gst_percentage) : 0,
+        tags: finalTags,
         benefits: benefits.length > 0 ? benefits : null,
         ingredients: ingredients.length > 0 ? ingredients : null,
         is_active: formData.is_active,
-        seller_id: user?.id, // Add seller_id to track ownership
-        // GPS coordinates
+        seller_id: user?.id,
         product_lat: productLocation.latitude,
         product_lng: productLocation.longitude,
       };
@@ -727,6 +765,86 @@ export default function AddProductPage() {
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Product Tags Section */}
+          <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground">
+                <Tag className="h-5 w-5 text-primary" />
+                Product Tags
+              </h2>
+              {formData.selectedTags.length > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={clearAllTags}
+                >
+                  Clear All ({formData.selectedTags.length})
+                </Button>
+              )}
+            </div>
+            
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4 mb-6">
+              <p className="text-sm text-blue-900 dark:text-blue-200">
+                <strong>Auto-tagging:</strong> If you don't select any tags, the system will automatically 
+                assign tags based on product category, stock, orders, and ratings.
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              {Object.entries(TAG_CATEGORIES).map(([categoryKey, category]) => (
+                <div key={categoryKey} className="space-y-3">
+                  <h3 className="font-medium text-sm text-muted-foreground">
+                    {category.label}
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {category.tags.map((tag) => (
+                      <div key={tag} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`tag-${tag}`}
+                          checked={formData.selectedTags.includes(tag)}
+                          onCheckedChange={() => handleTagToggle(tag)}
+                        />
+                        <Label
+                          htmlFor={`tag-${tag}`}
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          {tag}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {formData.selectedTags.length > 0 && (
+              <div className="pt-4 border-t border-border mt-6">
+                <p className="text-sm font-medium mb-2 text-foreground">
+                  Selected Tags ({formData.selectedTags.length}):
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {formData.selectedTags.map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant="secondary"
+                      className="px-3 py-1"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => handleTagToggle(tag)}
+                        className="ml-2 hover:text-destructive"
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Product Exact Location (GPS) Section */}

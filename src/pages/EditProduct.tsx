@@ -10,6 +10,11 @@ import { useProductVariants } from '@/hooks/useProductVariants';
 import ProductVariants from '@/components/ProductVariants';
 import { MapPin, Navigation } from 'lucide-react';
 import { compressImage } from '@/lib/imageCompression';
+import { TAG_CATEGORIES, generateAutoTags, AutoTaggingData } from '@/config/productTags';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 interface Product {
   id: string;
@@ -22,11 +27,14 @@ interface Product {
   image_url?: string;
   images?: string[];
   discount_percentage?: number;
+  gst_percentage?: number;
   benefits?: string[];
   ingredients?: string[];
   is_active: boolean;
   seller_id: string;
   category_id?: string;
+  created_at?: string;
+  average_rating?: number;
 }
 
 interface ProductVariant {
@@ -68,7 +76,8 @@ export default function EditProductPage() {
     gst_percentage: '0',
     is_active: true,
     benefits: [''],
-    ingredients: ['']
+    ingredients: [''],
+    selectedTags: [] as string[]
   });
 
   // Fetch product data
@@ -108,7 +117,8 @@ export default function EditProductPage() {
           gst_percentage: data.gst_percentage?.toString() || '0',
           is_active: data.is_active,
           benefits: data.benefits && data.benefits.length > 0 ? data.benefits : [''],
-          ingredients: data.ingredients && data.ingredients.length > 0 ? data.ingredients : ['']
+          ingredients: data.ingredients && data.ingredients.length > 0 ? data.ingredients : [''],
+          selectedTags: data.tags || []
         });
         
         // Set existing images from both images array and image_url
@@ -162,6 +172,22 @@ export default function EditProductPage() {
       })));
     }
   }, [existingVariants, variants.length]);
+
+  const handleTagToggle = (tag: string) => {
+    setFormData(prev => {
+      const isSelected = prev.selectedTags.includes(tag);
+      return {
+        ...prev,
+        selectedTags: isSelected
+          ? prev.selectedTags.filter(t => t !== tag)
+          : [...prev.selectedTags, tag]
+      };
+    });
+  };
+
+  const clearAllTags = () => {
+    setFormData(prev => ({ ...prev, selectedTags: [] }));
+  };
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -319,6 +345,29 @@ export default function EditProductPage() {
       const benefits = formData.benefits.filter(b => b.trim() !== '');
       const ingredients = formData.ingredients.filter(i => i.trim() !== '');
 
+      // Determine final tags: use manual if selected, otherwise auto-generate
+      let finalTags: string[] = [];
+
+      if (formData.selectedTags.length > 0) {
+        finalTags = formData.selectedTags;
+      } else {
+        // Fetch order count for this product
+        const { count: orderCount } = await supabase
+          .from('order_items')
+          .select('id', { count: 'exact', head: true })
+          .eq('product_id', id);
+
+        const autoTagData: AutoTaggingData = {
+          categoryName: product.category_id ? '' : '',
+          stockQuantity: parseInt(formData.stock_quantity) || 0,
+          createdAt: product.created_at,
+          averageRating: (product as any).average_rating || 0,
+          totalOrders: orderCount || 0,
+        };
+        
+        finalTags = generateAutoTags(autoTagData);
+      }
+
       // Update product
       const updateData = {
         name: formData.name,
@@ -327,10 +376,11 @@ export default function EditProductPage() {
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         type: formData.type || null,
         unit: formData.unit,
-        image_url: allImages.length > 0 ? allImages[0] : null, // Keep backward compatibility
+        image_url: allImages.length > 0 ? allImages[0] : null,
         images: allImages,
         discount_percentage: formData.discount_percentage ? parseFloat(formData.discount_percentage) : 0,
         gst_percentage: formData.gst_percentage ? parseFloat(formData.gst_percentage) : 0,
+        tags: finalTags,
         benefits: benefits.length > 0 ? benefits : null,
         ingredients: ingredients.length > 0 ? ingredients : null,
         is_active: formData.is_active,
@@ -875,6 +925,86 @@ export default function EditProductPage() {
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Product Tags Section */}
+          <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground">
+                <Tag className="h-5 w-5 text-primary" />
+                Product Tags
+              </h2>
+              {formData.selectedTags.length > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={clearAllTags}
+                >
+                  Clear All ({formData.selectedTags.length})
+                </Button>
+              )}
+            </div>
+            
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4 mb-6">
+              <p className="text-sm text-blue-900 dark:text-blue-200">
+                <strong>Auto-tagging:</strong> If you don't select any tags, the system will automatically 
+                assign tags based on product category, stock, orders, and ratings.
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              {Object.entries(TAG_CATEGORIES).map(([categoryKey, category]) => (
+                <div key={categoryKey} className="space-y-3">
+                  <h3 className="font-medium text-sm text-muted-foreground">
+                    {category.label}
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {category.tags.map((tag) => (
+                      <div key={tag} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`tag-${tag}`}
+                          checked={formData.selectedTags.includes(tag)}
+                          onCheckedChange={() => handleTagToggle(tag)}
+                        />
+                        <Label
+                          htmlFor={`tag-${tag}`}
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          {tag}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {formData.selectedTags.length > 0 && (
+              <div className="pt-4 border-t border-border mt-6">
+                <p className="text-sm font-medium mb-2 text-foreground">
+                  Selected Tags ({formData.selectedTags.length}):
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {formData.selectedTags.map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant="secondary"
+                      className="px-3 py-1"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => handleTagToggle(tag)}
+                        className="ml-2 hover:text-destructive"
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Product Variants */}
