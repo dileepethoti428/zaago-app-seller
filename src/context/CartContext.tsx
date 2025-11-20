@@ -15,6 +15,7 @@ interface CartItem {
   stock_quantity: number;
   variant_id?: string;
   variant_name?: string;
+  gst_percentage?: number;
 }
 
 interface CartContextType {
@@ -50,7 +51,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             name,
             image_url,
             seller_id,
-            stock_quantity
+            stock_quantity,
+            gst_percentage
           )
         `)
         .eq('user_id', user.id);
@@ -67,7 +69,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         seller_id: item.products?.seller_id,
         stock_quantity: item.products?.stock_quantity || 0,
         variant_id: item.variant_id,
-        variant_name: item.variant_name
+        variant_name: item.variant_name,
+        gst_percentage: item.products?.gst_percentage || 0
       }));
 
       setCartItems(formattedItems);

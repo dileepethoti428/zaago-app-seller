@@ -65,6 +65,7 @@ export default function EditProductPage() {
     unit: 'per litre',
     image_url: '',
     discount_percentage: '',
+    gst_percentage: '0',
     is_active: true,
     benefits: [''],
     ingredients: ['']
@@ -104,6 +105,7 @@ export default function EditProductPage() {
           unit: data.unit || 'per litre',
           image_url: data.image_url || '',
           discount_percentage: data.discount_percentage?.toString() || '',
+          gst_percentage: data.gst_percentage?.toString() || '0',
           is_active: data.is_active,
           benefits: data.benefits && data.benefits.length > 0 ? data.benefits : [''],
           ingredients: data.ingredients && data.ingredients.length > 0 ? data.ingredients : ['']
@@ -328,6 +330,7 @@ export default function EditProductPage() {
         image_url: allImages.length > 0 ? allImages[0] : null, // Keep backward compatibility
         images: allImages,
         discount_percentage: formData.discount_percentage ? parseFloat(formData.discount_percentage) : 0,
+        gst_percentage: formData.gst_percentage ? parseFloat(formData.gst_percentage) : 0,
         benefits: benefits.length > 0 ? benefits : null,
         ingredients: ingredients.length > 0 ? ingredients : null,
         is_active: formData.is_active,
@@ -660,6 +663,27 @@ export default function EditProductPage() {
                   onChange={(e) => handleInputChange('discount_percentage', e.target.value)}
                   className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder:text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 />
+              </div>
+
+              {/* GST Percentage */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Tag className="w-4 h-4" />
+                  GST Percentage (%)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={formData.gst_percentage}
+                  onChange={(e) => setFormData({ ...formData, gst_percentage: e.target.value })}
+                  placeholder="Enter GST % (e.g., 5, 12, 18)"
+                  className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder:text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Common GST rates: 0%, 5%, 12%, 18%, 28%
+                </p>
               </div>
             </div>
 

@@ -3,6 +3,7 @@ import { Package, DollarSign, Calendar, Edit, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useProductVariants } from '@/hooks/useProductVariants';
 import ProductVariantSelector from './ProductVariantSelector';
+import { formatPriceWithGST } from '@/utils/priceDisplay';
 
 interface Product {
   id: string;
@@ -13,6 +14,7 @@ interface Product {
   description?: string;
   stock_quantity?: number;
   created_at: string;
+  gst_percentage?: number;
 }
 
 interface ProductCardProps {
@@ -98,7 +100,9 @@ export default function ProductCard({ product, onDelete }: ProductCardProps) {
         ) : (
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-2 text-primary">
-              <span className="font-semibold">{formatPrice(product.price)}</span>
+              <span className="font-semibold">
+                {formatPriceWithGST(product.price, product.gst_percentage)}
+              </span>
             </div>
             
             {product.stock_quantity !== undefined && (

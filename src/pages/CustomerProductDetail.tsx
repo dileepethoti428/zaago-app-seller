@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/context/CartContext';
 import { useActiveOffersNearby } from '@/hooks/useSpecialOffers';
 import ProductVariantSelector from '@/components/ProductVariantSelector';
+import { formatPriceWithGST, formatGSTBadge } from '@/utils/priceDisplay';
 
 interface ProductWithSeller {
   id: string;
@@ -26,6 +27,7 @@ interface ProductWithSeller {
   description: string | null;
   price: number;
   discount_percentage: number;
+  gst_percentage: number | null;
   stock_quantity: number;
   image_url: string | null;
   is_active: boolean;
@@ -56,7 +58,8 @@ const CustomerProductDetail = () => {
       const { data, error } = await supabase
         .from('products')
         .select(`
-          id, name, description, price, discount_percentage, stock_quantity, 
+          id, name, description, price, discount_percentage, 
+          gst_percentage, stock_quantity, 
           image_url, is_active, seller_id, unit, type
         `)
         .eq('id', id)
@@ -240,6 +243,55 @@ const CustomerProductDetail = () => {
               <p className="text-sm text-orange-500 mt-2">
                 Offer expires {formatDistance(new Date(activeOffer.valid_until), new Date(), { addSuffix: true })}
               </p>
+            )}
+          </div>
+
+          {/* Price with GST */}
+          <div className="space-y-2">
+            {activeOffer && (
+              <>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-primary">
+                    {formatPriceWithGST(activeOffer.offer_price, product.gst_percentage)}
+                  </span>
+                  <Badge variant="destructive" className="text-sm">
+                    <Flame className="w-3 h-3 mr-1" />
+                    Special Offer
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg text-muted-foreground line-through">
+                    ₹{product.price.toFixed(2)}
+                  </span>
+                  <Badge variant="secondary">{formatGSTBadge(product.gst_percentage)}</Badge>
+                </div>
+              </>
+            )}
+            
+            {!activeOffer && product.discount_percentage > 0 && (
+              <>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-primary">
+                    {formatPriceWithGST(finalPrice, product.gst_percentage)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg text-muted-foreground line-through">
+                    ₹{product.price.toFixed(2)}
+                  </span>
+                  <Badge variant="secondary">
+                    {product.discount_percentage}% OFF
+                  </Badge>
+                </div>
+              </>
+            )}
+            
+            {!activeOffer && !product.discount_percentage && (
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-bold text-primary">
+                  {formatPriceWithGST(product.price, product.gst_percentage)}
+                </span>
+              </div>
             )}
           </div>
 

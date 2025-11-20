@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/context/CartContext';
+import { formatPriceWithGST } from '@/utils/priceDisplay';
 
 const Cart = () => {
   const { cartItems, cartTotal, itemCount, removeFromCart, updateQuantity, loading } = useCart();
@@ -99,7 +100,7 @@ const Cart = () => {
                         </p>
                       )}
                       <p className="text-lg font-bold text-primary">
-                        ₹{item.price.toFixed(2)}
+                        {formatPriceWithGST(item.price, item.gst_percentage)}
                       </p>
                       
                       {/* Stock Warning */}
