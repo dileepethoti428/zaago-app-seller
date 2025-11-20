@@ -43,7 +43,7 @@ export default function AddProductPage() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    price: '',
+    base_price: '',
     stock_quantity: '',
     type: '',
     category: '',
@@ -57,6 +57,8 @@ export default function AddProductPage() {
     ingredients: [''],
     selectedTags: [] as string[]
   });
+  
+  const [calculatedPrice, setCalculatedPrice] = useState<number>(0);
 
   const [productVariants, setProductVariants] = useState<Array<{
     id?: string;
@@ -109,6 +111,15 @@ export default function AddProductPage() {
   const clearAllTags = () => {
     setFormData(prev => ({ ...prev, selectedTags: [] }));
   };
+
+  // Auto-calculate final price when base price or GST changes
+  useEffect(() => {
+    const basePrice = parseFloat(formData.base_price) || 0;
+    const gst = parseFloat(formData.gst_percentage) || 0;
+    
+    const finalPrice = basePrice + (basePrice * gst / 100);
+    setCalculatedPrice(finalPrice);
+  }, [formData.base_price, formData.gst_percentage]);
 
   // Handle multiple image file selection
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -285,7 +296,8 @@ export default function AddProductPage() {
       const productData = {
         name: formData.name,
         description: formData.description || null,
-        price: parseFloat(formData.price),
+        base_price: parseFloat(formData.base_price),
+        price: calculatedPrice,
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         type: formData.type || null,
         category: formData.category === 'other' ? formData.customCategory : formData.category,
@@ -460,8 +472,8 @@ export default function AddProductPage() {
                     step="0.01"
                     min="0"
                     required
-                    value={formData.price}
-                    onChange={(e) => handleInputChange('price', e.target.value)}
+                    value={formData.base_price}
+                    onChange={(e) => handleInputChange('base_price', e.target.value)}
                     placeholder="0.00"
                     className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   />
@@ -661,13 +673,13 @@ export default function AddProductPage() {
                 />
                 
                 {/* Show discounted price calculation */}
-                {formData.price && formData.discount_percentage && parseFloat(formData.discount_percentage) > 0 && (
+                {calculatedPrice > 0 && formData.discount_percentage && parseFloat(formData.discount_percentage) > 0 && (
                   <div className="flex items-center justify-between text-sm bg-muted/50 px-3 py-2 rounded-md">
-                    <span className="text-muted-foreground">Final Price:</span>
+                    <span className="text-muted-foreground">Final Price after Discount:</span>
                     <div className="flex items-center gap-2">
-                      <span className="line-through text-muted-foreground">₹{parseFloat(formData.price).toFixed(2)}</span>
+                      <span className="line-through text-muted-foreground">₹{calculatedPrice.toFixed(2)}</span>
                       <span className="font-semibold text-green-600">
-                        ₹{(parseFloat(formData.price) * (1 - parseFloat(formData.discount_percentage) / 100)).toFixed(2)}
+                        ₹{(calculatedPrice * (1 - parseFloat(formData.discount_percentage) / 100)).toFixed(2)}
                       </span>
                       <span className="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded">
                         {formData.discount_percentage}% off

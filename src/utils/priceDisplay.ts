@@ -1,4 +1,17 @@
 /**
+ * Calculates final price including GST
+ * @param basePrice - Price without GST
+ * @param gstPercentage - GST percentage (0-100)
+ * @returns Final price including GST
+ */
+export const calculatePriceWithGST = (
+  basePrice: number,
+  gstPercentage: number
+): number => {
+  return basePrice + (basePrice * gstPercentage / 100);
+};
+
+/**
  * Formats price with GST percentage for display
  * @param price - The price to display
  * @param gstPercentage - The GST percentage (0-100)

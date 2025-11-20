@@ -67,7 +67,7 @@ export default function EditProductPage() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    price: '',
+    base_price: '',
     stock_quantity: '',
     type: '',
     unit: 'per litre',
@@ -79,6 +79,8 @@ export default function EditProductPage() {
     ingredients: [''],
     selectedTags: [] as string[]
   });
+  
+  const [calculatedPrice, setCalculatedPrice] = useState<number>(0);
 
   // Fetch product data
   useEffect(() => {
@@ -108,7 +110,7 @@ export default function EditProductPage() {
         setFormData({
           name: data.name || '',
           description: data.description || '',
-          price: data.price?.toString() || '',
+          base_price: data.base_price?.toString() || '',
           stock_quantity: data.stock_quantity?.toString() || '',
           type: data.type || '',
           unit: data.unit || 'per litre',
@@ -188,6 +190,15 @@ export default function EditProductPage() {
   const clearAllTags = () => {
     setFormData(prev => ({ ...prev, selectedTags: [] }));
   };
+
+  // Auto-calculate final price when base price or GST changes
+  useEffect(() => {
+    const basePrice = parseFloat(formData.base_price) || 0;
+    const gst = parseFloat(formData.gst_percentage) || 0;
+    
+    const finalPrice = basePrice + (basePrice * gst / 100);
+    setCalculatedPrice(finalPrice);
+  }, [formData.base_price, formData.gst_percentage]);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -372,7 +383,8 @@ export default function EditProductPage() {
       const updateData = {
         name: formData.name,
         description: formData.description || null,
-        price: parseFloat(formData.price),
+        base_price: parseFloat(formData.base_price),
+        price: calculatedPrice,
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         type: formData.type || null,
         unit: formData.unit,
@@ -654,8 +666,8 @@ export default function EditProductPage() {
                     step="0.01"
                     min="0"
                     required
-                    value={formData.price}
-                    onChange={(e) => handleInputChange('price', e.target.value)}
+                    value={formData.base_price}
+                    onChange={(e) => handleInputChange('base_price', e.target.value)}
                     className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder:text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   />
                 </div>
@@ -727,10 +739,26 @@ export default function EditProductPage() {
                   max="100"
                   step="0.01"
                   value={formData.gst_percentage}
-                  onChange={(e) => setFormData({ ...formData, gst_percentage: e.target.value })}
+                  onChange={(e) => handleInputChange('gst_percentage', e.target.value)}
                   placeholder="Enter GST % (e.g., 5, 12, 18)"
                   className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder:text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 />
+                
+                {/* Calculated Final Price Display */}
+                {formData.base_price && (
+                  <div className="mt-3 p-4 bg-primary/10 rounded-lg border border-primary/20">
+                    <p className="text-sm text-muted-foreground mb-1">Final Price (including GST):</p>
+                    <p className="text-2xl font-bold text-primary">
+                      ₹{calculatedPrice.toFixed(2)}
+                    </p>
+                    {formData.gst_percentage && parseFloat(formData.gst_percentage) > 0 && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        = ₹{formData.base_price} + {formData.gst_percentage}% GST
+                      </p>
+                    )}
+                  </div>
+                )}
+                
                 <p className="text-xs text-muted-foreground">
                   Common GST rates: 0%, 5%, 12%, 18%, 28%
                 </p>

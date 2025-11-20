@@ -193,6 +193,7 @@ const Products = () => {
       seller_id: user.id,
       name: formData.name,
       description: formData.description || null,
+      base_price: parseFloat(formData.price),
       price: parseFloat(formData.price),
       stock_quantity: parseInt(formData.stock_quantity) || 0,
       image_url: formData.image_url || null,
