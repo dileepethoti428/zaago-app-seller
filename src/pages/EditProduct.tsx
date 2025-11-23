@@ -70,6 +70,7 @@ export default function EditProductPage() {
     base_price: '',
     stock_quantity: '',
     type: '',
+    subcategory_id: '',
     unit: 'per litre',
     image_url: '',
     discount_percentage: '',
@@ -81,6 +82,7 @@ export default function EditProductPage() {
   });
   
   const [calculatedPrice, setCalculatedPrice] = useState<number>(0);
+  const [subcategories, setSubcategories] = useState<any[]>([]);
 
   // Fetch product data
   useEffect(() => {
@@ -113,6 +115,7 @@ export default function EditProductPage() {
           base_price: data.base_price?.toString() || '',
           stock_quantity: data.stock_quantity?.toString() || '',
           type: data.type || '',
+          subcategory_id: data.subcategory_id || '',
           unit: data.unit || 'per litre',
           image_url: data.image_url || '',
           discount_percentage: data.discount_percentage?.toString() || '',
@@ -199,6 +202,27 @@ export default function EditProductPage() {
     const finalPrice = basePrice + (basePrice * gst / 100);
     setCalculatedPrice(finalPrice);
   }, [formData.base_price, formData.gst_percentage]);
+
+  // Fetch subcategories (Note: EditProduct doesn't have category dropdown, subcategory is loaded from existing product)
+  useEffect(() => {
+    const fetchSubcategories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('subcategories')
+          .select('id, name')
+          .eq('is_active', true)
+          .order('name');
+
+        if (error) throw error;
+        setSubcategories(data || []);
+      } catch (error) {
+        console.error('Error fetching subcategories:', error);
+        setSubcategories([]);
+      }
+    };
+
+    fetchSubcategories();
+  }, []);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -387,6 +411,7 @@ export default function EditProductPage() {
         price: calculatedPrice,
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         type: formData.type || null,
+        subcategory_id: formData.subcategory_id || null,
         unit: formData.unit,
         image_url: allImages.length > 0 ? allImages[0] : null,
         images: allImages,
@@ -713,6 +738,23 @@ export default function EditProductPage() {
                   </select>
                 </div>
               </div>
+
+              {/* Sub-Category Selection */}
+              {subcategories.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Sub-Category (Optional)</label>
+                  <select
+                    value={formData.subcategory_id}
+                    onChange={(e) => handleInputChange('subcategory_id', e.target.value)}
+                    className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  >
+                    <option value="">Select a sub-category</option>
+                    {subcategories.map((sub) => (
+                      <option key={sub.id} value={sub.id}>{sub.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">Discount %</label>

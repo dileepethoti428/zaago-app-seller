@@ -15,6 +15,8 @@ import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import AddProduct from "./pages/AddProduct";
 import EditProduct from "./pages/EditProduct";
+import AddCategory from "./pages/AddCategory";
+import AddSubCategory from "./pages/AddSubCategory";
 import SpecialOffers from "./pages/SpecialOffers";
 import Subscriptions from "./pages/Subscriptions";
 import Payments from "./pages/Payments";
@@ -67,6 +69,8 @@ const AppContent = () => {
           <Route path="products/:id" element={<ProductDetail />} />
           <Route path="products/new" element={<AddProduct />} />
           <Route path="products/:id/edit" element={<EditProduct />} />
+          <Route path="categories/new" element={<AddCategory />} />
+          <Route path="subcategories/new" element={<AddSubCategory />} />
           <Route path="special-offers" element={<SpecialOffers />} />
           <Route path="subscriptions" element={<Subscriptions />} />
           <Route path="deliveries" element={<Deliveries />} />

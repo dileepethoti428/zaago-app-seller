@@ -14,7 +14,9 @@ import {
   User,
   Users,
   Tag,
-  CalendarClock
+  CalendarClock,
+  FolderPlus,
+  FolderTree
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -39,6 +41,8 @@ const navigationLinks = [
   { href: '/subscriptions', label: 'Subscriptions', icon: CalendarClock },
   { href: '/products', label: 'Products', icon: Package },
   { href: '/products/new', label: 'Add Product', icon: PlusCircle },
+  { href: '/categories/new', label: 'Add Category', icon: FolderPlus },
+  { href: '/subcategories/new', label: 'Add Sub-Category', icon: FolderTree },
   { href: '/special-offers', label: 'Special Offers', icon: Tag },
   { href: '/notifications', label: 'Notifications', icon: Bell },
   { href: '/settings', label: 'Settings', icon: Settings },
