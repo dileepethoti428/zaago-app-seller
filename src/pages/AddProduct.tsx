@@ -48,6 +48,7 @@ export default function AddProductPage() {
     type: '',
     category: '',
     customCategory: '',
+    subcategory_id: '',
     unit: 'per litre',
     image_url: '',
     discount_percentage: '',
@@ -59,6 +60,7 @@ export default function AddProductPage() {
   });
   
   const [calculatedPrice, setCalculatedPrice] = useState<number>(0);
+  const [subcategories, setSubcategories] = useState<any[]>([]);
 
   const [productVariants, setProductVariants] = useState<Array<{
     id?: string;
@@ -120,6 +122,33 @@ export default function AddProductPage() {
     const finalPrice = basePrice + (basePrice * gst / 100);
     setCalculatedPrice(finalPrice);
   }, [formData.base_price, formData.gst_percentage]);
+
+  // Fetch subcategories when category changes
+  useEffect(() => {
+    const fetchSubcategories = async () => {
+      if (!formData.category || formData.category === 'other') {
+        setSubcategories([]);
+        setFormData(prev => ({ ...prev, subcategory_id: '' }));
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('subcategories')
+          .select('id, name')
+          .eq('is_active', true)
+          .order('name');
+
+        if (error) throw error;
+        setSubcategories(data || []);
+      } catch (error) {
+        console.error('Error fetching subcategories:', error);
+        setSubcategories([]);
+      }
+    };
+
+    fetchSubcategories();
+  }, [formData.category]);
 
   // Handle multiple image file selection
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -301,6 +330,7 @@ export default function AddProductPage() {
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         type: formData.type || null,
         category: formData.category === 'other' ? formData.customCategory : formData.category,
+        subcategory_id: formData.subcategory_id || null,
         unit: formData.unit,
         image_url: allImages.length > 0 ? allImages[0] : null,
         images: allImages,
@@ -516,6 +546,23 @@ export default function AddProductPage() {
                    <option value="other">Other (Custom)</option>
                 </select>
               </div>
+
+              {/* Sub-Category Selection (Only show if category is selected and has subcategories) */}
+              {formData.category && formData.category !== 'other' && subcategories.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Sub-Category (Optional)</label>
+                  <select
+                    value={formData.subcategory_id}
+                    onChange={(e) => handleInputChange('subcategory_id', e.target.value)}
+                    className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  >
+                    <option value="">Select a sub-category</option>
+                    {subcategories.map((sub) => (
+                      <option key={sub.id} value={sub.id}>{sub.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* Custom Category Input */}
               {formData.category === 'other' && (
