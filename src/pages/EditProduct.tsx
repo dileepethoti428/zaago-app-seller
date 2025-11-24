@@ -70,6 +70,7 @@ export default function EditProductPage() {
     base_price: '',
     stock_quantity: '',
     type: '',
+    category_id: '',
     subcategory_id: '',
     unit: 'per litre',
     image_url: '',
@@ -82,6 +83,7 @@ export default function EditProductPage() {
   });
   
   const [calculatedPrice, setCalculatedPrice] = useState<number>(0);
+  const [categories, setCategories] = useState<any[]>([]);
   const [subcategories, setSubcategories] = useState<any[]>([]);
 
   // Fetch product data
@@ -115,6 +117,7 @@ export default function EditProductPage() {
           base_price: data.base_price?.toString() || '',
           stock_quantity: data.stock_quantity?.toString() || '',
           type: data.type || '',
+          category_id: data.category_id || '',
           subcategory_id: data.subcategory_id || '',
           unit: data.unit || 'per litre',
           image_url: data.image_url || '',
@@ -203,14 +206,42 @@ export default function EditProductPage() {
     setCalculatedPrice(finalPrice);
   }, [formData.base_price, formData.gst_percentage]);
 
-  // Fetch subcategories (Note: EditProduct doesn't have category dropdown, subcategory is loaded from existing product)
+  // Fetch categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('id, name')
+          .eq('is_active', true)
+          .order('sort_order')
+          .order('name');
+        
+        if (error) throw error;
+        setCategories(data || []);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    
+    fetchCategories();
+  }, []);
+
+  // Fetch subcategories when category changes
   useEffect(() => {
     const fetchSubcategories = async () => {
+      if (!formData.category_id) {
+        setSubcategories([]);
+        return;
+      }
+
       try {
         const { data, error } = await supabase
           .from('subcategories')
           .select('id, name')
+          .eq('category_id', formData.category_id)
           .eq('is_active', true)
+          .order('sort_order')
           .order('name');
 
         if (error) throw error;
@@ -222,7 +253,7 @@ export default function EditProductPage() {
     };
 
     fetchSubcategories();
-  }, []);
+  }, [formData.category_id]);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -411,6 +442,7 @@ export default function EditProductPage() {
         price: calculatedPrice,
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         type: formData.type || null,
+        category_id: formData.category_id || null,
         subcategory_id: formData.subcategory_id || null,
         unit: formData.unit,
         image_url: allImages.length > 0 ? allImages[0] : null,
@@ -739,20 +771,48 @@ export default function EditProductPage() {
                 </div>
               </div>
 
+              {/* Category Selection */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Select Category <span className="text-red-500">*</span>
+                </label>
+                <select
+                  required
+                  value={formData.category_id}
+                  onChange={(e) => handleInputChange('category_id', e.target.value)}
+                  className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                >
+                  <option value="">Select a category</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Sub-Category Selection */}
-              {subcategories.length > 0 && (
+              {formData.category_id && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Sub-Category (Optional)</label>
-                  <select
-                    value={formData.subcategory_id}
-                    onChange={(e) => handleInputChange('subcategory_id', e.target.value)}
-                    className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                  >
-                    <option value="">Select a sub-category</option>
-                    {subcategories.map((sub) => (
-                      <option key={sub.id} value={sub.id}>{sub.name}</option>
-                    ))}
-                  </select>
+                  <label className="text-sm font-medium text-foreground">
+                    Select Sub-Category (Optional)
+                  </label>
+                  {subcategories.length === 0 ? (
+                    <p className="text-sm text-muted-foreground px-4 py-3 bg-muted/50 rounded-lg">
+                      No sub-categories found for this category.
+                    </p>
+                  ) : (
+                    <select
+                      value={formData.subcategory_id}
+                      onChange={(e) => handleInputChange('subcategory_id', e.target.value)}
+                      className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    >
+                      <option value="">Select a sub-category</option>
+                      {subcategories.map((sub) => (
+                        <option key={sub.id} value={sub.id}>{sub.name}</option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               )}
 

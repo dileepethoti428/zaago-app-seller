@@ -46,8 +46,7 @@ export default function AddProductPage() {
     base_price: '',
     stock_quantity: '',
     type: '',
-    category: '',
-    customCategory: '',
+    category_id: '',
     subcategory_id: '',
     unit: 'per litre',
     image_url: '',
@@ -60,6 +59,9 @@ export default function AddProductPage() {
   });
   
   const [calculatedPrice, setCalculatedPrice] = useState<number>(0);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const [subcategories, setSubcategories] = useState<any[]>([]);
 
   const [productVariants, setProductVariants] = useState<Array<{
@@ -114,6 +116,32 @@ export default function AddProductPage() {
     setFormData(prev => ({ ...prev, selectedTags: [] }));
   };
 
+  // Fetch categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setLoadingCategories(true);
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('id, name, image_url')
+          .eq('is_active', true)
+          .order('sort_order')
+          .order('name');
+        
+        if (error) throw error;
+        setCategories(data || []);
+        setCategoriesError(null);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        setCategoriesError('Failed to load categories');
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    
+    fetchCategories();
+  }, []);
+
   // Auto-calculate final price when base price or GST changes
   useEffect(() => {
     const basePrice = parseFloat(formData.base_price) || 0;
@@ -126,7 +154,7 @@ export default function AddProductPage() {
   // Fetch subcategories when category changes
   useEffect(() => {
     const fetchSubcategories = async () => {
-      if (!formData.category || formData.category === 'other') {
+      if (!formData.category_id) {
         setSubcategories([]);
         setFormData(prev => ({ ...prev, subcategory_id: '' }));
         return;
@@ -136,7 +164,9 @@ export default function AddProductPage() {
         const { data, error } = await supabase
           .from('subcategories')
           .select('id, name')
+          .eq('category_id', formData.category_id)
           .eq('is_active', true)
+          .order('sort_order')
           .order('name');
 
         if (error) throw error;
@@ -148,7 +178,7 @@ export default function AddProductPage() {
     };
 
     fetchSubcategories();
-  }, [formData.category]);
+  }, [formData.category_id]);
 
   // Handle multiple image file selection
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -311,8 +341,9 @@ export default function AddProductPage() {
       if (formData.selectedTags.length > 0) {
         finalTags = formData.selectedTags;
       } else {
+        const selectedCategory = categories.find(c => c.id === formData.category_id);
         const autoTagData: AutoTaggingData = {
-          categoryName: formData.category === 'other' ? formData.customCategory : formData.category,
+          categoryName: selectedCategory?.name || '',
           stockQuantity: parseInt(formData.stock_quantity) || 0,
           createdAt: new Date().toISOString(),
           averageRating: 0,
@@ -329,7 +360,7 @@ export default function AddProductPage() {
         price: calculatedPrice,
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         type: formData.type || null,
-        category: formData.category === 'other' ? formData.customCategory : formData.category,
+        category_id: formData.category_id || null,
         subcategory_id: formData.subcategory_id || null,
         unit: formData.unit,
         image_url: allImages.length > 0 ? allImages[0] : null,
@@ -527,54 +558,76 @@ export default function AddProductPage() {
 
               {/* Category Selection */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Category</label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => handleInputChange('category', e.target.value)}
-                  className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                >
-                   <option value="">Select a category</option>
-                   <option value="food">Food</option>
-                   <option value="grocery">Grocery</option>
-                   <option value="frequently-bought">Frequently Bought</option>
-                   <option value="previously-bought">Previously Bought</option>
-                   <option value="fresh-milk-dairy">Fresh Milk and Dairy</option>
-                   <option value="grocery-kitchen">Grocery and Kitchen</option>
-                   <option value="beauty-personal-care">Beauty and Personal Care</option>
-                   <option value="household-essentials">Household Essentials</option>
-                   <option value="special-offers-deals">Special Offers and Deals</option>
-                   <option value="other">Other (Custom)</option>
-                </select>
-              </div>
-
-              {/* Sub-Category Selection (Only show if category is selected and has subcategories) */}
-              {formData.category && formData.category !== 'other' && subcategories.length > 0 && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Sub-Category (Optional)</label>
+                <label className="text-sm font-medium text-foreground">
+                  Select Category <span className="text-red-500">*</span>
+                </label>
+                
+                {loadingCategories ? (
+                  <div className="flex items-center gap-2 px-4 py-3 text-muted-foreground bg-muted/50 rounded-lg">
+                    <Loader className="w-4 h-4 animate-spin" />
+                    Loading categories...
+                  </div>
+                ) : categoriesError ? (
+                  <div className="space-y-2">
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{categoriesError}</AlertDescription>
+                    </Alert>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => window.location.reload()}
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Retry
+                    </Button>
+                  </div>
+                ) : categories.length === 0 ? (
+                  <Alert>
+                    <AlertDescription>
+                      No categories found. Please <Link to="/categories/new" className="underline font-medium">add a category</Link> first.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
                   <select
-                    value={formData.subcategory_id}
-                    onChange={(e) => handleInputChange('subcategory_id', e.target.value)}
+                    required
+                    value={formData.category_id}
+                    onChange={(e) => handleInputChange('category_id', e.target.value)}
                     className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   >
-                    <option value="">Select a sub-category</option>
-                    {subcategories.map((sub) => (
-                      <option key={sub.id} value={sub.id}>{sub.name}</option>
+                    <option value="">Select a category</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
                     ))}
                   </select>
-                </div>
-              )}
+                )}
+              </div>
 
-              {/* Custom Category Input */}
-              {formData.category === 'other' && (
+              {/* Sub-Category Selection */}
+              {formData.category_id && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Category Name/Type</label>
-                  <input
-                    type="text"
-                    value={formData.customCategory}
-                    onChange={(e) => handleInputChange('customCategory', e.target.value)}
-                    placeholder="Enter category name or type (e.g., Electronics, Books, etc.)"
-                    className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                  />
+                  <label className="text-sm font-medium text-foreground">
+                    Select Sub-Category (Optional)
+                  </label>
+                  {subcategories.length === 0 ? (
+                    <p className="text-sm text-muted-foreground px-4 py-3 bg-muted/50 rounded-lg">
+                      No sub-categories found for this category.
+                    </p>
+                  ) : (
+                    <select
+                      value={formData.subcategory_id}
+                      onChange={(e) => handleInputChange('subcategory_id', e.target.value)}
+                      className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    >
+                      <option value="">Select a sub-category</option>
+                      {subcategories.map((sub) => (
+                        <option key={sub.id} value={sub.id}>{sub.name}</option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               )}
 
@@ -984,7 +1037,7 @@ export default function AddProductPage() {
           {/* Product Variants Section */}
           <div className="space-y-6">
             <ProductVariants
-              selectedCategory={formData.category}
+              selectedCategory={categories.find(c => c.id === formData.category_id)?.name || ''}
               variants={productVariants}
               onVariantsChange={setProductVariants}
             />
