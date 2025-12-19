@@ -45,9 +45,7 @@ export default function AddProductPage() {
     description: '',
     base_price: '',
     stock_quantity: '',
-    type: '',
     category_id: '',
-    subcategory_id: '',
     unit: 'per litre',
     image_url: '',
     discount_percentage: '',
@@ -62,7 +60,12 @@ export default function AddProductPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
-  const [subcategories, setSubcategories] = useState<any[]>([]);
+  
+  // Custom category and unit state
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [showCustomUnitInput, setShowCustomUnitInput] = useState(false);
+  const [customUnit, setCustomUnit] = useState('');
 
   const [productVariants, setProductVariants] = useState<Array<{
     id?: string;
@@ -151,34 +154,6 @@ export default function AddProductPage() {
     setCalculatedPrice(finalPrice);
   }, [formData.base_price, formData.gst_percentage]);
 
-  // Fetch subcategories when category changes
-  useEffect(() => {
-    const fetchSubcategories = async () => {
-      if (!formData.category_id) {
-        setSubcategories([]);
-        setFormData(prev => ({ ...prev, subcategory_id: '' }));
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from('subcategories')
-          .select('id, name')
-          .eq('category_id', formData.category_id)
-          .eq('is_active', true)
-          .order('sort_order')
-          .order('name');
-
-        if (error) throw error;
-        setSubcategories(data || []);
-      } catch (error) {
-        console.error('Error fetching subcategories:', error);
-        setSubcategories([]);
-      }
-    };
-
-    fetchSubcategories();
-  }, [formData.category_id]);
 
   // Handle multiple image file selection
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -353,16 +328,38 @@ export default function AddProductPage() {
         finalTags = generateAutoTags(autoTagData);
       }
 
+      // Handle custom category creation
+      let finalCategoryId = formData.category_id;
+      if (showNewCategoryInput && newCategoryName.trim()) {
+        const { data: newCategory, error: categoryError } = await supabase
+          .from('categories')
+          .insert([{ name: newCategoryName.trim(), is_active: true }])
+          .select()
+          .single();
+        
+        if (categoryError) {
+          toast({
+            title: "Error",
+            description: "Failed to create new category",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+        finalCategoryId = newCategory.id;
+      }
+
+      // Handle custom unit
+      const finalUnit = showCustomUnitInput && customUnit.trim() ? customUnit.trim() : formData.unit;
+
       const productData = {
         name: formData.name,
         description: formData.description || null,
         base_price: parseFloat(formData.base_price),
         price: calculatedPrice,
         stock_quantity: parseInt(formData.stock_quantity) || 0,
-        type: formData.type || null,
-        category_id: formData.category_id || null,
-        subcategory_id: formData.subcategory_id || null,
-        unit: formData.unit,
+        category_id: finalCategoryId || null,
+        unit: finalUnit,
         image_url: allImages.length > 0 ? allImages[0] : null,
         images: allImages,
         discount_percentage: formData.discount_percentage ? parseFloat(formData.discount_percentage) : 0,
@@ -583,81 +580,107 @@ export default function AddProductPage() {
                       Retry
                     </Button>
                   </div>
-                ) : categories.length === 0 ? (
-                  <Alert>
-                    <AlertDescription>
-                      No categories found. Please <Link to="/categories/new" className="underline font-medium">add a category</Link> first.
-                    </AlertDescription>
-                  </Alert>
                 ) : (
-                  <select
-                    required
-                    value={formData.category_id}
-                    onChange={(e) => handleInputChange('category_id', e.target.value)}
-                    className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                  >
-                    <option value="">Select a category</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
+                  <>
+                    <select
+                      required={!showNewCategoryInput}
+                      value={showNewCategoryInput ? 'other' : formData.category_id}
+                      onChange={(e) => {
+                        if (e.target.value === 'other') {
+                          setShowNewCategoryInput(true);
+                          handleInputChange('category_id', '');
+                        } else {
+                          setShowNewCategoryInput(false);
+                          setNewCategoryName('');
+                          handleInputChange('category_id', e.target.value);
+                        }
+                      }}
+                      className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    >
+                      <option value="">Select a category</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                      <option value="other">+ Other (Add New)</option>
+                    </select>
+                    
+                    {showNewCategoryInput && (
+                      <div className="mt-2">
+                        <input
+                          type="text"
+                          required
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          placeholder="Enter new category name"
+                          className="w-full px-4 py-3 bg-card border border-primary rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowNewCategoryInput(false);
+                            setNewCategoryName('');
+                          }}
+                          className="mt-2 text-sm text-muted-foreground hover:text-foreground"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
-              {/* Sub-Category Selection */}
-              {formData.category_id && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Select Sub-Category (Optional)
-                  </label>
-                  {subcategories.length === 0 ? (
-                    <p className="text-sm text-muted-foreground px-4 py-3 bg-muted/50 rounded-lg">
-                      No sub-categories found for this category.
-                    </p>
-                  ) : (
-                    <select
-                      value={formData.subcategory_id}
-                      onChange={(e) => handleInputChange('subcategory_id', e.target.value)}
-                      className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              {/* Unit Selection */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Unit</label>
+                <select
+                  value={showCustomUnitInput ? 'other' : formData.unit}
+                  onChange={(e) => {
+                    if (e.target.value === 'other') {
+                      setShowCustomUnitInput(true);
+                      handleInputChange('unit', '');
+                    } else {
+                      setShowCustomUnitInput(false);
+                      setCustomUnit('');
+                      handleInputChange('unit', e.target.value);
+                    }
+                  }}
+                  className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                >
+                  <option value="per litre">Per Litre</option>
+                  <option value="500ml">500ml (Half Litre)</option>
+                  <option value="per kg">Per Kg</option>
+                  <option value="500g">500g (1/2 Kg)</option>
+                  <option value="per piece">Per Piece</option>
+                  <option value="per bottle">Per Bottle</option>
+                  <option value="other">+ Other</option>
+                </select>
+                
+                {showCustomUnitInput && (
+                  <div className="mt-2">
+                    <input
+                      type="text"
+                      required
+                      value={customUnit}
+                      onChange={(e) => setCustomUnit(e.target.value)}
+                      placeholder="Enter custom unit (e.g., per box, per dozen)"
+                      className="w-full px-4 py-3 bg-card border border-primary rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCustomUnitInput(false);
+                        setCustomUnit('');
+                        handleInputChange('unit', 'per litre');
+                      }}
+                      className="mt-2 text-sm text-muted-foreground hover:text-foreground"
                     >
-                      <option value="">Select a sub-category</option>
-                      {subcategories.map((sub) => (
-                        <option key={sub.id} value={sub.id}>{sub.name}</option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Product Type</label>
-                  <input
-                    type="text"
-                    value={formData.type}
-                    onChange={(e) => handleInputChange('type', e.target.value)}
-                    placeholder="e.g. Dairy, Organic"
-                    className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Unit</label>
-                  <select
-                    value={formData.unit}
-                    onChange={(e) => handleInputChange('unit', e.target.value)}
-                    className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                  >
-                    <option value="per litre">Per Litre</option>
-                    <option value="500ml">500ml (Half Litre)</option>
-                    <option value="per kg">Per Kg</option>
-                    <option value="500g">500g (1/2 Kg)</option>
-                    <option value="per piece">Per Piece</option>
-                    <option value="per bottle">Per Bottle</option>
-                  </select>
-                </div>
+                      Cancel
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
