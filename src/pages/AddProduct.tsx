@@ -148,6 +148,13 @@ export default function AddProductPage() {
     fetchCategories();
   }, [user?.id]);
 
+  // Auto-show new category input if seller has no categories
+  useEffect(() => {
+    if (!loadingCategories && categories.length === 0) {
+      setShowNewCategoryInput(true);
+    }
+  }, [loadingCategories, categories.length]);
+
   // Auto-calculate final price when base price or GST changes
   useEffect(() => {
     const basePrice = parseFloat(formData.base_price) || 0;
@@ -586,6 +593,18 @@ export default function AddProductPage() {
                       <RefreshCw className="w-4 h-4 mr-2" />
                       Retry
                     </Button>
+                  </div>
+                ) : categories.length === 0 ? (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Create your first category</p>
+                    <input
+                      type="text"
+                      required
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      placeholder="Enter category name"
+                      className="w-full px-4 py-3 bg-card border border-primary rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    />
                   </div>
                 ) : (
                   <>
