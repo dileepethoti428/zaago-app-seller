@@ -6177,6 +6177,8 @@ export type Database = {
               range_km?: number
             }
             Returns: {
+              category_id: string
+              category_name: string
               discount_percentage: number
               discounted_price: number
               distance_km: number

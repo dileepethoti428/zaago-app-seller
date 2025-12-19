@@ -363,6 +363,17 @@ export default function AddProductPage() {
         finalCategoryId = newCategory.id;
       }
 
+      // Validate that category is selected
+      if (!finalCategoryId) {
+        toast({
+          title: "Category Required",
+          description: "Please select or create a category for this product",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       // Handle custom unit
       const finalUnit = showCustomUnitInput && customUnit.trim() ? customUnit.trim() : formData.unit;
 
@@ -372,7 +383,7 @@ export default function AddProductPage() {
         base_price: parseFloat(formData.base_price),
         price: calculatedPrice,
         stock_quantity: parseInt(formData.stock_quantity) || 0,
-        category_id: finalCategoryId || null,
+        category_id: finalCategoryId,
         unit: finalUnit,
         image_url: allImages.length > 0 ? allImages[0] : null,
         images: allImages,
