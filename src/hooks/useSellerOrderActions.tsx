@@ -32,16 +32,17 @@ export const useSellerOrderActions = () => {
         const visibleUntil = order.visible_until ? new Date(order.visible_until) : null;
         const isLate = visibleUntil && now > visibleUntil;
 
-        // Determine new status based on timing
-        const newStatus = isLate ? 'accepted_late' : 'accepted_by_seller';
+        // Set status directly to 'packed' - skip accepted status
+        const newStatus = 'packed';
 
-        // Update order with acceptance details
+        // Update order with acceptance details and directly set to packed
         const { error: updateError } = await supabase
           .from('orders')
           .update({
             status: newStatus,
             seller_accepted_at: now.toISOString(),
             accepted_at: now.toISOString(),
+            packed_at: now.toISOString(),
             visible: false,
             acceptance_window_expired: false,
             updated_at: now.toISOString()
@@ -50,16 +51,17 @@ export const useSellerOrderActions = () => {
 
         if (updateError) throw updateError;
 
-        // Log seller acceptance
+        // Log seller acceptance (still track if it was late)
         await supabase.from('order_visibility_logs').insert({
           order_id: orderId,
-          event_type: isLate ? 'late_acceptance' : 'accepted',
+          event_type: isLate ? 'late_acceptance_packed' : 'accepted_packed',
           status_before: order.status,
           status_after: newStatus,
           visible_until: order.visible_until,
           acceptance_time: now.toISOString(),
           metadata: {
             is_late: isLate,
+            direct_to_packed: true,
             time_diff_minutes: visibleUntil ? Math.floor((now.getTime() - visibleUntil.getTime()) / (1000 * 60)) : 0
           }
         });
@@ -68,7 +70,7 @@ export const useSellerOrderActions = () => {
         if (isLate) {
           toast({
             title: "Late Acceptance",
-            description: "This order was accepted after the 11:30 AM deadline. Operations team has been notified.",
+            description: "Order accepted and packed. Operations team has been notified.",
             variant: "default"
           });
 
@@ -86,12 +88,12 @@ export const useSellerOrderActions = () => {
         } else {
           toast({
             title: "Success",
-            description: "Order accepted successfully",
+            description: "Order accepted and packed successfully",
             variant: "default"
           });
         }
 
-        // Confirm the update
+        // Confirm the update - status is now 'packed'
         window.dispatchEvent(new CustomEvent('orderStatusUpdated', { 
           detail: { orderId, action, status: newStatus, confirmed: true } 
         }));
