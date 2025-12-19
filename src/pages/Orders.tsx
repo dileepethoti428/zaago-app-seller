@@ -30,7 +30,7 @@ import { OrderAcceptanceTimer } from '@/components/OrderAcceptanceTimer';
 const Orders = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { acceptOrder, rejectOrder, packOrder, isProcessing } = useSellerOrderActions();
+  const { acceptOrder, rejectOrder, packOrder, notifyDeliveryAgents, isProcessing } = useSellerOrderActions();
   const [orders, setOrders] = useState<any[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -478,7 +478,7 @@ const Orders = () => {
                               </>
                             )}
                             
-                             {order.status === 'accepted' && (
+                            {(order.status === 'accepted' || order.status === 'accepted_by_seller' || order.status === 'accepted_late') && (
                               <Button
                                 onClick={async () => {
                                   const success = await packOrder(order.id, user?.id || '');
@@ -493,6 +493,18 @@ const Orders = () => {
                               >
                                 <Package className="w-4 h-4" />
                                 Mark as Packed
+                              </Button>
+                            )}
+
+                            {order.status === 'packed' && (
+                              <Button
+                                onClick={() => notifyDeliveryAgents(order.id, user?.id || '')}
+                                disabled={isProcessing === order.id}
+                                size="sm"
+                                className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+                              >
+                                <Truck className="w-4 h-4" />
+                                Notify Delivery Agents
                               </Button>
                             )}
                             
