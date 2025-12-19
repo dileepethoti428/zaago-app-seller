@@ -15,11 +15,8 @@ import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import AddProduct from "./pages/AddProduct";
 import EditProduct from "./pages/EditProduct";
-import AddCategory from "./pages/AddCategory";
 import EditCategory from "./pages/EditCategory";
 import ManageCategories from "./pages/ManageCategories";
-import AddSubCategory from "./pages/AddSubCategory";
-import SpecialOffers from "./pages/SpecialOffers";
 import Subscriptions from "./pages/Subscriptions";
 import Payments from "./pages/Payments";
 import PaymentDetail from "./pages/PaymentDetail";
@@ -71,11 +68,8 @@ const AppContent = () => {
           <Route path="products/:id" element={<ProductDetail />} />
           <Route path="products/new" element={<AddProduct />} />
           <Route path="products/:id/edit" element={<EditProduct />} />
-          <Route path="categories/new" element={<AddCategory />} />
           <Route path="categories" element={<ManageCategories />} />
           <Route path="categories/:id/edit" element={<EditCategory />} />
-          <Route path="subcategories/new" element={<AddSubCategory />} />
-          <Route path="special-offers" element={<SpecialOffers />} />
           <Route path="subscriptions" element={<Subscriptions />} />
           <Route path="deliveries" element={<Deliveries />} />
           <Route path="delivery-agent" element={<DeliveryAgent />} />
