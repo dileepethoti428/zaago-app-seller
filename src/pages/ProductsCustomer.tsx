@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Search, ShoppingCart, Heart, MapPin, Flame, Package } from "lucide-react";
+import { Search, ShoppingCart, Heart, MapPin, Flame, Package, Grid3X3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { formatDistance } from 'date-fns';
 const ProductsCustomer = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [maxDistance, setMaxDistance] = useState(15);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const { products, loading, error, customerLocation } = useProductsNearby(maxDistance);
   const { toast } = useToast();
   const { addToCart } = useCart();
@@ -32,15 +33,28 @@ const ProductsCustomer = () => {
     return map;
   }, [activeOffers]);
 
+  // Extract unique categories from products
+  const categories = useMemo(() => {
+    const uniqueCategories = new Map<string, string>();
+    products.forEach((product: any) => {
+      if (product.category_id && product.category_name) {
+        uniqueCategories.set(product.category_id, product.category_name);
+      }
+    });
+    return Array.from(uniqueCategories, ([id, name]) => ({ id, name }));
+  }, [products]);
+
   // Get products with active offers for special section
   const productsWithOffers = useMemo(() => {
     return products.filter((p: any) => offerMap.has(p.product_id)).slice(0, 8);
   }, [products, offerMap]);
 
-  const filteredProducts = products.filter(product =>
-    product.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.product_description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = products.filter((product: any) => {
+    const matchesSearch = product.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.product_description && product.product_description.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesCategory = !selectedCategory || product.category_id === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   const handleAddToCart = async (product: any) => {
     const productData = {
@@ -159,6 +173,37 @@ const ProductsCustomer = () => {
         </motion.div>
       )}
 
+      {/* Category Filter */}
+      {categories.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="flex flex-wrap gap-2"
+        >
+          <Button
+            variant={selectedCategory === null ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedCategory(null)}
+            className="rounded-full"
+          >
+            <Grid3X3 className="h-4 w-4 mr-1" />
+            All
+          </Button>
+          {categories.map((category) => (
+            <Button
+              key={category.id}
+              variant={selectedCategory === category.id ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory(category.id)}
+              className="rounded-full"
+            >
+              {category.name}
+            </Button>
+          ))}
+        </motion.div>
+      )}
+
       {/* Search and filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
@@ -175,7 +220,7 @@ const ProductsCustomer = () => {
           <select
             value={maxDistance}
             onChange={(e) => setMaxDistance(Number(e.target.value))}
-            className="border rounded px-3 py-1 text-sm"
+            className="border rounded px-3 py-1 text-sm bg-background text-foreground"
           >
             <option value={5}>5km</option>
             <option value={10}>10km</option>
