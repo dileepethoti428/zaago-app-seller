@@ -5530,15 +5530,15 @@ export type Database = {
       activate_delivery_agent: { Args: { agent_email: string }; Returns: Json }
       apply_coupon:
         | {
+            Args: { p_coupon_code: string; p_order_total: number }
+            Returns: Json
+          }
+        | {
             Args: {
               p_coupon_code: string
               p_order_total: number
               p_user_id?: string
             }
-            Returns: Json
-          }
-        | {
-            Args: { p_coupon_code: string; p_order_total: number }
             Returns: Json
           }
       apply_targeted_coupon: {
@@ -5873,7 +5873,6 @@ export type Database = {
               p_end_date: string
               p_start_date: string
               p_subscription_id: string
-              p_user_id: string
             }
             Returns: Json
           }
@@ -5882,6 +5881,7 @@ export type Database = {
               p_end_date: string
               p_start_date: string
               p_subscription_id: string
+              p_user_id: string
             }
             Returns: Json
           }
