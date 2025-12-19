@@ -130,7 +130,7 @@ export default function AddProductPage() {
           .from('categories')
           .select('id, name, image_url, seller_id')
           .eq('is_active', true)
-          .or(`seller_id.is.null,seller_id.eq.${user.id}`)
+          .eq('seller_id', user.id)
           .order('sort_order')
           .order('name');
         
