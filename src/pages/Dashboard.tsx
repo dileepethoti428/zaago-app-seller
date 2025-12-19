@@ -8,9 +8,7 @@ import {
   Clock,
   AlertCircle,
   CheckCircle2,
-  Calendar,
-  FolderPlus,
-  FolderTree
+  Calendar
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
@@ -256,27 +254,7 @@ const Dashboard = () => {
                 <p className="text-zaago-muted-foreground text-sm">Manage your orders</p>
               </Link>
 
-              <Link 
-                to="/categories/new" 
-                className="p-6 text-left group flex flex-col items-center text-center hover:bg-zaago-accent/50 rounded-lg transition-colors focus:outline-none focus:bg-zaago-accent/50 active:bg-zaago-accent/70"
-              >
-                <FolderPlus className="w-12 h-12 text-zaago-green mb-3 group-hover:scale-110 transition-transform" />
-                <h3 className="font-semibold text-foreground mb-1">Add Category</h3>
-                <p className="text-zaago-muted-foreground text-sm">Create new category</p>
-              </Link>
-
-              <Link 
-                to="/subcategories/new" 
-                className="p-6 text-left group flex flex-col items-center text-center hover:bg-zaago-accent/50 rounded-lg transition-colors focus:outline-none focus:bg-zaago-accent/50 active:bg-zaago-accent/70"
-              >
-                <FolderTree className="w-12 h-12 text-zaago-green mb-3 group-hover:scale-110 transition-transform" />
-                <h3 className="font-semibold text-foreground mb-1">Add Sub-Category</h3>
-                <p className="text-zaago-muted-foreground text-sm">Create subcategory</p>
-              </Link>
-
-              <div className="sm:col-span-2 lg:col-span-1">
-                <CustomerLookupDialog />
-              </div>
+              <CustomerLookupDialog />
             </CardContent>
           </Card>
         </motion.div>
