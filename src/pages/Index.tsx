@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Package, Truck, TrendingUp, Users, ShoppingCart, DollarSign, Calendar, Tag } from 'lucide-react';
+import { Package, Truck, TrendingUp, Users, ShoppingCart, DollarSign, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -184,7 +184,7 @@ const Index = () => {
         className="bg-zaago-card/50 border border-zaago-border rounded-xl p-6"
       >
         <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-6">Quick Actions</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <Link to="/products/new" className="p-6 text-center group hover:bg-zaago-accent/50 rounded-lg transition-colors focus:outline-none active:bg-zaago-accent/70">
             <Package className="w-12 h-12 text-zaago-green mb-4 mx-auto group-hover:scale-110 transition-transform" />
             <h3 className="text-lg font-semibold text-foreground mb-2">Add Product</h3>
@@ -195,12 +195,6 @@ const Index = () => {
             <ShoppingCart className="w-12 h-12 text-zaago-green mb-4 mx-auto group-hover:scale-110 transition-transform" />
             <h3 className="text-lg font-semibold text-foreground mb-2">Manage Products</h3>
             <p className="text-zaago-muted-foreground text-sm">View and edit your inventory</p>
-          </Link>
-
-          <Link to="/special-offers" className="p-6 text-center group hover:bg-zaago-accent/50 rounded-lg transition-colors focus:outline-none active:bg-zaago-accent/70">
-            <Tag className="w-12 h-12 text-zaago-green mb-4 mx-auto group-hover:scale-110 transition-transform" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">Special Offers</h3>
-            <p className="text-zaago-muted-foreground text-sm">Create and manage deals</p>
           </Link>
           
           <CustomerLookupDialog />
