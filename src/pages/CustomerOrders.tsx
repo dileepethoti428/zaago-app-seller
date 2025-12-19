@@ -680,26 +680,6 @@ const CustomerOrders: React.FC = () => {
                               </Button>
                             )}
 
-                            {order.status === 'packed' && (
-                              <Button
-                                onClick={() => handleNotifyAgents(order.id, user.id)}
-                                disabled={isProcessing === order.id}
-                                className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
-                                size="sm"
-                              >
-                                {isProcessing === order.id ? (
-                                  <>
-                                    <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
-                                    Notifying Agents...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Package className="w-4 h-4" />
-                                    Packed
-                                  </>
-                                )}
-                              </Button>
-                            )}
 
                             {order.status === 'assigned' && (
                               <div className="flex items-center gap-2">
