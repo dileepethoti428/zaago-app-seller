@@ -1037,6 +1037,7 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           name: string
+          seller_id: string | null
           sort_order: number | null
           updated_at: string
         }
@@ -1047,6 +1048,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           name: string
+          seller_id?: string | null
           sort_order?: number | null
           updated_at?: string
         }
@@ -1057,6 +1059,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           name?: string
+          seller_id?: string | null
           sort_order?: number | null
           updated_at?: string
         }

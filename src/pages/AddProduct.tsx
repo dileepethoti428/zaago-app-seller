@@ -119,15 +119,18 @@ export default function AddProductPage() {
     setFormData(prev => ({ ...prev, selectedTags: [] }));
   };
 
-  // Fetch categories on mount
+  // Fetch categories on mount - global categories + seller's own categories
   useEffect(() => {
     const fetchCategories = async () => {
+      if (!user?.id) return;
+      
       setLoadingCategories(true);
       try {
         const { data, error } = await supabase
           .from('categories')
-          .select('id, name, image_url')
+          .select('id, name, image_url, seller_id')
           .eq('is_active', true)
+          .or(`seller_id.is.null,seller_id.eq.${user.id}`)
           .order('sort_order')
           .order('name');
         
@@ -143,7 +146,7 @@ export default function AddProductPage() {
     };
     
     fetchCategories();
-  }, []);
+  }, [user?.id]);
 
   // Auto-calculate final price when base price or GST changes
   useEffect(() => {
@@ -328,12 +331,16 @@ export default function AddProductPage() {
         finalTags = generateAutoTags(autoTagData);
       }
 
-      // Handle custom category creation
+      // Handle custom category creation - private to this seller
       let finalCategoryId = formData.category_id;
       if (showNewCategoryInput && newCategoryName.trim()) {
         const { data: newCategory, error: categoryError } = await supabase
           .from('categories')
-          .insert([{ name: newCategoryName.trim(), is_active: true }])
+          .insert([{ 
+            name: newCategoryName.trim(), 
+            is_active: true,
+            seller_id: user?.id  // Makes it private to this seller
+          }])
           .select()
           .single();
         
