@@ -2698,6 +2698,7 @@ export type Database = {
           otp_verified: boolean | null
           otp_verified_at: string | null
           otp_verified_by: string | null
+          packed_at: string | null
           payment_id: string | null
           payment_method: string | null
           payment_status: string | null
@@ -2746,6 +2747,7 @@ export type Database = {
           otp_verified?: boolean | null
           otp_verified_at?: string | null
           otp_verified_by?: string | null
+          packed_at?: string | null
           payment_id?: string | null
           payment_method?: string | null
           payment_status?: string | null
@@ -2794,6 +2796,7 @@ export type Database = {
           otp_verified?: boolean | null
           otp_verified_at?: string | null
           otp_verified_by?: string | null
+          packed_at?: string | null
           payment_id?: string | null
           payment_method?: string | null
           payment_status?: string | null
