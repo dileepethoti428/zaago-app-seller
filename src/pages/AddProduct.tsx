@@ -66,6 +66,8 @@ export default function AddProductPage() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [showCustomUnitInput, setShowCustomUnitInput] = useState(false);
   const [customUnit, setCustomUnit] = useState('');
+  const [showCustomTagInput, setShowCustomTagInput] = useState(false);
+  const [customTagName, setCustomTagName] = useState('');
 
   const [productVariants, setProductVariants] = useState<Array<{
     id?: string;
@@ -117,6 +119,18 @@ export default function AddProductPage() {
 
   const clearAllTags = () => {
     setFormData(prev => ({ ...prev, selectedTags: [] }));
+  };
+
+  const handleAddCustomTag = () => {
+    const trimmedTag = customTagName.trim();
+    if (trimmedTag && !formData.selectedTags.includes(trimmedTag)) {
+      setFormData(prev => ({
+        ...prev,
+        selectedTags: [...prev.selectedTags, trimmedTag]
+      }));
+      setCustomTagName('');
+      setShowCustomTagInput(false);
+    }
   };
 
   // Fetch categories on mount - global categories + seller's own categories
@@ -990,6 +1004,56 @@ export default function AddProductPage() {
                   </div>
                 </div>
               ))}
+
+              {/* Custom Tag Option */}
+              <div className="space-y-3 pt-4 border-t border-border">
+                <h3 className="font-medium text-sm text-muted-foreground">
+                  Custom Tag
+                </h3>
+                {!showCustomTagInput ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowCustomTagInput(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Other Tag
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={customTagName}
+                      onChange={(e) => setCustomTagName(e.target.value)}
+                      placeholder="Enter custom tag name"
+                      className="flex-1 px-3 py-2 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddCustomTag();
+                        }
+                      }}
+                      autoFocus
+                    />
+                    <Button type="button" size="sm" onClick={handleAddCustomTag}>
+                      Add
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setShowCustomTagInput(false);
+                        setCustomTagName('');
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {formData.selectedTags.length > 0 && (

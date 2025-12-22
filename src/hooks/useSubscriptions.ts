@@ -244,6 +244,7 @@ export const useCreateSubscription = () => {
         is_active: true,
         quantity: data.quantity,
         special_instructions: data.specialInstructions || null,
+        location_id: null,
       };
 
       const { data: subscription, error: subscriptionError } = await supabase
