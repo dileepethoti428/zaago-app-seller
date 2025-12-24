@@ -34,6 +34,7 @@ const Subscriptions = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [deliveryTypeFilter, setDeliveryTypeFilter] = useState('all');
+  const [agentFilter, setAgentFilter] = useState('all');
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedSubscription, setSelectedSubscription] = useState<{ id: string; locationId: number | null } | null>(null);
   const [editCustomerDialog, setEditCustomerDialog] = useState<{
@@ -126,9 +127,14 @@ const Subscriptions = () => {
       const matchesDeliveryType =
         deliveryTypeFilter === 'all' || sub.subscription_type === deliveryTypeFilter;
 
-      return matchesSearch && matchesStatus && matchesDeliveryType;
+      // Agent assignment filter
+      let matchesAgentFilter = true;
+      if (agentFilter === 'assigned') matchesAgentFilter = !!sub.primary_agent_id;
+      else if (agentFilter === 'not_assigned') matchesAgentFilter = !sub.primary_agent_id;
+
+      return matchesSearch && matchesStatus && matchesDeliveryType && matchesAgentFilter;
     });
-  }, [subscriptions, searchTerm, statusFilter, deliveryTypeFilter]);
+  }, [subscriptions, searchTerm, statusFilter, deliveryTypeFilter, agentFilter]);
 
   const shouldShowActions = (subscription: any) => {
     if (!subscription.is_active || !subscription.next_delivery_date) return false;
@@ -261,18 +267,7 @@ const Subscriptions = () => {
             <h1 className="text-3xl font-bold">Subscriptions</h1>
             <p className="text-muted-foreground">Manage recurring customer deliveries</p>
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => refetch()}
-              disabled={isLoading}
-            >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            </Button>
-          </div>
         </div>
-        
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
@@ -307,6 +302,16 @@ const Subscriptions = () => {
             <SelectItem value="alternate">Alternate Days</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={agentFilter} onValueChange={setAgentFilter}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectValue placeholder="Filter by agent" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Agents</SelectItem>
+            <SelectItem value="assigned">Agent Assigned</SelectItem>
+            <SelectItem value="not_assigned">Agent Not Assigned</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {isLoading ? (
@@ -319,7 +324,7 @@ const Subscriptions = () => {
             <CalendarClock className="w-16 h-16 text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">No Subscriptions Found</h3>
             <p className="text-muted-foreground mb-6">
-              {searchTerm || statusFilter !== 'all' || deliveryTypeFilter !== 'all'
+              {searchTerm || statusFilter !== 'all' || deliveryTypeFilter !== 'all' || agentFilter !== 'all'
                 ? 'Try adjusting your filters'
                 : 'No subscriptions available yet'}
             </p>
