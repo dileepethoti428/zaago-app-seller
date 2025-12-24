@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useDeliveryAgentsWithCapacity, useUpdateAgentCapacity, useSellerLocationId } from '@/hooks/useDeliveryAgentsCapacity';
+import { useMarkAgentAbsent, useMarkAgentOnline } from '@/hooks/useAgentAbsence';
+import { MarkAgentAbsentDialog } from '@/components/MarkAgentAbsentDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Truck, Users, MapPin, Package, Edit2, Check, X, Loader2 } from 'lucide-react';
+import { Truck, Users, MapPin, Package, Edit2, Check, X, Loader2, UserX, UserCheck } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -15,14 +17,24 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
+interface AgentToMark {
+  id: string;
+  agent_id: string;
+  name: string;
+  ordersToday: number;
+}
+
 export default function DeliveryAgents() {
   const { user } = useAuth();
   const { data: locationId, isLoading: locationLoading } = useSellerLocationId(user?.id);
   const { data: agents, isLoading: agentsLoading, refetch } = useDeliveryAgentsWithCapacity(locationId);
   const updateCapacity = useUpdateAgentCapacity();
+  const markAbsent = useMarkAgentAbsent();
+  const markOnline = useMarkAgentOnline();
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<number>(30);
+  const [agentToMark, setAgentToMark] = useState<AgentToMark | null>(null);
 
   const handleEdit = (agentId: string, currentCapacity: number) => {
     setEditingId(agentId);
@@ -40,7 +52,22 @@ export default function DeliveryAgents() {
     setEditValue(30);
   };
 
+  const handleMarkAbsent = async () => {
+    if (!agentToMark) return;
+    await markAbsent.mutateAsync({ 
+      agentId: agentToMark.id, 
+      agentUserId: agentToMark.agent_id 
+    });
+    setAgentToMark(null);
+  };
+
+  const handleMarkOnline = async (agentId: string) => {
+    await markOnline.mutateAsync({ agentId });
+  };
+
   const isLoading = locationLoading || agentsLoading;
+  const onlineAgents = agents?.filter(a => a.is_online).length || 0;
+  const offlineAgents = agents?.filter(a => !a.is_online).length || 0;
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6">
@@ -65,7 +92,7 @@ export default function DeliveryAgents() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -75,6 +102,19 @@ export default function DeliveryAgents() {
                 <div>
                   <p className="text-sm text-muted-foreground">Total Agents</p>
                   <p className="text-2xl font-bold">{agents?.length || 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-500/10 rounded-lg">
+                  <UserCheck className="h-5 w-5 text-green-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Online</p>
+                  <p className="text-2xl font-bold text-green-500">{onlineAgents}</p>
                 </div>
               </div>
             </CardContent>
@@ -97,8 +137,8 @@ export default function DeliveryAgents() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-500/10 rounded-lg">
-                  <Truck className="h-5 w-5 text-green-500" />
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Truck className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Available Slots</p>
@@ -131,12 +171,13 @@ export default function DeliveryAgents() {
                 <p className="text-sm mt-1">Please contact admin to set up your location.</p>
               </div>
             ) : agents && agents.length > 0 ? (
-              <div className="rounded-md border">
+              <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Agent Name</TableHead>
-                      <TableHead className="text-center">Location ID</TableHead>
+                      <TableHead className="text-center">Status</TableHead>
+                      <TableHead className="text-center">Orders Today</TableHead>
                       <TableHead className="text-center">Orders Tomorrow</TableHead>
                       <TableHead className="text-center">Max Capacity</TableHead>
                       <TableHead className="text-center">Available Slots</TableHead>
@@ -148,7 +189,18 @@ export default function DeliveryAgents() {
                       <TableRow key={agent.id}>
                         <TableCell className="font-medium">{agent.name}</TableCell>
                         <TableCell className="text-center">
-                          <Badge variant="outline">{agent.location_id}</Badge>
+                          <Badge
+                            variant={agent.is_online ? 'default' : 'secondary'}
+                            className={agent.is_online 
+                              ? 'bg-green-500/20 text-green-500 hover:bg-green-500/30' 
+                              : 'bg-muted text-muted-foreground'
+                            }
+                          >
+                            {agent.is_online ? '🟢 Online' : '🔴 Offline'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline">{agent.orders_today}</Badge>
                         </TableCell>
                         <TableCell className="text-center">
                           <Badge variant="secondary">{agent.orders_tomorrow}</Badge>
@@ -176,40 +228,76 @@ export default function DeliveryAgents() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-center">
-                          {editingId === agent.id ? (
-                            <div className="flex items-center justify-center gap-1">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleSave(agent.id)}
-                                disabled={updateCapacity.isPending}
-                                className="h-8 w-8 p-0 text-green-500 hover:text-green-600 hover:bg-green-500/10"
-                              >
-                                {updateCapacity.isPending ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
+                          <div className="flex items-center justify-center gap-1">
+                            {editingId === agent.id ? (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleSave(agent.id)}
+                                  disabled={updateCapacity.isPending}
+                                  className="h-8 w-8 p-0 text-green-500 hover:text-green-600 hover:bg-green-500/10"
+                                >
+                                  {updateCapacity.isPending ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Check className="h-4 w-4" />
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={handleCancel}
+                                  className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleEdit(agent.id, agent.max_capacity)}
+                                  className="h-8 w-8 p-0"
+                                  title="Edit capacity"
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                                {agent.is_online ? (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setAgentToMark({
+                                      id: agent.id,
+                                      agent_id: agent.agent_id,
+                                      name: agent.name,
+                                      ordersToday: agent.orders_today,
+                                    })}
+                                    className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    title="Mark absent today"
+                                  >
+                                    <UserX className="h-4 w-4" />
+                                  </Button>
                                 ) : (
-                                  <Check className="h-4 w-4" />
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleMarkOnline(agent.id)}
+                                    disabled={markOnline.isPending}
+                                    className="h-8 w-8 p-0 text-green-500 hover:text-green-600 hover:bg-green-500/10"
+                                    title="Mark online"
+                                  >
+                                    {markOnline.isPending ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <UserCheck className="h-4 w-4" />
+                                    )}
+                                  </Button>
                                 )}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={handleCancel}
-                                className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-500/10"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleEdit(agent.id, agent.max_capacity)}
-                              className="h-8 w-8 p-0"
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                          )}
+                              </>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -225,6 +313,16 @@ export default function DeliveryAgents() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Mark Absent Dialog */}
+      <MarkAgentAbsentDialog
+        open={!!agentToMark}
+        onOpenChange={(open) => !open && setAgentToMark(null)}
+        agentName={agentToMark?.name || ''}
+        ordersToday={agentToMark?.ordersToday || 0}
+        onConfirm={handleMarkAbsent}
+        isPending={markAbsent.isPending}
+      />
     </div>
   );
 }
