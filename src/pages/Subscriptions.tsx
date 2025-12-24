@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { AddSubscriptionDialog } from '@/components/AddSubscriptionDialog';
+
 import { EditSubscriptionCustomerDialog } from '@/components/EditSubscriptionCustomerDialog';
 import { AcceptanceDeadlineTimer } from '@/components/AcceptanceDeadlineTimer';
 import { SubscriptionOrderCard } from '@/components/SubscriptionOrderCard';
@@ -270,7 +270,6 @@ const Subscriptions = () => {
             >
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
-            <AddSubscriptionDialog />
           </div>
         </div>
         <ISTTimeDisplay />
@@ -322,11 +321,8 @@ const Subscriptions = () => {
             <p className="text-muted-foreground mb-6">
               {searchTerm || statusFilter !== 'all' || deliveryTypeFilter !== 'all'
                 ? 'Try adjusting your filters'
-                : 'Get started by creating your first subscription'}
+                : 'No subscriptions available yet'}
             </p>
-            {!searchTerm && statusFilter === 'all' && deliveryTypeFilter === 'all' && (
-              <AddSubscriptionDialog />
-            )}
           </div>
         </Card>
       ) : (

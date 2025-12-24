@@ -2,9 +2,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { format, addDays, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { Database } from '@/integrations/supabase/types';
-import { getNextDeliveryDateIST, skipVacationDates } from '@/utils/subscriptionDateCalculator';
+import { getNextDeliveryDateIST } from '@/utils/subscriptionDateCalculator';
 
 type Subscription = Database['public']['Tables']['subscriptions']['Row'];
 type OrderInsert = Database['public']['Tables']['orders']['Insert'];
@@ -173,124 +173,6 @@ export const useSubscriptionDeliveryStatus = (subscriptionId: string, deliveryDa
       return data;
     },
     enabled: !!subscriptionId && !!deliveryDate,
-  });
-};
-
-export interface CreateSubscriptionData {
-  customerId: string;
-  productId: string;
-  quantity: number;
-  deliveryType: 'everyday' | 'weekend' | 'alternate';
-  timeSlot: string;
-  startDate: Date;
-  endDate?: Date;
-  address: any;
-  specialInstructions?: string;
-  vacationFrom?: Date;
-  vacationTo?: Date;
-  source?: 'seller_manual' | 'customer_app';
-}
-
-const calculateNextDeliveryDate = (
-  deliveryType: string,
-  currentDate: Date
-): Date => {
-  switch (deliveryType) {
-    case 'everyday':
-      return addDays(currentDate, 1);
-    case 'weekend':
-      const nextDate = addDays(currentDate, 1);
-      const dayOfWeek = nextDate.getDay();
-      if (dayOfWeek === 0 || dayOfWeek === 6) {
-        return nextDate;
-      }
-      const daysUntilSaturday = 6 - dayOfWeek;
-      return addDays(nextDate, daysUntilSaturday);
-    case 'alternate':
-      return addDays(currentDate, 2);
-    default:
-      return addDays(currentDate, 1);
-  }
-};
-
-export const useCreateSubscription = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: CreateSubscriptionData) => {
-      if (!user?.id) throw new Error('User not authenticated');
-
-      const nextDeliveryDate = calculateNextDeliveryDate(
-        data.deliveryType,
-        data.startDate
-      );
-
-      const subscriptionData: Database['public']['Tables']['subscriptions']['Insert'] = {
-        // For seller-created: customer_id from customers table, user_id is null
-        // For customer-created: both set (customer auto-created)
-        customer_id: data.customerId,
-        user_id: data.source === 'seller_manual' ? null : data.customerId,
-        created_by: user.id,
-        source: data.source || 'seller_manual',
-        product_id: data.productId,
-        subscription_type: data.deliveryType,
-        delivery_time_slot: data.timeSlot,
-        start_date: format(data.startDate, 'yyyy-MM-dd'),
-        end_date: data.endDate ? format(data.endDate, 'yyyy-MM-dd') : null,
-        next_delivery_date: format(nextDeliveryDate, 'yyyy-MM-dd'),
-        delivery_address: data.address,
-        is_active: true,
-        quantity: data.quantity,
-        special_instructions: data.specialInstructions || null,
-        location_id: null,
-      };
-
-      const { data: subscription, error: subscriptionError } = await supabase
-        .from('subscriptions')
-        .insert(subscriptionData)
-        .select()
-        .single();
-
-      if (subscriptionError) throw subscriptionError;
-
-      // Add vacation period if provided
-      if (data.vacationFrom && data.vacationTo && subscription) {
-        const vacationData = {
-          subscription_id: subscription.id,
-          user_id: data.customerId,
-          start_date: format(data.vacationFrom, 'yyyy-MM-dd'),
-          end_date: format(data.vacationTo, 'yyyy-MM-dd'),
-          status: 'active' as const,
-        };
-
-        const { error: vacationError } = await supabase
-          .from('subscription_vacation_periods')
-          .insert(vacationData);
-
-        if (vacationError) {
-          console.error('Error creating vacation period:', vacationError);
-        }
-      }
-
-      return subscription;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['seller-subscriptions'] });
-      toast({
-        title: 'Success',
-        description: 'Subscription created successfully',
-      });
-    },
-    onError: (error: any) => {
-      console.error('Error creating subscription:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to create subscription',
-      });
-    },
   });
 };
 
