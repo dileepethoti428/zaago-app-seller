@@ -16,86 +16,103 @@ interface AgentWithCapacity {
   is_online: boolean;
 }
 
-export const useDeliveryAgentsWithCapacity = (locationId: number | null) => {
+// Source-of-truth hook for grouped daily order counts
+export const useDailyOrdersCounts = (selectedLocationId: number | null, dateStr: string) => {
   return useQuery({
-    queryKey: ['delivery-agents-capacity', locationId],
-    queryFn: async (): Promise<AgentWithCapacity[]> => {
-      if (!locationId) return [];
+    queryKey: ['daily-orders-counts', selectedLocationId, dateStr],
+    queryFn: async (): Promise<Record<string, number>> => {
+      if (!selectedLocationId) return {};
 
-      // Use IST timezone for correct date calculation
-      const todayIST = getCurrentISTTime();
-      const tomorrowIST = getTomorrowDateIST();
-      const today = format(todayIST, 'yyyy-MM-dd');
-      const tomorrowStr = format(tomorrowIST, 'yyyy-MM-dd');
+      const { data, error } = await supabase
+        .from('daily_orders')
+        .select('assigned_agent_id')
+        .eq('date', dateStr)
+        .eq('location_id', selectedLocationId)
+        .not('assigned_agent_id', 'is', null);
 
-      // Fetch agents for this location
-      const { data: agents, error: agentsError } = await supabase
+      if (error) throw error;
+
+      // Group by assigned_agent_id - this is the ONLY place counts are computed
+      const counts: Record<string, number> = {};
+      (data || []).forEach(row => {
+        if (row.assigned_agent_id) {
+          counts[row.assigned_agent_id] = (counts[row.assigned_agent_id] || 0) + 1;
+        }
+      });
+
+      return counts;
+    },
+    enabled: !!selectedLocationId && !!dateStr,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+  });
+};
+
+export const useDeliveryAgentsWithCapacity = (selectedLocationId: number | null) => {
+  // Compute date strings using IST
+  const todayIST = getCurrentISTTime();
+  const tomorrowIST = getTomorrowDateIST();
+  const todayStr = format(todayIST, 'yyyy-MM-dd');
+  const tomorrowStr = format(tomorrowIST, 'yyyy-MM-dd');
+
+  // Source-of-truth counts from separate queries
+  const { data: todayCounts, isLoading: todayLoading } = useDailyOrdersCounts(selectedLocationId, todayStr);
+  const { data: tomorrowCounts, isLoading: tomorrowLoading } = useDailyOrdersCounts(selectedLocationId, tomorrowStr);
+
+  // Fetch agents list
+  const { data: agents, isLoading: agentsLoading, refetch } = useQuery({
+    queryKey: ['delivery-agents-list', selectedLocationId],
+    queryFn: async () => {
+      if (!selectedLocationId) return [];
+
+      const { data, error } = await supabase
         .from('delivery_agents')
         .select('id, agent_id, name, location_id, max_capacity, is_online')
-        .eq('location_id', locationId)
+        .eq('location_id', selectedLocationId)
         .eq('is_active', true);
 
-      if (agentsError) throw agentsError;
-      if (!agents || agents.length === 0) return [];
-
-      // Get agent user IDs for daily_orders query
-      const agentUserIds = agents.map(a => a.agent_id);
-
-      // Fetch tomorrow's orders count per agent - filter by location_id
-      const { data: tomorrowOrdersData, error: tomorrowError } = await supabase
-        .from('daily_orders')
-        .select('assigned_agent_id')
-        .eq('location_id', locationId)
-        .eq('date', tomorrowStr)
-        .not('assigned_agent_id', 'is', null);
-
-      if (tomorrowError) throw tomorrowError;
-
-      // Fetch today's orders count per agent - filter by location_id
-      const { data: todayOrdersData, error: todayError } = await supabase
-        .from('daily_orders')
-        .select('assigned_agent_id')
-        .eq('location_id', locationId)
-        .eq('date', today)
-        .not('assigned_agent_id', 'is', null);
-
-      if (todayError) throw todayError;
-
-      // Count orders per agent for tomorrow
-      const tomorrowCounts: Record<string, number> = {};
-      (tomorrowOrdersData || []).forEach(order => {
-        if (order.assigned_agent_id) {
-          tomorrowCounts[order.assigned_agent_id] = (tomorrowCounts[order.assigned_agent_id] || 0) + 1;
-        }
-      });
-
-      // Count orders per agent for today
-      const todayCounts: Record<string, number> = {};
-      (todayOrdersData || []).forEach(order => {
-        if (order.assigned_agent_id) {
-          todayCounts[order.assigned_agent_id] = (todayCounts[order.assigned_agent_id] || 0) + 1;
-        }
-      });
-
-      // Combine data
-      return agents.map(agent => {
-        const ordersTomorrow = tomorrowCounts[agent.agent_id] || 0;
-        const ordersToday = todayCounts[agent.agent_id] || 0;
-        return {
-          id: agent.id,
-          agent_id: agent.agent_id,
-          name: agent.name,
-          location_id: agent.location_id,
-          max_capacity: agent.max_capacity || 30,
-          orders_tomorrow: ordersTomorrow,
-          orders_today: ordersToday,
-          available_slots: (agent.max_capacity || 30) - ordersToday,
-          is_online: agent.is_online ?? true,
-        };
-      });
+      if (error) throw error;
+      return data || [];
     },
-    enabled: !!locationId,
+    enabled: !!selectedLocationId,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
+
+  // Combine agents with counts ONLY when all data is loaded
+  const isLoading = agentsLoading || todayLoading || tomorrowLoading;
+  
+  const agentsWithCapacity: AgentWithCapacity[] | undefined = 
+    !isLoading && agents && todayCounts && tomorrowCounts
+      ? agents.map(agent => {
+          // Use agent_id (user UUID) to look up counts - this is what daily_orders.assigned_agent_id references
+          const ordersToday = todayCounts[agent.agent_id] ?? 0;
+          const ordersTomorrow = tomorrowCounts[agent.agent_id] ?? 0;
+          const maxCapacity = agent.max_capacity || 30;
+
+          return {
+            id: agent.id,
+            agent_id: agent.agent_id,
+            name: agent.name,
+            location_id: agent.location_id,
+            max_capacity: maxCapacity,
+            orders_tomorrow: ordersTomorrow,
+            orders_today: ordersToday,
+            available_slots: maxCapacity - ordersToday,
+            is_online: agent.is_online ?? true,
+          };
+        })
+      : undefined;
+
+  return {
+    data: agentsWithCapacity,
+    isLoading,
+    refetch,
+  };
 };
 
 export const useUpdateAgentCapacity = () => {
@@ -112,7 +129,10 @@ export const useUpdateAgentCapacity = () => {
       if (error) throw error;
     },
     onSuccess: () => {
+      // Invalidate all related queries
+      queryClient.invalidateQueries({ queryKey: ['delivery-agents-list'] });
       queryClient.invalidateQueries({ queryKey: ['delivery-agents-capacity'] });
+      queryClient.invalidateQueries({ queryKey: ['daily-orders-counts'] });
       toast({
         title: 'Capacity Updated',
         description: 'Agent capacity has been updated successfully.',

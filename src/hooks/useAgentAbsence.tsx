@@ -32,7 +32,11 @@ export function useMarkAgentAbsent() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['delivery-agents-capacity'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-agents-list'] });
+      queryClient.invalidateQueries({ queryKey: ['daily-orders-counts'] });
       queryClient.invalidateQueries({ queryKey: ['unassigned-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['debug-daily-orders-today'] });
+      queryClient.invalidateQueries({ queryKey: ['debug-daily-orders-tomorrow'] });
       toast({
         title: 'Agent Marked Absent',
         description: "Agent is now offline and today's orders have been unassigned.",
@@ -64,6 +68,8 @@ export function useMarkAgentOnline() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['delivery-agents-capacity'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-agents-list'] });
+      queryClient.invalidateQueries({ queryKey: ['daily-orders-counts'] });
       toast({
         title: 'Agent Online',
         description: 'Agent is now available for deliveries.',
