@@ -1,3 +1,13 @@
+// ============================================================================
+// ASSIGN PRIMARY AGENT HOOK
+// ============================================================================
+// ⚠️ SAFETY RULES (CRITICAL):
+// - Primary agent can ONLY be assigned ONCE per subscription
+// - Once set, primary_agent_id CANNOT be changed (enforced by DB trigger)
+// - Sellers must NOT be able to override this assignment
+// - This is for INITIAL assignment only, not for changing agents
+// ============================================================================
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -7,6 +17,10 @@ interface AssignAgentParams {
   agentId: string;
 }
 
+/**
+ * Hook to assign primary delivery agent to a subscription.
+ * ⚠️ SAFETY: Can only be done ONCE. Database trigger prevents re-assignment.
+ */
 export const useAssignPrimaryAgent = () => {
   const queryClient = useQueryClient();
 

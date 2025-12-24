@@ -1,3 +1,14 @@
+// ============================================================================
+// SUBSCRIPTION DELIVERY ACTIONS HOOK
+// ============================================================================
+// ⚠️ SAFETY RULES (CRITICAL):
+// - Sellers can ONLY accept or skip deliveries
+// - Sellers CANNOT change delivery dates directly
+// - Sellers CANNOT regenerate orders
+// - Sellers CANNOT override cron job automation
+// - All date calculations are handled server-side
+// ============================================================================
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +19,10 @@ interface DeliveryActionParams {
   action: 'accept' | 'skip';
 }
 
+/**
+ * Hook for seller to accept or skip subscription deliveries.
+ * ⚠️ SAFETY: Only allows accept/skip. No date changes. Server handles automation.
+ */
 export const useSubscriptionDeliveryActions = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
