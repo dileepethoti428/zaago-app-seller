@@ -120,6 +120,10 @@ export function useUnassignedOrders(dateType: DateType = 'tomorrow') {
       });
     },
     enabled: !!locationId,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 30000,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 }
