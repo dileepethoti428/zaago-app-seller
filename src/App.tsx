@@ -34,6 +34,7 @@ import CustomerProductDetail from "./pages/CustomerProductDetail";
 import CustomerOrders from "./pages/CustomerOrders";
 import DeliveryAgent from "./pages/DeliveryAgent";
 import DeliveryAgents from "./pages/DeliveryAgents";
+import UnassignedOrders from "./pages/UnassignedOrders";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import ProductSuggestions from "./pages/ProductSuggestions";
@@ -75,6 +76,7 @@ const AppContent = () => {
           <Route path="deliveries" element={<Deliveries />} />
           <Route path="delivery-agent" element={<DeliveryAgent />} />
           <Route path="delivery-agents" element={<DeliveryAgents />} />
+          <Route path="unassigned-orders" element={<UnassignedOrders />} />
           <Route path="payments" element={<Payments />} />
           <Route path="payments/:id" element={<PaymentDetail />} />
           <Route path="settings" element={<Settings />} />
