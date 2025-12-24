@@ -40,6 +40,10 @@ export function useAssignOrderToAgent() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['unassigned-orders'] });
       queryClient.invalidateQueries({ queryKey: ['delivery-agents-capacity'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-agents-list'] });
+      queryClient.invalidateQueries({ queryKey: ['daily-orders-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['debug-daily-orders-today'] });
+      queryClient.invalidateQueries({ queryKey: ['debug-daily-orders-tomorrow'] });
       toast.success('Order assigned successfully');
     },
     onError: (error) => {
@@ -85,6 +89,8 @@ export function useCreateDeliveryAgent() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['delivery-agents-capacity'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-agents-list'] });
+      queryClient.invalidateQueries({ queryKey: ['daily-orders-counts'] });
       queryClient.invalidateQueries({ queryKey: ['unassigned-orders'] });
       toast.success('Delivery agent created successfully');
     },

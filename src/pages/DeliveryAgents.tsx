@@ -3,6 +3,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useDeliveryAgentsWithCapacity, useUpdateAgentCapacity, useSellerLocationId } from '@/hooks/useDeliveryAgentsCapacity';
 import { useMarkAgentAbsent, useMarkAgentOnline } from '@/hooks/useAgentAbsence';
 import { MarkAgentAbsentDialog } from '@/components/MarkAgentAbsentDialog';
+import { DailyOrdersDebugPanel } from '@/components/DailyOrdersDebugPanel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+
+// Set to false to hide debug panel in production
+const SHOW_DEBUG_PANEL = true;
 
 interface AgentToMark {
   id: string;
@@ -90,6 +94,11 @@ export default function DeliveryAgents() {
             </Badge>
           )}
         </div>
+
+        {/* Debug Panel - shows raw query results */}
+        {SHOW_DEBUG_PANEL && locationId && (
+          <DailyOrdersDebugPanel selectedLocationId={locationId} />
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
