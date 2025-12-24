@@ -18,19 +18,21 @@ export interface UnassignedOrder {
   reason: 'no_agents' | 'all_at_capacity';
 }
 
-export function useUnassignedOrders() {
+export type DateType = 'today' | 'tomorrow';
+
+export function useUnassignedOrders(dateType: DateType = 'tomorrow') {
   const { user } = useAuth();
   const { data: locationId } = useSellerLocationId(user?.id);
 
   return useQuery({
-    queryKey: ['unassigned-orders', locationId],
+    queryKey: ['unassigned-orders', locationId, dateType],
     queryFn: async (): Promise<UnassignedOrder[]> => {
       if (!locationId) return [];
 
-      const tomorrow = addDays(new Date(), 1);
-      const tomorrowStr = format(tomorrow, 'yyyy-MM-dd');
+      const targetDate = dateType === 'today' ? new Date() : addDays(new Date(), 1);
+      const dateStr = format(targetDate, 'yyyy-MM-dd');
 
-      // Fetch unassigned orders for tomorrow
+      // Fetch unassigned orders for the target date
       const { data: orders, error: ordersError } = await supabase
         .from('daily_orders')
         .select(`
@@ -48,7 +50,7 @@ export function useUnassignedOrders() {
             products!subscriptions_product_id_fkey(id, name)
           )
         `)
-        .eq('date', tomorrowStr)
+        .eq('date', dateStr)
         .eq('location_id', locationId)
         .is('assigned_agent_id', null);
 
@@ -64,11 +66,11 @@ export function useUnassignedOrders() {
 
       if (agentsError) throw agentsError;
 
-      // Count orders assigned to each agent for tomorrow
+      // Count orders assigned to each agent for the target date
       const { data: assignedOrders, error: assignedError } = await supabase
         .from('daily_orders')
         .select('assigned_agent_id')
-        .eq('date', tomorrowStr)
+        .eq('date', dateStr)
         .eq('location_id', locationId)
         .not('assigned_agent_id', 'is', null);
 

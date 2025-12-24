@@ -1360,7 +1360,7 @@ export type Database = {
             columns: ["assigned_agent_id"]
             isOneToOne: false
             referencedRelation: "delivery_agents"
-            referencedColumns: ["id"]
+            referencedColumns: ["agent_id"]
           },
           {
             foreignKeyName: "daily_orders_customer_id_fkey"
@@ -5572,7 +5572,7 @@ export type Database = {
             columns: ["assigned_agent_id"]
             isOneToOne: false
             referencedRelation: "delivery_agents"
-            referencedColumns: ["id"]
+            referencedColumns: ["agent_id"]
           },
           {
             foreignKeyName: "daily_orders_customer_id_fkey"
