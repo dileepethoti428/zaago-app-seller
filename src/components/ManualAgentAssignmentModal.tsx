@@ -59,11 +59,11 @@ export function ManualAgentAssignmentModal({
           ) : agents && agents.length > 0 ? (
             agents.map((agent) => {
               const isAtCapacity = agent.available_slots <= 0;
-              const isAssigning = assigningTo === agent.id;
+              const isAssigning = assigningTo === agent.agent_id;
 
               return (
                 <div
-                  key={agent.id}
+                  key={agent.agent_id}
                   className="flex items-center justify-between p-3 border rounded-lg bg-card"
                 >
                   <div className="flex items-center gap-3">
@@ -88,7 +88,7 @@ export function ManualAgentAssignmentModal({
                   <Button
                     size="sm"
                     variant={isAtCapacity ? 'outline' : 'default'}
-                    onClick={() => handleAssign(agent.id)}
+                    onClick={() => handleAssign(agent.agent_id)}
                     disabled={isAssigning}
                   >
                     {isAssigning ? (
