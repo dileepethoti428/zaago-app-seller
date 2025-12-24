@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.handle-subscription-delivery-action]
 verify_jwt = false
+
+[functions.sync-subscription-dates]
+verify_jwt = false
