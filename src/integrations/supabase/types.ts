@@ -4256,6 +4256,7 @@ export type Database = {
           ifsc_code: string | null
           is_bank_verified: boolean | null
           latitude: number | null
+          location_id: number | null
           location_verified: boolean | null
           longitude: number | null
           name: string
@@ -4286,6 +4287,7 @@ export type Database = {
           ifsc_code?: string | null
           is_bank_verified?: boolean | null
           latitude?: number | null
+          location_id?: number | null
           location_verified?: boolean | null
           longitude?: number | null
           name: string
@@ -4316,6 +4318,7 @@ export type Database = {
           ifsc_code?: string | null
           is_bank_verified?: boolean | null
           latitude?: number | null
+          location_id?: number | null
           location_verified?: boolean | null
           longitude?: number | null
           name?: string

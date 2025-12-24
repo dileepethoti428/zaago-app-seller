@@ -36,6 +36,7 @@ const navigationLinks = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/customer-orders', label: 'Orders', icon: ShoppingCart },
   { href: '/subscriptions', label: 'Subscriptions', icon: CalendarClock },
+  { href: '/delivery-agents', label: 'Delivery Agents', icon: Truck },
   { href: '/products', label: 'Products', icon: Package },
   { href: '/products/new', label: 'Add Product', icon: PlusCircle },
   { href: '/notifications', label: 'Notifications', icon: Bell },
