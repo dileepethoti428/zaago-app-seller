@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { getCurrentISTTime, getTomorrowDateIST } from '@/utils/timeZone';
 
 interface AgentWithCapacity {
   id: string;
@@ -21,10 +22,11 @@ export const useDeliveryAgentsWithCapacity = (locationId: number | null) => {
     queryFn: async (): Promise<AgentWithCapacity[]> => {
       if (!locationId) return [];
 
-      const today = format(new Date(), 'yyyy-MM-dd');
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowStr = format(tomorrow, 'yyyy-MM-dd');
+      // Use IST timezone for correct date calculation
+      const todayIST = getCurrentISTTime();
+      const tomorrowIST = getTomorrowDateIST();
+      const today = format(todayIST, 'yyyy-MM-dd');
+      const tomorrowStr = format(tomorrowIST, 'yyyy-MM-dd');
 
       // Fetch agents for this location
       const { data: agents, error: agentsError } = await supabase
@@ -85,7 +87,7 @@ export const useDeliveryAgentsWithCapacity = (locationId: number | null) => {
           max_capacity: agent.max_capacity || 30,
           orders_tomorrow: ordersTomorrow,
           orders_today: ordersToday,
-          available_slots: (agent.max_capacity || 30) - ordersTomorrow,
+          available_slots: (agent.max_capacity || 30) - ordersToday,
           is_online: agent.is_online ?? true,
         };
       });
