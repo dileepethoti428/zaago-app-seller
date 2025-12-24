@@ -41,21 +41,23 @@ export const useDeliveryAgentsWithCapacity = (locationId: number | null) => {
       // Get agent user IDs for daily_orders query
       const agentUserIds = agents.map(a => a.agent_id);
 
-      // Fetch tomorrow's orders count per agent
+      // Fetch tomorrow's orders count per agent - filter by location_id
       const { data: tomorrowOrdersData, error: tomorrowError } = await supabase
         .from('daily_orders')
         .select('assigned_agent_id')
-        .in('assigned_agent_id', agentUserIds)
-        .eq('date', tomorrowStr);
+        .eq('location_id', locationId)
+        .eq('date', tomorrowStr)
+        .not('assigned_agent_id', 'is', null);
 
       if (tomorrowError) throw tomorrowError;
 
-      // Fetch today's orders count per agent
+      // Fetch today's orders count per agent - filter by location_id
       const { data: todayOrdersData, error: todayError } = await supabase
         .from('daily_orders')
         .select('assigned_agent_id')
-        .in('assigned_agent_id', agentUserIds)
-        .eq('date', today);
+        .eq('location_id', locationId)
+        .eq('date', today)
+        .not('assigned_agent_id', 'is', null);
 
       if (todayError) throw todayError;
 
