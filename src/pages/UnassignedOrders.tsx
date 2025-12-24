@@ -44,9 +44,12 @@ export default function UnassignedOrders() {
   const todayCount = todayOrders?.length || 0;
   const tomorrowCount = tomorrowOrders?.length || 0;
 
-  const dateLabel = activeTab === 'today' 
-    ? format(new Date(), 'EEEE, MMM d') 
-    : format(addDays(new Date(), 1), 'EEEE, MMM d');
+  const todayDate = format(new Date(), 'EEEE, MMM d');
+  const tomorrowDate = format(addDays(new Date(), 1), 'EEEE, MMM d');
+  
+  const headerText = activeTab === 'today'
+    ? `Orders for Today (${todayDate})`
+    : `Orders for Tomorrow (${tomorrowDate})`;
 
   const handleAssignClick = (order: UnassignedOrder) => {
     setSelectedOrder(order);
@@ -166,7 +169,7 @@ export default function UnassignedOrders() {
             Unassigned Orders
           </h1>
           <p className="text-muted-foreground mt-1">
-            Orders for {dateLabel} • Location ID: {locationId}
+            {headerText} • Location ID: {locationId}
           </p>
         </div>
       </div>
@@ -242,9 +245,12 @@ export default function UnassignedOrders() {
 
         {/* Tab Content */}
         <TabsContent value="today" className="mt-4">
-          <Card>
+          <Card className="border-destructive/30">
             <CardHeader>
-              <CardTitle>Orders Requiring Assignment</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                Live Orders Requiring Immediate Assignment
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {renderOrdersTable(todayOrders)}
@@ -253,9 +259,12 @@ export default function UnassignedOrders() {
         </TabsContent>
 
         <TabsContent value="tomorrow" className="mt-4">
-          <Card>
+          <Card className="border-amber-500/30">
             <CardHeader>
-              <CardTitle>Orders Requiring Assignment</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-amber-500" />
+                Planning: Orders for Tomorrow
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {renderOrdersTable(tomorrowOrders)}
