@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, MapPin, User } from 'lucide-react';
 
 interface AssignAgentModalProps {
@@ -94,38 +95,40 @@ export const AssignAgentModal = ({
               </p>
             </div>
           ) : (
-            <RadioGroup
-              value={selectedAgentId || ''}
-              onValueChange={setSelectedAgentId}
-              className="space-y-3"
-            >
-              {agents.map((agent) => (
-                <div
-                  key={agent.id}
-                  className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                    selectedAgentId === agent.id
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:bg-muted/50'
-                  }`}
-                  onClick={() => setSelectedAgentId(agent.id)}
-                >
-                  <RadioGroupItem value={agent.id} id={agent.id} />
-                  <Label
-                    htmlFor={agent.id}
-                    className="flex-1 cursor-pointer flex items-center justify-between"
+            <ScrollArea className="max-h-[300px] pr-4">
+              <RadioGroup
+                value={selectedAgentId || ''}
+                onValueChange={setSelectedAgentId}
+                className="space-y-3"
+              >
+                {agents.map((agent) => (
+                  <div
+                    key={agent.id}
+                    className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                      selectedAgentId === agent.id
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:bg-muted/50'
+                    }`}
+                    onClick={() => setSelectedAgentId(agent.id)}
                   >
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{agent.name}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      <span>Location: {agent.location_id}</span>
-                    </div>
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
+                    <RadioGroupItem value={agent.id} id={agent.id} />
+                    <Label
+                      htmlFor={agent.id}
+                      className="flex-1 cursor-pointer flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">{agent.name}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <MapPin className="h-3 w-3" />
+                        <span>Location: {agent.location_id}</span>
+                      </div>
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </ScrollArea>
           )}
         </div>
 
