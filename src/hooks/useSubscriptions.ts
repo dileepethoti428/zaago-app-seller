@@ -431,3 +431,37 @@ export const useRejectSubscriptionDelivery = () => {
     },
   });
 };
+
+export const useUpdateSubscriptionCustomer = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ subscriptionId, customerId }: { subscriptionId: string; customerId: string }) => {
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .update({ customer_id: customerId })
+        .eq('id', subscriptionId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seller-subscriptions'] });
+      toast({
+        title: 'Success',
+        description: 'Customer updated successfully',
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error updating subscription customer:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to update customer',
+      });
+    },
+  });
+};

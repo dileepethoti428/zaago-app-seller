@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AddSubscriptionDialog } from '@/components/AddSubscriptionDialog';
+import { EditSubscriptionCustomerDialog } from '@/components/EditSubscriptionCustomerDialog';
 import { AcceptanceDeadlineTimer } from '@/components/AcceptanceDeadlineTimer';
 import { SubscriptionOrderCard } from '@/components/SubscriptionOrderCard';
 import { ISTTimeDisplay } from '@/components/ISTTimeDisplay';
@@ -14,7 +15,7 @@ import { AssignAgentModal } from '@/components/AssignAgentModal';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getCurrentISTTime, isAfter11_30PM_IST, getTomorrowDateIST, isDateTomorrow } from '@/utils/timeZone';
 import { formatDateForDisplay, formatDateWithLabel } from '@/utils/subscriptionDateCalculator';
-import { Search, RefreshCw, Calendar, User, Phone, MapPin, Package, CheckCircle, XCircle, Clock, CalendarClock, UserPlus } from 'lucide-react';
+import { Search, RefreshCw, Calendar, User, Phone, MapPin, Package, CheckCircle, XCircle, Clock, CalendarClock, UserPlus, Pencil } from 'lucide-react';
 import { format, addDays, parseISO, isSameDay, isWithinInterval, differenceInMinutes, setHours, setMinutes, setSeconds } from 'date-fns';
 import { motion } from 'framer-motion';
 import {
@@ -35,6 +36,17 @@ const Subscriptions = () => {
   const [deliveryTypeFilter, setDeliveryTypeFilter] = useState('all');
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedSubscription, setSelectedSubscription] = useState<{ id: string; locationId: number | null } | null>(null);
+  const [editCustomerDialog, setEditCustomerDialog] = useState<{
+    open: boolean;
+    subscriptionId: string;
+    currentCustomerId: string | null;
+    currentCustomerName: string;
+  }>({
+    open: false,
+    subscriptionId: '',
+    currentCustomerId: null,
+    currentCustomerName: '',
+  });
 
   const { data: subscriptions, isLoading, refetch } = useSellerSubscriptions();
   const { acceptDelivery, skipDelivery, isProcessing } = useSubscriptionDeliveryActions();
@@ -332,9 +344,25 @@ const Subscriptions = () => {
                   <div className="flex-1 space-y-4">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <h3 className="text-lg font-semibold">
-                          {subscription.customer_info?.full_name || 'Unknown Customer'}
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-lg font-semibold">
+                            {subscription.customer_info?.full_name || 'Unknown Customer'}
+                          </h3>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => setEditCustomerDialog({
+                              open: true,
+                              subscriptionId: subscription.id,
+                              currentCustomerId: subscription.customer_id,
+                              currentCustomerName: subscription.customer_info?.full_name || 'Unknown Customer',
+                            })}
+                            title="Change customer"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                         <p className="text-sm text-muted-foreground">
                           ID: {(subscription.customer_id || subscription.user_id || '').slice(0, 8)}...
                         </p>
@@ -494,6 +522,15 @@ const Subscriptions = () => {
           setAssignModalOpen(false);
           setSelectedSubscription(null);
         }}
+      />
+
+      {/* Edit Customer Dialog */}
+      <EditSubscriptionCustomerDialog
+        open={editCustomerDialog.open}
+        onOpenChange={(open) => setEditCustomerDialog(prev => ({ ...prev, open }))}
+        subscriptionId={editCustomerDialog.subscriptionId}
+        currentCustomerId={editCustomerDialog.currentCustomerId}
+        currentCustomerName={editCustomerDialog.currentCustomerName}
       />
     </motion.div>
   );
