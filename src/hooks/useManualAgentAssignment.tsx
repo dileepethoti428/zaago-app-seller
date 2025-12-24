@@ -1,3 +1,14 @@
+// ============================================================================
+// MANUAL AGENT ASSIGNMENT HOOKS
+// ============================================================================
+// ⚠️ SAFETY RULES (CRITICAL):
+// - Manual assignment is ONLY for overflow/unassigned orders
+// - Assignments MUST respect agent's location_id
+// - Assignments MUST respect agent's max_capacity
+// - Sellers CANNOT change delivery dates through this
+// - Sellers CANNOT regenerate orders or override cron automation
+// ============================================================================
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -7,6 +18,10 @@ interface AssignOrderParams {
   agentId: string;
 }
 
+/**
+ * Hook to manually assign an unassigned/overflow order to a delivery agent.
+ * ⚠️ SAFETY: Only for overflow orders. Agent must be from same location.
+ */
 export function useAssignOrderToAgent() {
   const queryClient = useQueryClient();
 
