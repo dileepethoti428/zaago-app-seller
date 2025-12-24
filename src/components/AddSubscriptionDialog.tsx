@@ -179,6 +179,29 @@ export const AddSubscriptionDialog = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!customerId) {
+      toast.error('Please select a customer');
+      return;
+    }
+    if (!productId) {
+      toast.error('Please select a product');
+      return;
+    }
+    if (!address.trim()) {
+      toast.error('Please enter the delivery address');
+      return;
+    }
+    if (!city.trim()) {
+      toast.error('Please enter the city');
+      return;
+    }
+    if (!pincode.trim()) {
+      toast.error('Please enter the pincode');
+      return;
+    }
+    
     setLoading(true);
 
     try {
