@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { EditSubscriptionCustomerDialog } from '@/components/EditSubscriptionCustomerDialog';
 import { AcceptanceDeadlineTimer } from '@/components/AcceptanceDeadlineTimer';
 import { SubscriptionOrderCard } from '@/components/SubscriptionOrderCard';
-import { ISTTimeDisplay } from '@/components/ISTTimeDisplay';
+
 import { AssignAgentModal } from '@/components/AssignAgentModal';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getCurrentISTTime, isAfter11_30PM_IST, getTomorrowDateIST, isDateTomorrow } from '@/utils/timeZone';
@@ -272,7 +272,7 @@ const Subscriptions = () => {
             </Button>
           </div>
         </div>
-        <ISTTimeDisplay />
+        
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
