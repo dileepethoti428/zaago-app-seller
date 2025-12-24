@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { Loader2, MapPin, User } from 'lucide-react';
 
 interface AssignAgentModalProps {
@@ -95,7 +95,7 @@ export const AssignAgentModal = ({
               </p>
             </div>
           ) : (
-            <ScrollArea className="max-h-[300px] pr-4">
+            <div className="max-h-[300px] overflow-y-auto pr-2">
               <RadioGroup
                 value={selectedAgentId || ''}
                 onValueChange={setSelectedAgentId}
@@ -128,7 +128,7 @@ export const AssignAgentModal = ({
                   </div>
                 ))}
               </RadioGroup>
-            </ScrollArea>
+            </div>
           )}
         </div>
 
