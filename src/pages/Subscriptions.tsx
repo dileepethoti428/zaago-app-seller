@@ -10,10 +10,11 @@ import { AddSubscriptionDialog } from '@/components/AddSubscriptionDialog';
 import { AcceptanceDeadlineTimer } from '@/components/AcceptanceDeadlineTimer';
 import { SubscriptionOrderCard } from '@/components/SubscriptionOrderCard';
 import { ISTTimeDisplay } from '@/components/ISTTimeDisplay';
+import { AssignAgentModal } from '@/components/AssignAgentModal';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getCurrentISTTime, isAfter11_30PM_IST, getTomorrowDateIST, isDateTomorrow } from '@/utils/timeZone';
 import { formatDateForDisplay, formatDateWithLabel } from '@/utils/subscriptionDateCalculator';
-import { Search, RefreshCw, Calendar, User, Phone, MapPin, Package, CheckCircle, XCircle, Clock, CalendarClock } from 'lucide-react';
+import { Search, RefreshCw, Calendar, User, Phone, MapPin, Package, CheckCircle, XCircle, Clock, CalendarClock, UserPlus } from 'lucide-react';
 import { format, addDays, parseISO, isSameDay, isWithinInterval, differenceInMinutes, setHours, setMinutes, setSeconds } from 'date-fns';
 import { motion } from 'framer-motion';
 import {
@@ -32,6 +33,8 @@ const Subscriptions = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [deliveryTypeFilter, setDeliveryTypeFilter] = useState('all');
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [selectedSubscription, setSelectedSubscription] = useState<{ id: string; locationId: number | null } | null>(null);
 
   const { data: subscriptions, isLoading, refetch } = useSellerSubscriptions();
   const { acceptDelivery, skipDelivery, isProcessing } = useSubscriptionDeliveryActions();
@@ -341,7 +344,7 @@ const Subscriptions = () => {
                           </p>
                         )}
                       </div>
-                      <div className="flex gap-2 flex-wrap justify-end">
+                      <div className="flex gap-2 flex-wrap justify-end items-start">
                         <Badge
                           className={
                             subscription.is_active && !vacationInfo
@@ -355,6 +358,34 @@ const Subscriptions = () => {
                           <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
                             🏖️ On Vacation
                           </Badge>
+                        )}
+                        {/* Primary Agent Status */}
+                        <Badge
+                          className={
+                            subscription.primary_agent_id
+                              ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                              : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                          }
+                        >
+                          {subscription.primary_agent_id ? '✓ Agent Assigned' : '⚠ Agent Not Assigned'}
+                        </Badge>
+                        {/* Assign Delivery Agent Button - Only if not assigned */}
+                        {!subscription.primary_agent_id && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedSubscription({
+                                id: subscription.id,
+                                locationId: subscription.location_id
+                              });
+                              setAssignModalOpen(true);
+                            }}
+                            className="h-6 text-xs"
+                          >
+                            <UserPlus className="h-3 w-3 mr-1" />
+                            Assign Agent
+                          </Button>
                         )}
                       </div>
                     </div>
@@ -399,6 +430,14 @@ const Subscriptions = () => {
                             {subscription.delivery_time_slot}
                           </span>
                         </div>
+
+                        {/* Location ID */}
+                        {subscription.location_id && (
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                            <span>Location ID: {subscription.location_id}</span>
+                          </div>
+                        )}
 
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -454,6 +493,22 @@ const Subscriptions = () => {
           })}
         </div>
       )}
+
+      {/* Assign Agent Modal */}
+      <AssignAgentModal
+        isOpen={assignModalOpen}
+        onClose={() => {
+          setAssignModalOpen(false);
+          setSelectedSubscription(null);
+        }}
+        subscriptionId={selectedSubscription?.id}
+        locationId={selectedSubscription?.locationId ?? null}
+        onAssigned={() => {
+          refetch();
+          setAssignModalOpen(false);
+          setSelectedSubscription(null);
+        }}
+      />
     </motion.div>
   );
 };
