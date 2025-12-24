@@ -83,15 +83,20 @@ export const useDeliveryAgentsWithCapacity = (selectedLocationId: number | null)
     refetchOnWindowFocus: true,
   });
 
-  // Combine agents with counts ONLY when all data is loaded
-  const isLoading = agentsLoading || todayLoading || tomorrowLoading;
+  // Use fallback empty objects so merge always works - missing entry = 0 orders
+  const safeTodayCounts = todayCounts ?? {};
+  const safeTomorrowCounts = tomorrowCounts ?? {};
+
+  // Only block on agents loading - counts update reactively
+  const isLoading = agentsLoading;
   
   const agentsWithCapacity: AgentWithCapacity[] | undefined = 
-    !isLoading && agents && todayCounts && tomorrowCounts
+    agents && agents.length > 0
       ? agents.map(agent => {
           // Use agent_id (user UUID) to look up counts - this is what daily_orders.assigned_agent_id references
-          const ordersToday = todayCounts[agent.agent_id] ?? 0;
-          const ordersTomorrow = tomorrowCounts[agent.agent_id] ?? 0;
+          // Missing entry means 0 orders (agent not in grouped results)
+          const ordersToday = safeTodayCounts[agent.agent_id] ?? 0;
+          const ordersTomorrow = safeTomorrowCounts[agent.agent_id] ?? 0;
           const maxCapacity = agent.max_capacity || 30;
 
           return {
