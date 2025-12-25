@@ -7,6 +7,8 @@ interface TodayOrdersOverview {
   totalOrders: number;
   assignedOrders: number;
   unassignedOrders: number;
+  deliveredOrders: number;
+  pendingOrders: number;
   locationId: number | null;
 }
 
@@ -17,7 +19,7 @@ export const useTodayOrdersOverview = () => {
     queryKey: ['today-orders-overview', user?.id],
     queryFn: async (): Promise<TodayOrdersOverview> => {
       if (!user?.id) {
-        return { totalOrders: 0, assignedOrders: 0, unassignedOrders: 0, locationId: null };
+        return { totalOrders: 0, assignedOrders: 0, unassignedOrders: 0, deliveredOrders: 0, pendingOrders: 0, locationId: null };
       }
 
       // Get seller's location_id
@@ -33,7 +35,7 @@ export const useTodayOrdersOverview = () => {
       }
 
       if (!seller?.location_id) {
-        return { totalOrders: 0, assignedOrders: 0, unassignedOrders: 0, locationId: null };
+        return { totalOrders: 0, assignedOrders: 0, unassignedOrders: 0, deliveredOrders: 0, pendingOrders: 0, locationId: null };
       }
 
       const today = format(new Date(), 'yyyy-MM-dd');
@@ -41,7 +43,7 @@ export const useTodayOrdersOverview = () => {
       // Fetch daily orders for today in seller's location
       const { data: orders, error: ordersError } = await supabase
         .from('daily_orders')
-        .select('id, assigned_agent_id')
+        .select('id, assigned_agent_id, status')
         .eq('date', today)
         .eq('location_id', seller.location_id);
 
@@ -53,11 +55,15 @@ export const useTodayOrdersOverview = () => {
       const totalOrders = orders?.length || 0;
       const assignedOrders = orders?.filter(o => o.assigned_agent_id !== null).length || 0;
       const unassignedOrders = totalOrders - assignedOrders;
+      const deliveredOrders = orders?.filter(o => o.status === 'delivered').length || 0;
+      const pendingOrders = orders?.filter(o => o.assigned_agent_id !== null && o.status !== 'delivered').length || 0;
 
       return {
         totalOrders,
         assignedOrders,
         unassignedOrders,
+        deliveredOrders,
+        pendingOrders,
         locationId: seller.location_id,
       };
     },
