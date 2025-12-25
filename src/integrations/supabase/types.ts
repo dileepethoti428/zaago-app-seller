@@ -6766,6 +6766,7 @@ export type Database = {
         Args: { p_date: string; p_seller_user_id: string }
         Returns: {
           customer_id: string
+          customer_name: string
           date: string
           id: string
           location_id: number

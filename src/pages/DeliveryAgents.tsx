@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/table';
 
 // Set to false to hide debug panel in production
-const SHOW_DEBUG_PANEL = true;
+const SHOW_DEBUG_PANEL = false;
 
 interface AgentToMark {
   id: string;
