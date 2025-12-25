@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -335,48 +335,38 @@ const Orders = () => {
         />
       </motion.div>
 
-      {/* Status Tabs */}
+      {/* Status Filter Dropdown */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.3 }}
       >
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-6 bg-transparent gap-1">
+        <Select value={activeTab} onValueChange={setActiveTab}>
+          <SelectTrigger className="w-[200px] bg-zaago-card border-zaago-border text-foreground">
+            <SelectValue>
+              {tabCounts.find(t => t.value === activeTab)?.label} ({tabCounts.find(t => t.value === activeTab)?.count})
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="bg-zaago-card border-zaago-border z-50">
             {tabCounts.map((tab) => (
-              <TabsTrigger
-                key={tab.value}
+              <SelectItem 
+                key={tab.value} 
                 value={tab.value}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                  activeTab === tab.value
-                    ? 'bg-zaago-green text-black font-medium'
-                    : 'bg-zaago-card/50 text-zaago-muted-foreground hover:bg-zaago-accent/50'
-                }`}
+                className="text-foreground hover:bg-zaago-accent focus:bg-zaago-accent cursor-pointer"
               >
-                <span className="font-medium text-sm">
-                  {tab.value === 'all' ? 'All Orders' : 
-                   tab.value === 'placed' ? 'Placed' :
-                   tab.value === 'new' ? 'New' :
-                   tab.value === 'accepted' ? 'Accepted' :
-                   tab.value === 'in_transit' ? 'In Transit' :
-                   'Delivered'}
-                </span>
-                <span className={`px-2 py-0.5 rounded-full text-xs ${
-                  activeTab === tab.value
-                    ? 'bg-black/20 text-black'
-                    : 'bg-zaago-muted text-zaago-muted-foreground'
-                }`}>
-                  {tab.count}
-                </span>
-              </TabsTrigger>
+                <div className="flex items-center justify-between w-full gap-4">
+                  <span>{tab.label}</span>
+                  <span className="text-zaago-muted-foreground">{tab.count}</span>
+                </div>
+              </SelectItem>
             ))}
-          </TabsList>
+          </SelectContent>
+        </Select>
 
-          <TabsContent value={activeTab} className="mt-6">
-            <div className="space-y-4">
-              <h2 className="text-xl font-bold text-foreground">
-                All Orders ({filteredOrders.length})
-              </h2>
+        <div className="mt-6 space-y-4">
+          <h2 className="text-xl font-bold text-foreground">
+            {tabCounts.find(t => t.value === activeTab)?.label} ({filteredOrders.length})
+          </h2>
 
               {loading ? (
                 <div className="flex items-center justify-center py-12">
@@ -552,9 +542,7 @@ const Orders = () => {
                   </p>
                 </div>
               )}
-            </div>
-          </TabsContent>
-        </Tabs>
+        </div>
       </motion.div>
 
       {/* Location Setup Modal */}
