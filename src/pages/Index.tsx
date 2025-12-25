@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Package, Truck, ShoppingCart, DollarSign, Calendar, AlertTriangle, CheckCircle, MapPin } from 'lucide-react';
+import { Package, Truck, ShoppingCart, DollarSign, Calendar, AlertTriangle, CheckCircle, MapPin, Circle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CustomerLookupDialog } from '@/components/CustomerLookupDialog';
 import { ProductSuggestionsPanel } from '@/components/ProductSuggestionsPanel';
 import { useTomorrowOrdersOverview } from '@/hooks/useTomorrowOrdersOverview';
+import { useTodayOrdersOverview } from '@/hooks/useTodayOrdersOverview';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -23,6 +24,7 @@ const Index = () => {
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
+  const { data: todayOverview, isLoading: todayLoading } = useTodayOrdersOverview();
   const { data: tomorrowOverview, isLoading: tomorrowLoading } = useTomorrowOrdersOverview();
 
   const timePeriods = [
@@ -159,17 +161,89 @@ const Index = () => {
         </Select>
       </motion.div>
 
-      {/* Tomorrow Orders Overview Card */}
+      {/* Today Orders Overview Card - LIVE */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.18, duration: 0.3 }}
+        className={`bg-zaago-card/50 border rounded-xl p-6 ${todayOverview?.unassignedOrders && todayOverview.unassignedOrders > 0 ? 'border-red-500/50' : 'border-zaago-border'}`}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Calendar className="w-5 h-5 text-red-500" />
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
+            </div>
+            <h2 className="text-lg font-semibold text-foreground">Today Orders Overview</h2>
+            <Badge variant="outline" className="border-red-500/50 text-red-500 text-xs">
+              LIVE
+            </Badge>
+          </div>
+          {todayOverview?.locationId && (
+            <Badge variant="outline" className="flex items-center gap-1 border-zaago-border text-zaago-muted-foreground">
+              <MapPin className="w-3 h-3" />
+              Location {todayOverview.locationId}
+            </Badge>
+          )}
+        </div>
+
+        {todayLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+          </div>
+        ) : !todayOverview?.locationId ? (
+          <div className="text-center py-6 text-zaago-muted-foreground">
+            <MapPin className="w-10 h-10 mx-auto mb-3 opacity-50" />
+            <p>No location set. Please configure your location first.</p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="bg-background/50 border border-zaago-border rounded-lg p-4 text-center">
+                <Package className="w-6 h-6 text-red-500 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-foreground">{todayOverview.totalOrders}</p>
+                <p className="text-sm text-zaago-muted-foreground">Total Orders</p>
+              </div>
+              <div className="bg-background/50 border border-zaago-border rounded-lg p-4 text-center">
+                <CheckCircle className="w-6 h-6 text-green-500 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-foreground">{todayOverview.assignedOrders}</p>
+                <p className="text-sm text-zaago-muted-foreground">Assigned</p>
+              </div>
+              <div className={`bg-background/50 border rounded-lg p-4 text-center ${todayOverview.unassignedOrders > 0 ? 'border-red-500/50' : 'border-zaago-border'}`}>
+                <AlertTriangle className={`w-6 h-6 mx-auto mb-2 ${todayOverview.unassignedOrders > 0 ? 'text-red-500' : 'text-zaago-muted-foreground'}`} />
+                <p className={`text-2xl font-bold ${todayOverview.unassignedOrders > 0 ? 'text-red-500' : 'text-foreground'}`}>
+                  {todayOverview.unassignedOrders}
+                </p>
+                <p className="text-sm text-zaago-muted-foreground">Unassigned</p>
+              </div>
+            </div>
+
+            {todayOverview.unassignedOrders > 0 && (
+              <Link to="/unassigned-orders?tab=today">
+                <Button variant="outline" className="w-full border-red-500/50 text-red-500 hover:bg-red-500/10">
+                  <AlertTriangle className="w-4 h-4 mr-2" />
+                  View {todayOverview.unassignedOrders} Unassigned Order{todayOverview.unassignedOrders !== 1 ? 's' : ''} - URGENT
+                </Button>
+              </Link>
+            )}
+          </>
+        )}
+      </motion.div>
+
+      {/* Tomorrow Orders Overview Card - Planning */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.22, duration: 0.3 }}
         className="bg-zaago-card/50 border border-zaago-border rounded-xl p-6"
       >
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-zaago-green" />
+            <Calendar className="w-5 h-5 text-amber-500" />
             <h2 className="text-lg font-semibold text-foreground">Tomorrow Orders Overview</h2>
+            <Badge variant="outline" className="border-amber-500/50 text-amber-500 text-xs">
+              PLANNING
+            </Badge>
           </div>
           {tomorrowOverview?.locationId && (
             <Badge variant="outline" className="flex items-center gap-1 border-zaago-border text-zaago-muted-foreground">
@@ -181,7 +255,7 @@ const Index = () => {
 
         {tomorrowLoading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zaago-green"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
           </div>
         ) : !tomorrowOverview?.locationId ? (
           <div className="text-center py-6 text-zaago-muted-foreground">
@@ -192,7 +266,7 @@ const Index = () => {
           <>
             <div className="grid grid-cols-3 gap-4 mb-4">
               <div className="bg-background/50 border border-zaago-border rounded-lg p-4 text-center">
-                <Package className="w-6 h-6 text-zaago-green mx-auto mb-2" />
+                <Package className="w-6 h-6 text-amber-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-foreground">{tomorrowOverview.totalOrders}</p>
                 <p className="text-sm text-zaago-muted-foreground">Total Orders</p>
               </div>
@@ -211,7 +285,7 @@ const Index = () => {
             </div>
 
             {tomorrowOverview.unassignedOrders > 0 && (
-              <Link to="/unassigned-orders">
+              <Link to="/unassigned-orders?tab=tomorrow">
                 <Button variant="outline" className="w-full border-amber-500/50 text-amber-500 hover:bg-amber-500/10">
                   <AlertTriangle className="w-4 h-4 mr-2" />
                   View {tomorrowOverview.unassignedOrders} Unassigned Order{tomorrowOverview.unassignedOrders !== 1 ? 's' : ''}
