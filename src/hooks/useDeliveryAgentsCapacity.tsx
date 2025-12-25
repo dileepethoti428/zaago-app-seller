@@ -15,9 +15,138 @@ interface AgentWithCapacity {
   orders_today: number;
   available_slots: number;
   is_online: boolean;
+  distance_km?: number;
 }
 
-// Seller-specific order counts using RPC
+interface NearbyAgent {
+  id: string;
+  agent_id: string;
+  name: string;
+  max_capacity: number;
+  is_online: boolean;
+  latitude: number;
+  longitude: number;
+  distance_km: number;
+}
+
+// Seller-specific order counts using RPC (updated to not require locationId)
+export const useSellerAgentOrderCountsGPS = (
+  sellerUserId: string | undefined,
+  dateStr: string
+) => {
+  return useQuery({
+    queryKey: ['seller-agent-order-counts-gps', sellerUserId, dateStr],
+    queryFn: async (): Promise<Record<string, number>> => {
+      if (!sellerUserId) return {};
+
+      // Get order counts for all agents that have orders for this seller on this date
+      const { data, error } = await supabase
+        .from('daily_orders')
+        .select(`
+          assigned_agent_id,
+          subscription:subscriptions!inner(
+            product:products!inner(seller_id)
+          )
+        `)
+        .eq('date', dateStr)
+        .eq('subscription.product.seller_id', sellerUserId)
+        .not('assigned_agent_id', 'is', null);
+
+      if (error) {
+        console.error('Error fetching seller agent order counts:', error);
+        throw error;
+      }
+
+      // Count orders per agent
+      const counts: Record<string, number> = {};
+      (data || []).forEach((row: { assigned_agent_id: string | null }) => {
+        if (row.assigned_agent_id) {
+          counts[row.assigned_agent_id] = (counts[row.assigned_agent_id] || 0) + 1;
+        }
+      });
+
+      return counts;
+    },
+    enabled: !!sellerUserId && !!dateStr,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+  });
+};
+
+// GPS-based agent matching - finds agents within 10km of seller
+export const useDeliveryAgentsNearSeller = () => {
+  const { user } = useAuth();
+  
+  // Compute date strings using IST
+  const todayIST = getCurrentISTTime();
+  const tomorrowIST = getTomorrowDateIST();
+  const todayStr = format(todayIST, 'yyyy-MM-dd');
+  const tomorrowStr = format(tomorrowIST, 'yyyy-MM-dd');
+
+  // Fetch order counts for this seller
+  const { data: todayCounts } = useSellerAgentOrderCountsGPS(user?.id, todayStr);
+  const { data: tomorrowCounts } = useSellerAgentOrderCountsGPS(user?.id, tomorrowStr);
+
+  // Fetch nearby agents using the new RPC (10km radius from seller)
+  const { data: agents, isLoading: agentsLoading, refetch } = useQuery({
+    queryKey: ['delivery-agents-near-seller', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+
+      const { data, error } = await supabase.rpc('get_delivery_agents_near_seller' as any, {
+        p_seller_user_id: user.id,
+        p_radius_km: 10
+      });
+
+      if (error) {
+        console.error('Error fetching nearby agents:', error);
+        throw error;
+      }
+      
+      return (data || []) as NearbyAgent[];
+    },
+    enabled: !!user?.id,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+  });
+
+  const safeTodayCounts = todayCounts ?? {};
+  const safeTomorrowCounts = tomorrowCounts ?? {};
+
+  const agentsWithCapacity: AgentWithCapacity[] | undefined = 
+    agents && agents.length > 0
+      ? agents.map(agent => {
+          const ordersToday = safeTodayCounts[agent.agent_id] ?? 0;
+          const ordersTomorrow = safeTomorrowCounts[agent.agent_id] ?? 0;
+          const maxCapacity = agent.max_capacity || 30;
+
+          return {
+            id: agent.id,
+            agent_id: agent.agent_id,
+            name: agent.name,
+            location_id: null, // Not using location_id anymore
+            max_capacity: maxCapacity,
+            orders_tomorrow: ordersTomorrow,
+            orders_today: ordersToday,
+            available_slots: maxCapacity - ordersToday,
+            is_online: agent.is_online ?? true,
+            distance_km: Number(agent.distance_km),
+          };
+        })
+      : undefined;
+
+  return {
+    data: agentsWithCapacity,
+    isLoading: agentsLoading,
+    refetch,
+  };
+};
+
+// Legacy location-based hook (kept for backwards compatibility)
 export const useSellerAgentOrderCounts = (
   sellerUserId: string | undefined,
   locationId: number | null,
@@ -39,7 +168,6 @@ export const useSellerAgentOrderCounts = (
         throw error;
       }
 
-      // Convert array to record
       const counts: Record<string, number> = {};
       (data || []).forEach((row: { agent_id: string; order_count: number }) => {
         counts[row.agent_id] = row.order_count;
@@ -55,28 +183,26 @@ export const useSellerAgentOrderCounts = (
   });
 };
 
+// Legacy location-based hook
 export const useDeliveryAgentsWithCapacity = (selectedLocationId: number | null) => {
   const { user } = useAuth();
   
-  // Compute date strings using IST
   const todayIST = getCurrentISTTime();
   const tomorrowIST = getTomorrowDateIST();
   const todayStr = format(todayIST, 'yyyy-MM-dd');
   const tomorrowStr = format(tomorrowIST, 'yyyy-MM-dd');
 
-  // Seller-specific order counts using RPC
-  const { data: todayCounts, isLoading: todayLoading } = useSellerAgentOrderCounts(
+  const { data: todayCounts } = useSellerAgentOrderCounts(
     user?.id,
     selectedLocationId,
     todayStr
   );
-  const { data: tomorrowCounts, isLoading: tomorrowLoading } = useSellerAgentOrderCounts(
+  const { data: tomorrowCounts } = useSellerAgentOrderCounts(
     user?.id,
     selectedLocationId,
     tomorrowStr
   );
 
-  // Fetch agents list (all agents at location - this is correct)
   const { data: agents, isLoading: agentsLoading, refetch } = useQuery({
     queryKey: ['delivery-agents-list', selectedLocationId],
     queryFn: async () => {
@@ -98,18 +224,14 @@ export const useDeliveryAgentsWithCapacity = (selectedLocationId: number | null)
     refetchOnWindowFocus: true,
   });
 
-  // Use fallback empty objects so merge always works - missing entry = 0 orders
   const safeTodayCounts = todayCounts ?? {};
   const safeTomorrowCounts = tomorrowCounts ?? {};
 
-  // Only block on agents loading - counts update reactively
   const isLoading = agentsLoading;
   
   const agentsWithCapacity: AgentWithCapacity[] | undefined = 
     agents && agents.length > 0
       ? agents.map(agent => {
-          // Use agent_id (user UUID) to look up counts
-          // These counts are now seller-specific (only this seller's orders)
           const ordersToday = safeTodayCounts[agent.agent_id] ?? 0;
           const ordersTomorrow = safeTomorrowCounts[agent.agent_id] ?? 0;
           const maxCapacity = agent.max_capacity || 30;
