@@ -20,7 +20,7 @@ interface AgentWithCapacity {
 
 interface NearbyAgent {
   id: string;
-  agent_id: string;
+  agent_id: string; // UUID from RPC, will be converted to string
   name: string;
   max_capacity: number;
   is_online: boolean;
@@ -120,13 +120,15 @@ export const useDeliveryAgentsNearSeller = () => {
   const agentsWithCapacity: AgentWithCapacity[] | undefined = 
     agents && agents.length > 0
       ? agents.map(agent => {
-          const ordersToday = safeTodayCounts[agent.agent_id] ?? 0;
-          const ordersTomorrow = safeTomorrowCounts[agent.agent_id] ?? 0;
+          // Convert agent_id to string in case it comes as UUID from RPC
+          const agentIdStr = String(agent.agent_id);
+          const ordersToday = safeTodayCounts[agentIdStr] ?? 0;
+          const ordersTomorrow = safeTomorrowCounts[agentIdStr] ?? 0;
           const maxCapacity = agent.max_capacity || 30;
 
           return {
-            id: agent.id,
-            agent_id: agent.agent_id,
+            id: String(agent.id),
+            agent_id: agentIdStr,
             name: agent.name,
             location_id: null, // Not using location_id anymore
             max_capacity: maxCapacity,

@@ -260,31 +260,20 @@ const Index = () => {
             </Badge>
           </div>
           
-          {/* Today/Tomorrow Toggle */}
-          <div className="flex items-center gap-2">
-            <Button
-              variant={subscriptionView === 'today' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSubscriptionView('today')}
-              className={subscriptionView === 'today' 
-                ? 'bg-red-500 hover:bg-red-600 text-white' 
-                : 'border-zaago-border text-zaago-muted-foreground hover:bg-zaago-accent'
-              }
-            >
-              Today
-            </Button>
-            <Button
-              variant={subscriptionView === 'tomorrow' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSubscriptionView('tomorrow')}
-              className={subscriptionView === 'tomorrow' 
-                ? 'bg-amber-500 hover:bg-amber-600 text-white' 
-                : 'border-zaago-border text-zaago-muted-foreground hover:bg-zaago-accent'
-              }
-            >
-              Tomorrow
-            </Button>
-          </div>
+          {/* Today/Tomorrow Dropdown */}
+          <Select value={subscriptionView} onValueChange={(value: 'today' | 'tomorrow') => setSubscriptionView(value)}>
+            <SelectTrigger className={`w-[120px] h-8 text-xs sm:text-sm ${
+              subscriptionView === 'today' 
+                ? 'border-red-500/50 text-red-500' 
+                : 'border-amber-500/50 text-amber-500'
+            }`}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="tomorrow">Tomorrow</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Location Badge */}
