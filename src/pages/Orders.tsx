@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { 
   Package, 
   Truck, 
@@ -39,8 +39,11 @@ const Orders = () => {
   const [processingOrder, setProcessingOrder] = useState<string | null>(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
 
+  const [searchParams] = useSearchParams();
+
   const orderTabs = [
     { value: 'all', label: 'All Orders', count: 0 },
+    { value: 'placed', label: 'Placed', count: 0 },
     { value: 'new', label: 'New', count: 0 },
     { value: 'accepted', label: 'Accepted', count: 0 },
     { value: 'in_transit', label: 'In Transit', count: 0 },
@@ -53,6 +56,14 @@ const Orders = () => {
       setupRealtimeSubscription();
     }
   }, [user]);
+
+  // Read URL filter parameter on mount
+  useEffect(() => {
+    const filterParam = searchParams.get('filter');
+    if (filterParam && ['all', 'placed', 'new', 'accepted', 'in_transit', 'delivered'].includes(filterParam)) {
+      setActiveTab(filterParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     filterOrders();
@@ -145,8 +156,10 @@ const Orders = () => {
 
     // Filter by tab
     if (activeTab !== 'all') {
-      // Treat 'new' tab as showing both 'new' and 'pending' statuses
-      if (activeTab === 'new') {
+      if (activeTab === 'placed') {
+        filtered = filtered.filter(order => order.status === 'placed');
+      } else if (activeTab === 'new') {
+        // Treat 'new' tab as showing both 'new' and 'pending' statuses
         filtered = filtered.filter(order => order.status === 'new' || order.status === 'pending');
       } else {
         filtered = filtered.filter(order => order.status === activeTab);
@@ -265,9 +278,11 @@ const Orders = () => {
     ...tab,
     count: tab.value === 'all' 
       ? orders.length 
-      : tab.value === 'new'
-        ? orders.filter(order => order.status === 'new' || order.status === 'pending').length
-        : orders.filter(order => order.status === tab.value).length
+      : tab.value === 'placed'
+        ? orders.filter(order => order.status === 'placed').length
+        : tab.value === 'new'
+          ? orders.filter(order => order.status === 'new' || order.status === 'pending').length
+          : orders.filter(order => order.status === tab.value).length
   }));
 
   return (
@@ -327,7 +342,7 @@ const Orders = () => {
         transition={{ delay: 0.3, duration: 0.3 }}
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-5 bg-transparent gap-1">
+          <TabsList className="grid grid-cols-6 bg-transparent gap-1">
             {tabCounts.map((tab) => (
               <TabsTrigger
                 key={tab.value}
@@ -340,6 +355,7 @@ const Orders = () => {
               >
                 <span className="font-medium text-sm">
                   {tab.value === 'all' ? 'All Orders' : 
+                   tab.value === 'placed' ? 'Placed' :
                    tab.value === 'new' ? 'New' :
                    tab.value === 'accepted' ? 'Accepted' :
                    tab.value === 'in_transit' ? 'In Transit' :

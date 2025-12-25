@@ -18,7 +18,6 @@ const Index = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('all');
   const [subscriptionView, setSubscriptionView] = useState<'today' | 'tomorrow'>('today');
   const [regularDateFilter, setRegularDateFilter] = useState('today');
-  const [regularSortBy, setRegularSortBy] = useState('newest');
   const [stats, setStats] = useState([
     { label: 'Total Products', value: '0', icon: Package, trend: '+0%' },
     { label: 'Active Orders', value: '0', icon: ShoppingCart, trend: '+0%' },
@@ -30,7 +29,7 @@ const Index = () => {
   
   const { data: todayOverview, isLoading: todayLoading } = useTodayOrdersOverview();
   const { data: tomorrowOverview, isLoading: tomorrowLoading } = useTomorrowOrdersOverview();
-  const { data: regularOrdersOverview, isLoading: regularOrdersLoading } = useRegularOrdersOverview(regularDateFilter, regularSortBy);
+  const { data: regularOrdersOverview, isLoading: regularOrdersLoading } = useRegularOrdersOverview(regularDateFilter, 'newest');
 
   const timePeriods = [
     { value: 'today', label: 'Today' },
@@ -176,18 +175,6 @@ const Index = () => {
                 <SelectItem value="month">This Month</SelectItem>
                 <SelectItem value="year">This Year</SelectItem>
                 <SelectItem value="all">All Time</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Select value={regularSortBy} onValueChange={setRegularSortBy}>
-              <SelectTrigger className="w-[120px] sm:w-[140px] h-8 text-xs sm:text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest First</SelectItem>
-                <SelectItem value="oldest">Oldest First</SelectItem>
-                <SelectItem value="highest">Highest Amount</SelectItem>
-                <SelectItem value="lowest">Lowest Amount</SelectItem>
               </SelectContent>
             </Select>
           </div>
