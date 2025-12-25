@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import { format } from 'date-fns';
 
 interface TodayRegularOrdersOverview {
   totalOrders: number;
@@ -21,14 +20,11 @@ export const useTodayRegularOrdersOverview = () => {
         return { totalOrders: 0, assignedOrders: 0, unassignedOrders: 0, deliveredOrders: 0, pendingOrders: 0 };
       }
 
-      const today = format(new Date(), 'yyyy-MM-dd');
-
-      // Fetch regular orders for today for this seller
+      // Use the RPC function that correctly filters by seller_id in items JSONB
       const { data: orders, error: ordersError } = await supabase
-        .from('orders')
-        .select('id, assigned_agent_id, status')
-        .eq('delivery_date', today)
-        .eq('user_id', user.id);
+        .rpc('get_seller_orders_today_overview', {
+          seller_user_id: user.id
+        });
 
       if (ordersError) {
         console.error('Error fetching today regular orders:', ordersError);
@@ -36,10 +32,10 @@ export const useTodayRegularOrdersOverview = () => {
       }
 
       const totalOrders = orders?.length || 0;
-      const assignedOrders = orders?.filter(o => o.assigned_agent_id !== null).length || 0;
+      const assignedOrders = orders?.filter((o: any) => o.assigned_agent_id !== null).length || 0;
       const unassignedOrders = totalOrders - assignedOrders;
-      const deliveredOrders = orders?.filter(o => o.status === 'delivered').length || 0;
-      const pendingOrders = orders?.filter(o => o.assigned_agent_id !== null && o.status !== 'delivered').length || 0;
+      const deliveredOrders = orders?.filter((o: any) => o.status === 'delivered').length || 0;
+      const pendingOrders = orders?.filter((o: any) => o.assigned_agent_id !== null && o.status !== 'delivered').length || 0;
 
       return {
         totalOrders,

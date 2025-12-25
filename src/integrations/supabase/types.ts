@@ -6691,6 +6691,15 @@ export type Database = {
           total: number
         }[]
       }
+      get_seller_orders_today_overview: {
+        Args: { seller_user_id: string }
+        Returns: {
+          assigned_agent_id: string
+          delivery_date: string
+          id: string
+          status: string
+        }[]
+      }
       get_seller_payouts_summary_json: {
         Args: { target_seller_id: string }
         Returns: Json
