@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 
-interface TodayRegularOrdersOverview {
+interface RegularOrdersOverview {
   totalOrders: number;
   placedOrders: number;
   rejectedOrders: number;
@@ -10,24 +10,29 @@ interface TodayRegularOrdersOverview {
   pendingOrders: number;
 }
 
-export const useTodayRegularOrdersOverview = () => {
+export const useRegularOrdersOverview = (
+  dateFilter: string = 'today',
+  sortBy: string = 'newest'
+) => {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['today-regular-orders-overview', user?.id],
-    queryFn: async (): Promise<TodayRegularOrdersOverview> => {
+    queryKey: ['regular-orders-overview', user?.id, dateFilter, sortBy],
+    queryFn: async (): Promise<RegularOrdersOverview> => {
       if (!user?.id) {
         return { totalOrders: 0, placedOrders: 0, rejectedOrders: 0, deliveredOrders: 0, pendingOrders: 0 };
       }
 
-      // Use the RPC function that correctly filters by seller_id in items JSONB
+      // Use the new RPC function with filters
       const { data: orders, error: ordersError } = await supabase
-        .rpc('get_seller_orders_today_overview', {
-          seller_user_id: user.id
+        .rpc('get_seller_orders_with_filters', {
+          seller_user_id: user.id,
+          date_filter: dateFilter,
+          sort_by: sortBy
         });
 
       if (ordersError) {
-        console.error('Error fetching today regular orders:', ordersError);
+        console.error('Error fetching regular orders with filters:', ordersError);
         throw ordersError;
       }
 

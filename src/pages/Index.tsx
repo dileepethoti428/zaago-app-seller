@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Package, Truck, ShoppingCart, DollarSign, Calendar, AlertTriangle, CheckCircle, CheckCircle2, Clock, MapPin, Circle, FileText, XCircle } from 'lucide-react';
+import { Package, Truck, ShoppingCart, DollarSign, Calendar, AlertTriangle, CheckCircle, CheckCircle2, Clock, MapPin, Circle, FileText, XCircle, Filter } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,7 +9,7 @@ import { CustomerLookupDialog } from '@/components/CustomerLookupDialog';
 import { ProductSuggestionsPanel } from '@/components/ProductSuggestionsPanel';
 import { useTomorrowOrdersOverview } from '@/hooks/useTomorrowOrdersOverview';
 import { useTodayOrdersOverview } from '@/hooks/useTodayOrdersOverview';
-import { useTodayRegularOrdersOverview } from '@/hooks/useTodayRegularOrdersOverview';
+import { useRegularOrdersOverview } from '@/hooks/useRegularOrdersOverview';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -17,6 +17,8 @@ const Index = () => {
   const { user } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState('all');
   const [subscriptionView, setSubscriptionView] = useState<'today' | 'tomorrow'>('today');
+  const [regularDateFilter, setRegularDateFilter] = useState('today');
+  const [regularSortBy, setRegularSortBy] = useState('newest');
   const [stats, setStats] = useState([
     { label: 'Total Products', value: '0', icon: Package, trend: '+0%' },
     { label: 'Active Orders', value: '0', icon: ShoppingCart, trend: '+0%' },
@@ -28,7 +30,7 @@ const Index = () => {
   
   const { data: todayOverview, isLoading: todayLoading } = useTodayOrdersOverview();
   const { data: tomorrowOverview, isLoading: tomorrowLoading } = useTomorrowOrdersOverview();
-  const { data: regularOrdersOverview, isLoading: regularOrdersLoading } = useTodayRegularOrdersOverview();
+  const { data: regularOrdersOverview, isLoading: regularOrdersLoading } = useRegularOrdersOverview(regularDateFilter, regularSortBy);
 
   const timePeriods = [
     { value: 'today', label: 'Today' },
@@ -150,7 +152,7 @@ const Index = () => {
         transition={{ delay: 0.15, duration: 0.3 }}
         className={`bg-zaago-card/50 border rounded-xl p-6 ${regularOrdersOverview?.placedOrders && regularOrdersOverview.placedOrders > 0 ? 'border-blue-500/50' : 'border-zaago-border'}`}
       >
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
             <div className="relative">
               <ShoppingCart className="w-5 h-5 text-purple-500" />
@@ -158,8 +160,36 @@ const Index = () => {
             </div>
             <h2 className="text-lg font-semibold text-foreground">Regular Orders Overview</h2>
             <Badge variant="outline" className="border-purple-500/50 text-purple-500 text-xs">
-              LIVE
+              {regularDateFilter === 'today' ? 'LIVE' : regularDateFilter.toUpperCase()}
             </Badge>
+          </div>
+          
+          {/* Filters */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Select value={regularDateFilter} onValueChange={setRegularDateFilter}>
+              <SelectTrigger className="w-[120px] sm:w-[140px] h-8 text-xs sm:text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="week">This Week</SelectItem>
+                <SelectItem value="month">This Month</SelectItem>
+                <SelectItem value="year">This Year</SelectItem>
+                <SelectItem value="all">All Time</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={regularSortBy} onValueChange={setRegularSortBy}>
+              <SelectTrigger className="w-[120px] sm:w-[140px] h-8 text-xs sm:text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="oldest">Oldest First</SelectItem>
+                <SelectItem value="highest">Highest Amount</SelectItem>
+                <SelectItem value="lowest">Lowest Amount</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
