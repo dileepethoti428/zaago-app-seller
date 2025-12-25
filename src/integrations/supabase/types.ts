@@ -6473,6 +6473,19 @@ export type Database = {
           vehicle_type: string
         }[]
       }
+      get_delivery_agents_near_seller: {
+        Args: { p_radius_km?: number; p_seller_user_id: string }
+        Returns: {
+          agent_id: string
+          distance_km: number
+          id: string
+          is_online: boolean
+          latitude: number
+          longitude: number
+          max_capacity: number
+          name: string
+        }[]
+      }
       get_delivery_performance: {
         Args: { time_period?: string }
         Returns: {

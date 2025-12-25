@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useDeliveryAgentsWithCapacity, useUpdateAgentCapacity, useSellerLocationId } from '@/hooks/useDeliveryAgentsCapacity';
+import { useDeliveryAgentsNearSeller, useUpdateAgentCapacity } from '@/hooks/useDeliveryAgentsCapacity';
 import { useMarkAgentAbsent, useMarkAgentOnline } from '@/hooks/useAgentAbsence';
 import { MarkAgentAbsentDialog } from '@/components/MarkAgentAbsentDialog';
 import { DailyOrdersDebugPanel } from '@/components/DailyOrdersDebugPanel';
@@ -30,8 +30,8 @@ interface AgentToMark {
 
 export default function DeliveryAgents() {
   const { user } = useAuth();
-  const { data: locationId, isLoading: locationLoading } = useSellerLocationId(user?.id);
-  const { data: agents, isLoading: agentsLoading, refetch } = useDeliveryAgentsWithCapacity(locationId);
+  // Use GPS-based agent matching instead of location_id
+  const { data: agents, isLoading: agentsLoading, refetch } = useDeliveryAgentsNearSeller();
   const updateCapacity = useUpdateAgentCapacity();
   const markAbsent = useMarkAgentAbsent();
   const markOnline = useMarkAgentOnline();
@@ -69,7 +69,7 @@ export default function DeliveryAgents() {
     await markOnline.mutateAsync({ agentId });
   };
 
-  const isLoading = locationLoading || agentsLoading;
+  const isLoading = agentsLoading;
   const onlineAgents = agents?.filter(a => a.is_online).length || 0;
   const offlineAgents = agents?.filter(a => !a.is_online).length || 0;
 
@@ -84,20 +84,18 @@ export default function DeliveryAgents() {
               Delivery Agents
             </h1>
             <p className="text-muted-foreground mt-1">
-              Manage delivery agents and their capacity for your location
+              Agents within 10km of your location ({agents?.length || 0} found)
             </p>
           </div>
-          {locationId && (
-            <Badge variant="outline" className="flex items-center gap-1">
-              <MapPin className="h-3 w-3" />
-              Location {locationId}
-            </Badge>
-          )}
+          <Badge variant="outline" className="flex items-center gap-1">
+            <MapPin className="h-3 w-3" />
+            GPS-based (10km radius)
+          </Badge>
         </div>
 
         {/* Debug Panel - shows raw query results */}
-        {SHOW_DEBUG_PANEL && locationId && (
-          <DailyOrdersDebugPanel selectedLocationId={locationId} />
+        {SHOW_DEBUG_PANEL && (
+          <DailyOrdersDebugPanel selectedLocationId={1} />
         )}
 
         {/* Stats Cards */}
@@ -173,18 +171,13 @@ export default function DeliveryAgents() {
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
-            ) : !locationId ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <MapPin className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No location configured for your seller account.</p>
-                <p className="text-sm mt-1">Please contact admin to set up your location.</p>
-              </div>
             ) : agents && agents.length > 0 ? (
               <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Agent Name</TableHead>
+                      <TableHead className="text-center">Distance</TableHead>
                       <TableHead className="text-center">Status</TableHead>
                       <TableHead className="text-center">Orders Today</TableHead>
                       <TableHead className="text-center">Orders Tomorrow</TableHead>
@@ -197,6 +190,11 @@ export default function DeliveryAgents() {
                     {agents.map((agent) => (
                       <TableRow key={agent.id}>
                         <TableCell className="font-medium">{agent.name}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline" className="text-xs">
+                            {agent.distance_km?.toFixed(1) || '?'} km
+                          </Badge>
+                        </TableCell>
                         <TableCell className="text-center">
                           <Badge
                             variant={agent.is_online ? 'default' : 'secondary'}
@@ -316,7 +314,8 @@ export default function DeliveryAgents() {
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No active delivery agents in your location.</p>
+                <p>No active delivery agents within 10km of your location.</p>
+                <p className="text-sm mt-1">Make sure your seller profile has GPS coordinates set.</p>
               </div>
             )}
           </CardContent>

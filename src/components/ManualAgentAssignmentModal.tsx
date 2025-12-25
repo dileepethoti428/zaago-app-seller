@@ -8,15 +8,15 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useDeliveryAgentsWithCapacity } from '@/hooks/useDeliveryAgentsCapacity';
+import { useDeliveryAgentsNearSeller } from '@/hooks/useDeliveryAgentsCapacity';
 import { useAssignOrderToAgent } from '@/hooks/useManualAgentAssignment';
-import { AlertTriangle, User, Loader2 } from 'lucide-react';
+import { AlertTriangle, User, Loader2, MapPin } from 'lucide-react';
 
 interface ManualAgentAssignmentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   orderId: string;
-  locationId: number;
+  locationId?: number; // Made optional since we use GPS now
   onCreateNewAgent: () => void;
 }
 
@@ -24,10 +24,10 @@ export function ManualAgentAssignmentModal({
   open,
   onOpenChange,
   orderId,
-  locationId,
   onCreateNewAgent,
 }: ManualAgentAssignmentModalProps) {
-  const { data: agents, isLoading } = useDeliveryAgentsWithCapacity(locationId);
+  // Use GPS-based agent matching instead of location_id
+  const { data: agents, isLoading } = useDeliveryAgentsNearSeller();
   const assignOrder = useAssignOrderToAgent();
   const [assigningTo, setAssigningTo] = useState<string | null>(null);
 
@@ -73,6 +73,11 @@ export function ManualAgentAssignmentModal({
                     <div>
                       <p className="font-medium">{agent.name}</p>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {agent.distance_km?.toFixed(1) || '?'} km
+                        </span>
+                        <span>•</span>
                         <span>
                           {agent.orders_tomorrow} / {agent.max_capacity} orders
                         </span>
@@ -102,7 +107,7 @@ export function ManualAgentAssignmentModal({
             })
           ) : (
             <div className="text-center py-8 text-muted-foreground">
-              No delivery agents found in this location.
+              No delivery agents found within 10km of your location.
             </div>
           )}
         </div>
