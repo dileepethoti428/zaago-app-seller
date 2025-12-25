@@ -4,8 +4,8 @@ import { useAuth } from '@/context/AuthContext';
 
 interface TodayRegularOrdersOverview {
   totalOrders: number;
-  assignedOrders: number;
-  unassignedOrders: number;
+  placedOrders: number;
+  rejectedOrders: number;
   deliveredOrders: number;
   pendingOrders: number;
 }
@@ -17,7 +17,7 @@ export const useTodayRegularOrdersOverview = () => {
     queryKey: ['today-regular-orders-overview', user?.id],
     queryFn: async (): Promise<TodayRegularOrdersOverview> => {
       if (!user?.id) {
-        return { totalOrders: 0, assignedOrders: 0, unassignedOrders: 0, deliveredOrders: 0, pendingOrders: 0 };
+        return { totalOrders: 0, placedOrders: 0, rejectedOrders: 0, deliveredOrders: 0, pendingOrders: 0 };
       }
 
       // Use the RPC function that correctly filters by seller_id in items JSONB
@@ -32,20 +32,22 @@ export const useTodayRegularOrdersOverview = () => {
       }
 
       const totalOrders = orders?.length || 0;
-      const assignedOrders = orders?.filter((o: any) => o.assigned_agent_id !== null).length || 0;
-      const unassignedOrders = totalOrders - assignedOrders;
+      const placedOrders = orders?.filter((o: any) => o.status === 'placed').length || 0;
+      const rejectedOrders = orders?.filter((o: any) => o.status === 'rejected').length || 0;
       const deliveredOrders = orders?.filter((o: any) => o.status === 'delivered').length || 0;
-      const pendingOrders = orders?.filter((o: any) => o.assigned_agent_id !== null && o.status !== 'delivered').length || 0;
+      const pendingOrders = orders?.filter((o: any) => 
+        ['accepted', 'accepted_by_seller', 'accepted_late', 'assigned', 'out_for_delivery', 'in_transit'].includes(o.status)
+      ).length || 0;
 
       return {
         totalOrders,
-        assignedOrders,
-        unassignedOrders,
+        placedOrders,
+        rejectedOrders,
         deliveredOrders,
         pendingOrders,
       };
     },
     enabled: !!user?.id,
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30000,
   });
 };
