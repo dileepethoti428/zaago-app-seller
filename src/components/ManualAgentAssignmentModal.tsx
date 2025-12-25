@@ -8,15 +8,15 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useDeliveryAgentsNearSeller } from '@/hooks/useDeliveryAgentsCapacity';
+import { useDeliveryAgentsWithCapacity, useDeliveryAgentsNearSeller } from '@/hooks/useDeliveryAgentsCapacity';
 import { useAssignOrderToAgent } from '@/hooks/useManualAgentAssignment';
-import { AlertTriangle, User, Loader2, MapPin } from 'lucide-react';
+import { AlertTriangle, User, Loader2, MapPin, Search, ArrowLeft } from 'lucide-react';
 
 interface ManualAgentAssignmentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   orderId: string;
-  locationId?: number; // Made optional since we use GPS now
+  locationId?: number;
   onCreateNewAgent: () => void;
 }
 
@@ -24,32 +24,85 @@ export function ManualAgentAssignmentModal({
   open,
   onOpenChange,
   orderId,
+  locationId,
   onCreateNewAgent,
 }: ManualAgentAssignmentModalProps) {
-  // Use GPS-based agent matching instead of location_id
-  const { data: agents, isLoading } = useDeliveryAgentsNearSeller();
+  // State to toggle between location-based and GPS-based views
+  const [showGPSView, setShowGPSView] = useState(false);
+  
+  // Location-based agents (default)
+  const { data: locationAgents, isLoading: locationLoading } = useDeliveryAgentsWithCapacity(locationId || null);
+  
+  // GPS-based agents (10km radius)
+  const { data: gpsAgents, isLoading: gpsLoading } = useDeliveryAgentsNearSeller();
+  
   const assignOrder = useAssignOrderToAgent();
   const [assigningTo, setAssigningTo] = useState<string | null>(null);
+
+  // Use appropriate agents based on view
+  const agents = showGPSView ? gpsAgents : locationAgents;
+  const isLoading = showGPSView ? gpsLoading : locationLoading;
 
   const handleAssign = async (agentId: string) => {
     setAssigningTo(agentId);
     try {
       await assignOrder.mutateAsync({ orderId, agentId });
       onOpenChange(false);
+      setShowGPSView(false); // Reset view on close
     } finally {
       setAssigningTo(null);
     }
   };
 
+  const handleClose = (newOpen: boolean) => {
+    if (!newOpen) {
+      setShowGPSView(false); // Reset view on close
+    }
+    onOpenChange(newOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Assign to Delivery Agent</DialogTitle>
           <DialogDescription>
-            Select an agent to assign this order. Capacity limits can be overridden.
+            {showGPSView 
+              ? 'Showing agents within 10km of your location.'
+              : 'Select an agent to assign this order. Capacity limits can be overridden.'
+            }
           </DialogDescription>
         </DialogHeader>
+
+        {/* View Toggle */}
+        {showGPSView ? (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowGPSView(false)}
+            className="w-full flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Assigned Agents
+          </Button>
+        ) : (
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            onClick={() => setShowGPSView(true)}
+            className="w-full flex items-center gap-2"
+          >
+            <Search className="h-4 w-4" />
+            Find New Agents in 10km Range
+          </Button>
+        )}
+
+        {showGPSView && (
+          <Badge variant="secondary" className="flex items-center gap-1 w-fit">
+            <MapPin className="h-3 w-3" />
+            GPS-based (10km radius)
+          </Badge>
+        )}
 
         <div className="space-y-3 max-h-[400px] overflow-y-auto">
           {isLoading ? (
@@ -73,11 +126,15 @@ export function ManualAgentAssignmentModal({
                     <div>
                       <p className="font-medium">{agent.name}</p>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {agent.distance_km?.toFixed(1) || '?'} km
-                        </span>
-                        <span>•</span>
+                        {showGPSView && agent.distance_km && (
+                          <>
+                            <span className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {agent.distance_km.toFixed(1)} km
+                            </span>
+                            <span>•</span>
+                          </>
+                        )}
                         <span>
                           {agent.orders_tomorrow} / {agent.max_capacity} orders
                         </span>
@@ -107,13 +164,16 @@ export function ManualAgentAssignmentModal({
             })
           ) : (
             <div className="text-center py-8 text-muted-foreground">
-              No delivery agents found within 10km of your location.
+              {showGPSView 
+                ? 'No delivery agents found within 10km of your location.'
+                : 'No delivery agents assigned to this location.'
+              }
             </div>
           )}
         </div>
 
         <div className="flex justify-between pt-4 border-t">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => handleClose(false)}>
             Cancel
           </Button>
           <Button onClick={onCreateNewAgent}>
