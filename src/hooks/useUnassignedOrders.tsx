@@ -25,36 +25,24 @@ export function useUnassignedOrders(dateType: DateType = 'tomorrow') {
   const { data: locationId } = useSellerLocationId(user?.id);
 
   return useQuery({
-    queryKey: ['unassigned-orders', locationId, dateType],
+    queryKey: ['unassigned-orders', user?.id, locationId, dateType],
     queryFn: async (): Promise<UnassignedOrder[]> => {
-      if (!locationId) return [];
+      if (!user?.id || !locationId) return [];
 
       const targetDate = dateType === 'today' ? new Date() : addDays(new Date(), 1);
       const dateStr = format(targetDate, 'yyyy-MM-dd');
 
-      // Fetch unassigned orders for the target date
-      const { data: orders, error: ordersError } = await supabase
-        .from('daily_orders')
-        .select(`
-          id,
-          date,
-          quantity,
-          status,
-          location_id,
-          customer_id,
-          subscription_id,
-          customers!daily_orders_customer_id_fkey(id, full_name),
-          subscriptions!daily_orders_subscription_id_fkey(
-            id,
-            product_id,
-            products!subscriptions_product_id_fkey(id, name)
-          )
-        `)
-        .eq('date', dateStr)
-        .eq('location_id', locationId)
-        .is('assigned_agent_id', null);
+      // Use RPC to get seller-specific unassigned orders
+      const { data: orders, error: ordersError } = await supabase.rpc('get_seller_unassigned_orders' as any, {
+        p_seller_user_id: user.id,
+        p_date: dateStr
+      });
 
-      if (ordersError) throw ordersError;
+      if (ordersError) {
+        console.error('Error fetching unassigned orders:', ordersError);
+        throw ordersError;
+      }
+
       if (!orders || orders.length === 0) return [];
 
       // Check if there are any agents in this location
@@ -66,22 +54,22 @@ export function useUnassignedOrders(dateType: DateType = 'tomorrow') {
 
       if (agentsError) throw agentsError;
 
-      // Count orders assigned to each agent for the target date
-      const { data: assignedOrders, error: assignedError } = await supabase
-        .from('daily_orders')
-        .select('assigned_agent_id')
-        .eq('date', dateStr)
-        .eq('location_id', locationId)
-        .not('assigned_agent_id', 'is', null);
+      // Count orders assigned to each agent for the target date (seller-specific)
+      const { data: agentCounts, error: countsError } = await supabase.rpc('get_seller_agent_order_counts' as any, {
+        p_seller_user_id: user.id,
+        p_date: dateStr,
+        p_location_id: locationId
+      });
 
-      if (assignedError) throw assignedError;
+      if (countsError) {
+        console.error('Error fetching agent order counts:', countsError);
+        throw countsError;
+      }
 
       // Calculate if all agents are at capacity
       const agentOrderCounts: Record<string, number> = {};
-      assignedOrders?.forEach((order) => {
-        if (order.assigned_agent_id) {
-          agentOrderCounts[order.assigned_agent_id] = (agentOrderCounts[order.assigned_agent_id] || 0) + 1;
-        }
+      (agentCounts || []).forEach((row: { agent_id: string; order_count: number }) => {
+        agentOrderCounts[row.agent_id] = row.order_count;
       });
 
       const hasAgents = agents && agents.length > 0;
@@ -91,14 +79,7 @@ export function useUnassignedOrders(dateType: DateType = 'tomorrow') {
       });
 
       // Map orders with reason
-      return orders.map((order): UnassignedOrder => {
-        const customer = order.customers as { id: string; full_name: string } | null;
-        const subscription = order.subscriptions as { 
-          id: string; 
-          product_id: string; 
-          products: { id: string; name: string } | null 
-        } | null;
-
+      return (orders as any[]).map((order): UnassignedOrder => {
         let reason: 'no_agents' | 'all_at_capacity' = 'no_agents';
         if (hasAgents) {
           reason = allAtCapacity ? 'all_at_capacity' : 'no_agents';
@@ -110,16 +91,16 @@ export function useUnassignedOrders(dateType: DateType = 'tomorrow') {
           quantity: order.quantity,
           status: order.status,
           location_id: order.location_id,
-          customer_name: customer?.full_name || 'Unknown Customer',
+          customer_name: order.customer_name || 'Unknown Customer',
           customer_id: order.customer_id,
-          product_name: subscription?.products?.name || 'Unknown Product',
-          product_id: subscription?.product_id || '',
+          product_name: order.product_name || 'Unknown Product',
+          product_id: order.product_id || '',
           subscription_id: order.subscription_id,
           reason,
         };
       });
     },
-    enabled: !!locationId,
+    enabled: !!user?.id && !!locationId,
     refetchInterval: 30000,
     staleTime: 0,
     gcTime: 0,
