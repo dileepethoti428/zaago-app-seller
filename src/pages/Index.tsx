@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Package, Truck, ShoppingCart, DollarSign, Calendar, AlertTriangle, CheckCircle, CheckCircle2, Clock, MapPin, Circle } from 'lucide-react';
+import { Package, Truck, ShoppingCart, DollarSign, Calendar, AlertTriangle, CheckCircle, CheckCircle2, Clock, MapPin, Circle, FileText, XCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -148,7 +148,7 @@ const Index = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15, duration: 0.3 }}
-        className={`bg-zaago-card/50 border rounded-xl p-6 ${regularOrdersOverview?.unassignedOrders && regularOrdersOverview.unassignedOrders > 0 ? 'border-purple-500/50' : 'border-zaago-border'}`}
+        className={`bg-zaago-card/50 border rounded-xl p-6 ${regularOrdersOverview?.placedOrders && regularOrdersOverview.placedOrders > 0 ? 'border-blue-500/50' : 'border-zaago-border'}`}
       >
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -169,41 +169,43 @@ const Index = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-5 gap-3 mb-4">
-              <div className="bg-background/50 border border-zaago-border rounded-lg p-3 text-center">
-                <ShoppingCart className="w-5 h-5 text-purple-500 mx-auto mb-1" />
-                <p className="text-xl font-bold text-foreground">{regularOrdersOverview?.totalOrders || 0}</p>
-                <p className="text-xs text-zaago-muted-foreground">Total</p>
+            <div className="grid grid-cols-5 gap-2 sm:gap-3 mb-4">
+              <div className="bg-background/50 border border-zaago-border rounded-lg p-2 sm:p-3 text-center">
+                <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500 mx-auto mb-1" />
+                <p className="text-lg sm:text-xl font-bold text-foreground">{regularOrdersOverview?.totalOrders || 0}</p>
+                <p className="text-[10px] sm:text-xs text-zaago-muted-foreground truncate">Total</p>
               </div>
-              <div className="bg-background/50 border border-zaago-border rounded-lg p-3 text-center">
-                <CheckCircle className="w-5 h-5 text-blue-500 mx-auto mb-1" />
-                <p className="text-xl font-bold text-foreground">{regularOrdersOverview?.assignedOrders || 0}</p>
-                <p className="text-xs text-zaago-muted-foreground">Assigned</p>
-              </div>
-              <div className={`bg-background/50 border rounded-lg p-3 text-center ${(regularOrdersOverview?.unassignedOrders || 0) > 0 ? 'border-red-500/50' : 'border-zaago-border'}`}>
-                <AlertTriangle className={`w-5 h-5 mx-auto mb-1 ${(regularOrdersOverview?.unassignedOrders || 0) > 0 ? 'text-red-500' : 'text-zaago-muted-foreground'}`} />
-                <p className={`text-xl font-bold ${(regularOrdersOverview?.unassignedOrders || 0) > 0 ? 'text-red-500' : 'text-foreground'}`}>
-                  {regularOrdersOverview?.unassignedOrders || 0}
+              <div className={`bg-background/50 border rounded-lg p-2 sm:p-3 text-center ${(regularOrdersOverview?.placedOrders || 0) > 0 ? 'border-blue-500/50' : 'border-zaago-border'}`}>
+                <FileText className={`w-4 h-4 sm:w-5 sm:h-5 mx-auto mb-1 ${(regularOrdersOverview?.placedOrders || 0) > 0 ? 'text-blue-500' : 'text-zaago-muted-foreground'}`} />
+                <p className={`text-lg sm:text-xl font-bold ${(regularOrdersOverview?.placedOrders || 0) > 0 ? 'text-blue-500' : 'text-foreground'}`}>
+                  {regularOrdersOverview?.placedOrders || 0}
                 </p>
-                <p className="text-xs text-zaago-muted-foreground">Unassigned</p>
+                <p className="text-[10px] sm:text-xs text-zaago-muted-foreground truncate">Placed</p>
               </div>
-              <div className="bg-background/50 border border-green-500/30 rounded-lg p-3 text-center">
-                <CheckCircle2 className="w-5 h-5 text-green-500 mx-auto mb-1" />
-                <p className="text-xl font-bold text-green-500">{regularOrdersOverview?.deliveredOrders || 0}</p>
-                <p className="text-xs text-zaago-muted-foreground">Delivered</p>
+              <div className={`bg-background/50 border rounded-lg p-2 sm:p-3 text-center ${(regularOrdersOverview?.rejectedOrders || 0) > 0 ? 'border-red-500/50' : 'border-zaago-border'}`}>
+                <XCircle className={`w-4 h-4 sm:w-5 sm:h-5 mx-auto mb-1 ${(regularOrdersOverview?.rejectedOrders || 0) > 0 ? 'text-red-500' : 'text-zaago-muted-foreground'}`} />
+                <p className={`text-lg sm:text-xl font-bold ${(regularOrdersOverview?.rejectedOrders || 0) > 0 ? 'text-red-500' : 'text-foreground'}`}>
+                  {regularOrdersOverview?.rejectedOrders || 0}
+                </p>
+                <p className="text-[10px] sm:text-xs text-zaago-muted-foreground truncate">Rejected</p>
               </div>
-              <div className="bg-background/50 border border-amber-500/30 rounded-lg p-3 text-center">
-                <Clock className="w-5 h-5 text-amber-500 mx-auto mb-1" />
-                <p className="text-xl font-bold text-amber-500">{regularOrdersOverview?.pendingOrders || 0}</p>
-                <p className="text-xs text-zaago-muted-foreground">Pending</p>
+              <div className="bg-background/50 border border-green-500/30 rounded-lg p-2 sm:p-3 text-center">
+                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 mx-auto mb-1" />
+                <p className="text-lg sm:text-xl font-bold text-green-500">{regularOrdersOverview?.deliveredOrders || 0}</p>
+                <p className="text-[10px] sm:text-xs text-zaago-muted-foreground truncate">Delivered</p>
+              </div>
+              <div className="bg-background/50 border border-amber-500/30 rounded-lg p-2 sm:p-3 text-center">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 mx-auto mb-1" />
+                <p className="text-lg sm:text-xl font-bold text-amber-500">{regularOrdersOverview?.pendingOrders || 0}</p>
+                <p className="text-[10px] sm:text-xs text-zaago-muted-foreground truncate">Pending</p>
               </div>
             </div>
 
-            {(regularOrdersOverview?.unassignedOrders || 0) > 0 && (
-              <Link to="/orders?filter=unassigned">
-                <Button variant="outline" className="w-full border-red-500/50 text-red-500 hover:bg-red-500/10">
-                  <AlertTriangle className="w-4 h-4 mr-2" />
-                  View {regularOrdersOverview?.unassignedOrders} Unassigned Regular Order{regularOrdersOverview?.unassignedOrders !== 1 ? 's' : ''} - URGENT
+            {(regularOrdersOverview?.placedOrders || 0) > 0 && (
+              <Link to="/orders?filter=placed">
+                <Button variant="outline" className="w-full border-blue-500/50 text-blue-500 hover:bg-blue-500/10">
+                  <FileText className="w-4 h-4 mr-2" />
+                  View {regularOrdersOverview?.placedOrders} Placed Order{regularOrdersOverview?.placedOrders !== 1 ? 's' : ''} - Accept Now
                 </Button>
               </Link>
             )}
@@ -289,35 +291,35 @@ const Index = () => {
           </div>
         ) : (
           <>
-            <div className={`grid ${subscriptionView === 'today' ? 'grid-cols-5' : 'grid-cols-3'} gap-3 mb-4`}>
-              <div className="bg-background/50 border border-zaago-border rounded-lg p-3 text-center">
-                <Package className={`w-5 h-5 mx-auto mb-1 ${subscriptionView === 'today' ? 'text-red-500' : 'text-amber-500'}`} />
-                <p className="text-xl font-bold text-foreground">{currentSubscriptionData.totalOrders}</p>
-                <p className="text-xs text-zaago-muted-foreground">Total</p>
+            <div className={`grid ${subscriptionView === 'today' ? 'grid-cols-5' : 'grid-cols-3'} gap-2 sm:gap-3 mb-4`}>
+              <div className="bg-background/50 border border-zaago-border rounded-lg p-2 sm:p-3 text-center">
+                <Package className={`w-4 h-4 sm:w-5 sm:h-5 mx-auto mb-1 ${subscriptionView === 'today' ? 'text-red-500' : 'text-amber-500'}`} />
+                <p className="text-lg sm:text-xl font-bold text-foreground">{currentSubscriptionData.totalOrders}</p>
+                <p className="text-[10px] sm:text-xs text-zaago-muted-foreground truncate">Total</p>
               </div>
-              <div className="bg-background/50 border border-zaago-border rounded-lg p-3 text-center">
-                <CheckCircle className="w-5 h-5 text-blue-500 mx-auto mb-1" />
-                <p className="text-xl font-bold text-foreground">{currentSubscriptionData.assignedOrders}</p>
-                <p className="text-xs text-zaago-muted-foreground">Assigned</p>
+              <div className="bg-background/50 border border-zaago-border rounded-lg p-2 sm:p-3 text-center">
+                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mx-auto mb-1" />
+                <p className="text-lg sm:text-xl font-bold text-foreground">{currentSubscriptionData.assignedOrders}</p>
+                <p className="text-[10px] sm:text-xs text-zaago-muted-foreground truncate">Assigned</p>
               </div>
-              <div className={`bg-background/50 border rounded-lg p-3 text-center ${currentSubscriptionData.unassignedOrders > 0 ? 'border-red-500/50' : 'border-zaago-border'}`}>
-                <AlertTriangle className={`w-5 h-5 mx-auto mb-1 ${currentSubscriptionData.unassignedOrders > 0 ? 'text-red-500' : 'text-zaago-muted-foreground'}`} />
-                <p className={`text-xl font-bold ${currentSubscriptionData.unassignedOrders > 0 ? 'text-red-500' : 'text-foreground'}`}>
+              <div className={`bg-background/50 border rounded-lg p-2 sm:p-3 text-center ${currentSubscriptionData.unassignedOrders > 0 ? 'border-red-500/50' : 'border-zaago-border'}`}>
+                <AlertTriangle className={`w-4 h-4 sm:w-5 sm:h-5 mx-auto mb-1 ${currentSubscriptionData.unassignedOrders > 0 ? 'text-red-500' : 'text-zaago-muted-foreground'}`} />
+                <p className={`text-lg sm:text-xl font-bold ${currentSubscriptionData.unassignedOrders > 0 ? 'text-red-500' : 'text-foreground'}`}>
                   {currentSubscriptionData.unassignedOrders}
                 </p>
-                <p className="text-xs text-zaago-muted-foreground">Unassigned</p>
+                <p className="text-[10px] sm:text-xs text-zaago-muted-foreground truncate">Unassigned</p>
               </div>
               {subscriptionView === 'today' && todayOverview && (
                 <>
-                  <div className="bg-background/50 border border-green-500/30 rounded-lg p-3 text-center">
-                    <CheckCircle2 className="w-5 h-5 text-green-500 mx-auto mb-1" />
-                    <p className="text-xl font-bold text-green-500">{todayOverview.deliveredOrders}</p>
-                    <p className="text-xs text-zaago-muted-foreground">Delivered</p>
+                  <div className="bg-background/50 border border-green-500/30 rounded-lg p-2 sm:p-3 text-center">
+                    <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 mx-auto mb-1" />
+                    <p className="text-lg sm:text-xl font-bold text-green-500">{todayOverview.deliveredOrders}</p>
+                    <p className="text-[10px] sm:text-xs text-zaago-muted-foreground truncate">Delivered</p>
                   </div>
-                  <div className="bg-background/50 border border-amber-500/30 rounded-lg p-3 text-center">
-                    <Clock className="w-5 h-5 text-amber-500 mx-auto mb-1" />
-                    <p className="text-xl font-bold text-amber-500">{todayOverview.pendingOrders}</p>
-                    <p className="text-xs text-zaago-muted-foreground">Pending</p>
+                  <div className="bg-background/50 border border-amber-500/30 rounded-lg p-2 sm:p-3 text-center">
+                    <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 mx-auto mb-1" />
+                    <p className="text-lg sm:text-xl font-bold text-amber-500">{todayOverview.pendingOrders}</p>
+                    <p className="text-[10px] sm:text-xs text-zaago-muted-foreground truncate">Pending</p>
                   </div>
                 </>
               )}
