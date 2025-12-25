@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useDeliveryAgentsNearSeller, useUpdateAgentCapacity } from '@/hooks/useDeliveryAgentsCapacity';
+import { useDeliveryAgentsWithCapacity, useDeliveryAgentsNearSeller, useUpdateAgentCapacity, useSellerLocationId } from '@/hooks/useDeliveryAgentsCapacity';
 import { useMarkAgentAbsent, useMarkAgentOnline } from '@/hooks/useAgentAbsence';
 import { MarkAgentAbsentDialog } from '@/components/MarkAgentAbsentDialog';
 import { DailyOrdersDebugPanel } from '@/components/DailyOrdersDebugPanel';
@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Truck, Users, MapPin, Package, Edit2, Check, X, Loader2, UserX, UserCheck } from 'lucide-react';
+import { Truck, Users, MapPin, Package, Edit2, Check, X, Loader2, UserX, UserCheck, Search, ArrowLeft } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -30,8 +30,17 @@ interface AgentToMark {
 
 export default function DeliveryAgents() {
   const { user } = useAuth();
-  // Use GPS-based agent matching instead of location_id
-  const { data: agents, isLoading: agentsLoading, refetch } = useDeliveryAgentsNearSeller();
+  const { data: locationId, isLoading: locationLoading } = useSellerLocationId(user?.id);
+  
+  // State to toggle between location-based and GPS-based views
+  const [showGPSView, setShowGPSView] = useState(false);
+  
+  // Location-based agents (default)
+  const { data: locationAgents, isLoading: locationAgentsLoading, refetch: refetchLocation } = useDeliveryAgentsWithCapacity(locationId);
+  
+  // GPS-based agents (10km radius)
+  const { data: gpsAgents, isLoading: gpsAgentsLoading, refetch: refetchGPS } = useDeliveryAgentsNearSeller();
+  
   const updateCapacity = useUpdateAgentCapacity();
   const markAbsent = useMarkAgentAbsent();
   const markOnline = useMarkAgentOnline();
@@ -39,6 +48,11 @@ export default function DeliveryAgents() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<number>(30);
   const [agentToMark, setAgentToMark] = useState<AgentToMark | null>(null);
+
+  // Use appropriate agents based on view
+  const agents = showGPSView ? gpsAgents : locationAgents;
+  const isLoading = showGPSView ? gpsAgentsLoading : (locationLoading || locationAgentsLoading);
+  const refetch = showGPSView ? refetchGPS : refetchLocation;
 
   const handleEdit = (agentId: string, currentCapacity: number) => {
     setEditingId(agentId);
@@ -69,7 +83,6 @@ export default function DeliveryAgents() {
     await markOnline.mutateAsync({ agentId });
   };
 
-  const isLoading = agentsLoading;
   const onlineAgents = agents?.filter(a => a.is_online).length || 0;
   const offlineAgents = agents?.filter(a => !a.is_online).length || 0;
 
@@ -84,18 +97,43 @@ export default function DeliveryAgents() {
               Delivery Agents
             </h1>
             <p className="text-muted-foreground mt-1">
-              Agents within 10km of your location ({agents?.length || 0} found)
+              {showGPSView 
+                ? `Agents within 10km of your location (${agents?.length || 0} found)`
+                : `Manage agents assigned to your location (${agents?.length || 0} agents)`
+              }
             </p>
           </div>
-          <Badge variant="outline" className="flex items-center gap-1">
-            <MapPin className="h-3 w-3" />
-            GPS-based (10km radius)
-          </Badge>
+          {showGPSView ? (
+            <Button 
+              variant="outline" 
+              onClick={() => setShowGPSView(false)}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Assigned Agents
+            </Button>
+          ) : (
+            <Button 
+              onClick={() => setShowGPSView(true)}
+              className="flex items-center gap-2"
+            >
+              <Search className="h-4 w-4" />
+              Find New Agents (10km)
+            </Button>
+          )}
         </div>
+
+        {/* GPS View Badge */}
+        {showGPSView && (
+          <Badge variant="secondary" className="flex items-center gap-1 w-fit">
+            <MapPin className="h-3 w-3" />
+            GPS-based Discovery (10km radius)
+          </Badge>
+        )}
 
         {/* Debug Panel - shows raw query results */}
         {SHOW_DEBUG_PANEL && (
-          <DailyOrdersDebugPanel selectedLocationId={1} />
+          <DailyOrdersDebugPanel selectedLocationId={locationId || 1} />
         )}
 
         {/* Stats Cards */}
@@ -163,7 +201,7 @@ export default function DeliveryAgents() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Agent Capacity Management
+              {showGPSView ? 'Nearby Agents (GPS Discovery)' : 'Agent Capacity Management'}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -177,7 +215,7 @@ export default function DeliveryAgents() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Agent Name</TableHead>
-                      <TableHead className="text-center">Distance</TableHead>
+                      {showGPSView && <TableHead className="text-center">Distance</TableHead>}
                       <TableHead className="text-center">Status</TableHead>
                       <TableHead className="text-center">Orders Today</TableHead>
                       <TableHead className="text-center">Orders Tomorrow</TableHead>
@@ -190,11 +228,13 @@ export default function DeliveryAgents() {
                     {agents.map((agent) => (
                       <TableRow key={agent.id}>
                         <TableCell className="font-medium">{agent.name}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline" className="text-xs">
-                            {agent.distance_km?.toFixed(1) || '?'} km
-                          </Badge>
-                        </TableCell>
+                        {showGPSView && (
+                          <TableCell className="text-center">
+                            <Badge variant="outline" className="text-xs">
+                              {agent.distance_km?.toFixed(1) || '?'} km
+                            </Badge>
+                          </TableCell>
+                        )}
                         <TableCell className="text-center">
                           <Badge
                             variant={agent.is_online ? 'default' : 'secondary'}
@@ -314,8 +354,23 @@ export default function DeliveryAgents() {
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No active delivery agents within 10km of your location.</p>
-                <p className="text-sm mt-1">Make sure your seller profile has GPS coordinates set.</p>
+                {showGPSView ? (
+                  <>
+                    <p>No active delivery agents within 10km of your location.</p>
+                    <p className="text-sm mt-1">Make sure your seller profile has GPS coordinates set.</p>
+                  </>
+                ) : (
+                  <>
+                    <p>No delivery agents assigned to your location.</p>
+                    <Button 
+                      className="mt-4" 
+                      onClick={() => setShowGPSView(true)}
+                    >
+                      <Search className="h-4 w-4 mr-2" />
+                      Find New Agents (10km)
+                    </Button>
+                  </>
+                )}
               </div>
             )}
           </CardContent>
