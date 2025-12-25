@@ -6666,6 +6666,17 @@ export type Database = {
           viewed_at: string
         }[]
       }
+      get_seller_agent_order_counts: {
+        Args: {
+          p_date: string
+          p_location_id: number
+          p_seller_user_id: string
+        }
+        Returns: {
+          agent_id: string
+          order_count: number
+        }[]
+      }
       get_seller_order_items: {
         Args: { order_items: Json; target_seller_id: string }
         Returns: {
@@ -6740,6 +6751,30 @@ export type Database = {
       get_seller_stats_with_period: {
         Args: { seller_user_id: string; time_period?: string }
         Returns: Json
+      }
+      get_seller_subscription_orders_overview: {
+        Args: { p_date: string; p_seller_user_id: string }
+        Returns: {
+          assigned_orders: number
+          delivered_orders: number
+          pending_orders: number
+          total_orders: number
+          unassigned_orders: number
+        }[]
+      }
+      get_seller_unassigned_orders: {
+        Args: { p_date: string; p_seller_user_id: string }
+        Returns: {
+          customer_id: string
+          date: string
+          id: string
+          location_id: number
+          product_id: string
+          product_name: string
+          quantity: number
+          status: string
+          subscription_id: string
+        }[]
       }
       get_service_config: { Args: { config_key: string }; Returns: string }
       get_suggestions_within_range: {
