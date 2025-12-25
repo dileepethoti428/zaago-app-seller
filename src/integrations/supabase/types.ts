@@ -6700,6 +6700,17 @@ export type Database = {
           status: string
         }[]
       }
+      get_seller_orders_with_filters: {
+        Args: { date_filter?: string; seller_user_id: string; sort_by?: string }
+        Returns: {
+          assigned_agent_id: string
+          created_at: string
+          delivery_date: string
+          id: string
+          status: string
+          total: number
+        }[]
+      }
       get_seller_payouts_summary_json: {
         Args: { target_seller_id: string }
         Returns: Json
