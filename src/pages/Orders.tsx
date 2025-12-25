@@ -470,7 +470,7 @@ const Orders = () => {
                           {/* Action Buttons */}
                           <div className="flex flex-col sm:flex-row gap-2 justify-center sm:justify-end">
                             {/* Seller Action Buttons */}
-                            {(order.status === 'new' || order.status === 'pending') && (
+                            {(order.status === 'new' || order.status === 'pending' || order.status === 'placed') && (
                               <>
                                 <Button
                                   onClick={() => acceptOrder(order.id, user?.id || '')}
