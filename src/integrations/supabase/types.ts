@@ -2822,6 +2822,7 @@ export type Database = {
           pickup_location: Json | null
           pickup_status: string | null
           seller_accepted_at: string | null
+          seller_id: string | null
           seller_latitude: number | null
           seller_longitude: number | null
           seller_name: string | null
@@ -2875,6 +2876,7 @@ export type Database = {
           pickup_location?: Json | null
           pickup_status?: string | null
           seller_accepted_at?: string | null
+          seller_id?: string | null
           seller_latitude?: number | null
           seller_longitude?: number | null
           seller_name?: string | null
@@ -2928,6 +2930,7 @@ export type Database = {
           pickup_location?: Json | null
           pickup_status?: string | null
           seller_accepted_at?: string | null
+          seller_id?: string | null
           seller_latitude?: number | null
           seller_longitude?: number | null
           seller_name?: string | null
@@ -6276,6 +6279,8 @@ export type Database = {
         Args: { order_uuid: string }
         Returns: undefined
       }
+      generate_today_orders_for_test: { Args: never; Returns: undefined }
+      generate_today_orders_for_testing: { Args: never; Returns: undefined }
       generate_tracking_id: { Args: never; Returns: string }
       get_agent_distance_stats: { Args: { agent_uuid: string }; Returns: Json }
       get_agent_hours_today: { Args: { agent_uuid: string }; Returns: number }

@@ -73,23 +73,16 @@ const Dashboard = () => {
         });
       }
 
-      // Fetch recent orders
+      // Fetch recent orders using seller RPC for correct seller-scoped data
       const { data: ordersData, error: ordersError } = await supabase
-        .from('orders')
-        .select(`
-          id,
-          total,
-          status,
-          created_at,
-          customer_name,
-          items
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
+        .rpc('get_seller_orders', {
+          seller_user_id: user.id,
+          status_filter: null
+        });
 
       if (!ordersError && ordersData) {
-        setRecentOrders(ordersData);
+        // RPC returns orders sorted by created_at desc, take first 5
+        setRecentOrders((ordersData as any[]).slice(0, 5));
       }
 
     } catch (error) {
