@@ -43,6 +43,7 @@ const Orders = () => {
 
   const orderTabs = [
     { value: 'all', label: 'All Orders', count: 0 },
+    { value: 'to_accept', label: 'To Accept', count: 0 },
     { value: 'placed', label: 'Placed', count: 0 },
     { value: 'new', label: 'New', count: 0 },
     { value: 'accepted', label: 'Accepted', count: 0 },
@@ -60,7 +61,7 @@ const Orders = () => {
   // Read URL filter parameter on mount
   useEffect(() => {
     const filterParam = searchParams.get('filter');
-    if (filterParam && ['all', 'placed', 'new', 'accepted', 'in_transit', 'delivered'].includes(filterParam)) {
+    if (filterParam && ['all', 'to_accept', 'placed', 'new', 'accepted', 'in_transit', 'delivered'].includes(filterParam)) {
       setActiveTab(filterParam);
     }
   }, [searchParams]);
@@ -156,7 +157,10 @@ const Orders = () => {
 
     // Filter by tab
     if (activeTab !== 'all') {
-      if (activeTab === 'placed') {
+      if (activeTab === 'to_accept') {
+        // Show orders with status 'placed', 'pending', or 'new' (excludes payment_pending)
+        filtered = filtered.filter(order => ['placed', 'pending', 'new'].includes(order.status));
+      } else if (activeTab === 'placed') {
         filtered = filtered.filter(order => order.status === 'placed');
       } else if (activeTab === 'new') {
         // Treat 'new' tab as showing both 'new' and 'pending' statuses
@@ -278,11 +282,13 @@ const Orders = () => {
     ...tab,
     count: tab.value === 'all' 
       ? orders.length 
-      : tab.value === 'placed'
-        ? orders.filter(order => order.status === 'placed').length
-        : tab.value === 'new'
-          ? orders.filter(order => order.status === 'new' || order.status === 'pending').length
-          : orders.filter(order => order.status === tab.value).length
+      : tab.value === 'to_accept'
+        ? orders.filter(order => ['placed', 'pending', 'new'].includes(order.status)).length
+        : tab.value === 'placed'
+          ? orders.filter(order => order.status === 'placed').length
+          : tab.value === 'new'
+            ? orders.filter(order => order.status === 'new' || order.status === 'pending').length
+            : orders.filter(order => order.status === tab.value).length
   }));
 
   return (
