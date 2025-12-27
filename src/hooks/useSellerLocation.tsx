@@ -119,7 +119,7 @@ export const useSellerLocation = () => {
             // Get address from coordinates using the Google Places edge function
             const { data: addressData } = await supabase.functions.invoke('google-places', {
               body: { 
-                action: 'reverse_geocode',
+                type: 'reverse_geocode',
                 lat: latitude,
                 lng: longitude
               }
