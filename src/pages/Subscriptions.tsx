@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSellerSubscriptions, useAcceptSubscriptionDelivery, useRejectSubscriptionDelivery } from '@/hooks/useSubscriptions';
+import { useRemovePrimaryAgent } from '@/hooks/useAssignPrimaryAgent';
 import { useTodaySubscriptionOrder } from '@/hooks/useSubscriptionOrders';
 import { useSubscriptionDeliveryActions } from '@/hooks/useSubscriptionDeliveryActions';
 import { Card } from '@/components/ui/card';
@@ -15,7 +16,7 @@ import { CustomerDetailsDialog } from '@/components/CustomerDetailsDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getCurrentISTTime, isAfter11_30PM_IST, getTomorrowDateIST, isDateTomorrow } from '@/utils/timeZone';
 import { formatDateForDisplay, formatDateWithLabel } from '@/utils/subscriptionDateCalculator';
-import { Search, RefreshCw, Calendar, User, Phone, MapPin, Package, CheckCircle, XCircle, Clock, CalendarClock, UserPlus, Eye } from 'lucide-react';
+import { Search, RefreshCw, Calendar, User, Phone, MapPin, Package, CheckCircle, XCircle, Clock, CalendarClock, UserPlus, UserMinus, Eye } from 'lucide-react';
 import { format, addDays, parseISO, isSameDay, isWithinInterval, differenceInMinutes, setHours, setMinutes, setSeconds } from 'date-fns';
 import { motion } from 'framer-motion';
 import {
@@ -47,6 +48,7 @@ const Subscriptions = () => {
 
   const { data: subscriptions, isLoading, refetch } = useSellerSubscriptions();
   const { acceptDelivery, skipDelivery, isProcessing } = useSubscriptionDeliveryActions();
+  const { mutate: removePrimaryAgent, isPending: isRemovingAgent } = useRemovePrimaryAgent();
 
   // Set up real-time subscription
   useEffect(() => {
@@ -393,8 +395,36 @@ const Subscriptions = () => {
                         >
                           {subscription.primary_agent_id ? '✓ Agent Assigned' : '⚠ Agent Not Assigned'}
                         </Badge>
-                        {/* Assign Delivery Agent Button - Only if not assigned */}
-                        {!subscription.primary_agent_id && (
+                        {/* Agent Actions */}
+                        {subscription.primary_agent_id ? (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedSubscription({
+                                  id: subscription.id,
+                                  locationId: subscription.location_id
+                                });
+                                setAssignModalOpen(true);
+                              }}
+                              className="h-6 text-xs"
+                            >
+                              <UserPlus className="h-3 w-3 mr-1" />
+                              Change Agent
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => removePrimaryAgent(subscription.id)}
+                              disabled={isRemovingAgent}
+                              className="h-6 text-xs"
+                            >
+                              <UserMinus className="h-3 w-3 mr-1" />
+                              Remove Agent
+                            </Button>
+                          </>
+                        ) : (
                           <Button
                             size="sm"
                             variant="outline"
