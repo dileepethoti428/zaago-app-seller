@@ -27,6 +27,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 
@@ -41,9 +52,11 @@ const Subscriptions = () => {
   const [customerDetailsDialog, setCustomerDetailsDialog] = useState<{
     open: boolean;
     customerInfo: any;
+    assignedAgent: any;
   }>({
     open: false,
     customerInfo: null,
+    assignedAgent: null,
   });
 
   const { data: subscriptions, isLoading, refetch } = useSellerSubscriptions();
@@ -341,19 +354,20 @@ const Subscriptions = () => {
               >
                 <div className="flex flex-col lg:flex-row gap-6">
                 <div className="flex-1 space-y-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-lg font-semibold">
+                    <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-lg font-semibold truncate">
                             {subscription.customer_info?.full_name || 'Unknown Customer'}
                           </h3>
                           <Button
                             variant="outline"
                             size="sm"
-                            className="h-6 text-xs"
+                            className="h-6 text-xs shrink-0"
                             onClick={() => setCustomerDetailsDialog({
                               open: true,
                               customerInfo: subscription.customer_info,
+                              assignedAgent: (subscription as any).primary_agent || null,
                             })}
                             title="View customer details"
                           >
@@ -370,7 +384,7 @@ const Subscriptions = () => {
                           </p>
                         )}
                       </div>
-                      <div className="flex gap-2 flex-wrap justify-end items-start">
+                      <div className="flex flex-wrap gap-2 items-start w-full sm:w-auto">
                         <Badge
                           className={
                             subscription.is_active && !vacationInfo
@@ -395,36 +409,13 @@ const Subscriptions = () => {
                         >
                           {subscription.primary_agent_id ? '✓ Agent Assigned' : '⚠ Agent Not Assigned'}
                         </Badge>
-                        {/* Agent Actions */}
-                        {subscription.primary_agent_id ? (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedSubscription({
-                                  id: subscription.id,
-                                  locationId: subscription.location_id
-                                });
-                                setAssignModalOpen(true);
-                              }}
-                              className="h-6 text-xs"
-                            >
-                              <UserPlus className="h-3 w-3 mr-1" />
-                              Change Agent
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => removePrimaryAgent(subscription.id)}
-                              disabled={isRemovingAgent}
-                              className="h-6 text-xs"
-                            >
-                              <UserMinus className="h-3 w-3 mr-1" />
-                              Remove Agent
-                            </Button>
-                          </>
-                        ) : (
+                      </div>
+                    </div>
+                    
+                    {/* Agent Actions - separate row for mobile */}
+                    <div className="flex flex-wrap gap-2">
+                      {subscription.primary_agent_id ? (
+                        <>
                           <Button
                             size="sm"
                             variant="outline"
@@ -435,13 +426,60 @@ const Subscriptions = () => {
                               });
                               setAssignModalOpen(true);
                             }}
-                            className="h-6 text-xs"
+                            className="h-7 text-xs"
                           >
                             <UserPlus className="h-3 w-3 mr-1" />
-                            Assign Agent
+                            Change Agent
                           </Button>
-                        )}
-                      </div>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                disabled={isRemovingAgent}
+                                className="h-7 text-xs"
+                              >
+                                <UserMinus className="h-3 w-3 mr-1" />
+                                Remove Agent
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Remove assigned agent?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Use this if the delivery agent quit or can no longer deliver to this subscription. 
+                                  The subscription will not be assigned to them anymore and you'll need to assign a new agent.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => removePrimaryAgent(subscription.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Confirm Remove
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedSubscription({
+                              id: subscription.id,
+                              locationId: subscription.location_id
+                            });
+                            setAssignModalOpen(true);
+                          }}
+                          className="h-7 text-xs"
+                        >
+                          <UserPlus className="h-3 w-3 mr-1" />
+                          Assign Agent
+                        </Button>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -553,8 +591,9 @@ const Subscriptions = () => {
       {/* Customer Details Dialog */}
       <CustomerDetailsDialog
         isOpen={customerDetailsDialog.open}
-        onClose={() => setCustomerDetailsDialog({ open: false, customerInfo: null })}
+        onClose={() => setCustomerDetailsDialog({ open: false, customerInfo: null, assignedAgent: null })}
         customerInfo={customerDetailsDialog.customerInfo}
+        assignedAgent={customerDetailsDialog.assignedAgent}
       />
     </motion.div>
   );
