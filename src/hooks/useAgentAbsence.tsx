@@ -37,6 +37,9 @@ export function useMarkAgentAbsent() {
       queryClient.invalidateQueries({ queryKey: ['unassigned-orders'] });
       queryClient.invalidateQueries({ queryKey: ['debug-daily-orders-today'] });
       queryClient.invalidateQueries({ queryKey: ['debug-daily-orders-tomorrow'] });
+      // GPS-based queries
+      queryClient.invalidateQueries({ queryKey: ['delivery-agents-near-seller'] });
+      queryClient.invalidateQueries({ queryKey: ['seller-agent-order-counts-gps'] });
       toast({
         title: 'Agent Marked Absent',
         description: "Agent is now offline and today's orders have been unassigned.",
@@ -70,6 +73,9 @@ export function useMarkAgentOnline() {
       queryClient.invalidateQueries({ queryKey: ['delivery-agents-capacity'] });
       queryClient.invalidateQueries({ queryKey: ['delivery-agents-list'] });
       queryClient.invalidateQueries({ queryKey: ['daily-orders-counts'] });
+      // GPS-based queries
+      queryClient.invalidateQueries({ queryKey: ['delivery-agents-near-seller'] });
+      queryClient.invalidateQueries({ queryKey: ['seller-agent-order-counts-gps'] });
       toast({
         title: 'Agent Online',
         description: 'Agent is now available for deliveries.',

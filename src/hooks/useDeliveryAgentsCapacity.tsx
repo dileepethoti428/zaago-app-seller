@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { getCurrentISTTime, getTomorrowDateIST } from '@/utils/timeZone';
 import { useAuth } from '@/context/AuthContext';
 
-interface AgentWithCapacity {
+export interface AgentWithCapacity {
   id: string;
   agent_id: string;
   name: string;
@@ -15,18 +15,45 @@ interface AgentWithCapacity {
   orders_today: number;
   available_slots: number;
   is_online: boolean;
+  is_active?: boolean;
   distance_km?: number;
+  // Extended fields
+  email?: string | null;
+  phone?: string | null;
+  vehicle_type?: string | null;
+  vehicle_number?: string | null;
+  total_deliveries?: number | null;
+  average_rating?: number | null;
+  performance_score?: number | null;
+  verification_status?: string | null;
+  profile_image?: string | null;
+  created_at?: string | null;
+  last_delivery_at?: string | null;
+  last_status_change?: string | null;
 }
 
 interface NearbyAgent {
   id: string;
-  agent_id: string; // UUID from RPC, will be converted to string
+  agent_id: string;
   name: string;
+  email: string | null;
+  phone: string | null;
   max_capacity: number;
   is_online: boolean;
+  is_active: boolean;
   latitude: number;
   longitude: number;
   distance_km: number;
+  vehicle_type: string | null;
+  vehicle_number: string | null;
+  total_deliveries: number | null;
+  average_rating: number | null;
+  performance_score: number | null;
+  verification_status: string | null;
+  profile_image: string | null;
+  created_at: string | null;
+  last_delivery_at: string | null;
+  last_status_change: string | null;
 }
 
 // Seller-specific order counts using RPC (updated to not require locationId)
@@ -136,7 +163,21 @@ export const useDeliveryAgentsNearSeller = () => {
             orders_today: ordersToday,
             available_slots: maxCapacity - ordersToday,
             is_online: agent.is_online ?? true,
+            is_active: agent.is_active ?? true,
             distance_km: Number(agent.distance_km),
+            // Extended fields from GPS RPC
+            email: agent.email,
+            phone: agent.phone,
+            vehicle_type: agent.vehicle_type,
+            vehicle_number: agent.vehicle_number,
+            total_deliveries: agent.total_deliveries,
+            average_rating: agent.average_rating,
+            performance_score: agent.performance_score,
+            verification_status: agent.verification_status,
+            profile_image: agent.profile_image,
+            created_at: agent.created_at,
+            last_delivery_at: agent.last_delivery_at,
+            last_status_change: agent.last_status_change,
           };
         })
       : undefined;
@@ -273,10 +314,12 @@ export const useUpdateAgentCapacity = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      // Invalidate all related queries
+      // Invalidate all related queries including GPS-based
       queryClient.invalidateQueries({ queryKey: ['delivery-agents-list'] });
       queryClient.invalidateQueries({ queryKey: ['delivery-agents-capacity'] });
       queryClient.invalidateQueries({ queryKey: ['seller-agent-order-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-agents-near-seller'] });
+      queryClient.invalidateQueries({ queryKey: ['seller-agent-order-counts-gps'] });
       toast({
         title: 'Capacity Updated',
         description: 'Agent capacity has been updated successfully.',
