@@ -355,25 +355,30 @@ export default function AddProductPage() {
       // Handle custom category creation - private to this seller
       let finalCategoryId = formData.category_id;
       if (showNewCategoryInput && newCategoryName.trim()) {
+        console.log('Creating category with seller_id:', user.id);
+        
         const { data: newCategory, error: categoryError } = await supabase
           .from('categories')
           .insert([{ 
             name: newCategoryName.trim(), 
             is_active: true,
-            seller_id: user?.id  // Makes it private to this seller
+            seller_id: user.id  // Must match auth.uid() for RLS
           }])
           .select()
           .single();
         
         if (categoryError) {
+          console.error('Category creation error:', categoryError);
           toast({
-            title: "Error",
-            description: "Failed to create new category",
+            title: "Category Error",
+            description: categoryError.message || "Failed to create new category. Please try again.",
             variant: "destructive",
           });
           setLoading(false);
           return;
         }
+        
+        console.log('Category created successfully:', newCategory);
         finalCategoryId = newCategory.id;
       }
 
