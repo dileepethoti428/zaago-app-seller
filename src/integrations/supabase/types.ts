@@ -4253,11 +4253,15 @@ export type Database = {
           business_license: string | null
           business_name: string | null
           created_at: string
+          deleted_at: string | null
+          deletion_reason: string | null
+          deletion_requested_by: string | null
           device_info: Json | null
           email: string
           id: string
           ifsc_code: string | null
           is_bank_verified: boolean | null
+          is_deleted: boolean | null
           latitude: number | null
           location_id: number | null
           location_verified: boolean | null
@@ -4287,11 +4291,15 @@ export type Database = {
           business_license?: string | null
           business_name?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deletion_reason?: string | null
+          deletion_requested_by?: string | null
           device_info?: Json | null
           email: string
           id?: string
           ifsc_code?: string | null
           is_bank_verified?: boolean | null
+          is_deleted?: boolean | null
           latitude?: number | null
           location_id?: number | null
           location_verified?: boolean | null
@@ -4321,11 +4329,15 @@ export type Database = {
           business_license?: string | null
           business_name?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deletion_reason?: string | null
+          deletion_requested_by?: string | null
           device_info?: Json | null
           email?: string
           id?: string
           ifsc_code?: string | null
           is_bank_verified?: boolean | null
+          is_deleted?: boolean | null
           latitude?: number | null
           location_id?: number | null
           location_verified?: boolean | null
