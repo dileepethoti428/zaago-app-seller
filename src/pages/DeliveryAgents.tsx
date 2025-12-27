@@ -62,7 +62,11 @@ export default function DeliveryAgents() {
   };
 
   const handleSave = async (agentId: string) => {
-    await updateCapacity.mutateAsync({ agentId, newCapacity: editValue });
+    await updateCapacity.mutateAsync({ 
+      agentId, 
+      newCapacity: editValue, 
+      isGPSAgent: showGPSView 
+    });
     setEditingId(null);
     refetch();
   };
