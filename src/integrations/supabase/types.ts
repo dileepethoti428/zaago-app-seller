@@ -4265,8 +4265,11 @@ export type Database = {
           name: string
           onesignal_player_id: string | null
           phone: string | null
+          privacy_accepted_at: string | null
           rejection_reason: string | null
           status: string
+          terms_accepted_at: string | null
+          terms_version: string | null
           updated_at: string
           user_id: string | null
         }
@@ -4296,8 +4299,11 @@ export type Database = {
           name: string
           onesignal_player_id?: string | null
           phone?: string | null
+          privacy_accepted_at?: string | null
           rejection_reason?: string | null
           status?: string
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -4327,8 +4333,11 @@ export type Database = {
           name?: string
           onesignal_player_id?: string | null
           phone?: string | null
+          privacy_accepted_at?: string | null
           rejection_reason?: string | null
           status?: string
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           updated_at?: string
           user_id?: string | null
         }

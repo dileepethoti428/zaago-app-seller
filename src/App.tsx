@@ -38,6 +38,8 @@ import UnassignedOrders from "./pages/UnassignedOrders";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import ProductSuggestions from "./pages/ProductSuggestions";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsConditions from "./pages/TermsConditions";
 import { CustomerNotifications } from "@/components/CustomerNotifications";
 import { AgentNotifications } from "@/components/AgentNotifications";
 import { SellerNotifications } from "@/components/SellerNotifications";
@@ -60,6 +62,8 @@ const AppContent = () => {
         <Route path="/bank-details" element={<BankDetails />} />
         <Route path="/pending-approval" element={<PendingApproval />} />
         <Route path="/application-rejected" element={<ApplicationRejected />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-conditions" element={<TermsConditions />} />
         <Route path="/" element={<Layout />}>
           <Route index element={<Index />} />
           <Route path="dashboard" element={<Dashboard />} />

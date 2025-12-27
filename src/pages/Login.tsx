@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function LoginPage() {
   const { signIn, signUp, user, loading: authLoading } = useAuth();
@@ -11,6 +12,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -46,10 +48,21 @@ export default function LoginPage() {
       return;
     }
 
+    if (isSignUp && !termsAccepted) {
+      toast({
+        title: "Terms Required",
+        description: "Please accept the Terms & Conditions and Privacy Policy to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
       if (isSignUp) {
+        const acceptanceTimestamp = new Date().toISOString();
+        
         // Create auth user with business data in metadata
         const { data: signUpData, error: authError } = await supabase.auth.signUp({
           email: formData.email,
@@ -59,7 +72,10 @@ export default function LoginPage() {
             data: {
               phone: formData.phone,
               business_name: formData.businessName,
-              full_name: formData.businessName
+              full_name: formData.businessName,
+              terms_accepted_at: acceptanceTimestamp,
+              privacy_accepted_at: acceptanceTimestamp,
+              terms_version: '1.0'
             }
           }
         });
@@ -85,6 +101,7 @@ export default function LoginPage() {
         console.log('Signup successful:', signUpData);
 
         setIsSignUp(false);
+        setTermsAccepted(false);
         setFormData({ email: '', password: '', phone: '', businessName: '' });
       } else {
         const { error } = await signIn(formData.email, formData.password);
@@ -223,6 +240,34 @@ export default function LoginPage() {
                     />
                   </div>
                 </div>
+
+                {/* Terms Acceptance Checkbox */}
+                <div className="flex items-start gap-3 mt-4">
+                  <Checkbox
+                    id="terms"
+                    checked={termsAccepted}
+                    onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+                    className="mt-1 border-zinc-600 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                  />
+                  <label htmlFor="terms" className="text-sm text-zinc-400 leading-relaxed">
+                    I have read and agree to the{' '}
+                    <Link 
+                      to="/terms-conditions" 
+                      target="_blank"
+                      className="text-green-500 hover:text-green-400 underline"
+                    >
+                      Terms & Conditions
+                    </Link>{' '}
+                    and{' '}
+                    <Link 
+                      to="/privacy-policy" 
+                      target="_blank"
+                      className="text-green-500 hover:text-green-400 underline"
+                    >
+                      Privacy Policy
+                    </Link>
+                  </label>
+                </div>
               </>
             )}
 
@@ -242,7 +287,10 @@ export default function LoginPage() {
           {/* Toggle Link */}
           <div className="text-center mt-8">
             <button
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setTermsAccepted(false);
+              }}
               className="text-green-500 hover:text-green-400 text-base font-medium transition-colors"
             >
               {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
@@ -257,6 +305,19 @@ export default function LoginPage() {
                 Use any email/password to create an account or sign in
               </p>
             )}
+          </div>
+
+          {/* Legal Links Footer */}
+          <div className="text-center mt-6 pt-6 border-t border-zinc-800">
+            <div className="flex justify-center gap-4 text-sm">
+              <Link to="/privacy-policy" className="text-zinc-500 hover:text-zinc-400">
+                Privacy Policy
+              </Link>
+              <span className="text-zinc-700">•</span>
+              <Link to="/terms-conditions" className="text-zinc-500 hover:text-zinc-400">
+                Terms & Conditions
+              </Link>
+            </div>
           </div>
         </div>
       </div>

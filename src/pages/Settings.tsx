@@ -16,7 +16,9 @@ import {
   Sun,
   Moon,
   MapPin,
-  AlertCircle
+  AlertCircle,
+  FileText,
+  ExternalLink
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -34,6 +36,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useTheme } from 'next-themes';
 import { TestOrderNotification } from '@/components/TestOrderNotification';
 import { MapSelector } from '@/components/MapSelector';
+import { Link } from 'react-router-dom';
 
 
 const Settings = () => {
@@ -502,6 +505,41 @@ const Settings = () => {
 
               <p className="text-xs text-muted-foreground">
                 Your products are visible to customers within 15km of your store location
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Legal Section */}
+          <Card className="zaago-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Legal
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Link 
+                to="/privacy-policy" 
+                className="flex items-center justify-between p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Shield className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">Privacy Policy</span>
+                </div>
+                <ExternalLink className="w-4 h-4 text-muted-foreground" />
+              </Link>
+              <Link 
+                to="/terms-conditions" 
+                className="flex items-center justify-between p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <FileText className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">Terms & Conditions</span>
+                </div>
+                <ExternalLink className="w-4 h-4 text-muted-foreground" />
+              </Link>
+              <p className="text-xs text-muted-foreground mt-2">
+                Version 1.0 • Last updated December 27, 2024
               </p>
             </CardContent>
           </Card>
