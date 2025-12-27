@@ -7191,6 +7191,14 @@ export type Database = {
         Args: { p_agent_id?: string; p_subscription_id: string }
         Returns: Json
       }
+      seller_update_nearby_agent_capacity: {
+        Args: {
+          p_agent_row_id: string
+          p_new_capacity: number
+          p_radius_km?: number
+        }
+        Returns: Json
+      }
       send_birthday_messages: { Args: never; Returns: number }
       send_subscription_notification: {
         Args: {

@@ -300,18 +300,52 @@ export const useDeliveryAgentsWithCapacity = (selectedLocationId: number | null)
   };
 };
 
+// Hook for updating capacity - supports both location-based and GPS-based agents
 export const useUpdateAgentCapacity = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ agentId, newCapacity }: { agentId: string; newCapacity: number }) => {
-      const { error } = await supabase
-        .from('delivery_agents')
-        .update({ max_capacity: newCapacity })
-        .eq('id', agentId);
+    mutationFn: async ({ 
+      agentId, 
+      newCapacity, 
+      isGPSAgent = false 
+    }: { 
+      agentId: string; 
+      newCapacity: number; 
+      isGPSAgent?: boolean;
+    }) => {
+      if (isGPSAgent) {
+        // Use the secure RPC for GPS-discovered agents
+        const { data, error } = await supabase.rpc('seller_update_nearby_agent_capacity' as any, {
+          p_agent_row_id: agentId,
+          p_new_capacity: newCapacity,
+          p_radius_km: 10
+        });
 
-      if (error) throw error;
+        if (error) throw error;
+
+        // Check RPC response for errors
+        const result = data as { success: boolean; error?: string; new_capacity?: number };
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to update capacity');
+        }
+
+        return result;
+      } else {
+        // Use direct update for location-based agents (existing RLS policy applies)
+        const { data, error } = await supabase
+          .from('delivery_agents')
+          .update({ max_capacity: newCapacity })
+          .eq('id', agentId)
+          .select('id')
+          .single();
+
+        if (error) throw error;
+        if (!data) throw new Error('No rows updated - agent may not be in your location');
+
+        return { success: true, new_capacity: newCapacity };
+      }
     },
     onSuccess: () => {
       // Invalidate all related queries including GPS-based
@@ -325,10 +359,10 @@ export const useUpdateAgentCapacity = () => {
         description: 'Agent capacity has been updated successfully.',
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
-        title: 'Error',
-        description: `Failed to update capacity: ${error.message}`,
+        title: 'Update Failed',
+        description: error.message,
         variant: 'destructive',
       });
     },
