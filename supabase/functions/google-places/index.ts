@@ -12,11 +12,21 @@ serve(async (req) => {
   }
 
   try {
-    const { type, ...params } = await req.json();
+    const body = await req.json();
+    const { type, ...params } = body;
+    
+    console.log('📍 Google Places request received:', { type, params: Object.keys(params) });
+    
     const apiKey = Deno.env.get('GOOGLE_PLACES_API_KEY');
     
     if (!apiKey) {
+      console.error('❌ GOOGLE_PLACES_API_KEY not configured');
       throw new Error('Google Places API key not configured');
+    }
+
+    if (!type) {
+      console.error('❌ Missing request type in body:', body);
+      throw new Error('Missing request type. Expected: reverse_geocode, place_autocomplete, place_details, or nearby_search');
     }
 
     let url: string;
@@ -51,7 +61,8 @@ serve(async (req) => {
         break;
       
       default:
-        throw new Error('Invalid request type');
+        console.error('❌ Invalid request type:', type);
+        throw new Error(`Invalid request type: "${type}". Expected: reverse_geocode, place_autocomplete, place_details, or nearby_search`);
     }
 
     const data = await response.json();
