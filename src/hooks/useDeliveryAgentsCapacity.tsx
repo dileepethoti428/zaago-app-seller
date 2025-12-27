@@ -315,25 +315,49 @@ export const useUpdateAgentCapacity = () => {
       newCapacity: number; 
       isGPSAgent?: boolean;
     }) => {
+      console.log('🔧 Updating agent capacity:', { agentId, newCapacity, isGPSAgent });
+      
       if (isGPSAgent) {
         // Use the secure RPC for GPS-discovered agents
+        console.log('📡 Calling seller_update_nearby_agent_capacity RPC...');
         const { data, error } = await supabase.rpc('seller_update_nearby_agent_capacity' as any, {
           p_agent_row_id: agentId,
           p_new_capacity: newCapacity,
           p_radius_km: 10
         });
 
-        if (error) throw error;
+        console.log('📡 RPC Response:', { data, error });
+
+        if (error) {
+          console.error('❌ RPC Error:', error);
+          throw error;
+        }
 
         // Check RPC response for errors
         const result = data as { success: boolean; error?: string; new_capacity?: number };
+        console.log('📡 RPC Result:', result);
+        
         if (!result.success) {
-          throw new Error(result.error || 'Failed to update capacity');
+          const errorMessage = result.error || 'Failed to update capacity';
+          console.error('❌ RPC returned error:', errorMessage);
+          
+          // Provide user-friendly error messages
+          if (errorMessage.includes('Seller GPS coordinates not set')) {
+            throw new Error('Please set your seller location first. Go to Settings → Location to set your GPS coordinates.');
+          } else if (errorMessage.includes('Agent is no longer within')) {
+            throw new Error('This agent has moved out of your 10km radius and can no longer be updated.');
+          } else if (errorMessage.includes('Agent GPS coordinates not available')) {
+            throw new Error('This agent does not have GPS coordinates set. They need to update their location.');
+          }
+          
+          throw new Error(errorMessage);
         }
 
+        console.log('✅ GPS agent capacity updated successfully');
         return result;
       } else {
         // Use direct update for location-based agents (existing RLS policy applies)
+        console.log('📝 Direct update for location-based agent...');
         const { data, error } = await supabase
           .from('delivery_agents')
           .update({ max_capacity: newCapacity })
@@ -341,9 +365,13 @@ export const useUpdateAgentCapacity = () => {
           .select('id')
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('❌ Direct update error:', error);
+          throw error;
+        }
         if (!data) throw new Error('No rows updated - agent may not be in your location');
 
+        console.log('✅ Location-based agent capacity updated successfully');
         return { success: true, new_capacity: newCapacity };
       }
     },
@@ -360,6 +388,7 @@ export const useUpdateAgentCapacity = () => {
       });
     },
     onError: (error: Error) => {
+      console.error('❌ Capacity update failed:', error.message);
       toast({
         title: 'Update Failed',
         description: error.message,
