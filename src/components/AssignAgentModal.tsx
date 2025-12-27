@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAssignPrimaryAgent } from '@/hooks/useAssignPrimaryAgent';
+import { useDeliveryAgentsNearSeller, useDeliveryAgentsWithCapacity } from '@/hooks/useDeliveryAgentsCapacity';
 import {
   Dialog,
   DialogContent,
@@ -13,8 +14,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-
-import { Loader2, MapPin, User } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, MapPin, User, Navigation, ArrowLeft } from 'lucide-react';
 
 interface AssignAgentModalProps {
   isOpen: boolean;
@@ -32,32 +33,26 @@ export const AssignAgentModal = ({
   onAssigned,
 }: AssignAgentModalProps) => {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [showGPSView, setShowGPSView] = useState(false);
   const { mutate: assignAgent, isPending: isAssigning } = useAssignPrimaryAgent();
 
-  // Reset selection when modal opens
+  // GPS-based agents (10km radius)
+  const { data: gpsAgents, isLoading: gpsLoading } = useDeliveryAgentsNearSeller();
+  
+  // Location-based agents with capacity
+  const { data: locationAgents, isLoading: locationLoading } = useDeliveryAgentsWithCapacity(locationId);
+
+  // Reset selection when modal opens or view changes
   useEffect(() => {
     if (isOpen) {
       setSelectedAgentId(null);
+      setShowGPSView(false);
     }
   }, [isOpen]);
 
-  // Fetch delivery agents by location
-  const { data: agents, isLoading } = useQuery({
-    queryKey: ['delivery-agents-by-location', locationId],
-    queryFn: async () => {
-      if (!locationId) return [];
-
-      const { data, error } = await supabase
-        .from('delivery_agents')
-        .select('id, name, location_id')
-        .eq('location_id', locationId)
-        .eq('is_active', true);
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: isOpen && !!locationId,
-  });
+  useEffect(() => {
+    setSelectedAgentId(null);
+  }, [showGPSView]);
 
   const handleConfirm = () => {
     if (!subscriptionId || !selectedAgentId) return;
@@ -72,15 +67,123 @@ export const AssignAgentModal = ({
     );
   };
 
+  const isLoading = showGPSView ? gpsLoading : locationLoading;
+  const agents = showGPSView ? gpsAgents : locationAgents;
+
+  const renderAgentCard = (agent: any) => {
+    const orderCount = agent.orders_tomorrow ?? agent.orders_today ?? 0;
+    const maxCapacity = agent.max_capacity ?? 30;
+    const isFull = orderCount >= maxCapacity;
+    const capacityPercentage = (orderCount / maxCapacity) * 100;
+
+    return (
+      <div
+        key={agent.id}
+        className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+          selectedAgentId === agent.id
+            ? 'border-primary bg-primary/5'
+            : isFull
+            ? 'border-destructive/50 bg-destructive/5'
+            : 'border-border hover:bg-muted/50'
+        }`}
+        onClick={() => !isFull && setSelectedAgentId(agent.id)}
+      >
+        <RadioGroupItem value={agent.id} id={agent.id} disabled={isFull} />
+        <Label
+          htmlFor={agent.id}
+          className={`flex-1 cursor-pointer ${isFull ? 'opacity-60' : ''}`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">{agent.name}</span>
+              {showGPSView && (
+                <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-500 border-blue-500/30">
+                  <Navigation className="h-3 w-3 mr-1" />
+                  GPS
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Capacity indicator */}
+              <Badge
+                variant={isFull ? 'destructive' : capacityPercentage > 80 ? 'secondary' : 'outline'}
+                className={`text-xs ${
+                  isFull 
+                    ? 'bg-destructive text-destructive-foreground' 
+                    : capacityPercentage > 80 
+                    ? 'bg-yellow-500/20 text-yellow-600 border-yellow-500/30'
+                    : ''
+                }`}
+              >
+                {orderCount}/{maxCapacity} orders
+              </Badge>
+              {isFull && (
+                <Badge variant="destructive" className="text-xs">
+                  At Capacity
+                </Badge>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+            {showGPSView && agent.distance_km !== undefined && (
+              <span className="flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {agent.distance_km.toFixed(1)} km away
+              </span>
+            )}
+            {!showGPSView && agent.location_id && (
+              <span className="flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                Location: {agent.location_id}
+              </span>
+            )}
+            {!agent.is_online && (
+              <Badge variant="outline" className="text-xs">Offline</Badge>
+            )}
+          </div>
+        </Label>
+      </div>
+    );
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Assign Delivery Agent</DialogTitle>
           <DialogDescription>
-            Select a delivery agent for this subscription. This is a one-time assignment.
+            {showGPSView 
+              ? 'Showing delivery agents within 10km of your location'
+              : 'Select a delivery agent for this subscription'
+            }
           </DialogDescription>
         </DialogHeader>
+
+        {/* Toggle between views */}
+        <div className="flex gap-2">
+          {showGPSView ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowGPSView(false)}
+              className="w-full"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Assigned Agents
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowGPSView(true)}
+              className="w-full"
+            >
+              <Navigation className="h-4 w-4 mr-2" />
+              Find New Agents in 10km Range
+            </Button>
+          )}
+        </div>
 
         <div className="py-4">
           {isLoading ? (
@@ -91,7 +194,10 @@ export const AssignAgentModal = ({
             <div className="text-center py-8">
               <User className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
               <p className="text-muted-foreground">
-                No active delivery agents found for location ID: {locationId}
+                {showGPSView 
+                  ? 'No delivery agents found within 10km of your location'
+                  : `No active delivery agents found for location ID: ${locationId}`
+                }
               </p>
             </div>
           ) : (
@@ -101,32 +207,7 @@ export const AssignAgentModal = ({
                 onValueChange={setSelectedAgentId}
                 className="space-y-3"
               >
-                {agents.map((agent) => (
-                  <div
-                    key={agent.id}
-                    className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                      selectedAgentId === agent.id
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:bg-muted/50'
-                    }`}
-                    onClick={() => setSelectedAgentId(agent.id)}
-                  >
-                    <RadioGroupItem value={agent.id} id={agent.id} />
-                    <Label
-                      htmlFor={agent.id}
-                      className="flex-1 cursor-pointer flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{agent.name}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <MapPin className="h-3 w-3" />
-                        <span>Location: {agent.location_id}</span>
-                      </div>
-                    </Label>
-                  </div>
-                ))}
+                {agents.map(renderAgentCard)}
               </RadioGroup>
             </div>
           )}
