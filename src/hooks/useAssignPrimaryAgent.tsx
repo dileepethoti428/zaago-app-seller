@@ -2,6 +2,7 @@
 // ASSIGN PRIMARY AGENT HOOK
 // ============================================================================
 // Agent assignment can be changed or removed when needed (e.g., agent quits)
+// Uses RPC function to bypass trigger protection
 // ============================================================================
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -15,22 +16,20 @@ interface AssignAgentParams {
 
 /**
  * Hook to assign or change primary delivery agent for a subscription.
+ * Uses RPC function to bypass the trigger that normally blocks agent changes.
  */
 export const useAssignPrimaryAgent = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ subscriptionId, agentId }: AssignAgentParams) => {
-      const { error } = await supabase
-        .from('subscriptions')
-        .update({
-          primary_agent_id: agentId,
-          last_assigned_agent_id: agentId
-        })
-        .eq('id', subscriptionId);
+      const { data, error } = await supabase.rpc('seller_set_subscription_agent', {
+        p_subscription_id: subscriptionId,
+        p_agent_id: agentId
+      });
 
       if (error) throw error;
-      return { subscriptionId, agentId };
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['seller-subscriptions'] });
@@ -53,22 +52,20 @@ export const useAssignPrimaryAgent = () => {
 /**
  * Hook to remove primary delivery agent from a subscription.
  * Use when an agent quits or needs to be unassigned.
+ * Uses RPC function to bypass the trigger that normally blocks agent changes.
  */
 export const useRemovePrimaryAgent = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (subscriptionId: string) => {
-      const { error } = await supabase
-        .from('subscriptions')
-        .update({
-          primary_agent_id: null,
-          last_assigned_agent_id: null
-        })
-        .eq('id', subscriptionId);
+      const { data, error } = await supabase.rpc('seller_set_subscription_agent', {
+        p_subscription_id: subscriptionId,
+        p_agent_id: null
+      });
 
       if (error) throw error;
-      return { subscriptionId };
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['seller-subscriptions'] });

@@ -7147,6 +7147,10 @@ export type Database = {
         Args: { p_action: string; p_order_id: string; p_seller_user_id: string }
         Returns: Json
       }
+      seller_set_subscription_agent: {
+        Args: { p_agent_id?: string; p_subscription_id: string }
+        Returns: Json
+      }
       send_birthday_messages: { Args: never; Returns: number }
       send_subscription_notification: {
         Args: {

@@ -75,7 +75,8 @@ export const useSellerSubscriptions = () => {
         .select(`
           *,
           products!subscriptions_product_id_fkey(name, price, seller_id),
-          vacation:subscription_vacation_periods(start_date, end_date, status)
+          vacation:subscription_vacation_periods(start_date, end_date, status),
+          primary_agent:delivery_agents!subscriptions_primary_agent_id_fkey(id, name, phone, is_active, is_online)
         `)
         .in('product_id', productIds)
         .order('created_at', { ascending: false });

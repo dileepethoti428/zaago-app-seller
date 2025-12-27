@@ -5,7 +5,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { User, Phone, Mail, MapPin, Home } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { User, Phone, Mail, MapPin, Home, Truck } from 'lucide-react';
 
 interface CustomerInfo {
   full_name?: string;
@@ -17,16 +18,26 @@ interface CustomerInfo {
   pincode?: string;
 }
 
+interface AgentInfo {
+  id: string;
+  name: string;
+  phone?: string | null;
+  is_active?: boolean;
+  is_online?: boolean;
+}
+
 interface CustomerDetailsDialogProps {
   isOpen: boolean;
   onClose: () => void;
   customerInfo: CustomerInfo | null;
+  assignedAgent?: AgentInfo | null;
 }
 
 export const CustomerDetailsDialog = ({
   isOpen,
   onClose,
   customerInfo,
+  assignedAgent,
 }: CustomerDetailsDialogProps) => {
   if (!customerInfo) return null;
 
@@ -122,6 +133,48 @@ export const CustomerDetailsDialog = ({
               </div>
             </div>
           )}
+
+          {/* Assigned Delivery Agent */}
+          <div className="flex items-start gap-3 pt-2 border-t border-border">
+            <div className="p-2 rounded-lg bg-blue-500/10">
+              <Truck className="h-4 w-4 text-blue-500" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-muted-foreground">Assigned Delivery Agent</p>
+              {assignedAgent ? (
+                <div className="space-y-1">
+                  <p className="font-medium">{assignedAgent.name}</p>
+                  {assignedAgent.phone && (
+                    <p className="text-sm text-muted-foreground">📱 {assignedAgent.phone}</p>
+                  )}
+                  <div className="flex gap-2 mt-1">
+                    <Badge
+                      variant="outline"
+                      className={
+                        assignedAgent.is_online
+                          ? 'bg-green-500/20 text-green-500 border-green-500/30'
+                          : 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+                      }
+                    >
+                      {assignedAgent.is_online ? '🟢 Online' : '⚫ Offline'}
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className={
+                        assignedAgent.is_active
+                          ? 'bg-blue-500/20 text-blue-500 border-blue-500/30'
+                          : 'bg-red-500/20 text-red-400 border-red-500/30'
+                      }
+                    >
+                      {assignedAgent.is_active ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </div>
+                </div>
+              ) : (
+                <p className="font-medium text-yellow-500">Not assigned</p>
+              )}
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
