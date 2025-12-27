@@ -149,7 +149,7 @@ const Index = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15, duration: 0.3 }}
-        className={`bg-zaago-card/50 border rounded-xl p-6 ${regularOrdersOverview?.placedOrders && regularOrdersOverview.placedOrders > 0 ? 'border-blue-500/50' : 'border-zaago-border'}`}
+        className={`bg-zaago-card/50 border rounded-xl p-6 ${regularOrdersOverview?.toAcceptOrders && regularOrdersOverview.toAcceptOrders > 0 ? 'border-blue-500/50' : 'border-zaago-border'}`}
       >
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
@@ -192,12 +192,12 @@ const Index = () => {
                 <p className="text-lg sm:text-xl font-bold text-foreground">{regularOrdersOverview?.totalOrders || 0}</p>
                 <p className="text-[10px] sm:text-xs text-zaago-muted-foreground truncate">Total</p>
               </div>
-              <div className={`bg-background/50 border rounded-lg p-2 sm:p-3 text-center ${(regularOrdersOverview?.placedOrders || 0) > 0 ? 'border-blue-500/50' : 'border-zaago-border'}`}>
-                <FileText className={`w-4 h-4 sm:w-5 sm:h-5 mx-auto mb-1 ${(regularOrdersOverview?.placedOrders || 0) > 0 ? 'text-blue-500' : 'text-zaago-muted-foreground'}`} />
-                <p className={`text-lg sm:text-xl font-bold ${(regularOrdersOverview?.placedOrders || 0) > 0 ? 'text-blue-500' : 'text-foreground'}`}>
-                  {regularOrdersOverview?.placedOrders || 0}
+              <div className={`bg-background/50 border rounded-lg p-2 sm:p-3 text-center ${(regularOrdersOverview?.toAcceptOrders || 0) > 0 ? 'border-blue-500/50' : 'border-zaago-border'}`}>
+                <FileText className={`w-4 h-4 sm:w-5 sm:h-5 mx-auto mb-1 ${(regularOrdersOverview?.toAcceptOrders || 0) > 0 ? 'text-blue-500' : 'text-zaago-muted-foreground'}`} />
+                <p className={`text-lg sm:text-xl font-bold ${(regularOrdersOverview?.toAcceptOrders || 0) > 0 ? 'text-blue-500' : 'text-foreground'}`}>
+                  {regularOrdersOverview?.toAcceptOrders || 0}
                 </p>
-                <p className="text-[10px] sm:text-xs text-zaago-muted-foreground truncate">Placed</p>
+                <p className="text-[10px] sm:text-xs text-zaago-muted-foreground truncate">To Accept</p>
               </div>
               <div className={`bg-background/50 border rounded-lg p-2 sm:p-3 text-center ${(regularOrdersOverview?.rejectedOrders || 0) > 0 ? 'border-red-500/50' : 'border-zaago-border'}`}>
                 <XCircle className={`w-4 h-4 sm:w-5 sm:h-5 mx-auto mb-1 ${(regularOrdersOverview?.rejectedOrders || 0) > 0 ? 'text-red-500' : 'text-zaago-muted-foreground'}`} />
@@ -218,11 +218,11 @@ const Index = () => {
               </div>
             </div>
 
-            {(regularOrdersOverview?.placedOrders || 0) > 0 && (
-              <Link to="/orders?filter=placed">
+            {(regularOrdersOverview?.toAcceptOrders || 0) > 0 && (
+              <Link to="/orders?filter=to_accept">
                 <Button variant="outline" className="w-full border-blue-500/50 text-blue-500 hover:bg-blue-500/10">
                   <FileText className="w-4 h-4 mr-2" />
-                  View {regularOrdersOverview?.placedOrders} Placed Order{regularOrdersOverview?.placedOrders !== 1 ? 's' : ''} - Accept Now
+                  View {regularOrdersOverview?.toAcceptOrders} Order{regularOrdersOverview?.toAcceptOrders !== 1 ? 's' : ''} - Accept Now
                 </Button>
               </Link>
             )}

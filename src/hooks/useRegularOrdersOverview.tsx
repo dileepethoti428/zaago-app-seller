@@ -8,6 +8,7 @@ interface RegularOrdersOverview {
   rejectedOrders: number;
   deliveredOrders: number;
   pendingOrders: number;
+  toAcceptOrders: number; // Orders with status 'placed', 'pending', or 'new' (excludes payment_pending)
 }
 
 export const useRegularOrdersOverview = (
@@ -20,7 +21,7 @@ export const useRegularOrdersOverview = (
     queryKey: ['regular-orders-overview', user?.id, dateFilter, sortBy],
     queryFn: async (): Promise<RegularOrdersOverview> => {
       if (!user?.id) {
-        return { totalOrders: 0, placedOrders: 0, rejectedOrders: 0, deliveredOrders: 0, pendingOrders: 0 };
+        return { totalOrders: 0, placedOrders: 0, rejectedOrders: 0, deliveredOrders: 0, pendingOrders: 0, toAcceptOrders: 0 };
       }
 
       // Use the new RPC function with filters
@@ -43,6 +44,10 @@ export const useRegularOrdersOverview = (
       const pendingOrders = orders?.filter((o: any) => 
         ['accepted', 'accepted_by_seller', 'accepted_late', 'assigned', 'out_for_delivery', 'in_transit'].includes(o.status)
       ).length || 0;
+      // Count orders that need seller acceptance (placed, pending, new) - excludes payment_pending
+      const toAcceptOrders = orders?.filter((o: any) => 
+        ['placed', 'pending', 'new'].includes(o.status)
+      ).length || 0;
 
       return {
         totalOrders,
@@ -50,6 +55,7 @@ export const useRegularOrdersOverview = (
         rejectedOrders,
         deliveredOrders,
         pendingOrders,
+        toAcceptOrders,
       };
     },
     enabled: !!user?.id,
