@@ -1,11 +1,7 @@
 // ============================================================================
 // ASSIGN PRIMARY AGENT HOOK
 // ============================================================================
-// ⚠️ SAFETY RULES (CRITICAL):
-// - Primary agent can ONLY be assigned ONCE per subscription
-// - Once set, primary_agent_id CANNOT be changed (enforced by DB trigger)
-// - Sellers must NOT be able to override this assignment
-// - This is for INITIAL assignment only, not for changing agents
+// Agent assignment can be changed or removed when needed (e.g., agent quits)
 // ============================================================================
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -18,8 +14,7 @@ interface AssignAgentParams {
 }
 
 /**
- * Hook to assign primary delivery agent to a subscription.
- * ⚠️ SAFETY: Can only be done ONCE. Database trigger prevents re-assignment.
+ * Hook to assign or change primary delivery agent for a subscription.
  */
 export const useAssignPrimaryAgent = () => {
   const queryClient = useQueryClient();
@@ -41,7 +36,7 @@ export const useAssignPrimaryAgent = () => {
       queryClient.invalidateQueries({ queryKey: ['seller-subscriptions'] });
       toast({
         title: 'Agent Assigned',
-        description: 'Primary delivery agent has been assigned successfully.',
+        description: 'Delivery agent has been assigned successfully.',
       });
     },
     onError: (error) => {
@@ -49,6 +44,44 @@ export const useAssignPrimaryAgent = () => {
       toast({
         title: 'Assignment Failed',
         description: 'Failed to assign delivery agent. Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+/**
+ * Hook to remove primary delivery agent from a subscription.
+ * Use when an agent quits or needs to be unassigned.
+ */
+export const useRemovePrimaryAgent = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (subscriptionId: string) => {
+      const { error } = await supabase
+        .from('subscriptions')
+        .update({
+          primary_agent_id: null,
+          last_assigned_agent_id: null
+        })
+        .eq('id', subscriptionId);
+
+      if (error) throw error;
+      return { subscriptionId };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seller-subscriptions'] });
+      toast({
+        title: 'Agent Removed',
+        description: 'Delivery agent has been removed from this subscription.',
+      });
+    },
+    onError: (error) => {
+      console.error('Error removing agent:', error);
+      toast({
+        title: 'Removal Failed',
+        description: 'Failed to remove delivery agent. Please try again.',
         variant: 'destructive',
       });
     },
