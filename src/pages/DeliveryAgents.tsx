@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useDeliveryAgentsWithCapacity, useDeliveryAgentsNearSeller, useUpdateAgentCapacity, useSellerLocationId } from '@/hooks/useDeliveryAgentsCapacity';
+import { useDeliveryAgentsWithCapacity, useDeliveryAgentsNearSeller, useUpdateAgentCapacity, useSellerLocationId, AgentWithCapacity } from '@/hooks/useDeliveryAgentsCapacity';
 import { useMarkAgentAbsent, useMarkAgentOnline } from '@/hooks/useAgentAbsence';
 import { MarkAgentAbsentDialog } from '@/components/MarkAgentAbsentDialog';
+import { DeliveryAgentDetailsDialog, AgentDetails } from '@/components/DeliveryAgentDetailsDialog';
 import { DailyOrdersDebugPanel } from '@/components/DailyOrdersDebugPanel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Truck, Users, MapPin, Package, Edit2, Check, X, Loader2, UserX, UserCheck, Search, ArrowLeft } from 'lucide-react';
+import { Truck, Users, MapPin, Package, Edit2, Check, X, Loader2, UserX, UserCheck, Search, ArrowLeft, Eye, CheckCircle } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -48,6 +49,7 @@ export default function DeliveryAgents() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<number>(30);
   const [agentToMark, setAgentToMark] = useState<AgentToMark | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState<AgentWithCapacity | null>(null);
 
   // Use appropriate agents based on view
   const agents = showGPSView ? gpsAgents : locationAgents;
@@ -137,7 +139,7 @@ export default function DeliveryAgents() {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -194,6 +196,21 @@ export default function DeliveryAgents() {
               </div>
             </CardContent>
           </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Completed (All Time)</p>
+                  <p className="text-2xl font-bold text-blue-500">
+                    {agents?.reduce((sum, a) => sum + (a.total_deliveries || 0), 0) || 0}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Agents Table */}
@@ -219,6 +236,7 @@ export default function DeliveryAgents() {
                       <TableHead className="text-center">Status</TableHead>
                       <TableHead className="text-center">Orders Today</TableHead>
                       <TableHead className="text-center">Orders Tomorrow</TableHead>
+                      <TableHead className="text-center">Completed (All)</TableHead>
                       <TableHead className="text-center">Max Capacity</TableHead>
                       <TableHead className="text-center">Available Slots</TableHead>
                       <TableHead className="text-center">Actions</TableHead>
@@ -251,6 +269,9 @@ export default function DeliveryAgents() {
                         </TableCell>
                         <TableCell className="text-center">
                           <Badge variant="secondary">{agent.orders_tomorrow}</Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline" className="text-blue-500">{agent.total_deliveries || 0}</Badge>
                         </TableCell>
                         <TableCell className="text-center">
                           {editingId === agent.id ? (
@@ -302,6 +323,15 @@ export default function DeliveryAgents() {
                               </>
                             ) : (
                               <>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => setSelectedAgent(agent)}
+                                  className="h-8 w-8 p-0"
+                                  title="View details"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
                                 <Button
                                   size="sm"
                                   variant="ghost"
@@ -376,6 +406,13 @@ export default function DeliveryAgents() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Agent Details Dialog */}
+      <DeliveryAgentDetailsDialog
+        open={!!selectedAgent}
+        onOpenChange={(open) => !open && setSelectedAgent(null)}
+        agent={selectedAgent}
+      />
 
       {/* Mark Absent Dialog */}
       <MarkAgentAbsentDialog
