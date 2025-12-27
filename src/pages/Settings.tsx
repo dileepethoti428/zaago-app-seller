@@ -18,7 +18,8 @@ import {
   MapPin,
   AlertCircle,
   FileText,
-  ExternalLink
+  ExternalLink,
+  UserX
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -37,6 +38,7 @@ import { useTheme } from 'next-themes';
 import { TestOrderNotification } from '@/components/TestOrderNotification';
 import { MapSelector } from '@/components/MapSelector';
 import { Link } from 'react-router-dom';
+import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
 
 
 const Settings = () => {
@@ -76,6 +78,7 @@ const Settings = () => {
     longitude: number;
     address: string;
   } | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -807,6 +810,43 @@ const Settings = () => {
             </CardContent>
           </Card>
 
+          {/* Account Section - Delete Account */}
+          <Card className="zaago-card border-destructive/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <UserX className="w-5 h-5" />
+                Account
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-4 rounded-lg bg-destructive/5 border border-destructive/20">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Permanently delete your seller account and all associated data. This action cannot be undone.
+                </p>
+                <Button 
+                  variant="destructive" 
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="w-full sm:w-auto"
+                >
+                  <UserX className="w-4 h-4 mr-2" />
+                  Delete My Account
+                </Button>
+              </div>
+              
+              <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-4 h-4 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">
+                      Before deleting, ensure all active orders are completed and pending payouts are settled. 
+                      Order history will be retained for legal compliance.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Test Order Notification - Admin/Seller Only */}
           <Card className="zaago-card">
             <CardHeader>
@@ -861,6 +901,12 @@ const Settings = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Delete Account Dialog */}
+      <DeleteAccountDialog 
+        open={showDeleteDialog} 
+        onOpenChange={setShowDeleteDialog} 
+      />
 
       {/* Floating WhatsApp Button */}
       <motion.div
