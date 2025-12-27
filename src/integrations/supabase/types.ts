@@ -6483,13 +6483,26 @@ export type Database = {
             Args: { p_radius_km?: number; p_seller_user_id: string }
             Returns: {
               agent_id: string
+              average_rating: number
+              created_at: string
               distance_km: number
+              email: string
               id: string
+              is_active: boolean
               is_online: boolean
+              last_delivery_at: string
+              last_status_change: string
               latitude: number
               longitude: number
               max_capacity: number
               name: string
+              performance_score: number
+              phone: string
+              profile_image: string
+              total_deliveries: number
+              vehicle_number: string
+              vehicle_type: string
+              verification_status: string
             }[]
           }
         | {
