@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
@@ -10,9 +11,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
-import { Loader2, Save, User, Phone, Mail, MapPin } from 'lucide-react';
+import { Loader2, Save, User, Phone, Mail, MapPin, AlertTriangle } from 'lucide-react';
 
 interface EditCustomerDialogProps {
   open: boolean;
@@ -34,6 +37,8 @@ export function EditCustomerDialog({
   customerInfo,
   onSuccess,
 }: EditCustomerDialogProps) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
@@ -82,6 +87,9 @@ export function EditCustomerDialog({
 
       if (error) throw error;
 
+      // Invalidate seller subscriptions query to refresh customer data
+      await queryClient.invalidateQueries({ queryKey: ['seller-subscriptions', user?.id] });
+
       toast.success('Customer details updated successfully');
       onOpenChange(false);
       onSuccess?.();
@@ -101,9 +109,15 @@ export function EditCustomerDialog({
             <User className="h-5 w-5" />
             Edit Customer Details
           </DialogTitle>
-          <DialogDescription>
-            Update customer information for this subscription
+          <DialogDescription className="sr-only">
+            Update customer information
           </DialogDescription>
+          <Alert className="mt-2 border-yellow-500/50 bg-yellow-500/10">
+            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+            <AlertDescription className="text-xs text-yellow-600 dark:text-yellow-400">
+              Editing this customer will update all subscriptions linked to them.
+            </AlertDescription>
+          </Alert>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">

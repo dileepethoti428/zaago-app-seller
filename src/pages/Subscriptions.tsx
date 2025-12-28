@@ -73,7 +73,7 @@ const Subscriptions = () => {
   const { acceptDelivery, skipDelivery, isProcessing } = useSubscriptionDeliveryActions();
   const { mutate: removePrimaryAgent, isPending: isRemovingAgent } = useRemovePrimaryAgent();
 
-  // Set up real-time subscription
+  // Set up real-time subscription for both subscriptions and customers tables
   useEffect(() => {
     if (!user?.id) return;
 
@@ -87,6 +87,18 @@ const Subscriptions = () => {
           table: 'subscriptions',
         },
         () => {
+          refetch();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'customers',
+        },
+        () => {
+          // Refetch when customer data changes (e.g., name edited)
           refetch();
         }
       )
