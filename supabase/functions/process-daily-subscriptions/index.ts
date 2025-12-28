@@ -116,12 +116,37 @@ serve(async (req) => {
           continue;
         }
 
-        // Fetch customer profile for name and phone
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name, phone')
-          .eq('user_id', subscription.user_id)
-          .single();
+        // Fetch customer details - prefer customers table, fallback to profiles
+        let customerName = 'Customer';
+        let customerPhone: string | null = null;
+
+        // First try to get from customers table if customer_id exists
+        if (subscription.customer_id) {
+          const { data: customer } = await supabase
+            .from('customers')
+            .select('full_name, phone')
+            .eq('id', subscription.customer_id)
+            .single();
+          
+          if (customer) {
+            customerName = customer.full_name;
+            customerPhone = customer.phone;
+          }
+        }
+        
+        // Fallback to profiles table for legacy subscriptions without customer_id
+        if (customerName === 'Customer' && subscription.user_id) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, phone')
+            .eq('user_id', subscription.user_id)
+            .single();
+          
+          if (profile) {
+            customerName = profile.full_name || 'Customer';
+            customerPhone = profile.phone;
+          }
+        }
 
         // Calculate total
         const itemTotal = Number(product.price) * subscription.quantity;
@@ -156,8 +181,8 @@ serve(async (req) => {
           delivery_time_slot: subscription.delivery_time_slot || 'morning',
           delivery_time: subscription.delivery_time || '12:00:00',
           special_instructions: subscription.special_instructions,
-          customer_name: profile?.full_name || 'Customer',
-          customer_phone: profile?.phone || null,
+          customer_name: customerName,
+          customer_phone: customerPhone,
           payment_method: 'subscription',
           payment_status: 'pending',
           accepted_at: null,
