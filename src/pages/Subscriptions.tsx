@@ -125,6 +125,63 @@ const Subscriptions = () => {
     return () => clearInterval(interval);
   }, [refetch]);
 
+  // Calculate counts for all filter categories
+  const subscriptionCounts = useMemo(() => {
+    if (!subscriptions) return {
+      total: 0,
+      active: 0,
+      inactive: 0,
+      onVacation: 0,
+      everyday: 0,
+      weekend: 0,
+      alternate: 0,
+      agentAssigned: 0,
+      agentNotAssigned: 0,
+    };
+
+    let active = 0, inactive = 0, onVacation = 0;
+    let everyday = 0, weekend = 0, alternate = 0;
+    let agentAssigned = 0, agentNotAssigned = 0;
+
+    subscriptions.forEach((sub) => {
+      // Check vacation status
+      const activeVacation = sub.vacation?.find((v) => {
+        if (v.status !== 'active') return false;
+        const today = new Date();
+        const start = parseISO(v.start_date);
+        const end = parseISO(v.end_date);
+        return isWithinInterval(today, { start, end });
+      });
+      const isOnVacationNow = !!activeVacation;
+
+      // Status counts
+      if (isOnVacationNow) onVacation++;
+      else if (sub.is_active) active++;
+      else inactive++;
+
+      // Delivery type counts
+      if (sub.subscription_type === 'everyday') everyday++;
+      else if (sub.subscription_type === 'weekend') weekend++;
+      else if (sub.subscription_type === 'alternate') alternate++;
+
+      // Agent assignment counts
+      if (sub.primary_agent_id) agentAssigned++;
+      else agentNotAssigned++;
+    });
+
+    return {
+      total: subscriptions.length,
+      active,
+      inactive,
+      onVacation,
+      everyday,
+      weekend,
+      alternate,
+      agentAssigned,
+      agentNotAssigned,
+    };
+  }, [subscriptions]);
+
   const filteredSubscriptions = useMemo(() => {
     if (!subscriptions) return [];
 
@@ -318,10 +375,10 @@ const Subscriptions = () => {
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-            <SelectItem value="on_vacation">On Vacation</SelectItem>
+            <SelectItem value="all">All Status ({subscriptionCounts.total})</SelectItem>
+            <SelectItem value="active">Active ({subscriptionCounts.active})</SelectItem>
+            <SelectItem value="inactive">Inactive ({subscriptionCounts.inactive})</SelectItem>
+            <SelectItem value="on_vacation">On Vacation ({subscriptionCounts.onVacation})</SelectItem>
           </SelectContent>
         </Select>
         <Select value={deliveryTypeFilter} onValueChange={setDeliveryTypeFilter}>
@@ -329,10 +386,10 @@ const Subscriptions = () => {
             <SelectValue placeholder="Filter by type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="everyday">Everyday</SelectItem>
-            <SelectItem value="weekend">Weekend</SelectItem>
-            <SelectItem value="alternate">Alternate Days</SelectItem>
+            <SelectItem value="all">All Types ({subscriptionCounts.total})</SelectItem>
+            <SelectItem value="everyday">Everyday ({subscriptionCounts.everyday})</SelectItem>
+            <SelectItem value="weekend">Weekend ({subscriptionCounts.weekend})</SelectItem>
+            <SelectItem value="alternate">Alternate Days ({subscriptionCounts.alternate})</SelectItem>
           </SelectContent>
         </Select>
         <Select value={agentFilter} onValueChange={setAgentFilter}>
@@ -340,9 +397,9 @@ const Subscriptions = () => {
             <SelectValue placeholder="Filter by agent" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Agents</SelectItem>
-            <SelectItem value="assigned">Agent Assigned</SelectItem>
-            <SelectItem value="not_assigned">Agent Not Assigned</SelectItem>
+            <SelectItem value="all">All Agents ({subscriptionCounts.total})</SelectItem>
+            <SelectItem value="assigned">Agent Assigned ({subscriptionCounts.agentAssigned})</SelectItem>
+            <SelectItem value="not_assigned">Agent Not Assigned ({subscriptionCounts.agentNotAssigned})</SelectItem>
           </SelectContent>
         </Select>
       </div>
