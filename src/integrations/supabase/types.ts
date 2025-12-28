@@ -6314,6 +6314,10 @@ export type Database = {
         Args: { end_date: string; start_date: string; target_seller_id: string }
         Returns: string
       }
+      customer_has_subscription_to_seller_products: {
+        Args: { _customer_id: string; _seller_user_id: string }
+        Returns: boolean
+      }
       delete_orders_with_related_data: {
         Args: { order_ids: string[] }
         Returns: undefined
