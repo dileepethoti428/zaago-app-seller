@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.sync-subscription-dates]
 verify_jwt = false
+
+[functions.create-customer-app-subscription]
+verify_jwt = false
