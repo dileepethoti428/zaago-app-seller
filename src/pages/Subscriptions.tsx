@@ -13,10 +13,11 @@ import { SubscriptionOrderCard } from '@/components/SubscriptionOrderCard';
 
 import { AssignAgentModal } from '@/components/AssignAgentModal';
 import { CustomerDetailsDialog } from '@/components/CustomerDetailsDialog';
+import { EditCustomerDialog } from '@/components/EditCustomerDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getCurrentISTTime, isAfter11_30PM_IST, getTomorrowDateIST, isDateTomorrow } from '@/utils/timeZone';
 import { formatDateForDisplay, formatDateWithLabel } from '@/utils/subscriptionDateCalculator';
-import { Search, RefreshCw, Calendar, User, Phone, MapPin, Package, CheckCircle, XCircle, Clock, CalendarClock, UserPlus, UserMinus, Eye } from 'lucide-react';
+import { Search, RefreshCw, Calendar, User, Phone, MapPin, Package, CheckCircle, XCircle, Clock, CalendarClock, UserPlus, UserMinus, Eye, Pencil } from 'lucide-react';
 import { format, addDays, parseISO, isSameDay, isWithinInterval, differenceInMinutes, setHours, setMinutes, setSeconds } from 'date-fns';
 import { motion } from 'framer-motion';
 import {
@@ -57,6 +58,15 @@ const Subscriptions = () => {
     open: false,
     customerInfo: null,
     assignedAgent: null,
+  });
+  const [editCustomerDialog, setEditCustomerDialog] = useState<{
+    open: boolean;
+    customerId: string;
+    customerInfo: any;
+  }>({
+    open: false,
+    customerId: '',
+    customerInfo: null,
   });
 
   const { data: subscriptions, isLoading, refetch } = useSellerSubscriptions();
@@ -372,7 +382,21 @@ const Subscriptions = () => {
                             title="View customer details"
                           >
                             <Eye className="h-3 w-3 mr-1" />
-                            View Details
+                            View
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-6 text-xs shrink-0"
+                            onClick={() => setEditCustomerDialog({
+                              open: true,
+                              customerId: subscription.customer_id || '',
+                              customerInfo: subscription.customer_info,
+                            })}
+                            title="Edit customer details"
+                          >
+                            <Pencil className="h-3 w-3 mr-1" />
+                            Edit
                           </Button>
                         </div>
                         <p className="text-sm text-muted-foreground">
@@ -594,6 +618,15 @@ const Subscriptions = () => {
         onClose={() => setCustomerDetailsDialog({ open: false, customerInfo: null, assignedAgent: null })}
         customerInfo={customerDetailsDialog.customerInfo}
         assignedAgent={customerDetailsDialog.assignedAgent}
+      />
+
+      {/* Edit Customer Dialog */}
+      <EditCustomerDialog
+        open={editCustomerDialog.open}
+        onOpenChange={(open) => setEditCustomerDialog(prev => ({ ...prev, open }))}
+        customerId={editCustomerDialog.customerId}
+        customerInfo={editCustomerDialog.customerInfo}
+        onSuccess={() => refetch()}
       />
     </motion.div>
   );
