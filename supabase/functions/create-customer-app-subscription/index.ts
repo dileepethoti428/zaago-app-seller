@@ -94,11 +94,35 @@ serve(async (req) => {
 
     const sellerId = product.seller_id;
 
-    // Step 2: Find or create customer for this seller
-    // First, try to find existing customer by phone (and seller_id)
+    // Step 2: Derive location_id - CRITICAL: subscriptions.location_id is NOT NULL
+    let finalLocationId: number = location_id || null;
+    
+    if (!finalLocationId) {
+      // Try to get location_id from seller
+      const { data: seller, error: sellerError } = await supabase
+        .from('sellers')
+        .select('location_id')
+        .eq('id', sellerId)
+        .single();
+      
+      if (sellerError) {
+        console.warn('Seller lookup error:', sellerError);
+      }
+      
+      if (seller?.location_id) {
+        finalLocationId = seller.location_id;
+        console.log('Derived location_id from seller:', finalLocationId);
+      } else {
+        // Fallback to default location 1
+        finalLocationId = 1;
+        console.log('Using default location_id:', finalLocationId);
+      }
+    }
+
+    // Step 3: Find or create customer for this seller
     const { data: existingCustomer, error: findError } = await supabase
       .from('customers')
-      .select('id, full_name, phone, email')
+      .select('id, full_name, phone, email, location_id')
       .eq('seller_id', sellerId)
       .eq('phone', customer_phone)
       .maybeSingle();
@@ -110,11 +134,10 @@ serve(async (req) => {
     let customerId: string;
 
     if (existingCustomer) {
-      // Use existing customer
       customerId = existingCustomer.id;
       console.log('Found existing customer:', customerId, existingCustomer.full_name);
 
-      // Optionally update customer details if they've changed
+      // Update customer details if changed
       if (existingCustomer.full_name !== customer_name || existingCustomer.email !== customer_email) {
         const { error: updateError } = await supabase
           .from('customers')
@@ -124,7 +147,7 @@ serve(async (req) => {
             address: delivery_address,
             latitude: latitude || null,
             longitude: longitude || null,
-            location_id: location_id || null,
+            location_id: finalLocationId,
             updated_at: new Date().toISOString(),
           })
           .eq('id', customerId);
@@ -147,7 +170,7 @@ serve(async (req) => {
           address: delivery_address,
           latitude: latitude || null,
           longitude: longitude || null,
-          location_id: location_id || null,
+          location_id: finalLocationId,
         })
         .select('id')
         .single();
@@ -164,7 +187,9 @@ serve(async (req) => {
       console.log('Created new customer:', customerId, 'for seller:', sellerId);
     }
 
-    // Step 3: Create subscription with correct customer_id
+    // Step 4: Create subscription with correct fields
+    // Note: use delivery_latitude/delivery_longitude (not latitude/longitude)
+    // Note: location_id is NOT NULL - must always have a value
     const subscriptionData = {
       user_id: user.id,
       customer_id: customerId,
@@ -176,34 +201,42 @@ serve(async (req) => {
       start_date: start_date || new Date().toISOString().split('T')[0],
       next_delivery_date: next_delivery_date || start_date || new Date().toISOString().split('T')[0],
       status: 'active',
-      latitude: latitude || null,
-      longitude: longitude || null,
-      location_id: location_id || null,
+      is_active: true,
+      delivery_latitude: latitude || null,
+      delivery_longitude: longitude || null,
+      location_id: finalLocationId,
+      source: 'customer_app',
     };
 
-    console.log('Creating subscription:', JSON.stringify(subscriptionData, null, 2));
+    console.log('Creating subscription with data:', JSON.stringify(subscriptionData, null, 2));
 
     const { data: subscription, error: subscriptionError } = await supabase
       .from('subscriptions')
       .insert(subscriptionData)
-      .select('id, customer_id, user_id, status')
+      .select('id, customer_id, user_id, status, location_id')
       .single();
 
     if (subscriptionError) {
       console.error('Subscription creation error:', subscriptionError);
       return new Response(
-        JSON.stringify({ error: 'Failed to create subscription', details: subscriptionError.message }),
+        JSON.stringify({ 
+          error: 'Failed to create subscription', 
+          details: subscriptionError.message,
+          code: subscriptionError.code,
+          hint: subscriptionError.hint
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Successfully created subscription:', subscription.id, 'with customer_id:', subscription.customer_id);
+    console.log('Successfully created subscription:', subscription.id, 'customer_id:', subscription.customer_id, 'location_id:', subscription.location_id);
 
     return new Response(
       JSON.stringify({
         success: true,
         subscription_id: subscription.id,
         customer_id: customerId,
+        location_id: finalLocationId,
         message: 'Subscription created successfully'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
