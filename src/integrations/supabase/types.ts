@@ -263,6 +263,7 @@ export type Database = {
           id: string
           is_peak_hour: boolean | null
           order_id: string
+          order_type: string | null
           payment_method: string | null
           payout_breakdown: Json | null
           payout_status: string
@@ -279,6 +280,7 @@ export type Database = {
           id?: string
           is_peak_hour?: boolean | null
           order_id: string
+          order_type?: string | null
           payment_method?: string | null
           payout_breakdown?: Json | null
           payout_status?: string
@@ -295,6 +297,7 @@ export type Database = {
           id?: string
           is_peak_hour?: boolean | null
           order_id?: string
+          order_type?: string | null
           payment_method?: string | null
           payout_breakdown?: Json | null
           payout_status?: string
@@ -2865,6 +2868,8 @@ export type Database = {
           delivery_time_slot: string | null
           id: string
           items: Json
+          last_notified_at: string | null
+          last_notified_status: string | null
           notification_count: number
           otp_attempts: number | null
           otp_expires_at: string | null
@@ -2919,6 +2924,8 @@ export type Database = {
           delivery_time_slot?: string | null
           id?: string
           items: Json
+          last_notified_at?: string | null
+          last_notified_status?: string | null
           notification_count?: number
           otp_attempts?: number | null
           otp_expires_at?: string | null
@@ -2973,6 +2980,8 @@ export type Database = {
           delivery_time_slot?: string | null
           id?: string
           items?: Json
+          last_notified_at?: string | null
+          last_notified_status?: string | null
           notification_count?: number
           otp_attempts?: number | null
           otp_expires_at?: string | null
@@ -3802,6 +3811,7 @@ export type Database = {
           full_name: string | null
           id: string
           notification_preferences: Json | null
+          onesignal_external_user_id: string | null
           onesignal_player_id: string | null
           phone: string | null
           photo_uploaded_at: string | null
@@ -3833,6 +3843,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           notification_preferences?: Json | null
+          onesignal_external_user_id?: string | null
           onesignal_player_id?: string | null
           phone?: string | null
           photo_uploaded_at?: string | null
@@ -3864,6 +3875,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           notification_preferences?: Json | null
+          onesignal_external_user_id?: string | null
           onesignal_player_id?: string | null
           phone?: string | null
           photo_uploaded_at?: string | null
