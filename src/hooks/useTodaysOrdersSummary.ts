@@ -24,10 +24,11 @@ interface TodaysOrdersSummaryData {
 }
 
 interface OrderItem {
-  product_id: string;
+  id: string;           // product_id is stored as "id" in JSONB
   quantity: number;
-  product_name?: string;
+  name?: string;
   unit?: string;
+  seller_id?: string;
 }
 
 const getDateRange = (filter: DateFilter): string | null => {
@@ -123,10 +124,10 @@ export const useTodaysOrdersSummary = (
         if (regularError) {
           console.error('Error fetching regular orders:', regularError);
         } else {
-          // Filter orders that contain seller's products
+          // Filter orders that contain seller's products (use item.id as product_id)
           regularOrders = (regularData || []).filter(order => {
             const orderItems = (order.items as unknown as OrderItem[]) || [];
-            return orderItems.some(item => sellerProductIds.includes(item.product_id));
+            return orderItems.some(item => sellerProductIds.includes(item.id) || item.seller_id === user.id);
           });
         }
       }
@@ -162,9 +163,9 @@ export const useTodaysOrdersSummary = (
             if (order.subscription?.product_id && sellerProductIds.includes(order.subscription.product_id)) {
               return true;
             }
-            // Also check items array
+            // Also check items array (use item.id as product_id)
             const orderItems = (order.items as unknown as OrderItem[]) || [];
-            return orderItems.some(item => sellerProductIds.includes(item.product_id));
+            return orderItems.some(item => sellerProductIds.includes(item.id) || item.seller_id === user.id);
           });
         }
       }
@@ -184,16 +185,16 @@ export const useTodaysOrdersSummary = (
         const items = (order.items as unknown as OrderItem[]) || [];
         
         items.forEach(item => {
-          // Only count items that belong to this seller
-          if (!sellerProductIds.includes(item.product_id)) return;
+          // Only count items that belong to this seller (use item.id as product_id)
+          if (!sellerProductIds.includes(item.id) && item.seller_id !== user.id) return;
           
-          uniqueProductIds.add(item.product_id);
+          uniqueProductIds.add(item.id);
           totalItems += item.quantity || 0;
 
-          const existing = productBreakdown.get(item.product_id) || { quantity: 0, orderIds: new Set() };
+          const existing = productBreakdown.get(item.id) || { quantity: 0, orderIds: new Set() };
           existing.quantity += item.quantity || 0;
           existing.orderIds.add(order.id);
-          productBreakdown.set(item.product_id, existing);
+          productBreakdown.set(item.id, existing);
         });
 
         // Also handle subscription quantity if no items array

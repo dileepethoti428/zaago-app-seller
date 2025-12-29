@@ -92,7 +92,7 @@ export const TodaysOrdersSummary = () => {
         <div className="flex items-center gap-2">
           <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
             <CollapsibleTrigger asChild>
-              <Button variant="outline" size="sm" className="bg-slate-800/50 border-slate-700 hover:bg-slate-700/50">
+              <Button variant="outline" size="sm">
                 <Filter className="h-4 w-4 mr-2" />
                 Filters
                 <ChevronDown className={`h-4 w-4 ml-2 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
@@ -105,7 +105,6 @@ export const TodaysOrdersSummary = () => {
             size="sm"
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="bg-slate-800/50 border-slate-700 hover:bg-slate-700/50"
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
@@ -119,12 +118,12 @@ export const TodaysOrdersSummary = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-slate-800/30 border border-slate-700/50"
+            className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-muted/50 border border-border"
           >
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Order Type</label>
               <Select value={orderType} onValueChange={(v) => setOrderType(v as OrderTypeFilter)}>
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-foreground">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -138,7 +137,7 @@ export const TodaysOrdersSummary = () => {
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Date Range</label>
               <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilter)}>
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-foreground">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -153,7 +152,7 @@ export const TodaysOrdersSummary = () => {
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Status</label>
               <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-foreground">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -169,18 +168,18 @@ export const TodaysOrdersSummary = () => {
 
       {/* Summary Cards */}
       <motion.div variants={itemVariants} className="grid grid-cols-3 gap-3">
-        <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/50 shadow-lg shadow-black/20">
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                <ShoppingCart className="h-5 w-5 text-emerald-400" />
+              <div className="p-2 rounded-lg bg-primary/10">
+                <ShoppingCart className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Total Orders</p>
                 {isLoading ? (
                   <Skeleton className="h-7 w-12 mt-1" />
                 ) : (
-                  <p className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                  <p className="text-2xl font-bold text-foreground">
                     {data?.totalOrders || 0}
                   </p>
                 )}
@@ -189,18 +188,18 @@ export const TodaysOrdersSummary = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/50 shadow-lg shadow-black/20">
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                <Package className="h-5 w-5 text-blue-400" />
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Package className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Total Items</p>
                 {isLoading ? (
                   <Skeleton className="h-7 w-12 mt-1" />
                 ) : (
-                  <p className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
+                  <p className="text-2xl font-bold text-foreground">
                     {data?.totalItems || 0}
                   </p>
                 )}
@@ -209,18 +208,18 @@ export const TodaysOrdersSummary = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/50 shadow-lg shadow-black/20">
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                <Layers className="h-5 w-5 text-amber-400" />
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Layers className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Products</p>
                 {isLoading ? (
                   <Skeleton className="h-7 w-12 mt-1" />
                 ) : (
-                  <p className="text-2xl font-bold bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
+                  <p className="text-2xl font-bold text-foreground">
                     {data?.differentProducts || 0}
                   </p>
                 )}
@@ -232,9 +231,9 @@ export const TodaysOrdersSummary = () => {
 
       {/* Item Breakdown Section */}
       <motion.div variants={itemVariants}>
-        <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/50 shadow-lg shadow-black/20">
+        <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-foreground">Item Breakdown</CardTitle>
+            <CardTitle className="text-base font-semibold">Item Breakdown</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -251,12 +250,12 @@ export const TodaysOrdersSummary = () => {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: index * 0.05 }}
-                    className="group p-3 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-emerald-500/30 hover:bg-slate-800/80 transition-all duration-200"
+                    className="group p-3 rounded-xl bg-muted/50 border border-border hover:border-primary/30 hover:bg-muted transition-all duration-200"
                   >
                     <h4 className="font-medium text-sm text-foreground truncate mb-1">
                       {item.productName}
                     </h4>
-                    <p className="text-xl font-bold text-emerald-400">
+                    <p className="text-xl font-bold text-primary">
                       {item.totalQuantity}
                       <span className="text-xs font-normal text-muted-foreground ml-1">
                         {item.unit === 'litre' ? 'L' : item.unit === 'kg' ? 'kg' : 'pcs'}
@@ -264,7 +263,7 @@ export const TodaysOrdersSummary = () => {
                     </p>
                     <Badge 
                       variant="secondary" 
-                      className="mt-2 text-[10px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20"
+                      className="mt-2 text-[10px] px-1.5 py-0.5"
                     >
                       {item.orderCount} {item.orderCount === 1 ? 'order' : 'orders'}
                     </Badge>
