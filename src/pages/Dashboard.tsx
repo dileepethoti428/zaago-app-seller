@@ -17,6 +17,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomerLookupDialog } from '@/components/CustomerLookupDialog';
+import { TodaysOrdersSummary } from '@/components/TodaysOrdersSummary';
 
 
 const Dashboard = () => {
@@ -161,6 +162,9 @@ const Dashboard = () => {
           </Select>
         </div>
       </motion.div>
+
+      {/* Today's Orders Summary */}
+      <TodaysOrdersSummary />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
