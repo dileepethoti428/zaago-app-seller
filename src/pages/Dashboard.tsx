@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomerLookupDialog } from '@/components/CustomerLookupDialog';
 import { TodaysOrdersSummary } from '@/components/TodaysOrdersSummary';
-
+import { TomorrowSubscriptionForecast } from '@/components/TomorrowSubscriptionForecast';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -165,6 +165,9 @@ const Dashboard = () => {
 
       {/* Today's Orders Summary */}
       <TodaysOrdersSummary />
+
+      {/* Tomorrow's Subscription Forecast */}
+      <TomorrowSubscriptionForecast />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
