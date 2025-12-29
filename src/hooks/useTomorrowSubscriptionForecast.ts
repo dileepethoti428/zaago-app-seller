@@ -249,11 +249,5 @@ export const useTomorrowSubscriptionForecast = () => {
     fetchForecast();
   }, [fetchForecast]);
 
-  // Auto-refresh every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(fetchForecast, 30000);
-    return () => clearInterval(interval);
-  }, [fetchForecast]);
-
   return { ...data, refetch: fetchForecast };
 };
