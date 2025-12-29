@@ -20,6 +20,7 @@ import { CustomerLookupDialog } from '@/components/CustomerLookupDialog';
 import { TodaysOrdersSummary } from '@/components/TodaysOrdersSummary';
 import { TomorrowSubscriptionForecast } from '@/components/TomorrowSubscriptionForecast';
 import { StockAlertsRefillSuggestions } from '@/components/StockAlertsRefillSuggestions';
+import { WeeklyRefillTrendReport } from '@/components/WeeklyRefillTrendReport';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -172,6 +173,10 @@ const Dashboard = () => {
 
       {/* Stock Alerts & Refill Suggestions */}
       <StockAlertsRefillSuggestions />
+
+      {/* Weekly Refill Trend Report */}
+      <WeeklyRefillTrendReport />
+
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         {[
