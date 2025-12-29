@@ -13,12 +13,16 @@ import {
   ChevronUp,
   Plus,
   Check,
-  ShoppingCart
+  ShoppingCart,
+  Download,
+  FileText
 } from 'lucide-react';
 import { useStockAlerts, StockAlert } from '@/hooks/useStockAlerts';
 import { useRestockList } from '@/hooks/useRestockList';
 import { UpdateStockModal } from './UpdateStockModal';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
+import { exportRefillListAsCSV, exportRefillListAsPDF } from '@/utils/refillListExport';
 
 // Alert Card Component
 const AlertCard = ({ 
@@ -163,7 +167,7 @@ const EmptyState = () => (
 
 // Main Component
 export const StockAlertsRefillSuggestions = () => {
-  const { alerts, totalLowStockItems, totalRefillQuantity, lastUpdated, isLoading, error, refetch } = useStockAlerts();
+  const { alerts, totalLowStockItems, totalRefillQuantity, lastUpdated, isLoading, error, refetch, sellerName } = useStockAlerts();
   const { addToList, isInList, isAddingToList } = useRestockList();
   
   const [selectedProduct, setSelectedProduct] = useState<{
@@ -200,6 +204,24 @@ export const StockAlertsRefillSuggestions = () => {
     });
   };
 
+  const handleDownloadCSV = () => {
+    try {
+      exportRefillListAsCSV({ items: alerts, sellerName });
+      toast.success('Refill list downloaded successfully');
+    } catch (error) {
+      toast.error('Failed to download CSV');
+    }
+  };
+
+  const handleDownloadPDF = () => {
+    try {
+      exportRefillListAsPDF({ items: alerts, sellerName });
+      toast.success('Refill list downloaded successfully');
+    } catch (error) {
+      toast.error('Failed to download PDF');
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -218,16 +240,38 @@ export const StockAlertsRefillSuggestions = () => {
                 Based on today's sales + tomorrow's subscriptions
               </p>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadCSV}
+                disabled={alerts.length === 0 || isLoading}
+                className="text-xs border-zaago-border"
+              >
+                <Download className="w-3 h-3 mr-1" />
+                CSV
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadPDF}
+                disabled={alerts.length === 0 || isLoading}
+                className="text-xs border-zaago-border"
+              >
+                <FileText className="w-3 h-3 mr-1" />
+                PDF
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
               className="text-zaago-muted-foreground hover:text-foreground"
             >
-              <RefreshCw className={`w-4 h-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
+                <RefreshCw className={`w-4 h-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            </div>
           </div>
 
           {/* Summary Badges */}

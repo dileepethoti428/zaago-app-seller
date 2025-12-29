@@ -24,6 +24,7 @@ export interface StockAlertsData {
   lastUpdated: Date | null;
   isLoading: boolean;
   error: string | null;
+  sellerName: string;
 }
 
 export const useStockAlerts = () => {
@@ -38,6 +39,7 @@ export const useStockAlerts = () => {
     lastUpdated: null,
     isLoading: true,
     error: null,
+    sellerName: '',
   });
 
   const fetchStockAlerts = useCallback(async () => {
@@ -46,7 +48,16 @@ export const useStockAlerts = () => {
     setData(prev => ({ ...prev, isLoading: true, error: null }));
     
     try {
-      // 1. Fetch seller's products with stock
+      // 1. Fetch seller profile for name
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+
+      const sellerName = profile?.full_name || 'Seller';
+
+      // 2. Fetch seller's products with stock
       const { data: products, error: productsError } = await supabase
         .from('products')
         .select('id, name, unit, stock_quantity, seller_id')
@@ -148,6 +159,7 @@ export const useStockAlerts = () => {
         lastUpdated: new Date(),
         isLoading: false,
         error: null,
+        sellerName,
       });
     } catch (error: any) {
       console.error('Error fetching stock alerts:', error);
