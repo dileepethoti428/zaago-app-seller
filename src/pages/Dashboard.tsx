@@ -130,8 +130,18 @@ const Dashboard = () => {
       transition={{ duration: 0.5 }}
       className="space-y-6 sm:space-y-8"
     >
-      
-      
+      {/* Today's Orders Summary */}
+      <TodaysOrdersSummary />
+
+      {/* Tomorrow's Subscription Forecast */}
+      <TomorrowSubscriptionForecast />
+
+      {/* Stock Alerts & Refill Suggestions */}
+      <StockAlertsRefillSuggestions />
+
+      {/* Weekly Refill Trend Report */}
+      <WeeklyRefillTrendReport />
+
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
@@ -164,18 +174,6 @@ const Dashboard = () => {
           </Select>
         </div>
       </motion.div>
-
-      {/* Today's Orders Summary */}
-      <TodaysOrdersSummary />
-
-      {/* Tomorrow's Subscription Forecast */}
-      <TomorrowSubscriptionForecast />
-
-      {/* Stock Alerts & Refill Suggestions */}
-      <StockAlertsRefillSuggestions />
-
-      {/* Weekly Refill Trend Report */}
-      <WeeklyRefillTrendReport />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">

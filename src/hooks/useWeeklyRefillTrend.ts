@@ -329,8 +329,6 @@ export const useWeeklyRefillTrend = () => {
 
   useEffect(() => {
     fetchWeeklyTrend();
-    const interval = setInterval(fetchWeeklyTrend, 30000);
-    return () => clearInterval(interval);
   }, [fetchWeeklyTrend]);
 
   return { ...data, refetch: fetchWeeklyTrend };

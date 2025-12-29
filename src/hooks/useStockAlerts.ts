@@ -178,11 +178,5 @@ export const useStockAlerts = () => {
     }
   }, [fetchStockAlerts, forecastLoading]);
 
-  // Auto-refresh every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(fetchStockAlerts, 30000);
-    return () => clearInterval(interval);
-  }, [fetchStockAlerts]);
-
   return { ...data, refetch: fetchStockAlerts };
 };
