@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomerLookupDialog } from '@/components/CustomerLookupDialog';
 import { TodaysOrdersSummary } from '@/components/TodaysOrdersSummary';
 import { TomorrowSubscriptionForecast } from '@/components/TomorrowSubscriptionForecast';
+import { StockAlertsRefillSuggestions } from '@/components/StockAlertsRefillSuggestions';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -169,6 +170,8 @@ const Dashboard = () => {
       {/* Tomorrow's Subscription Forecast */}
       <TomorrowSubscriptionForecast />
 
+      {/* Stock Alerts & Refill Suggestions */}
+      <StockAlertsRefillSuggestions />
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         {[

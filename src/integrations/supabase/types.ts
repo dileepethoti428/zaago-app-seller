@@ -4307,6 +4307,54 @@ export type Database = {
           },
         ]
       }
+      seller_restock_list: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_purchased: boolean | null
+          notes: string | null
+          product_id: string
+          seller_id: string
+          suggested_quantity: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_purchased?: boolean | null
+          notes?: string | null
+          product_id: string
+          seller_id: string
+          suggested_quantity: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_purchased?: boolean | null
+          notes?: string | null
+          product_id?: string
+          seller_id?: string
+          suggested_quantity?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_restock_list_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_restock_list_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sellers: {
         Row: {
           account_holder_name: string | null
