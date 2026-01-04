@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 // ✅ FIX 1: use relative path, not "@/..."
-import { registerSellerForPush } from "../utils/pushNotifications.ts";
+import { registerSellerForPush } from "@/utils/pushNotifications";
 
 export default function LoginPage() {
   const { signIn, signUp, user, loading: authLoading } = useAuth();
