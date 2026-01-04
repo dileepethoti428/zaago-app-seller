@@ -5,7 +5,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
-// ✅ FIX 1: use relative path, not "@/..."
 import { registerSellerForPush } from "../utils/pushNotifications";
 
 export default function LoginPage() {
@@ -86,13 +85,14 @@ export default function LoginPage() {
           throw authError;
         }
 
-        // Supabase v2: email_confirmed_at may be null until verification
+        // If the user was created immediately (no email confirmation required)
         if (signUpData.user && !signUpData.user.email_confirmed_at) {
           toast({
             title: "Account Created!",
             description: "Please check your email to verify your account, then sign in.",
           });
         } else if (signUpData.user && signUpData.user.email_confirmed_at) {
+          // User created and confirmed immediately
           toast({
             title: "Account Created!",
             description: "Your account has been created successfully.",
@@ -116,17 +116,17 @@ export default function LoginPage() {
           description: "Logged in successfully.",
         });
 
-        // Get current user from Supabase
+        // 🔔 STEP 2.1: Get current user from Supabase
         const {
           data: { user },
         } = await supabase.auth.getUser();
 
-        // Trigger push notification registration
+        // 🔔 STEP 2.2: Trigger push notification permission + FCM token
         if (user) {
           await registerSellerForPush(user.id);
         }
 
-        // Small delay to ensure auth state is updated
+        // 🔁 Small delay to ensure auth state is updated
         setTimeout(() => {
           navigate("/");
         }, 100);
@@ -134,7 +134,7 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error("Auth error:", error);
 
-      let errorMessage = error.message as string;
+      let errorMessage = error.message;
 
       if (error.message?.includes("Invalid login credentials")) {
         errorMessage = "Invalid email or password. Please check your credentials.";
@@ -206,12 +206,7 @@ export default function LoginPage() {
                   required
                   minLength={6}
                   value={formData.password}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      password: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
                   placeholder="Enter your password"
                   className="w-full pl-12 pr-4 py-4 bg-zinc-800 border border-zinc-700 rounded-xl text-white placeholder:text-zinc-500 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-base"
                 />
@@ -230,12 +225,7 @@ export default function LoginPage() {
                       type="tel"
                       required
                       value={formData.phone}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          phone: e.target.value,
-                        }))
-                      }
+                      onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                       placeholder="Enter your phone number"
                       className="w-full pl-12 pr-4 py-4 bg-zinc-800 border border-zinc-700 rounded-xl text-white placeholder:text-zinc-500 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-base"
                     />
@@ -250,12 +240,7 @@ export default function LoginPage() {
                       type="text"
                       required
                       value={formData.businessName}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          businessName: e.target.value,
-                        }))
-                      }
+                      onChange={(e) => setFormData((prev) => ({ ...prev, businessName: e.target.value }))}
                       placeholder="Enter your business name"
                       className="w-full pl-12 pr-4 py-4 bg-zinc-800 border border-zinc-700 rounded-xl text-white placeholder:text-zinc-500 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-base"
                     />
@@ -267,7 +252,6 @@ export default function LoginPage() {
                   <Checkbox
                     id="terms"
                     checked={termsAccepted}
-                    // shadcn Checkbox onCheckedChange gives boolean | "indeterminate" [web:7]
                     onCheckedChange={(checked) => setTermsAccepted(checked === true)}
                     className="mt-1 border-zinc-600 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
                   />
