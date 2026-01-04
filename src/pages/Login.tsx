@@ -1,10 +1,11 @@
-import { ArrowRight, UserPlus, Mail, Lock, Phone, Building } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { useNavigate, Link } from 'react-router-dom';
-import { Checkbox } from '@/components/ui/checkbox';
+import { ArrowRight, UserPlus, Mail, Lock, Phone, Building } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate, Link } from "react-router-dom";
+import { Checkbox } from "@/components/ui/checkbox";
+import { registerSellerForPush } from "@/utils/pushNotifications";
 
 export default function LoginPage() {
   const { signIn, signUp, user, loading: authLoading } = useAuth();
@@ -14,22 +15,22 @@ export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    phone: '',
-    businessName: ''
+    email: "",
+    password: "",
+    phone: "",
+    businessName: "",
   });
 
   // Redirect if already logged in
   useEffect(() => {
     if (user && !authLoading) {
-      navigate('/');
+      navigate("/");
     }
   }, [user, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.email || !formData.password) {
       toast({
         title: "Missing Information",
@@ -62,7 +63,7 @@ export default function LoginPage() {
     try {
       if (isSignUp) {
         const acceptanceTimestamp = new Date().toISOString();
-        
+
         // Create auth user with business data in metadata
         const { data: signUpData, error: authError } = await supabase.auth.signUp({
           email: formData.email,
@@ -75,11 +76,11 @@ export default function LoginPage() {
               full_name: formData.businessName,
               terms_accepted_at: acceptanceTimestamp,
               privacy_accepted_at: acceptanceTimestamp,
-              terms_version: '1.0'
-            }
-          }
+              terms_version: "1.0",
+            },
+          },
         });
-        
+
         if (authError) {
           throw authError;
         }
@@ -97,41 +98,50 @@ export default function LoginPage() {
             description: "Your account has been created successfully.",
           });
         }
-        
-        console.log('Signup successful:', signUpData);
+
+        console.log("Signup successful:", signUpData);
 
         setIsSignUp(false);
         setTermsAccepted(false);
-        setFormData({ email: '', password: '', phone: '', businessName: '' });
+        setFormData({ email: "", password: "", phone: "", businessName: "" });
       } else {
         const { error } = await signIn(formData.email, formData.password);
-        
+
         if (error) {
           throw error;
         }
 
-        // Wait a moment for auth state to update, then redirect
         toast({
           title: "Welcome back!",
           description: "Logged in successfully.",
         });
-        
-        // Small delay to ensure auth state is updated
+
+        // 🔔 STEP 2.1: Get current user from Supabase
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        // 🔔 STEP 2.2: Trigger push notification permission + FCM token
+        if (user) {
+          await registerSellerForPush(user.id);
+        }
+
+        // 🔁 Small delay to ensure auth state is updated
         setTimeout(() => {
-          navigate('/');
+          navigate("/");
         }, 100);
       }
     } catch (error: any) {
-      console.error('Auth error:', error);
-      
+      console.error("Auth error:", error);
+
       let errorMessage = error.message;
-      
-      if (error.message?.includes('Invalid login credentials')) {
+
+      if (error.message?.includes("Invalid login credentials")) {
         errorMessage = "Invalid email or password. Please check your credentials.";
-      } else if (error.message?.includes('User already registered')) {
+      } else if (error.message?.includes("User already registered")) {
         errorMessage = "This email is already registered. Try signing in instead.";
         setIsSignUp(false);
-      } else if (error.message?.includes('signup')) {
+      } else if (error.message?.includes("signup")) {
         errorMessage = "Account creation failed. Please try again.";
       }
 
@@ -162,11 +172,9 @@ export default function LoginPage() {
                 </div>
               )}
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">
-              {isSignUp ? 'Create Account' : 'Welcome Back'}
-            </h1>
+            <h1 className="text-3xl font-bold text-white mb-2">{isSignUp ? "Create Account" : "Welcome Back"}</h1>
             <p className="text-zinc-400 text-base">
-              {isSignUp ? 'Sign up for your Zaago Seller account' : 'Sign in to your Zaago Seller account'}
+              {isSignUp ? "Sign up for your Zaago Seller account" : "Sign in to your Zaago Seller account"}
             </p>
           </div>
 
@@ -181,7 +189,7 @@ export default function LoginPage() {
                   type="email"
                   required
                   value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                   placeholder="Enter your email"
                   className="w-full pl-12 pr-4 py-4 bg-zinc-800 border border-zinc-700 rounded-xl text-white placeholder:text-zinc-500 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-base"
                 />
@@ -198,14 +206,12 @@ export default function LoginPage() {
                   required
                   minLength={6}
                   value={formData.password}
-                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
                   placeholder="Enter your password"
                   className="w-full pl-12 pr-4 py-4 bg-zinc-800 border border-zinc-700 rounded-xl text-white placeholder:text-zinc-500 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-base"
                 />
               </div>
-              {isSignUp && (
-                <p className="text-sm text-zinc-500 mt-2">Password must be at least 6 characters</p>
-              )}
+              {isSignUp && <p className="text-sm text-zinc-500 mt-2">Password must be at least 6 characters</p>}
             </div>
 
             {/* Additional signup fields */}
@@ -219,7 +225,7 @@ export default function LoginPage() {
                       type="tel"
                       required
                       value={formData.phone}
-                      onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                       placeholder="Enter your phone number"
                       className="w-full pl-12 pr-4 py-4 bg-zinc-800 border border-zinc-700 rounded-xl text-white placeholder:text-zinc-500 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-base"
                     />
@@ -234,7 +240,7 @@ export default function LoginPage() {
                       type="text"
                       required
                       value={formData.businessName}
-                      onChange={(e) => setFormData(prev => ({ ...prev, businessName: e.target.value }))}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, businessName: e.target.value }))}
                       placeholder="Enter your business name"
                       className="w-full pl-12 pr-4 py-4 bg-zinc-800 border border-zinc-700 rounded-xl text-white placeholder:text-zinc-500 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-base"
                     />
@@ -250,17 +256,17 @@ export default function LoginPage() {
                     className="mt-1 border-zinc-600 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
                   />
                   <label htmlFor="terms" className="text-sm text-zinc-400 leading-relaxed">
-                    I have read and agree to the{' '}
-                    <Link 
-                      to="/terms-conditions" 
+                    I have read and agree to the{" "}
+                    <Link
+                      to="/terms-conditions"
                       target="_blank"
                       className="text-green-500 hover:text-green-400 underline"
                     >
                       Terms & Conditions
-                    </Link>{' '}
-                    and{' '}
-                    <Link 
-                      to="/privacy-policy" 
+                    </Link>{" "}
+                    and{" "}
+                    <Link
+                      to="/privacy-policy"
                       target="_blank"
                       className="text-green-500 hover:text-green-400 underline"
                     >
@@ -278,9 +284,12 @@ export default function LoginPage() {
               className="w-full bg-green-500 text-white py-4 rounded-xl font-semibold text-base hover:bg-green-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-8"
             >
               {loading || authLoading
-                ? (isSignUp ? 'Creating Account...' : 'Signing In...') 
-                : (isSignUp ? 'Create Account' : 'Sign In')
-              }
+                ? isSignUp
+                  ? "Creating Account..."
+                  : "Signing In..."
+                : isSignUp
+                  ? "Create Account"
+                  : "Sign In"}
             </button>
           </form>
 
@@ -296,14 +305,10 @@ export default function LoginPage() {
               {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
             </button>
             {isSignUp && (
-              <p className="text-sm text-zinc-500 mt-3">
-                After signing up, check your email to verify your account
-              </p>
+              <p className="text-sm text-zinc-500 mt-3">After signing up, check your email to verify your account</p>
             )}
             {!isSignUp && (
-              <p className="text-sm text-zinc-500 mt-3">
-                Use any email/password to create an account or sign in
-              </p>
+              <p className="text-sm text-zinc-500 mt-3">Use any email/password to create an account or sign in</p>
             )}
           </div>
 
