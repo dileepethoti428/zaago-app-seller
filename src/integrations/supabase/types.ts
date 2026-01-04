@@ -1329,6 +1329,7 @@ export type Database = {
           date: string
           id: string
           location_id: number | null
+          notification_sent: boolean | null
           quantity: number
           status: string
           subscription_id: string
@@ -1341,6 +1342,7 @@ export type Database = {
           date: string
           id?: string
           location_id?: number | null
+          notification_sent?: boolean | null
           quantity: number
           status?: string
           subscription_id: string
@@ -1353,6 +1355,7 @@ export type Database = {
           date?: string
           id?: string
           location_id?: number | null
+          notification_sent?: boolean | null
           quantity?: number
           status?: string
           subscription_id?: string
@@ -1943,6 +1946,27 @@ export type Database = {
         }
         Relationships: []
       }
+      devices: {
+        Row: {
+          fcm_token: string
+          id: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          fcm_token: string
+          id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          fcm_token?: string
+          id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       driver_locations: {
         Row: {
           accuracy: number | null
@@ -2119,6 +2143,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      fcm_tokens: {
+        Row: {
+          created_at: string | null
+          id: string
+          platform: string | null
+          token: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          platform?: string | null
+          token?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          platform?: string | null
+          token?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       flexible_payment_requests: {
         Row: {
@@ -2413,6 +2461,48 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_queue: {
+        Row: {
+          body: string
+          created_at: string | null
+          data: Json | null
+          debug_source: string | null
+          event_type: string
+          id: string
+          order_id: string | null
+          processed: boolean | null
+          target: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string | null
+          data?: Json | null
+          debug_source?: string | null
+          event_type: string
+          id?: string
+          order_id?: string | null
+          processed?: boolean | null
+          target?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string | null
+          data?: Json | null
+          debug_source?: string | null
+          event_type?: string
+          id?: string
+          order_id?: string | null
+          processed?: boolean | null
+          target?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_recipients: {
         Row: {
           created_at: string
@@ -2463,48 +2553,72 @@ export type Database = {
           },
         ]
       }
+      notification_types: {
+        Row: {
+          body_template: string
+          key: string
+          title: string
+        }
+        Insert: {
+          body_template: string
+          key: string
+          title: string
+        }
+        Update: {
+          body_template?: string
+          key?: string
+          title?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
-          created_at: string
-          id: string
-          is_read: boolean
+          body: string
+          created_at: string | null
+          data: Json | null
+          id: number
+          is_read: boolean | null
           link: string | null
-          message: string
+          message: string | null
           metadata: Json | null
           order_id: string | null
           reference_id: string | null
-          role: string
+          role: string | null
           title: string
-          type: string
-          user_id: string
+          type: string | null
+          user_id: string | null
         }
         Insert: {
-          created_at?: string
-          id?: string
-          is_read?: boolean
+          body: string
+          created_at?: string | null
+          data?: Json | null
+          id?: number
+          is_read?: boolean | null
           link?: string | null
-          message: string
+          message?: string | null
           metadata?: Json | null
           order_id?: string | null
           reference_id?: string | null
-          role?: string
+          role?: string | null
           title: string
-          type: string
-          user_id: string
+          type?: string | null
+          user_id?: string | null
         }
         Update: {
-          created_at?: string
-          id?: string
-          is_read?: boolean
+          body?: string
+          created_at?: string | null
+          data?: Json | null
+          id?: number
+          is_read?: boolean | null
           link?: string | null
-          message?: string
+          message?: string | null
           metadata?: Json | null
           order_id?: string | null
           reference_id?: string | null
-          role?: string
+          role?: string | null
           title?: string
-          type?: string
-          user_id?: string
+          type?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -2866,11 +2980,13 @@ export type Database = {
           delivery_payout: number | null
           delivery_time: string | null
           delivery_time_slot: string | null
+          distance_km: number | null
           id: string
           items: Json
           last_notified_at: string | null
           last_notified_status: string | null
           notification_count: number
+          notification_sent: boolean | null
           otp_attempts: number | null
           otp_expires_at: string | null
           otp_verified: boolean | null
@@ -2922,11 +3038,13 @@ export type Database = {
           delivery_payout?: number | null
           delivery_time?: string | null
           delivery_time_slot?: string | null
+          distance_km?: number | null
           id?: string
           items: Json
           last_notified_at?: string | null
           last_notified_status?: string | null
           notification_count?: number
+          notification_sent?: boolean | null
           otp_attempts?: number | null
           otp_expires_at?: string | null
           otp_verified?: boolean | null
@@ -2978,11 +3096,13 @@ export type Database = {
           delivery_payout?: number | null
           delivery_time?: string | null
           delivery_time_slot?: string | null
+          distance_km?: number | null
           id?: string
           items?: Json
           last_notified_at?: string | null
           last_notified_status?: string | null
           notification_count?: number
+          notification_sent?: boolean | null
           otp_attempts?: number | null
           otp_expires_at?: string | null
           otp_verified?: boolean | null
@@ -3938,6 +4058,36 @@ export type Database = {
           target_type?: string | null
           target_user_id?: string | null
           title?: string
+        }
+        Relationships: []
+      }
+      push_tokens: {
+        Row: {
+          app_type: string
+          created_at: string | null
+          device_type: string
+          fcm_token: string
+          id: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          app_type: string
+          created_at?: string | null
+          device_type: string
+          fcm_token: string
+          id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          app_type?: string
+          created_at?: string | null
+          device_type?: string
+          fcm_token?: string
+          id?: string
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -6291,6 +6441,23 @@ export type Database = {
         }
         Returns: Json
       }
+      complete_delivery_zepto:
+        | {
+            Args: {
+              p_agent_id: string
+              p_order_id: string
+              p_payment_method: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_live_distance_km?: number
+              p_order_id: string
+              p_payment_method: string
+            }
+            Returns: Json
+          }
       complete_qr_delivery_safe: {
         Args: {
           p_agent_id: string
