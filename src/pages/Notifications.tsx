@@ -112,7 +112,7 @@ const Notifications = () => {
       const { error } = await supabase
         .from('notifications')
         .update({ is_read: true })
-        .eq('id', notificationId);
+        .eq('id', notificationId as any);
 
       if (error) {
         console.error('Error marking notification as read:', error);

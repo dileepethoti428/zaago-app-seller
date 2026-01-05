@@ -92,10 +92,11 @@ export const SellerNotifications = () => {
         
         // Process first unprocessed notification
         for (const notif of unreadNotifications) {
-          if (!processedNotifications.current.has(notif.id)) {
+          const notifId = String(notif.id);
+          if (!processedNotifications.current.has(notifId)) {
             console.log('🔔 Processing unread notification:', notif.id);
             await handleNotification(notif);
-            processedNotifications.current.add(notif.id);
+            processedNotifications.current.add(notifId);
             break;
           }
         }
@@ -230,10 +231,11 @@ export const SellerNotifications = () => {
         console.log('📬 Polling found', data.length, 'notifications');
         
         for (const notification of data) {
-          if (!processedNotifications.current.has(notification.id)) {
+          const notifId = String(notification.id);
+          if (!processedNotifications.current.has(notifId)) {
             console.log('🔔 Processing notification from polling:', notification.id);
             await handleNotification(notification);
-            processedNotifications.current.add(notification.id);
+            processedNotifications.current.add(notifId);
           }
         }
       }
@@ -264,9 +266,10 @@ export const SellerNotifications = () => {
         filter: `user_id=eq.${user.id}`
       }, (payload) => {
         console.log('🔔 Real-time notification:', payload.new);
-        if (payload.new && !processedNotifications.current.has(payload.new.id)) {
+        const notifId = String((payload.new as any)?.id);
+        if (payload.new && !processedNotifications.current.has(notifId)) {
           handleNotification(payload.new);
-          processedNotifications.current.add(payload.new.id);
+          processedNotifications.current.add(notifId);
         }
       })
       .subscribe((status) => {
