@@ -1,22 +1,37 @@
 import { PushNotifications } from "@capacitor/push-notifications";
+import { supabase } from "@/integrations/supabase/client";
 
-export const registerSellerForPush = async (sellerId: string) => {
-  console.log("🔔 Checking push permission for seller:", sellerId);
+export async function registerSellerForPush(sellerId: string) {
+  console.log("🔥 registerSellerForPush START", sellerId);
 
-  try {
-    // Only request permission - token comes from native FCM
-    const perm = await PushNotifications.requestPermissions();
-    console.log("🔐 Push permission result:", perm);
+  const perm = await PushNotifications.requestPermissions();
+  console.log("🔔 Permission result:", perm);
 
-    if (perm.receive !== "granted") {
-      console.warn("❌ Push permission not granted");
-      return false;
-    }
-
-    console.log("✅ Push permission granted, waiting for native FCM token");
-    return true;
-  } catch (error) {
-    console.log("Push notifications not available:", error);
-    return false;
+  if (perm.receive !== "granted") {
+    console.log("❌ Permission not granted");
+    return;
   }
-};
+
+  await PushNotifications.register();
+  console.log("✅ PushNotifications.register() called");
+
+  PushNotifications.addListener("registration", async (token) => {
+    console.log("📲 FCM TOKEN RECEIVED:", token.value);
+
+    const { error } = await supabase.from("seller_push_tokens").insert({
+      seller_id: sellerId,
+      fcm_token: token.value,
+      device: "android",
+    });
+
+    if (error) {
+      console.error("❌ DB INSERT FAILED", error);
+    } else {
+      console.log("✅ TOKEN SAVED TO DATABASE");
+    }
+  });
+
+  PushNotifications.addListener("registrationError", (err) => {
+    console.error("❌ FCM REGISTRATION ERROR", err);
+  });
+}
