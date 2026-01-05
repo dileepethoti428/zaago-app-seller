@@ -4457,6 +4457,30 @@ export type Database = {
           },
         ]
       }
+      seller_push_tokens: {
+        Row: {
+          created_at: string | null
+          device: string | null
+          fcm_token: string
+          id: string
+          seller_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          device?: string | null
+          fcm_token: string
+          id?: string
+          seller_id: string
+        }
+        Update: {
+          created_at?: string | null
+          device?: string | null
+          fcm_token?: string
+          id?: string
+          seller_id?: string
+        }
+        Relationships: []
+      }
       seller_restock_list: {
         Row: {
           created_at: string | null
