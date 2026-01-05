@@ -7516,10 +7516,19 @@ export type Database = {
         Args: { agent_id: string; order_id: string; qr_code_id: string }
         Returns: boolean
       }
-      seller_order_action: {
-        Args: { p_action: string; p_order_id: string; p_seller_user_id: string }
-        Returns: Json
-      }
+      seller_order_action:
+        | {
+            Args: { p_action: string; p_order_id: string; p_seller_id?: string }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_action: string
+              p_order_id: string
+              p_seller_user_id: string
+            }
+            Returns: Json
+          }
       seller_set_subscription_agent: {
         Args: { p_agent_id?: string; p_subscription_id: string }
         Returns: Json
@@ -7611,10 +7620,23 @@ export type Database = {
         }
         Returns: boolean
       }
-      update_seller_order_status: {
-        Args: { p_action: string; p_order_id: string; p_seller_user_id: string }
-        Returns: Json
-      }
+      update_seller_order_status:
+        | {
+            Args: {
+              p_new_status: string
+              p_order_id: string
+              p_seller_id?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_action: string
+              p_order_id: string
+              p_seller_user_id: string
+            }
+            Returns: Json
+          }
       update_subscription_next_delivery: {
         Args: { p_subscription_id: string }
         Returns: Json

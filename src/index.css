@@ -388,6 +388,24 @@ body {
   }
 }
 
+/* Pull-to-refresh styles */
+.ptr-container {
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+.ptr-indicator {
+  pointer-events: none;
+}
+
+.ptr-spinner-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px hsla(var(--foreground) / 0.15);
+}
+
 /* Print styles */
 @media print {
   * {
