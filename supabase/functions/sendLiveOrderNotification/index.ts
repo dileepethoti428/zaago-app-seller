@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
               ios_sound: "default",
               
               // Android specific settings
-              android_channel_id: "new_orders",
+              android_channel_id: "orders",
               android_visibility: 1,  // Public - show on lock screen
               android_sound: "default",
               
