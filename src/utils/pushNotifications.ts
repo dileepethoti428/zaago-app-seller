@@ -2,36 +2,36 @@ import { PushNotifications } from "@capacitor/push-notifications";
 import { supabase } from "@/integrations/supabase/client";
 
 export async function registerSellerForPush(sellerId: string) {
-  console.log("🔥 registerSellerForPush START", sellerId);
+  console.log("🔥 registerSellerForPush STARTED", sellerId);
 
-  const perm = await PushNotifications.requestPermissions();
-  console.log("🔔 Permission result:", perm);
+  try {
+    const perm = await PushNotifications.requestPermissions();
+    console.log("🔐 Permission result:", perm);
 
-  if (perm.receive !== "granted") {
-    console.log("❌ Permission not granted");
-    return;
-  }
-
-  await PushNotifications.register();
-  console.log("✅ PushNotifications.register() called");
-
-  PushNotifications.addListener("registration", async (token) => {
-    console.log("📲 FCM TOKEN RECEIVED:", token.value);
-
-    const { error } = await supabase.from("seller_push_tokens").insert({
-      seller_id: sellerId,
-      fcm_token: token.value,
-      device: "android",
-    });
-
-    if (error) {
-      console.error("❌ DB INSERT FAILED", error);
-    } else {
-      console.log("✅ TOKEN SAVED TO DATABASE");
+    if (perm.receive !== "granted") {
+      console.log("❌ Permission denied");
+      return;
     }
-  });
 
-  PushNotifications.addListener("registrationError", (err) => {
-    console.error("❌ FCM REGISTRATION ERROR", err);
-  });
+    await PushNotifications.register();
+    console.log("📲 PushNotifications.register() called");
+
+    PushNotifications.addListener("registration", async (token) => {
+      console.log("✅ FCM TOKEN RECEIVED:", token.value);
+
+      const { data, error } = await supabase
+        .from("seller_push_tokens")
+        .insert({
+          seller_id: sellerId,
+          fcm_token: token.value,
+          device: "android",
+        })
+        .select();
+
+      console.log("📦 Supabase insert result:", data);
+      console.log("❌ Supabase insert error:", error);
+    });
+  } catch (err) {
+    console.error("🔥 registerSellerForPush ERROR:", err);
+  }
 }
