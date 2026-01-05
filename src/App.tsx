@@ -47,6 +47,7 @@ import { SellerNotifications } from "@/components/SellerNotifications";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { useOneSignal } from "@/hooks/useOneSignal";
 import { PushNotifications } from "@capacitor/push-notifications";
+import { supabase } from "@/integrations/supabase/client";
 
 const AppContent = () => {
   useRealtimeSync();
@@ -78,6 +79,37 @@ const AppContent = () => {
     };
 
     setupPushListeners();
+  }, []);
+
+  // Listen for FCM token from native Android
+  useEffect(() => {
+    const handler = async (event: any) => {
+      const token = event.detail?.token;
+      if (!token) return;
+
+      console.log("🔥 FCM TOKEN RECEIVED:", token);
+
+      const { data } = await supabase.auth.getUser();
+      if (!data?.user) return;
+
+      const { error } = await supabase.from("seller_push_tokens").upsert(
+        {
+          seller_id: data.user.id,
+          fcm_token: token,
+          device: "android",
+        },
+        { onConflict: "seller_id" }
+      );
+
+      if (error) {
+        console.error("❌ Failed to save seller push token:", error);
+      } else {
+        console.log("✅ Seller push token saved");
+      }
+    };
+
+    window.addEventListener("fcm-token", handler);
+    return () => window.removeEventListener("fcm-token", handler);
   }, []);
   
   return (
