@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -44,14 +44,47 @@ import TermsConditions from "./pages/TermsConditions";
 import { CustomerNotifications } from "@/components/CustomerNotifications";
 import { AgentNotifications } from "@/components/AgentNotifications";
 import { SellerNotifications } from "@/components/SellerNotifications";
+import { OfflinePage } from "@/components/OfflinePage";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { useOneSignal } from "@/hooks/useOneSignal";
+import { useNetworkStatus } from "@/lib/network";
+import { queryClient } from "@/lib/queryClient";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const AppContent = () => {
   useRealtimeSync();
   useOneSignal();
+  
+  const isOnline = useNetworkStatus();
+  const [showOfflinePage, setShowOfflinePage] = useState(!navigator.onLine);
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  // Auto-restore when back online
+  useEffect(() => {
+    if (isOnline) {
+      setShowOfflinePage(false);
+      // Trigger data refetch when coming back online
+      queryClient.invalidateQueries();
+    } else {
+      setShowOfflinePage(true);
+    }
+  }, [isOnline]);
+
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    // Small delay to show loading state
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    if (navigator.onLine) {
+      await queryClient.invalidateQueries();
+      setShowOfflinePage(false);
+    } else {
+      toast.error("Still offline. Please check your connection.");
+    }
+    setIsRetrying(false);
+  };
   
   // Set up push notification listeners for foreground/tap handling
   useEffect(() => {
@@ -111,6 +144,17 @@ const AppContent = () => {
     window.addEventListener("fcm-token", handler);
     return () => window.removeEventListener("fcm-token", handler);
   }, []);
+
+  // Show offline page when offline
+  if (showOfflinePage) {
+    return (
+      <>
+        <Toaster />
+        <Sonner />
+        <OfflinePage onRetry={handleRetry} isRetrying={isRetrying} />
+      </>
+    );
+  }
   
   return (
     <>
