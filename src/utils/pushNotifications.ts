@@ -1,37 +1,54 @@
 import { PushNotifications } from "@capacitor/push-notifications";
 import { supabase } from "@/integrations/supabase/client";
 
-export async function registerSellerForPush(sellerId: string) {
-  console.log("🔥 registerSellerForPush STARTED", sellerId);
+let listenersRegistered = false;
 
-  try {
-    const perm = await PushNotifications.requestPermissions();
-    console.log("🔐 Permission result:", perm);
+/**
+ * Call this ONCE after login
+ */
+export const registerSellerForPush = async (sellerId: string) => {
+  console.log("🔔 registerSellerForPush STARTED:", sellerId);
 
-    if (perm.receive !== "granted") {
-      console.log("❌ Permission denied");
-      return;
-    }
+  // 1️⃣ Request permission (Android 13+)
+  const perm = await PushNotifications.requestPermissions();
+  console.log("🔐 Push permission result:", perm);
 
-    await PushNotifications.register();
-    console.log("📲 PushNotifications.register() called");
+  if (perm.receive !== "granted") {
+    console.warn("❌ Push permission not granted");
+    return;
+  }
+
+  // 2️⃣ Register listeners ONLY ONCE
+  if (!listenersRegistered) {
+    console.log("📡 Registering FCM listeners");
 
     PushNotifications.addListener("registration", async (token) => {
       console.log("✅ FCM TOKEN RECEIVED:", token.value);
 
-      const { data, error } = await supabase
-        .from("seller_push_tokens")
-        .insert({
+      const { error } = await supabase.from("seller_push_tokens").upsert(
+        {
           seller_id: sellerId,
           fcm_token: token.value,
           device: "android",
-        })
-        .select();
+          is_active: true,
+        },
+        { onConflict: "seller_id" },
+      );
 
-      console.log("📦 Supabase insert result:", data);
-      console.log("❌ Supabase insert error:", error);
+      if (error) {
+        console.error("❌ Failed to save seller token:", error);
+      } else {
+        console.log("✅ Seller FCM token UPSERTED");
+      }
     });
-  } catch (err) {
-    console.error("🔥 registerSellerForPush ERROR:", err);
+
+    PushNotifications.addListener("registrationError", (err) => {
+      console.error("❌ Push registration error:", err);
+    });
+
+    listenersRegistered = true;
   }
-}
+
+  // 3️⃣ Trigger FCM registration
+  await PushNotifications.register();
+};
