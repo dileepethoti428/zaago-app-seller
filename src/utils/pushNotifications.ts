@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 let listenersRegistered = false;
 
 /**
- * Call this ONCE after login
+ * Call this ONCE after seller login
  */
 export const registerSellerForPush = async (sellerId: string) => {
   console.log("🔔 registerSellerForPush STARTED:", sellerId);
@@ -30,15 +30,16 @@ export const registerSellerForPush = async (sellerId: string) => {
           seller_id: sellerId,
           fcm_token: token.value,
           device: "android",
-          is_active: true,
         },
-        { onConflict: "seller_id" },
+        {
+          onConflict: "seller_id",
+        },
       );
 
       if (error) {
         console.error("❌ Failed to save seller token:", error);
       } else {
-        console.log("✅ Seller FCM token UPSERTED");
+        console.log("✅ Seller FCM token saved / updated");
       }
     });
 
