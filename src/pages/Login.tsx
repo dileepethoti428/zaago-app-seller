@@ -5,8 +5,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
-// ✅ FIX 1: use relative path, not "@/..."
 import { registerSellerForPush } from "@/utils/pushNotifications";
+import { PushNotifications } from '@capacitor/push-notifications';
+import { NativeSettings, AndroidSettings, IOSSettings } from 'capacitor-native-settings';
 
 export default function LoginPage() {
   const { signIn, signUp, user, loading: authLoading } = useAuth();
@@ -28,6 +29,23 @@ export default function LoginPage() {
       navigate("/");
     }
   }, [user, authLoading, navigate]);
+
+  const checkAndPromptNotificationPermission = async () => {
+    try {
+      const perm = await PushNotifications.checkPermissions();
+
+      if (perm.receive !== 'granted') {
+        // Open app notification settings
+        await NativeSettings.open({
+          optionAndroid: AndroidSettings.ApplicationDetails,
+          optionIOS: IOSSettings.App,
+        });
+      }
+    } catch (error) {
+      // Fallback for web - Capacitor plugins only work on native
+      console.log('Capacitor not available, skipping native permission check');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,12 +134,15 @@ export default function LoginPage() {
           description: "Logged in successfully.",
         });
 
+        // Check/prompt for notification permission (native only)
+        await checkAndPromptNotificationPermission();
+
         // Get current user from Supabase
         const {
           data: { user },
         } = await supabase.auth.getUser();
 
-        // Trigger push notification registration
+        // Trigger push notification registration after permission decision
         if (user) {
           await registerSellerForPush(user.id);
         }
