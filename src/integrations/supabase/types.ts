@@ -2469,8 +2469,10 @@ export type Database = {
           debug_source: string | null
           event_type: string
           id: string
+          last_error: string | null
           order_id: string | null
           processed: boolean | null
+          retry_count: number | null
           target: string | null
           title: string
           user_id: string
@@ -2482,8 +2484,10 @@ export type Database = {
           debug_source?: string | null
           event_type: string
           id?: string
+          last_error?: string | null
           order_id?: string | null
           processed?: boolean | null
+          retry_count?: number | null
           target?: string | null
           title: string
           user_id: string
@@ -2495,8 +2499,10 @@ export type Database = {
           debug_source?: string | null
           event_type?: string
           id?: string
+          last_error?: string | null
           order_id?: string | null
           processed?: boolean | null
+          retry_count?: number | null
           target?: string | null
           title?: string
           user_id?: string
@@ -4463,6 +4469,7 @@ export type Database = {
           device: string | null
           fcm_token: string
           id: string
+          is_active: boolean | null
           seller_id: string
         }
         Insert: {
@@ -4470,6 +4477,7 @@ export type Database = {
           device?: string | null
           fcm_token: string
           id?: string
+          is_active?: boolean | null
           seller_id: string
         }
         Update: {
@@ -4477,6 +4485,7 @@ export type Database = {
           device?: string | null
           fcm_token?: string
           id?: string
+          is_active?: boolean | null
           seller_id?: string
         }
         Relationships: []
@@ -6470,7 +6479,7 @@ export type Database = {
             Args: {
               p_agent_id: string
               p_order_id: string
-              p_payment_method: string
+              p_payment_method?: string
             }
             Returns: Json
           }
