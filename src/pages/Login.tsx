@@ -134,15 +134,23 @@ export default function LoginPage() {
           description: "Logged in successfully.",
         });
 
-        // Check/prompt for notification permission (native only)
+        // 1. Ask permission / open settings if denied
         await checkAndPromptNotificationPermission();
 
-        // Get current user from Supabase
+        // 2. REGISTER device with FCM (ensures token is generated)
+        try {
+          await PushNotifications.register();
+          console.log("✅ PushNotifications.register() called in Login");
+        } catch (e) {
+          console.warn("Push register failed (web?):", e);
+        }
+
+        // 3. Get logged-in user
         const {
           data: { user },
         } = await supabase.auth.getUser();
 
-        // Trigger push notification registration after permission decision
+        // 4. Save FCM token to Supabase
         if (user) {
           await registerSellerForPush(user.id);
         }
