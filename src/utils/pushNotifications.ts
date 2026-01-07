@@ -53,23 +53,31 @@ export const registerSellerForPush = async (sellerId: string) => {
       console.log("📦 Notification data:", action.notification.data);
 
       const orderId = action.notification.data?.order_id;
+      const agentId = action.notification.data?.agent_id || sellerId;
 
       if (!orderId) {
         console.warn("⚠️ No order_id in notification");
         return;
       }
 
+      if (!agentId) {
+        console.warn("⚠️ No agent_id available");
+        return;
+      }
+
       if (action.actionId === "ACCEPT_ORDER") {
         console.log("✅ Accept order:", orderId);
         await supabase.rpc("accept_order", {
-          order_id: orderId,
+          p_agent_id: agentId,
+          p_order_id: orderId,
         });
       }
 
       if (action.actionId === "REJECT_ORDER") {
         console.log("❌ Reject order:", orderId);
         await supabase.rpc("reject_order", {
-          order_id: orderId,
+          p_agent_id: agentId,
+          p_order_id: orderId,
         });
       }
     });
