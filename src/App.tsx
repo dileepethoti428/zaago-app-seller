@@ -86,33 +86,7 @@ const AppContent = () => {
     setIsRetrying(false);
   };
   
-  // Set up push notification listeners for foreground/tap handling
-  useEffect(() => {
-    const setupPushListeners = async () => {
-      try {
-        // When notification is received while app is in foreground
-        await PushNotifications.addListener('pushNotificationReceived', notification => {
-          console.log('🔔 Push notification received:', notification);
-        });
-
-        // When user taps on a notification
-        await PushNotifications.addListener('pushNotificationActionPerformed', action => {
-          console.log('👉 Push notification tapped:', action);
-          const orderId = action.notification.data?.orderId;
-          if (orderId) {
-            // Navigate to order details
-            window.location.href = `#/orders/${orderId}`;
-          }
-        });
-        
-        console.log('Push notification listeners registered');
-      } catch (error) {
-        console.log('Push notification listeners not available:', error);
-      }
-    };
-
-    setupPushListeners();
-  }, []);
+  // Push notification listeners are now handled in pushNotifications.ts
 
   // Listen for FCM token from native Android
   useEffect(() => {

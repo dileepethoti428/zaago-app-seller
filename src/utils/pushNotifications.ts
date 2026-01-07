@@ -108,6 +108,20 @@ export const registerSellerForPush = async (sellerId: string) => {
       }
     );
 
+    // 📍 Navigate to order screen when notification is tapped (not button clicks)
+    PushNotifications.addListener(
+      "pushNotificationActionPerformed",
+      (action) => {
+        console.log("📍 Notification tapped:", action);
+        
+        const orderId = action.notification.data?.order_id;
+        if (!orderId) return;
+
+        // Navigate to order screen (HashRouter format)
+        window.location.href = `#/orders/${orderId}`;
+      }
+    );
+
     listenersRegistered = true;
   }
 
