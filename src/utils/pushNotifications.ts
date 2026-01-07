@@ -22,19 +22,18 @@ export const registerSellerForPush = async (sellerId: string) => {
 
   // 2️⃣ Register LocalNotification action types (REQUIRED for buttons)
   await LocalNotifications.registerActionTypes({
-    actionTypes: [
+    types: [
+      // ✅ Fixed: 'types' not 'actionTypes'
       {
         id: "ORDER_ACTIONS",
         actions: [
           {
             id: "ACCEPT_ORDER",
             title: "Accept Order",
-            // icon: "./assets/accept.png" // Optional custom icon
           },
           {
             id: "REJECT_ORDER",
             title: "Reject Order",
-            // icon: "./assets/reject.png"
           },
         ],
       },
@@ -74,10 +73,10 @@ export const registerSellerForPush = async (sellerId: string) => {
           notifications: [
             {
               id: Date.now(),
-              title: data.title || "New Order", // ✅ From FCM data.title
-              body: data.body || "You have a new order", // ✅ From FCM data.body
-              actionTypeId: "ORDER_ACTIONS", // ✅ Shows Accept/Reject buttons
-              sound: "order_ring", // ✅ Matches your MainActivity raw/order_ring
+              title: data.title || "New Order",
+              body: data.body || "You have a new order",
+              actionTypeId: "ORDER_ACTIONS",
+              sound: "order_ring",
               extra: {
                 order_id: data.order_id,
               },
@@ -101,7 +100,7 @@ export const registerSellerForPush = async (sellerId: string) => {
         if (action.actionId === "ACCEPT_ORDER") {
           console.log("✅ Accepting:", orderId);
           await supabase.rpc("accept_order", {
-            p_agent_id: sellerId, // ✅ Use sellerId from login
+            p_agent_id: sellerId,
             p_order_id: orderId,
           });
         } else if (action.actionId === "REJECT_ORDER") {
@@ -119,19 +118,18 @@ export const registerSellerForPush = async (sellerId: string) => {
     listenersRegistered = true;
   }
 
-  // 4️⃣ Register channels + trigger FCM
-  if (LocalNotifications.canSchedule()) {
-    await LocalNotifications.createChannel({
-      id: "orders",
-      name: "New Orders",
-      description: "Order notifications",
-      sound: "order_ring",
-      importance: 5,
-      visibility: 1,
-      lights: true,
-      vibration: true,
-    });
-  }
+  // 4️⃣ Create channel (no canSchedule check needed)
+  await LocalNotifications.createChannel({
+    id: "orders",
+    name: "New Orders",
+    description: "Order notifications",
+    sound: "order_ring",
+    importance: 5,
+    visibility: 1,
+    lights: true,
+    vibration: true,
+  });
 
+  // 5️⃣ Trigger FCM registration
   await PushNotifications.register();
 };
