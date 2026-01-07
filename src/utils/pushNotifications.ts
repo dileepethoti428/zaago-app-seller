@@ -47,6 +47,33 @@ export const registerSellerForPush = async (sellerId: string) => {
       console.error("❌ Push registration error:", err);
     });
 
+    // 🔧 NEW: Action button handler (Accept/Reject orders)
+    PushNotifications.addListener("pushNotificationActionPerformed", async (action) => {
+      console.log("🔘 Notification action clicked:", action.actionId);
+      console.log("📦 Notification data:", action.notification.data);
+
+      const orderId = action.notification.data?.order_id;
+
+      if (!orderId) {
+        console.warn("⚠️ No order_id in notification");
+        return;
+      }
+
+      if (action.actionId === "ACCEPT_ORDER") {
+        console.log("✅ Accept order:", orderId);
+        await supabase.rpc("accept_order", {
+          order_id: orderId,
+        });
+      }
+
+      if (action.actionId === "REJECT_ORDER") {
+        console.log("❌ Reject order:", orderId);
+        await supabase.rpc("reject_order", {
+          order_id: orderId,
+        });
+      }
+    });
+
     listenersRegistered = true;
   }
 
