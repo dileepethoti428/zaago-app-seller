@@ -51,23 +51,27 @@ export const registerSellerForPush = async (sellerId: string) => {
     // 🔔 When data-only FCM arrives → show local notification with buttons
     PushNotifications.addListener(
       "pushNotificationReceived",
-      (notification) => {
+      async (notification) => {
         console.log("📩 Push received:", notification);
 
         const data = notification.data;
 
-        // Only handle new order notifications
         if (data?.type === "NEW_ORDER") {
-          LocalNotifications.schedule({
+          // ❗ Cancel system notification
+          await LocalNotifications.cancel({ notifications: [] });
+
+          // 🔔 Show local notification with buttons
+          await LocalNotifications.schedule({
             notifications: [
               {
                 id: Date.now(),
-                title: data.title || "New Order",
-                body: data.body || "You have a new order",
+                title: notification.title || "New Order",
+                body: notification.body || "You have a new order",
                 actionTypeId: "ORDER_ACTIONS",
+                sound: "default",
                 extra: {
                   order_id: data.order_id,
-                  seller_id: sellerId,
+                  seller_id: data.seller_id,
                 },
               },
             ],
