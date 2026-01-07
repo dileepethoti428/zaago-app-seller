@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client'
 import { ThemeProvider } from 'next-themes'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { PushNotifications } from '@capacitor/push-notifications'
+import { LocalNotifications } from '@capacitor/local-notifications'
 import App from './App.tsx'
 import './index.css'
 import { queryClient, persister } from './lib/queryClient'
@@ -23,7 +24,31 @@ const initializePushNotifications = async () => {
   }
 };
 
+// 🔔 Register local notification actions (Accept / Reject)
+const initializeLocalNotificationActions = async () => {
+  try {
+    await LocalNotifications.requestPermissions();
+
+    await LocalNotifications.registerActionTypes({
+      types: [
+        {
+          id: 'ORDER_ACTIONS',
+          actions: [
+            { id: 'ACCEPT_ORDER', title: 'Accept' },
+            { id: 'REJECT_ORDER', title: 'Reject' },
+          ],
+        },
+      ],
+    });
+
+    console.log('Local notification actions registered');
+  } catch (error) {
+    console.log('LocalNotifications init skipped:', error);
+  }
+};
+
 initializePushNotifications();
+initializeLocalNotificationActions();
 
 createRoot(document.getElementById("root")!).render(
   <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
