@@ -1,26 +1,26 @@
-import { createRoot } from 'react-dom/client'
-import { ThemeProvider } from 'next-themes'
-import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
-import { PushNotifications } from '@capacitor/push-notifications'
-import { LocalNotifications } from '@capacitor/local-notifications'
-import App from './App.tsx'
-import './index.css'
-import { queryClient, persister } from './lib/queryClient'
+import { createRoot } from "react-dom/client";
+import { ThemeProvider } from "next-themes";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { PushNotifications } from "@capacitor/push-notifications";
+import { LocalNotifications } from "@capacitor/local-notifications";
+import App from "./App.tsx";
+import "./index.css";
+import { queryClient, persister } from "./lib/queryClient";
 
 // Create notification channel for Android (runs once on app start)
 const initializePushNotifications = async () => {
   try {
     await PushNotifications.createChannel({
-      id: 'orders',
-      name: 'New Orders',
-      description: 'New order alerts for sellers',
+      id: "orders",
+      name: "New Orders",
+      description: "New order alerts for sellers",
       importance: 5, // HIGH importance
-      sound: 'default',
+      sound: "default",
       vibration: true,
     });
-    console.log('Notification channel created successfully');
+    console.log("Notification channel created successfully");
   } catch (error) {
-    console.log('Capacitor not available or channel already exists:', error);
+    console.log("Capacitor not available or channel already exists:", error);
   }
 };
 
@@ -32,18 +32,18 @@ const initializeLocalNotificationActions = async () => {
     await LocalNotifications.registerActionTypes({
       types: [
         {
-          id: 'ORDER_ACTIONS',
+          id: "ORDER_ACTIONS",
           actions: [
-            { id: 'ACCEPT_ORDER', title: 'Accept' },
-            { id: 'REJECT_ORDER', title: 'Reject' },
+            { id: "ACCEPT_ORDER", title: "Accept" },
+            { id: "REJECT_ORDER", title: "Reject" },
           ],
         },
       ],
     });
 
-    console.log('Local notification actions registered');
+    console.log("Local notification actions registered");
   } catch (error) {
-    console.log('LocalNotifications init skipped:', error);
+    console.log("LocalNotifications init skipped:", error);
   }
 };
 
@@ -55,5 +55,5 @@ createRoot(document.getElementById("root")!).render(
     <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
       <App />
     </PersistQueryClientProvider>
-  </ThemeProvider>
+  </ThemeProvider>,
 );
