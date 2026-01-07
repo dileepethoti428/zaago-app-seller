@@ -10,121 +10,128 @@ let listenersRegistered = false;
 export const registerSellerForPush = async (sellerId: string) => {
   console.log("🔔 registerSellerForPush STARTED:", sellerId);
 
-  // 1️⃣ Request permission (Android 13+)
-  const perm = await PushNotifications.requestPermissions();
-  console.log("🔐 Push permission result:", perm);
+  // 1️⃣ Request permissions
+  const pushPerm = await PushNotifications.requestPermissions();
+  const localPerm = await LocalNotifications.requestPermissions();
+  console.log("🔐 Permissions:", { push: pushPerm, local: localPerm });
 
-  if (perm.receive !== "granted") {
-    console.warn("❌ Push permission not granted");
+  if (pushPerm.receive !== "granted" || localPerm.display !== "granted") {
+    console.warn("❌ Push/Local permissions not granted");
     return;
   }
 
-  // 2️⃣ Register listeners ONLY ONCE
+  // 2️⃣ Register LocalNotification action types (REQUIRED for buttons)
+  await LocalNotifications.registerActionTypes({
+    actionTypes: [
+      {
+        id: "ORDER_ACTIONS",
+        actions: [
+          {
+            id: "ACCEPT_ORDER",
+            title: "Accept Order",
+            // icon: "./assets/accept.png" // Optional custom icon
+          },
+          {
+            id: "REJECT_ORDER",
+            title: "Reject Order",
+            // icon: "./assets/reject.png"
+          },
+        ],
+      },
+    ],
+  });
+
+  // 3️⃣ Register listeners ONLY ONCE
   if (!listenersRegistered) {
-    console.log("📡 Registering FCM listeners");
+    console.log("📡 Registering FCM + Local listeners");
 
+    // Token registration
     PushNotifications.addListener("registration", async (token) => {
-      console.log("✅ FCM TOKEN RECEIVED:", token.value);
-
+      console.log("✅ FCM TOKEN:", token.value);
       const { error } = await supabase.from("seller_push_tokens").upsert(
         {
           seller_id: sellerId,
           fcm_token: token.value,
           device: "android",
         },
-        {
-          onConflict: "seller_id",
-        },
+        { onConflict: "seller_id" },
       );
-
-      if (error) {
-        console.error("❌ Failed to save seller token:", error);
-      } else {
-        console.log("✅ Seller FCM token saved / updated");
-      }
+      if (error) console.error("❌ Token save failed:", error);
+      else console.log("✅ Token saved");
     });
 
     PushNotifications.addListener("registrationError", (err) => {
-      console.error("❌ Push registration error:", err);
+      console.error("❌ Registration error:", err);
     });
 
-    // 🔔 When data-only FCM arrives → show local notification with buttons
-    PushNotifications.addListener(
-      "pushNotificationReceived",
-      async (notification) => {
-        console.log("📩 Push received:", notification);
+    // 🔔 Handle incoming FCM (shows local notification with buttons)
+    PushNotifications.addListener("pushNotificationReceived", async (notif) => {
+      console.log("📩 FCM received:", notif);
 
-        const data = notification.data;
-
-        if (data?.type === "NEW_ORDER") {
-          // ❗ Cancel system notification
-          await LocalNotifications.cancel({ notifications: [] });
-
-          // 🔔 Show local notification with buttons
-          await LocalNotifications.schedule({
-            notifications: [
-              {
-                id: Date.now(),
-                title: notification.title || "New Order",
-                body: notification.body || "You have a new order",
-                actionTypeId: "ORDER_ACTIONS",
-                sound: "default",
-                extra: {
-                  order_id: data.order_id,
-                  seller_id: data.seller_id,
-                },
+      const data = notif.data;
+      if (data?.type === "NEW_ORDER") {
+        await LocalNotifications.schedule({
+          notifications: [
+            {
+              id: Date.now(),
+              title: data.title || "New Order", // ✅ From FCM data.title
+              body: data.body || "You have a new order", // ✅ From FCM data.body
+              actionTypeId: "ORDER_ACTIONS", // ✅ Shows Accept/Reject buttons
+              sound: "order_ring", // ✅ Matches your MainActivity raw/order_ring
+              extra: {
+                order_id: data.order_id,
               },
-            ],
-          });
-        }
+            },
+          ],
+        });
       }
-    );
+    });
 
-    // 🔘 Handle Accept / Reject button clicks from local notifications
-    LocalNotifications.addListener(
-      "localNotificationActionPerformed",
-      async (action) => {
-        console.log("🔘 Local notification action:", action.actionId);
+    // 🔘 Handle Accept/Reject button taps
+    LocalNotifications.addListener("localNotificationActionPerformed", async (action) => {
+      console.log("🔘 Action:", action.actionId, "Order:", action.notification.extra);
 
-        const orderId = action.notification.extra?.order_id;
-        const agentId = action.notification.extra?.seller_id || sellerId;
-        if (!orderId) return;
+      const orderId = action.notification.extra?.order_id;
+      if (!orderId) {
+        console.warn("⚠️ No order_id");
+        return;
+      }
 
+      try {
         if (action.actionId === "ACCEPT_ORDER") {
-          console.log("✅ Accept order:", orderId);
-          await supabase.rpc("accept_order", { 
-            p_agent_id: agentId,
-            p_order_id: orderId 
+          console.log("✅ Accepting:", orderId);
+          await supabase.rpc("accept_order", {
+            p_agent_id: sellerId, // ✅ Use sellerId from login
+            p_order_id: orderId,
+          });
+        } else if (action.actionId === "REJECT_ORDER") {
+          console.log("❌ Rejecting:", orderId);
+          await supabase.rpc("reject_order", {
+            p_agent_id: sellerId,
+            p_order_id: orderId,
           });
         }
-
-        if (action.actionId === "REJECT_ORDER") {
-          console.log("❌ Reject order:", orderId);
-          await supabase.rpc("reject_order", { 
-            p_agent_id: agentId,
-            p_order_id: orderId 
-          });
-        }
+      } catch (err) {
+        console.error("❌ RPC failed:", err);
       }
-    );
-
-    // 📍 Navigate to order screen when notification is tapped (not button clicks)
-    PushNotifications.addListener(
-      "pushNotificationActionPerformed",
-      (action) => {
-        console.log("📍 Notification tapped:", action);
-        
-        const orderId = action.notification.data?.order_id;
-        if (!orderId) return;
-
-        // Navigate to order screen (HashRouter format)
-        window.location.href = `#/orders/${orderId}`;
-      }
-    );
+    });
 
     listenersRegistered = true;
   }
 
-  // 3️⃣ Trigger FCM registration
+  // 4️⃣ Register channels + trigger FCM
+  if (LocalNotifications.canSchedule()) {
+    await LocalNotifications.createChannel({
+      id: "orders",
+      name: "New Orders",
+      description: "Order notifications",
+      sound: "order_ring",
+      importance: 5,
+      visibility: 1,
+      lights: true,
+      vibration: true,
+    });
+  }
+
   await PushNotifications.register();
 };
