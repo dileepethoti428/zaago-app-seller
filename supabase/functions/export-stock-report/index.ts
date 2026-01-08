@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { PDFDocument, rgb, StandardFonts } from "https://esm.sh/pdf-lib@1.17.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,7 +57,6 @@ interface ProductSummary {
 
 const getISTDateTime = (): { date: string; fullDateTime: string; tomorrowDate: string } => {
   const now = new Date();
-  // Convert to IST (UTC+5:30)
   const istOffset = 5.5 * 60 * 60 * 1000;
   const istTime = new Date(now.getTime() + istOffset);
   
@@ -86,8 +86,9 @@ const sanitizeFilename = (name: string): string => {
   return name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
 };
 
+// CSV Generation Functions
 const generateRefillListCSV = (items: RefillItem[], sellerName: string): string => {
-  const { fullDateTime, date, tomorrowDate } = getISTDateTime();
+  const { fullDateTime, tomorrowDate } = getISTDateTime();
   
   const headers = ['Product Name', 'Current Stock', 'Sold Today', 'Required Tomorrow', 'Suggested Refill', 'Unit', 'Seller Name', 'For Date', 'Generated (IST)'];
   const rows = items.map(item => [
@@ -154,10 +155,8 @@ const generateDeliveryReportCSV = (
     `"${item.specialInstructions}"`
   ].join(','));
   
-  // Add separator
   const separator = ['', '', '--- PRODUCT SUMMARY ---', '', '', '', '', '', '', '', '', '', '', ''].join(',');
   
-  // Add summary rows
   const summaryRows = productSummary.map(product => [
     selectedDate,
     '',
@@ -178,147 +177,442 @@ const generateDeliveryReportCSV = (
   return '\ufeff' + [headers.join(','), ...orderRows, separator, ...summaryRows].join('\n');
 };
 
-// PDF Generation Functions (text-based format for Deno compatibility)
-const generateRefillListPDF = (items: RefillItem[], sellerName: string): string => {
+// PDF Generation Functions using pdf-lib
+const generateRefillListPDF = async (items: RefillItem[], sellerName: string): Promise<Uint8Array> => {
   const { fullDateTime, tomorrowDate } = getISTDateTime();
   
-  let content = 'REFILL LIST REPORT\n';
-  content += '='.repeat(60) + '\n\n';
-  content += `Seller: ${sellerName}\n`;
-  content += `For Date: ${tomorrowDate}\n`;
-  content += `Generated: ${fullDateTime} IST\n\n`;
-  content += '-'.repeat(60) + '\n\n';
+  const pdfDoc = await PDFDocument.create();
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   
-  content += 'SUMMARY\n';
-  content += '-'.repeat(30) + '\n';
-  content += `Total Products: ${items.length}\n`;
-  content += `Total Refill Needed: ${items.reduce((sum, i) => sum + i.refillNeeded, 0)} units\n\n`;
+  const page = pdfDoc.addPage([595, 842]); // A4 size
+  const { width, height } = page.getSize();
   
-  content += 'DETAILED LIST\n';
-  content += '-'.repeat(60) + '\n\n';
+  let y = height - 50;
+  const margin = 40;
+  const contentWidth = width - (margin * 2);
   
-  items.forEach((item, i) => {
-    content += `${i + 1}. ${item.productName}\n`;
-    content += `   Current Stock:     ${item.currentStock} ${item.unit}\n`;
-    content += `   Sold Today:        ${item.soldToday} ${item.unit}\n`;
-    content += `   Required Tomorrow: ${item.requiredTomorrow} ${item.unit}\n`;
-    content += `   REFILL NEEDED:     ${item.refillNeeded} ${item.unit}\n`;
-    content += '\n';
+  // Colors
+  const orange = rgb(0.82, 0.41, 0.12); // RGB: 210, 105, 30
+  const lightOrange = rgb(1, 0.9, 0.78); // Light orange for total row
+  const gray = rgb(0.4, 0.4, 0.4);
+  const lightGray = rgb(0.95, 0.95, 0.95);
+  const white = rgb(1, 1, 1);
+  
+  // Title
+  page.drawText('REFILL STOCK LIST – TOMORROW', {
+    x: margin,
+    y,
+    size: 18,
+    font: fontBold,
+    color: rgb(0, 0, 0),
+  });
+  y -= 30;
+  
+  // Header info
+  page.drawText(`Seller: ${sellerName}`, { x: margin, y, size: 11, font, color: gray });
+  y -= 18;
+  page.drawText(`For Date: ${tomorrowDate}`, { x: margin, y, size: 11, font, color: gray });
+  y -= 18;
+  page.drawText(`Generated: ${fullDateTime} IST`, { x: margin, y, size: 11, font, color: gray });
+  y -= 35;
+  
+  // Table configuration
+  const columns = [
+    { header: 'Product', width: 150 },
+    { header: 'Current Stock', width: 85 },
+    { header: 'Sold Today', width: 75 },
+    { header: 'Required Tomorrow', width: 110 },
+    { header: 'Refill Needed', width: 90 },
+  ];
+  
+  const rowHeight = 28;
+  const headerHeight = 32;
+  let x = margin;
+  
+  // Draw table header background
+  page.drawRectangle({
+    x: margin,
+    y: y - headerHeight,
+    width: contentWidth,
+    height: headerHeight,
+    color: orange,
   });
   
-  content += '\n' + '='.repeat(60) + '\n';
-  content += 'End of Report\n';
+  // Draw header text
+  x = margin + 8;
+  columns.forEach(col => {
+    page.drawText(col.header, {
+      x,
+      y: y - 20,
+      size: 10,
+      font: fontBold,
+      color: white,
+    });
+    x += col.width;
+  });
+  y -= headerHeight;
   
-  return content;
+  // Draw table rows
+  let totalRefill = 0;
+  items.forEach((item, index) => {
+    const rowY = y - rowHeight;
+    
+    // Alternating row background
+    if (index % 2 === 1) {
+      page.drawRectangle({
+        x: margin,
+        y: rowY,
+        width: contentWidth,
+        height: rowHeight,
+        color: lightGray,
+      });
+    }
+    
+    // Row data
+    x = margin + 8;
+    const rowData = [
+      item.productName.substring(0, 25),
+      `${item.currentStock} ${item.unit}`,
+      `${item.soldToday} ${item.unit}`,
+      `${item.requiredTomorrow} ${item.unit}`,
+      `${item.refillNeeded} ${item.unit}`,
+    ];
+    
+    rowData.forEach((text, colIndex) => {
+      page.drawText(String(text), {
+        x,
+        y: rowY + 10,
+        size: 9,
+        font: colIndex === 4 ? fontBold : font,
+        color: colIndex === 4 ? orange : rgb(0, 0, 0),
+      });
+      x += columns[colIndex].width;
+    });
+    
+    totalRefill += item.refillNeeded;
+    y -= rowHeight;
+  });
+  
+  // Total row
+  page.drawRectangle({
+    x: margin,
+    y: y - rowHeight,
+    width: contentWidth,
+    height: rowHeight,
+    color: lightOrange,
+  });
+  
+  page.drawText('TOTAL', {
+    x: margin + 8,
+    y: y - rowHeight + 10,
+    size: 10,
+    font: fontBold,
+    color: rgb(0, 0, 0),
+  });
+  
+  page.drawText(`${totalRefill} units`, {
+    x: margin + columns[0].width + columns[1].width + columns[2].width + columns[3].width + 8,
+    y: y - rowHeight + 10,
+    size: 10,
+    font: fontBold,
+    color: orange,
+  });
+  y -= rowHeight + 20;
+  
+  // Footer
+  page.drawText('Generated automatically from subscription forecast', {
+    x: margin,
+    y: 30,
+    size: 9,
+    font,
+    color: orange,
+  });
+  
+  return pdfDoc.save();
 };
 
-const generateWeeklyReportPDF = (products: WeeklyProduct[], sellerName: string, dateRange: { start: string; end: string }): string => {
+const generateWeeklyReportPDF = async (products: WeeklyProduct[], sellerName: string, dateRange: { start: string; end: string }): Promise<Uint8Array> => {
   const { fullDateTime } = getISTDateTime();
   
-  let content = 'WEEKLY REFILL TREND REPORT\n';
-  content += '='.repeat(60) + '\n\n';
-  content += `Seller: ${sellerName}\n`;
-  content += `Period: ${dateRange.start} to ${dateRange.end}\n`;
-  content += `Generated: ${fullDateTime} IST\n\n`;
-  content += '-'.repeat(60) + '\n\n';
+  const pdfDoc = await PDFDocument.create();
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   
-  // Summary
+  const page = pdfDoc.addPage([595, 842]); // A4 size
+  const { width, height } = page.getSize();
+  
+  let y = height - 50;
+  const margin = 40;
+  const contentWidth = width - (margin * 2);
+  
+  // Colors
+  const orange = rgb(0.82, 0.41, 0.12);
+  const lightOrange = rgb(1, 0.9, 0.78);
+  const gray = rgb(0.4, 0.4, 0.4);
+  const lightGray = rgb(0.95, 0.95, 0.95);
+  const white = rgb(1, 1, 1);
+  
+  // Title
+  page.drawText('WEEKLY REFILL TREND REPORT', {
+    x: margin,
+    y,
+    size: 18,
+    font: fontBold,
+    color: rgb(0, 0, 0),
+  });
+  y -= 30;
+  
+  // Header info
+  page.drawText(`Seller: ${sellerName}`, { x: margin, y, size: 11, font, color: gray });
+  y -= 18;
+  page.drawText(`Week: ${dateRange.start} to ${dateRange.end}`, { x: margin, y, size: 11, font, color: gray });
+  y -= 18;
+  page.drawText(`Generated: ${fullDateTime} IST`, { x: margin, y, size: 11, font, color: gray });
+  y -= 35;
+  
+  // Summary section
   const totalRefill = products.reduce((sum, p) => sum + p.totalRefillQuantity, 0);
-  const totalSold = products.reduce((sum, p) => 
-    sum + p.dailyData.reduce((s, d) => s + d.sold, 0), 0);
-  const totalForecast = products.reduce((sum, p) => 
-    sum + p.dailyData.reduce((s, d) => s + d.forecast, 0), 0);
+  const productsNeedingRefill = products.filter(p => p.totalRefillQuantity > 0).length;
   
-  content += 'SUMMARY\n';
-  content += '-'.repeat(30) + '\n';
-  content += `Total Products: ${products.length}\n`;
-  content += `Total Sold: ${totalSold}\n`;
-  content += `Total Forecast: ${totalForecast}\n`;
-  content += `Total Refill Needed: ${totalRefill}\n\n`;
+  page.drawText('Summary', { x: margin, y, size: 14, font: fontBold, color: rgb(0, 0, 0) });
+  y -= 22;
+  page.drawText(`Total Refill Quantity (7 days): ${totalRefill} units`, { x: margin, y, size: 11, font, color: gray });
+  y -= 18;
+  page.drawText(`Products Requiring Refill: ${productsNeedingRefill}`, { x: margin, y, size: 11, font, color: gray });
+  y -= 30;
   
-  content += 'TOP PRODUCTS BY REFILL QUANTITY\n';
-  content += '-'.repeat(60) + '\n\n';
-  
+  // Top 3 Products
   const sortedProducts = [...products].sort((a, b) => b.totalRefillQuantity - a.totalRefillQuantity);
+  const top3 = sortedProducts.slice(0, 3);
   
-  sortedProducts.slice(0, 10).forEach((product, i) => {
-    content += `${i + 1}. ${product.productName}\n`;
-    content += `   Days Needing Refill: ${product.daysRefillNeeded}\n`;
-    content += `   Total Refill:        ${product.totalRefillQuantity} ${product.unit}\n`;
-    content += `   Avg Daily Refill:    ${product.avgDailyRefill.toFixed(1)} ${product.unit}\n`;
-    content += '\n';
-  });
-  
-  content += '\nDAILY BREAKDOWN\n';
-  content += '-'.repeat(60) + '\n\n';
-  
-  products.forEach(product => {
-    content += `${product.productName} (${product.unit})\n`;
-    product.dailyData.forEach(day => {
-      content += `  ${day.dayLabel} (${day.date}): Sold ${day.sold}, Forecast ${day.forecast}, Refill ${day.refillNeeded}\n`;
+  if (top3.length > 0) {
+    page.drawText('Top 3 Refill-Heavy Products', { x: margin, y, size: 12, font: fontBold, color: rgb(0, 0, 0) });
+    y -= 20;
+    
+    top3.forEach((product, index) => {
+      page.drawText(`${index + 1}. ${product.productName} – ${product.totalRefillQuantity} ${product.unit}`, {
+        x: margin + 10,
+        y,
+        size: 10,
+        font,
+        color: gray,
+      });
+      y -= 16;
     });
-    content += '\n';
+    y -= 20;
+  }
+  
+  // Product Summary Table
+  page.drawText('Product Summary', { x: margin, y, size: 14, font: fontBold, color: rgb(0, 0, 0) });
+  y -= 25;
+  
+  const columns = [
+    { header: 'Product', width: 180 },
+    { header: 'Days Refill Needed', width: 100 },
+    { header: 'Total Refill', width: 80 },
+    { header: 'Avg Daily', width: 70 },
+    { header: 'Unit', width: 60 },
+  ];
+  
+  const rowHeight = 26;
+  const headerHeight = 30;
+  
+  // Draw table header background
+  page.drawRectangle({
+    x: margin,
+    y: y - headerHeight,
+    width: contentWidth,
+    height: headerHeight,
+    color: orange,
   });
   
-  content += '\n' + '='.repeat(60) + '\n';
-  content += 'End of Report\n';
+  // Draw header text
+  let x = margin + 8;
+  columns.forEach(col => {
+    page.drawText(col.header, {
+      x,
+      y: y - 19,
+      size: 9,
+      font: fontBold,
+      color: white,
+    });
+    x += col.width;
+  });
+  y -= headerHeight;
   
-  return content;
+  // Draw table rows (limit to fit on page)
+  const maxRows = Math.min(sortedProducts.length, 15);
+  sortedProducts.slice(0, maxRows).forEach((product, index) => {
+    const rowY = y - rowHeight;
+    
+    if (index % 2 === 1) {
+      page.drawRectangle({
+        x: margin,
+        y: rowY,
+        width: contentWidth,
+        height: rowHeight,
+        color: lightGray,
+      });
+    }
+    
+    x = margin + 8;
+    const rowData = [
+      product.productName.substring(0, 30),
+      String(product.daysRefillNeeded),
+      String(product.totalRefillQuantity),
+      product.avgDailyRefill.toFixed(1),
+      product.unit,
+    ];
+    
+    rowData.forEach((text, colIndex) => {
+      page.drawText(text, {
+        x,
+        y: rowY + 9,
+        size: 9,
+        font,
+        color: rgb(0, 0, 0),
+      });
+      x += columns[colIndex].width;
+    });
+    
+    y -= rowHeight;
+  });
+  
+  // Footer
+  page.drawText('Generated automatically from sales & subscription forecast', {
+    x: margin,
+    y: 30,
+    size: 9,
+    font,
+    color: orange,
+  });
+  
+  return pdfDoc.save();
 };
 
-const generateDeliveryReportPDF = (
+const generateDeliveryReportPDF = async (
   orders: DeliveryReportItem[], 
   productSummary: ProductSummary[], 
   selectedDate: string
-): string => {
+): Promise<Uint8Array> => {
   const { fullDateTime } = getISTDateTime();
   
-  let content = 'DELIVERY REPORT\n';
-  content += '='.repeat(60) + '\n\n';
-  content += `Date: ${selectedDate}\n`;
-  content += `Generated: ${fullDateTime} IST\n\n`;
-  content += '-'.repeat(60) + '\n\n';
+  const pdfDoc = await PDFDocument.create();
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  
+  const page = pdfDoc.addPage([595, 842]);
+  const { width, height } = page.getSize();
+  
+  let y = height - 50;
+  const margin = 40;
+  const contentWidth = width - (margin * 2);
+  
+  const orange = rgb(0.82, 0.41, 0.12);
+  const gray = rgb(0.4, 0.4, 0.4);
+  const lightGray = rgb(0.95, 0.95, 0.95);
+  const white = rgb(1, 1, 1);
+  
+  // Title
+  page.drawText('DELIVERY REPORT', {
+    x: margin,
+    y,
+    size: 18,
+    font: fontBold,
+    color: rgb(0, 0, 0),
+  });
+  y -= 30;
+  
+  // Header info
+  page.drawText(`Date: ${selectedDate}`, { x: margin, y, size: 11, font, color: gray });
+  y -= 18;
+  page.drawText(`Generated: ${fullDateTime} IST`, { x: margin, y, size: 11, font, color: gray });
+  y -= 35;
   
   // Summary
   const totalOrders = new Set(orders.map(o => o.orderId)).size;
   const totalAmount = orders.reduce((sum, o) => sum + o.itemTotal, 0);
   
-  content += 'SUMMARY\n';
-  content += '-'.repeat(30) + '\n';
-  content += `Total Orders: ${totalOrders}\n`;
-  content += `Total Items: ${orders.length}\n`;
-  content += `Total Amount: ₹${totalAmount.toFixed(2)}\n\n`;
+  page.drawText('Summary', { x: margin, y, size: 14, font: fontBold, color: rgb(0, 0, 0) });
+  y -= 22;
+  page.drawText(`Total Orders: ${totalOrders}`, { x: margin, y, size: 11, font, color: gray });
+  y -= 18;
+  page.drawText(`Total Amount: ₹${totalAmount.toFixed(2)}`, { x: margin, y, size: 11, font, color: gray });
+  y -= 30;
   
-  content += 'PRODUCT SUMMARY\n';
-  content += '-'.repeat(40) + '\n';
-  productSummary.forEach(product => {
-    content += `${product.name}: ${product.quantity} units (${product.orders} orders)\n`;
+  // Product Summary Table
+  if (productSummary.length > 0) {
+    page.drawText('Product Summary', { x: margin, y, size: 12, font: fontBold, color: rgb(0, 0, 0) });
+    y -= 25;
+    
+    const columns = [
+      { header: 'Product', width: 250 },
+      { header: 'Quantity', width: 100 },
+      { header: 'Orders', width: 100 },
+    ];
+    
+    const headerHeight = 28;
+    
+    page.drawRectangle({
+      x: margin,
+      y: y - headerHeight,
+      width: contentWidth,
+      height: headerHeight,
+      color: orange,
+    });
+    
+    let x = margin + 8;
+    columns.forEach(col => {
+      page.drawText(col.header, {
+        x,
+        y: y - 18,
+        size: 9,
+        font: fontBold,
+        color: white,
+      });
+      x += col.width;
+    });
+    y -= headerHeight;
+    
+    const rowHeight = 24;
+    productSummary.forEach((product, index) => {
+      const rowY = y - rowHeight;
+      
+      if (index % 2 === 1) {
+        page.drawRectangle({
+          x: margin,
+          y: rowY,
+          width: contentWidth,
+          height: rowHeight,
+          color: lightGray,
+        });
+      }
+      
+      x = margin + 8;
+      page.drawText(product.name.substring(0, 40), { x, y: rowY + 8, size: 9, font, color: rgb(0, 0, 0) });
+      x += columns[0].width;
+      page.drawText(String(product.quantity), { x, y: rowY + 8, size: 9, font, color: rgb(0, 0, 0) });
+      x += columns[1].width;
+      page.drawText(String(product.orders), { x, y: rowY + 8, size: 9, font, color: rgb(0, 0, 0) });
+      
+      y -= rowHeight;
+    });
+  }
+  
+  // Footer
+  page.drawText('Generated automatically', {
+    x: margin,
+    y: 30,
+    size: 9,
+    font,
+    color: orange,
   });
-  content += '\n';
   
-  content += 'ORDER DETAILS\n';
-  content += '-'.repeat(60) + '\n\n';
-  
-  orders.forEach((order, i) => {
-    content += `${i + 1}. Order: ${order.orderId}\n`;
-    content += `   Customer: ${order.customerName} (${order.customerPhone})\n`;
-    content += `   Product: ${order.productName} x ${order.quantity}\n`;
-    content += `   Amount: ₹${order.itemTotal} | Status: ${order.paymentStatus}\n`;
-    content += `   Address: ${order.deliveryAddress}, ${order.city}\n`;
-    if (order.specialInstructions) {
-      content += `   Note: ${order.specialInstructions}\n`;
-    }
-    content += '\n';
-  });
-  
-  content += '\n' + '='.repeat(60) + '\n';
-  content += 'End of Report\n';
-  
-  return content;
+  return pdfDoc.save();
 };
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -335,7 +629,6 @@ serve(async (req) => {
       );
     }
 
-    // Initialize Supabase client with service role for storage upload
     const supabaseUrl = 'https://amhpjsmubciahslghobw.supabase.co';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
@@ -348,7 +641,7 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    let fileContent: string;
+    let fileContent: string | Uint8Array;
     let filename: string;
     let contentType: string;
     const { date } = getISTDateTime();
@@ -373,18 +666,17 @@ serve(async (req) => {
         );
       }
     } else if (format === 'pdf') {
-      // Generate text-based report (compatible with Deno, opens in any text viewer)
-      contentType = 'text/plain;charset=utf-8';
+      contentType = 'application/pdf';
       
       if (type === 'refill-list') {
-        fileContent = generateRefillListPDF(data as RefillItem[], sellerName);
-        filename = `refill_list_${safeSellerName}_${date}.txt`;
+        fileContent = await generateRefillListPDF(data as RefillItem[], sellerName);
+        filename = `refill_list_${safeSellerName}_${date}.pdf`;
       } else if (type === 'weekly-report') {
-        fileContent = generateWeeklyReportPDF(data as WeeklyProduct[], sellerName, dateRange);
-        filename = `weekly_refill_report_${safeSellerName}_${dateRange?.start || date}_${dateRange?.end || date}.txt`;
+        fileContent = await generateWeeklyReportPDF(data as WeeklyProduct[], sellerName, dateRange);
+        filename = `weekly_refill_report_${safeSellerName}_${dateRange?.start || date}_${dateRange?.end || date}.pdf`;
       } else if (type === 'delivery-report') {
-        fileContent = generateDeliveryReportPDF(data as DeliveryReportItem[], productSummary || [], selectedDate || date);
-        filename = `zaago-delivery-report-${selectedDate || date}.txt`;
+        fileContent = await generateDeliveryReportPDF(data as DeliveryReportItem[], productSummary || [], selectedDate || date);
+        filename = `zaago-delivery-report-${selectedDate || date}.pdf`;
       } else {
         return new Response(
           JSON.stringify({ error: 'Invalid report type' }),
@@ -398,12 +690,10 @@ serve(async (req) => {
       );
     }
 
-    // Generate unique file path
     const timestamp = Date.now();
-    const fileExtension = format === 'csv' ? 'csv' : 'txt';
+    const fileExtension = format === 'csv' ? 'csv' : 'pdf';
     const filePath = `${sellerId}/${type}_${timestamp}.${fileExtension}`;
 
-    // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('exports')
       .upload(filePath, fileContent, {
@@ -419,12 +709,10 @@ serve(async (req) => {
       );
     }
 
-    // Get public URL
     const { data: { publicUrl } } = supabase.storage
       .from('exports')
       .getPublicUrl(filePath);
 
-    // Add download filename parameter
     const downloadUrl = `${publicUrl}?download=${encodeURIComponent(filename)}`;
 
     console.log('Export successful:', { filePath, publicUrl: downloadUrl });
