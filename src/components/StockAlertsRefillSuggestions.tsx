@@ -182,6 +182,7 @@ export const StockAlertsRefillSuggestions = () => {
   const [isRefillSuggestionsOpen, setIsRefillSuggestionsOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDownloadingCSV, setIsDownloadingCSV] = useState(false);
+  const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -251,8 +252,47 @@ export const StockAlertsRefillSuggestions = () => {
     }
   };
 
-  const handleDownloadPDF = () => {
-    toast.info('PDF export coming soon. Please use CSV for now.');
+  const handleDownloadPDF = async () => {
+    if (!user?.id || alerts.length === 0) return;
+    
+    setIsDownloadingPDF(true);
+    try {
+      const response = await fetch(
+        'https://amhpjsmubciahslghobw.supabase.co/functions/v1/export-stock-report',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'refill-list',
+            format: 'pdf',
+            sellerId: user.id,
+            sellerName,
+            data: alerts.map(a => ({
+              productName: a.productName,
+              currentStock: a.currentStock,
+              soldToday: a.soldToday,
+              requiredTomorrow: a.requiredTomorrow,
+              refillNeeded: a.refillNeeded,
+              unit: a.unit,
+            })),
+          }),
+        }
+      );
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to generate report');
+      }
+      
+      window.location.href = result.fileUrl;
+      toast.success('Refill list report downloaded successfully');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download report');
+    } finally {
+      setIsDownloadingPDF(false);
+    }
   };
 
   return (
@@ -292,10 +332,14 @@ export const StockAlertsRefillSuggestions = () => {
                 variant="outline"
                 size="sm"
                 onClick={handleDownloadPDF}
-                disabled={alerts.length === 0 || isLoading}
+                disabled={alerts.length === 0 || isLoading || isDownloadingPDF}
                 className="text-xs border-zaago-border"
               >
-                <FileText className="w-3 h-3 mr-1" />
+                {isDownloadingPDF ? (
+                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                ) : (
+                  <FileText className="w-3 h-3 mr-1" />
+                )}
                 PDF
               </Button>
               <Button
