@@ -577,9 +577,6 @@ const Products = () => {
                       <h3 className="font-semibold text-foreground text-xl leading-tight group-hover:text-zaago-green transition-colors">{product.name}</h3>
                       <span className="font-bold text-zaago-green text-xl">₹{product.price}</span>
                     </div>
-                    <p className="text-zaago-muted-foreground text-base leading-relaxed">
-                      {product.description || 'No description available'}
-                    </p>
                     <div className="flex items-center gap-3 flex-wrap">
                       {product.stock_quantity <= 10 && product.stock_quantity > 0 && (
                         <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-sm px-3 py-1">
