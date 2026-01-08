@@ -50,47 +50,45 @@ export default function ProductCard({ product, onDelete }: ProductCardProps) {
       className="zaago-card p-6 flex flex-col gap-4 hover:shadow-lg transition-all duration-300 group"
     >
       {/* Product Image */}
-      <div className="relative w-full h-48 rounded-2xl overflow-hidden bg-input">
-        {product.image_url ? (
-          <img
-            src={product.image_url}
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            onError={(e) => {
-              e.currentTarget.src = '/placeholder.svg';
-            }}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-secondary">
-            <Package className="w-16 h-16" />
+      <Link to={`/products/${product.id}`} className="block">
+        <div className="relative w-full h-48 rounded-2xl overflow-hidden bg-input cursor-pointer">
+          {product.image_url ? (
+            <img
+              src={product.image_url}
+              alt={product.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              onError={(e) => {
+                e.currentTarget.src = '/placeholder.svg';
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-secondary">
+              <Package className="w-16 h-16" />
+            </div>
+          )}
+          
+          {/* Status Badge */}
+          <div className="absolute top-3 right-3">
+            <span
+              className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                product.is_active
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-destructive text-destructive-foreground'
+              }`}
+            >
+              {product.is_active ? 'ACTIVE' : 'INACTIVE'}
+            </span>
           </div>
-        )}
-        
-        {/* Status Badge */}
-        <div className="absolute top-3 right-3">
-          <span
-            className={`text-xs font-semibold px-3 py-1 rounded-full ${
-              product.is_active
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-destructive text-destructive-foreground'
-            }`}
-          >
-            {product.is_active ? 'ACTIVE' : 'INACTIVE'}
-          </span>
         </div>
-      </div>
+      </Link>
 
       {/* Product Info */}
       <div className="flex-1 space-y-3">
-        <h3 className="text-xl font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-          {product.name}
-        </h3>
-        
-        {product.description && (
-          <p className="text-secondary text-sm line-clamp-2">
-            {product.description}
-          </p>
-        )}
+        <Link to={`/products/${product.id}`}>
+          <h3 className="text-xl font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors cursor-pointer hover:underline">
+            {product.name}
+          </h3>
+        </Link>
 
         {/* Product Tags */}
         {product.tags && product.tags.length > 0 && (
