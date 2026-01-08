@@ -178,6 +178,145 @@ const generateDeliveryReportCSV = (
   return '\ufeff' + [headers.join(','), ...orderRows, separator, ...summaryRows].join('\n');
 };
 
+// PDF Generation Functions (text-based format for Deno compatibility)
+const generateRefillListPDF = (items: RefillItem[], sellerName: string): string => {
+  const { fullDateTime, tomorrowDate } = getISTDateTime();
+  
+  let content = 'REFILL LIST REPORT\n';
+  content += '='.repeat(60) + '\n\n';
+  content += `Seller: ${sellerName}\n`;
+  content += `For Date: ${tomorrowDate}\n`;
+  content += `Generated: ${fullDateTime} IST\n\n`;
+  content += '-'.repeat(60) + '\n\n';
+  
+  content += 'SUMMARY\n';
+  content += '-'.repeat(30) + '\n';
+  content += `Total Products: ${items.length}\n`;
+  content += `Total Refill Needed: ${items.reduce((sum, i) => sum + i.refillNeeded, 0)} units\n\n`;
+  
+  content += 'DETAILED LIST\n';
+  content += '-'.repeat(60) + '\n\n';
+  
+  items.forEach((item, i) => {
+    content += `${i + 1}. ${item.productName}\n`;
+    content += `   Current Stock:     ${item.currentStock} ${item.unit}\n`;
+    content += `   Sold Today:        ${item.soldToday} ${item.unit}\n`;
+    content += `   Required Tomorrow: ${item.requiredTomorrow} ${item.unit}\n`;
+    content += `   REFILL NEEDED:     ${item.refillNeeded} ${item.unit}\n`;
+    content += '\n';
+  });
+  
+  content += '\n' + '='.repeat(60) + '\n';
+  content += 'End of Report\n';
+  
+  return content;
+};
+
+const generateWeeklyReportPDF = (products: WeeklyProduct[], sellerName: string, dateRange: { start: string; end: string }): string => {
+  const { fullDateTime } = getISTDateTime();
+  
+  let content = 'WEEKLY REFILL TREND REPORT\n';
+  content += '='.repeat(60) + '\n\n';
+  content += `Seller: ${sellerName}\n`;
+  content += `Period: ${dateRange.start} to ${dateRange.end}\n`;
+  content += `Generated: ${fullDateTime} IST\n\n`;
+  content += '-'.repeat(60) + '\n\n';
+  
+  // Summary
+  const totalRefill = products.reduce((sum, p) => sum + p.totalRefillQuantity, 0);
+  const totalSold = products.reduce((sum, p) => 
+    sum + p.dailyData.reduce((s, d) => s + d.sold, 0), 0);
+  const totalForecast = products.reduce((sum, p) => 
+    sum + p.dailyData.reduce((s, d) => s + d.forecast, 0), 0);
+  
+  content += 'SUMMARY\n';
+  content += '-'.repeat(30) + '\n';
+  content += `Total Products: ${products.length}\n`;
+  content += `Total Sold: ${totalSold}\n`;
+  content += `Total Forecast: ${totalForecast}\n`;
+  content += `Total Refill Needed: ${totalRefill}\n\n`;
+  
+  content += 'TOP PRODUCTS BY REFILL QUANTITY\n';
+  content += '-'.repeat(60) + '\n\n';
+  
+  const sortedProducts = [...products].sort((a, b) => b.totalRefillQuantity - a.totalRefillQuantity);
+  
+  sortedProducts.slice(0, 10).forEach((product, i) => {
+    content += `${i + 1}. ${product.productName}\n`;
+    content += `   Days Needing Refill: ${product.daysRefillNeeded}\n`;
+    content += `   Total Refill:        ${product.totalRefillQuantity} ${product.unit}\n`;
+    content += `   Avg Daily Refill:    ${product.avgDailyRefill.toFixed(1)} ${product.unit}\n`;
+    content += '\n';
+  });
+  
+  content += '\nDAILY BREAKDOWN\n';
+  content += '-'.repeat(60) + '\n\n';
+  
+  products.forEach(product => {
+    content += `${product.productName} (${product.unit})\n`;
+    product.dailyData.forEach(day => {
+      content += `  ${day.dayLabel} (${day.date}): Sold ${day.sold}, Forecast ${day.forecast}, Refill ${day.refillNeeded}\n`;
+    });
+    content += '\n';
+  });
+  
+  content += '\n' + '='.repeat(60) + '\n';
+  content += 'End of Report\n';
+  
+  return content;
+};
+
+const generateDeliveryReportPDF = (
+  orders: DeliveryReportItem[], 
+  productSummary: ProductSummary[], 
+  selectedDate: string
+): string => {
+  const { fullDateTime } = getISTDateTime();
+  
+  let content = 'DELIVERY REPORT\n';
+  content += '='.repeat(60) + '\n\n';
+  content += `Date: ${selectedDate}\n`;
+  content += `Generated: ${fullDateTime} IST\n\n`;
+  content += '-'.repeat(60) + '\n\n';
+  
+  // Summary
+  const totalOrders = new Set(orders.map(o => o.orderId)).size;
+  const totalAmount = orders.reduce((sum, o) => sum + o.itemTotal, 0);
+  
+  content += 'SUMMARY\n';
+  content += '-'.repeat(30) + '\n';
+  content += `Total Orders: ${totalOrders}\n`;
+  content += `Total Items: ${orders.length}\n`;
+  content += `Total Amount: ₹${totalAmount.toFixed(2)}\n\n`;
+  
+  content += 'PRODUCT SUMMARY\n';
+  content += '-'.repeat(40) + '\n';
+  productSummary.forEach(product => {
+    content += `${product.name}: ${product.quantity} units (${product.orders} orders)\n`;
+  });
+  content += '\n';
+  
+  content += 'ORDER DETAILS\n';
+  content += '-'.repeat(60) + '\n\n';
+  
+  orders.forEach((order, i) => {
+    content += `${i + 1}. Order: ${order.orderId}\n`;
+    content += `   Customer: ${order.customerName} (${order.customerPhone})\n`;
+    content += `   Product: ${order.productName} x ${order.quantity}\n`;
+    content += `   Amount: ₹${order.itemTotal} | Status: ${order.paymentStatus}\n`;
+    content += `   Address: ${order.deliveryAddress}, ${order.city}\n`;
+    if (order.specialInstructions) {
+      content += `   Note: ${order.specialInstructions}\n`;
+    }
+    content += '\n';
+  });
+  
+  content += '\n' + '='.repeat(60) + '\n';
+  content += 'End of Report\n';
+  
+  return content;
+};
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -233,18 +372,36 @@ serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+    } else if (format === 'pdf') {
+      // Generate text-based report (compatible with Deno, opens in any text viewer)
+      contentType = 'text/plain;charset=utf-8';
+      
+      if (type === 'refill-list') {
+        fileContent = generateRefillListPDF(data as RefillItem[], sellerName);
+        filename = `refill_list_${safeSellerName}_${date}.txt`;
+      } else if (type === 'weekly-report') {
+        fileContent = generateWeeklyReportPDF(data as WeeklyProduct[], sellerName, dateRange);
+        filename = `weekly_refill_report_${safeSellerName}_${dateRange?.start || date}_${dateRange?.end || date}.txt`;
+      } else if (type === 'delivery-report') {
+        fileContent = generateDeliveryReportPDF(data as DeliveryReportItem[], productSummary || [], selectedDate || date);
+        filename = `zaago-delivery-report-${selectedDate || date}.txt`;
+      } else {
+        return new Response(
+          JSON.stringify({ error: 'Invalid report type' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     } else {
-      // For PDF, we'll generate a simple text-based format that can be opened
-      // In a production app, you'd use a proper PDF library
       return new Response(
-        JSON.stringify({ error: 'PDF format not yet implemented on server. Please use CSV for now.' }),
+        JSON.stringify({ error: 'Invalid format. Use csv or pdf.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // Generate unique file path
     const timestamp = Date.now();
-    const filePath = `${sellerId}/${type}_${timestamp}.csv`;
+    const fileExtension = format === 'csv' ? 'csv' : 'txt';
+    const filePath = `${sellerId}/${type}_${timestamp}.${fileExtension}`;
 
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage

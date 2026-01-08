@@ -46,6 +46,7 @@ export const WeeklyRefillTrendReport = () => {
   const [chartFilter, setChartFilter] = useState<ChartFilter>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDownloadingCSV, setIsDownloadingCSV] = useState(false);
+  const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -101,11 +102,48 @@ export const WeeklyRefillTrendReport = () => {
     }
   };
 
-  const handleDownloadPDF = () => {
-    toast({
-      title: 'Coming Soon',
-      description: 'PDF export is not yet available. Please use CSV.',
-    });
+  const handleDownloadPDF = async () => {
+    if (products.length === 0 || !user?.id) return;
+    
+    setIsDownloadingPDF(true);
+    try {
+      const response = await fetch(
+        'https://amhpjsmubciahslghobw.supabase.co/functions/v1/export-stock-report',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'weekly-report',
+            format: 'pdf',
+            sellerId: user.id,
+            sellerName,
+            dateRange,
+            data: products,
+          }),
+        }
+      );
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to generate report');
+      }
+      
+      window.location.href = result.fileUrl;
+      toast({
+        title: 'Downloaded',
+        description: 'Weekly refill report downloaded',
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to download report',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDownloadingPDF(false);
+    }
   };
 
   const hasData = products.length > 0 || chartData.some(d => d.sold > 0 || d.forecast > 0);
@@ -165,10 +203,14 @@ export const WeeklyRefillTrendReport = () => {
                 variant="outline"
                 size="sm"
                 onClick={handleDownloadPDF}
-                disabled={!hasRefillData || isLoading}
+                disabled={!hasRefillData || isLoading || isDownloadingPDF}
                 className="gap-1.5 text-xs"
               >
-                <FileText className="w-3.5 h-3.5" />
+                {isDownloadingPDF ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <FileText className="w-3.5 h-3.5" />
+                )}
                 PDF
               </Button>
               <Button
