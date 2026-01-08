@@ -6,14 +6,15 @@ import {
   RefreshCw, 
   FileText,
   BarChart3,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 import { useWeeklyRefillTrend, DailyTrendData } from '@/hooks/useWeeklyRefillTrend';
-import { exportWeeklyReportAsCSV, exportWeeklyReportAsPDF } from '@/utils/weeklyReportExport';
 import {
   BarChart,
   Bar,
@@ -29,6 +30,7 @@ type ChartFilter = 'all' | 'sold' | 'forecast' | 'refill';
 
 export const WeeklyRefillTrendReport = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const {
     products,
     chartData,
@@ -43,6 +45,7 @@ export const WeeklyRefillTrendReport = () => {
 
   const [chartFilter, setChartFilter] = useState<ChartFilter>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isDownloadingCSV, setIsDownloadingCSV] = useState(false);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -54,21 +57,54 @@ export const WeeklyRefillTrendReport = () => {
     });
   };
 
-  const handleDownloadCSV = () => {
-    if (products.length === 0) return;
-    exportWeeklyReportAsCSV({ products, sellerName, dateRange, totalRefillQuantity, top3Products });
-    toast({
-      title: 'Downloaded',
-      description: 'Weekly refill report downloaded as CSV',
-    });
+  const handleDownloadCSV = async () => {
+    if (products.length === 0 || !user?.id) return;
+    
+    setIsDownloadingCSV(true);
+    try {
+      const response = await fetch(
+        'https://amhpjsmubciahslghobw.supabase.co/functions/v1/export-stock-report',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'weekly-report',
+            format: 'csv',
+            sellerId: user.id,
+            sellerName,
+            dateRange,
+            data: products,
+          }),
+        }
+      );
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to generate report');
+      }
+      
+      window.location.href = result.fileUrl;
+      toast({
+        title: 'Downloaded',
+        description: 'Weekly refill report downloaded as CSV',
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to download CSV',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDownloadingCSV(false);
+    }
   };
 
   const handleDownloadPDF = () => {
-    if (products.length === 0) return;
-    exportWeeklyReportAsPDF({ products, sellerName, dateRange, totalRefillQuantity, top3Products });
     toast({
-      title: 'Downloaded',
-      description: 'Weekly refill report downloaded as PDF',
+      title: 'Coming Soon',
+      description: 'PDF export is not yet available. Please use CSV.',
     });
   };
 
@@ -115,10 +151,14 @@ export const WeeklyRefillTrendReport = () => {
                 variant="outline"
                 size="sm"
                 onClick={handleDownloadCSV}
-                disabled={!hasRefillData || isLoading}
+                disabled={!hasRefillData || isLoading || isDownloadingCSV}
                 className="gap-1.5 text-xs"
               >
-                <Download className="w-3.5 h-3.5" />
+                {isDownloadingCSV ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5" />
+                )}
                 CSV
               </Button>
               <Button
