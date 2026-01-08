@@ -1,11 +1,9 @@
 import { motion } from 'framer-motion';
-import { Truck, Clock, CheckCircle, Package, MapPin, Filter, Calendar, Download, CalendarIcon } from 'lucide-react';
+import { Truck, Clock, CheckCircle, Package, MapPin, Filter, Calendar, Download, CalendarIcon, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
-import Papa from 'papaparse';
-import { saveAs } from 'file-saver';
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -60,6 +58,7 @@ export default function DeliveriesPage() {
   });
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
 
   const calculateProductTotals = async (orders: DeliveredOrder[]) => {
@@ -115,7 +114,7 @@ export default function DeliveriesPage() {
     }
   };
 
-  const exportDeliveryReport = () => {
+  const exportDeliveryReport = async () => {
     if (filteredOrders.length === 0) {
       toast({
         title: "No Data to Export",
@@ -125,79 +124,57 @@ export default function DeliveriesPage() {
       return;
     }
 
+    if (!user?.id) return;
+
+    setIsExporting(true);
     try {
       // Prepare detailed orders data
-      const orderRows = filteredOrders.flatMap(order => {
+      const orderData = filteredOrders.flatMap(order => {
         if (order.items && Array.isArray(order.items)) {
           return order.items.map((item: any) => ({
-            'Date': new Date(order.created_at).toLocaleDateString(),
-            'Time': new Date(order.created_at).toLocaleTimeString(),
-            'Order ID': order.id.slice(0, 8),
-            'Customer Name': order.customer_name || 'N/A',
-            'Customer Phone': order.customer_phone || 'N/A',
-            'Product Name': item.name || 'Unknown Product',
-            'Quantity': item.quantity || 0,
-            'Unit Price (₹)': item.unit_price || 0,
-            'Item Total (₹)': (item.quantity || 0) * (item.unit_price || 0),
-            'Order Total (₹)': order.total,
-            'Payment Status': order.payment_status || 'N/A',
-            'Delivery Address': order.address?.full_address || 'N/A',
-            'City': order.address?.city || 'N/A',
-            'Special Instructions': order.special_instructions || 'None',
+            date: new Date(order.created_at).toLocaleDateString(),
+            time: new Date(order.created_at).toLocaleTimeString(),
+            orderId: order.id.slice(0, 8),
+            customerName: order.customer_name || 'N/A',
+            customerPhone: order.customer_phone || 'N/A',
+            productName: item.name || 'Unknown Product',
+            quantity: item.quantity || 0,
+            unitPrice: item.unit_price || 0,
+            itemTotal: (item.quantity || 0) * (item.unit_price || 0),
+            orderTotal: order.total,
+            paymentStatus: order.payment_status || 'N/A',
+            deliveryAddress: order.address?.full_address || 'N/A',
+            city: order.address?.city || 'N/A',
+            specialInstructions: order.special_instructions || 'None',
           }));
         }
         return [];
       });
 
-      // Add separator row
-      const separatorRow = {
-        'Date': '',
-        'Time': '',
-        'Order ID': '--- PRODUCT SUMMARY ---',
-        'Customer Name': '',
-        'Customer Phone': '',
-        'Product Name': '',
-        'Quantity': '',
-        'Unit Price (₹)': '',
-        'Item Total (₹)': '',
-        'Order Total (₹)': '',
-        'Payment Status': '',
-        'Delivery Address': '',
-        'City': '',
-        'Special Instructions': '',
-      };
+      const response = await fetch(
+        'https://amhpjsmubciahslghobw.supabase.co/functions/v1/export-stock-report',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'delivery-report',
+            format: 'csv',
+            sellerId: user.id,
+            sellerName: 'Seller',
+            selectedDate,
+            data: orderData,
+            productSummary: productTotals,
+          }),
+        }
+      );
 
-      // Prepare product totals summary
-      const summaryRows = productTotals.map(product => ({
-        'Date': selectedDate,
-        'Time': '',
-        'Order ID': 'SUMMARY',
-        'Customer Name': '',
-        'Customer Phone': '',
-        'Product Name': product.name,
-        'Quantity': product.quantity,
-        'Unit Price (₹)': '',
-        'Item Total (₹)': '',
-        'Order Total (₹)': '',
-        'Payment Status': '',
-        'Delivery Address': `${product.orders} orders delivered`,
-        'City': '',
-        'Special Instructions': `Restock Level: ${
-          product.quantity > 50 ? 'High' :
-          product.quantity > 20 ? 'Medium' : 'Low'
-        }`,
-      }));
+      const result = await response.json();
 
-      // Combine all data
-      const allRows = [...orderRows, separatorRow, ...summaryRows];
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to generate report');
+      }
 
-      // Generate CSV
-      const csv = Papa.unparse(allRows);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      
-      // Generate filename with date
-      const filename = `zaago-delivery-report-${selectedDate}.csv`;
-      saveAs(blob, filename);
+      window.location.href = result.fileUrl;
 
       toast({
         title: "Export Successful",
@@ -210,6 +187,8 @@ export default function DeliveriesPage() {
         description: "Failed to generate the delivery report",
         variant: "destructive",
       });
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -619,10 +598,15 @@ export default function DeliveriesPage() {
             {filteredOrders.length > 0 && (
               <button
                 onClick={exportDeliveryReport}
-                className="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-secondary/90 transition-colors"
+                disabled={isExporting}
+                className="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-secondary/90 transition-colors disabled:opacity-50"
               >
-                <Download className="w-4 h-4" />
-                Export CSV
+                {isExporting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+                {isExporting ? 'Exporting...' : 'Export CSV'}
               </button>
             )}
           </div>

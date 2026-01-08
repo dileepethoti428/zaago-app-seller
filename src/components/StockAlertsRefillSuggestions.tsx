@@ -15,14 +15,15 @@ import {
   Check,
   ShoppingCart,
   Download,
-  FileText
+  FileText,
+  Loader2
 } from 'lucide-react';
 import { useStockAlerts, StockAlert } from '@/hooks/useStockAlerts';
 import { useRestockList } from '@/hooks/useRestockList';
 import { UpdateStockModal } from './UpdateStockModal';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { exportRefillListAsCSV, exportRefillListAsPDF } from '@/utils/refillListExport';
+import { useAuth } from '@/context/AuthContext';
 
 // Alert Card Component
 const AlertCard = ({ 
@@ -167,6 +168,7 @@ const EmptyState = () => (
 
 // Main Component
 export const StockAlertsRefillSuggestions = () => {
+  const { user } = useAuth();
   const { alerts, totalLowStockItems, totalRefillQuantity, lastUpdated, isLoading, error, refetch, sellerName } = useStockAlerts();
   const { addToList, isInList, isAddingToList } = useRestockList();
   
@@ -179,6 +181,7 @@ export const StockAlertsRefillSuggestions = () => {
   } | null>(null);
   const [isRefillSuggestionsOpen, setIsRefillSuggestionsOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isDownloadingCSV, setIsDownloadingCSV] = useState(false);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -204,22 +207,52 @@ export const StockAlertsRefillSuggestions = () => {
     });
   };
 
-  const handleDownloadCSV = () => {
+  const handleDownloadCSV = async () => {
+    if (!user?.id || alerts.length === 0) return;
+    
+    setIsDownloadingCSV(true);
     try {
-      exportRefillListAsCSV({ items: alerts, sellerName });
+      const response = await fetch(
+        'https://amhpjsmubciahslghobw.supabase.co/functions/v1/export-stock-report',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'refill-list',
+            format: 'csv',
+            sellerId: user.id,
+            sellerName,
+            data: alerts.map(a => ({
+              productName: a.productName,
+              currentStock: a.currentStock,
+              soldToday: a.soldToday,
+              requiredTomorrow: a.requiredTomorrow,
+              refillNeeded: a.refillNeeded,
+              unit: a.unit,
+            })),
+          }),
+        }
+      );
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to generate report');
+      }
+      
+      // Navigate to the file URL for download
+      window.location.href = result.fileUrl;
       toast.success('Refill list downloaded successfully');
     } catch (error) {
+      console.error('Download error:', error);
       toast.error('Failed to download CSV');
+    } finally {
+      setIsDownloadingCSV(false);
     }
   };
 
   const handleDownloadPDF = () => {
-    try {
-      exportRefillListAsPDF({ items: alerts, sellerName });
-      toast.success('Refill list downloaded successfully');
-    } catch (error) {
-      toast.error('Failed to download PDF');
-    }
+    toast.info('PDF export coming soon. Please use CSV for now.');
   };
 
   return (
@@ -245,10 +278,14 @@ export const StockAlertsRefillSuggestions = () => {
                 variant="outline"
                 size="sm"
                 onClick={handleDownloadCSV}
-                disabled={alerts.length === 0 || isLoading}
+                disabled={alerts.length === 0 || isLoading || isDownloadingCSV}
                 className="text-xs border-zaago-border"
               >
-                <Download className="w-3 h-3 mr-1" />
+                {isDownloadingCSV ? (
+                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                ) : (
+                  <Download className="w-3 h-3 mr-1" />
+                )}
                 CSV
               </Button>
               <Button
