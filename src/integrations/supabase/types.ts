@@ -3819,6 +3819,7 @@ export type Database = {
           images: string[] | null
           ingredients: string[] | null
           is_active: boolean
+          low_stock_notified: boolean | null
           name: string
           nutritional_info: Json | null
           price: number
@@ -3849,6 +3850,7 @@ export type Database = {
           images?: string[] | null
           ingredients?: string[] | null
           is_active?: boolean
+          low_stock_notified?: boolean | null
           name: string
           nutritional_info?: Json | null
           price: number
@@ -3879,6 +3881,7 @@ export type Database = {
           images?: string[] | null
           ingredients?: string[] | null
           is_active?: boolean
+          low_stock_notified?: boolean | null
           name?: string
           nutritional_info?: Json | null
           price?: number
@@ -4071,6 +4074,7 @@ export type Database = {
         Row: {
           app_type: string
           created_at: string | null
+          customer_id: string | null
           device_type: string
           fcm_token: string
           id: string
@@ -4080,6 +4084,7 @@ export type Database = {
         Insert: {
           app_type: string
           created_at?: string | null
+          customer_id?: string | null
           device_type: string
           fcm_token: string
           id?: string
@@ -4089,6 +4094,7 @@ export type Database = {
         Update: {
           app_type?: string
           created_at?: string | null
+          customer_id?: string | null
           device_type?: string
           fcm_token?: string
           id?: string
