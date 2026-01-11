@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Package, Truck, ShoppingCart, DollarSign, Calendar, AlertTriangle, CheckCircle, CheckCircle2, Clock, MapPin, Circle, FileText, XCircle, Filter } from 'lucide-react';
+import { Package, Truck, ShoppingCart, DollarSign, Calendar, AlertTriangle, CheckCircle, CheckCircle2, Clock, MapPin, Circle, FileText, XCircle, Filter, RefreshCcw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,6 +24,12 @@ const Index = () => {
     { label: 'Deliveries', value: '0', icon: Truck, trend: '+0%' },
     { label: 'Revenue', value: '₹0', icon: DollarSign, trend: '+0%' },
   ]);
+  const [revenueBreakdown, setRevenueBreakdown] = useState({
+    regularRevenue: 0,
+    subscriptionRevenue: 0,
+    activeSubscriptions: 0,
+    subscriptionOrdersCount: 0
+  });
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -72,10 +78,10 @@ const Index = () => {
         }
       }
 
-      // Use the new seller stats function with time period for accurate data
+      // Use the new seller stats function with period for accurate data
       const { data: statsData, error: statsError } = await supabase.rpc('get_seller_stats_with_period', {
         seller_user_id: user.id,
-        time_period: selectedPeriod
+        period: selectedPeriod === '1week' ? 'week' : selectedPeriod === '1month' ? 'month' : selectedPeriod === '3months' ? 'month' : selectedPeriod === '6months' ? 'month' : selectedPeriod
       });
 
       if (statsError) {
@@ -83,11 +89,16 @@ const Index = () => {
         return;
       }
 
-      const stats_obj = statsData as any;
-      const totalProducts = stats_obj?.total_products || 0;
-      const activeOrders = stats_obj?.active_orders || 0;
-      const totalDeliveries = stats_obj?.total_deliveries || 0;
-      const revenue = stats_obj?.total_revenue || 0;
+      // The RPC returns an array, get first row
+      const stats_obj = Array.isArray(statsData) ? statsData[0] : statsData;
+      const totalProducts = Number(stats_obj?.total_products) || 0;
+      const activeOrders = Number(stats_obj?.active_orders) || 0;
+      const totalDeliveries = Number(stats_obj?.delivered_count) || 0;
+      const revenue = Number(stats_obj?.total_revenue) || 0;
+      const regularRevenue = Number(stats_obj?.regular_revenue) || 0;
+      const subscriptionRevenue = Number(stats_obj?.subscription_revenue) || 0;
+      const activeSubscriptions = Number(stats_obj?.active_subscriptions) || 0;
+      const subscriptionOrdersCount = Number(stats_obj?.subscription_orders_count) || 0;
 
       // Get recent activity using seller orders
       const { data: recentOrders, error: ordersError } = await supabase.rpc('get_seller_orders', {
@@ -107,6 +118,13 @@ const Index = () => {
         { label: 'Deliveries', value: totalDeliveries.toString(), icon: Truck, trend: '+18%' },
         { label: 'Revenue', value: `₹${revenue.toFixed(2)}`, icon: DollarSign, trend: '+23%' },
       ]);
+
+      setRevenueBreakdown({
+        regularRevenue,
+        subscriptionRevenue,
+        activeSubscriptions,
+        subscriptionOrdersCount
+      });
 
       setRecentActivity(recentActivity);
 
@@ -394,7 +412,47 @@ const Index = () => {
         ))}
       </div>
 
-      {/* Quick Actions */}
+      {/* Revenue Breakdown Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.3 }}
+        className="bg-zaago-card/50 border border-zaago-border rounded-xl p-6"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <RefreshCcw className="w-5 h-5 text-zaago-green" />
+            <h2 className="text-lg font-semibold text-foreground">Revenue Breakdown</h2>
+          </div>
+          <Badge variant="outline" className="text-xs border-zaago-green/50 text-zaago-green">
+            {selectedPeriod === 'today' ? 'Today' : selectedPeriod === '1week' ? 'This Week' : selectedPeriod === '1month' ? 'This Month' : selectedPeriod === 'all' ? 'All Time' : selectedPeriod}
+          </Badge>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-background/50 border border-zaago-border rounded-lg p-4 text-center">
+            <ShoppingCart className="w-5 h-5 text-purple-500 mx-auto mb-2" />
+            <p className="text-xl font-bold text-foreground">₹{revenueBreakdown.regularRevenue.toFixed(2)}</p>
+            <p className="text-xs text-zaago-muted-foreground">Regular Revenue</p>
+          </div>
+          <div className="bg-background/50 border border-zaago-green/30 rounded-lg p-4 text-center">
+            <RefreshCcw className="w-5 h-5 text-zaago-green mx-auto mb-2" />
+            <p className="text-xl font-bold text-zaago-green">₹{revenueBreakdown.subscriptionRevenue.toFixed(2)}</p>
+            <p className="text-xs text-zaago-muted-foreground">Subscription Revenue</p>
+          </div>
+          <div className="bg-background/50 border border-blue-500/30 rounded-lg p-4 text-center">
+            <Calendar className="w-5 h-5 text-blue-500 mx-auto mb-2" />
+            <p className="text-xl font-bold text-blue-500">{revenueBreakdown.activeSubscriptions}</p>
+            <p className="text-xs text-zaago-muted-foreground">Active Subscriptions</p>
+          </div>
+          <div className="bg-background/50 border border-amber-500/30 rounded-lg p-4 text-center">
+            <Truck className="w-5 h-5 text-amber-500 mx-auto mb-2" />
+            <p className="text-xl font-bold text-amber-500">{revenueBreakdown.subscriptionOrdersCount}</p>
+            <p className="text-xs text-zaago-muted-foreground">Subscription Deliveries</p>
+          </div>
+        </div>
+      </motion.div>
+
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
