@@ -14,7 +14,8 @@ import {
   User,
   Users,
   CalendarClock,
-  AlertTriangle
+  AlertTriangle,
+  CalendarOff
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -37,6 +38,7 @@ const navigationLinks = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/customer-orders', label: 'Orders', icon: ShoppingCart },
   { href: '/subscriptions', label: 'Subscriptions', icon: CalendarClock },
+  { href: '/vacation-compensations', label: 'Vacation Comp.', icon: CalendarOff },
   { href: '/delivery-agents', label: 'Delivery Agents', icon: Truck },
   { href: '/unassigned-orders', label: 'Unassigned Orders', icon: AlertTriangle },
   { href: '/products', label: 'Products', icon: Package },
