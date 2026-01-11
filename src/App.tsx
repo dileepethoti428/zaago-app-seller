@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { HashRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -59,10 +59,28 @@ import { toast } from "sonner";
 const AppContent = () => {
   useRealtimeSync();
   useOneSignal();
+  const navigate = useNavigate();
   
   const isOnline = useNetworkStatus();
   const [showOfflinePage, setShowOfflinePage] = useState(!navigator.onLine);
   const [isRetrying, setIsRetrying] = useState(false);
+
+  // Handle password recovery redirect - detect PASSWORD_RECOVERY event and navigate to reset page
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log("Global auth event:", event);
+        if (event === "PASSWORD_RECOVERY") {
+          // Redirect to reset password page when user clicks recovery link
+          navigate("/reset-password");
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   // Auto-restore when back online
   useEffect(() => {
