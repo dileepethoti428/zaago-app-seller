@@ -105,7 +105,63 @@ export const useAllVacationData = () => {
         };
       }
 
-      // Fetch all active vacation periods with subscription details
+      // First, get seller's product IDs
+      const { data: sellerProducts, error: productsError } = await supabase
+        .from('products')
+        .select('id')
+        .eq('seller_id', user.id);
+
+      if (productsError) {
+        console.error('Error fetching seller products:', productsError);
+        throw productsError;
+      }
+
+      const sellerProductIds = (sellerProducts || []).map(p => p.id);
+
+      // If seller has no products, return empty data
+      if (sellerProductIds.length === 0) {
+        return {
+          vacationPeriods: [],
+          compensations: [],
+          summary: {
+            totalActiveVacations: 0,
+            totalVacationDays: 0,
+            pendingCompensations: 0,
+            assignedCompensations: 0,
+            deliveredCompensations: 0,
+          }
+        };
+      }
+
+      // Get subscriptions for seller's products
+      const { data: sellerSubscriptions, error: subError } = await supabase
+        .from('subscriptions')
+        .select('id')
+        .in('product_id', sellerProductIds);
+
+      if (subError) {
+        console.error('Error fetching seller subscriptions:', subError);
+        throw subError;
+      }
+
+      const sellerSubscriptionIds = (sellerSubscriptions || []).map(s => s.id);
+
+      // If no subscriptions, return empty data
+      if (sellerSubscriptionIds.length === 0) {
+        return {
+          vacationPeriods: [],
+          compensations: [],
+          summary: {
+            totalActiveVacations: 0,
+            totalVacationDays: 0,
+            pendingCompensations: 0,
+            assignedCompensations: 0,
+            deliveredCompensations: 0,
+          }
+        };
+      }
+
+      // Fetch vacation periods only for seller's subscriptions
       const { data: vacationPeriods, error: vpError } = await supabase
         .from('subscription_vacation_periods')
         .select(`
@@ -118,6 +174,7 @@ export const useAllVacationData = () => {
           created_at
         `)
         .eq('status', 'active')
+        .in('subscription_id', sellerSubscriptionIds)
         .order('start_date', { ascending: true });
 
       if (vpError) {
@@ -174,10 +231,11 @@ export const useAllVacationData = () => {
         })
       );
 
-      // Fetch all compensations
+      // Fetch compensations only for this seller
       const { data: compensations, error: compError } = await supabase
         .from('vacation_compensations' as any)
         .select('*, delivery_agents(id, name, phone, profile_image, vehicle_type, vehicle_number, average_rating, total_deliveries, is_online, performance_score)')
+        .eq('seller_id', user.id)
         .order('compensation_delivery_date', { ascending: true });
 
       if (compError) {
