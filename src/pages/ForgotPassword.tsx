@@ -26,7 +26,7 @@ export default function ForgotPassword() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `https://zaago-seller.vercel.app/`,
+        redirectTo: `https://zaago-seller.vercel.app/reset-password`,
       });
 
       if (error) {
