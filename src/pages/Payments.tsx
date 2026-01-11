@@ -7,8 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { DollarSign, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { DollarSign, TrendingUp, Clock, CheckCircle, RefreshCcw, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Payout {
   id: string;
@@ -36,6 +37,13 @@ interface PaymentStats {
   lastPayoutDate: string | null;
 }
 
+interface RevenueStats {
+  regularRevenue: number;
+  subscriptionRevenue: number;
+  totalRevenue: number;
+  activeSubscriptions: number;
+}
+
 export default function Payments() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -47,6 +55,13 @@ export default function Payments() {
     pendingPayout: 0,
     lastPayoutDate: null
   });
+  const [revenueStats, setRevenueStats] = useState<RevenueStats>({
+    regularRevenue: 0,
+    subscriptionRevenue: 0,
+    totalRevenue: 0,
+    activeSubscriptions: 0
+  });
+  const [selectedPeriod, setSelectedPeriod] = useState<'today' | 'week' | 'month'>('today');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -56,6 +71,33 @@ export default function Payments() {
       setupRealtimeSubscription();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchRevenueStats();
+    }
+  }, [user, selectedPeriod]);
+
+  const fetchRevenueStats = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_seller_stats', {
+        seller_user_id: user?.id,
+        period: selectedPeriod
+      });
+
+      if (error) throw error;
+
+      const stats_obj = data as any;
+      setRevenueStats({
+        regularRevenue: stats_obj?.regular_revenue || 0,
+        subscriptionRevenue: stats_obj?.subscription_revenue || 0,
+        totalRevenue: stats_obj?.total_revenue || 0,
+        activeSubscriptions: stats_obj?.active_subscriptions || 0
+      });
+    } catch (error) {
+      console.error('Error fetching revenue stats:', error);
+    }
+  };
 
   const fetchPayouts = async () => {
     try {
@@ -192,14 +234,60 @@ export default function Payments() {
 
   return (
       <div className="container mx-auto p-6 space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-zaago-green">Payments Dashboard</h1>
             <p className="text-zaago-green-light">
               Current commission rate: <span className="font-semibold">{commissionRate}%</span>
             </p>
           </div>
+          <div className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-zaago-green" />
+            <Select value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as 'today' | 'week' | 'month')}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="week">This Week</SelectItem>
+                <SelectItem value="month">This Month</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+
+        {/* Revenue Breakdown */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <RefreshCcw className="h-5 w-5 text-zaago-green" />
+              Revenue Breakdown ({selectedPeriod === 'today' ? 'Today' : selectedPeriod === 'week' ? 'This Week' : 'This Month'})
+            </CardTitle>
+            <CardDescription>
+              Regular vs Subscription revenue comparison
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-4 rounded-lg bg-muted/50 border">
+                <p className="text-sm text-muted-foreground mb-1">Regular Revenue</p>
+                <p className="text-2xl font-bold text-foreground">{formatCurrency(revenueStats.regularRevenue)}</p>
+              </div>
+              <div className="p-4 rounded-lg bg-muted/50 border">
+                <p className="text-sm text-muted-foreground mb-1">Subscription Revenue</p>
+                <p className="text-2xl font-bold text-primary">{formatCurrency(revenueStats.subscriptionRevenue)}</p>
+              </div>
+              <div className="p-4 rounded-lg bg-muted/50 border">
+                <p className="text-sm text-muted-foreground mb-1">Total Revenue</p>
+                <p className="text-2xl font-bold text-zaago-green">{formatCurrency(revenueStats.totalRevenue)}</p>
+              </div>
+              <div className="p-4 rounded-lg bg-muted/50 border">
+                <p className="text-sm text-muted-foreground mb-1">Active Subscriptions</p>
+                <p className="text-2xl font-bold text-foreground">{revenueStats.activeSubscriptions}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

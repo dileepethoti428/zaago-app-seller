@@ -7238,7 +7238,9 @@ export type Database = {
           updated_at: string
         }[]
       }
-      get_seller_stats: { Args: { seller_user_id: string }; Returns: Json }
+      get_seller_stats:
+        | { Args: { seller_user_id: string }; Returns: Json }
+        | { Args: { period?: string; seller_user_id: string }; Returns: Json }
       get_seller_stats_with_period: {
         Args: { seller_user_id: string; time_period?: string }
         Returns: Json

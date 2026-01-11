@@ -8,8 +8,10 @@ import {
   Clock,
   AlertCircle,
   CheckCircle2,
-  Calendar
+  Calendar,
+  RefreshCcw
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,14 +27,16 @@ import { WeeklyRefillTrendReport } from '@/components/WeeklyRefillTrendReport';
 const Dashboard = () => {
   const { user } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState('today');
+  const [revenueType, setRevenueType] = useState<'all' | 'regular' | 'subscription'>('all');
   const [stats, setStats] = useState({
     totalProducts: 0,
     activeOrders: 0,
     deliveredToday: 0,
-    todayRevenue: 0,
-    weekOrders: 0,
-    weekRevenue: 0,
-    monthRevenue: 0
+    regularRevenue: 0,
+    subscriptionRevenue: 0,
+    totalRevenue: 0,
+    activeSubscriptions: 0,
+    subscriptionOrdersCount: 0
   });
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,9 +58,10 @@ const Dashboard = () => {
     
     setLoading(true);
     try {
-      // Fetch seller stats using the existing function
+      // Fetch seller stats using the updated function with period parameter
       const { data: statsData, error: statsError } = await supabase.rpc('get_seller_stats', {
-        seller_user_id: user.id
+        seller_user_id: user.id,
+        period: selectedPeriod
       });
 
       if (statsError) {
@@ -68,11 +73,12 @@ const Dashboard = () => {
         setStats({
           totalProducts: stats_obj?.total_products || 0,
           activeOrders: stats_obj?.active_orders || 0,
-          deliveredToday: stats_obj?.total_deliveries || 0,
-          todayRevenue: stats_obj?.today_revenue || 0,
-          weekOrders: stats_obj?.week_orders || 0,
-          weekRevenue: stats_obj?.week_revenue || 0,
-          monthRevenue: stats_obj?.month_revenue || 0
+          deliveredToday: stats_obj?.delivered_count || 0,
+          regularRevenue: stats_obj?.regular_revenue || 0,
+          subscriptionRevenue: stats_obj?.subscription_revenue || 0,
+          totalRevenue: stats_obj?.total_revenue || 0,
+          activeSubscriptions: stats_obj?.active_subscriptions || 0,
+          subscriptionOrdersCount: stats_obj?.subscription_orders_count || 0
         });
       }
 
@@ -175,6 +181,43 @@ const Dashboard = () => {
         </div>
       </motion.div>
 
+      {/* Revenue Type Toggle */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15, duration: 0.3 }}
+        className="flex flex-wrap items-center gap-2"
+      >
+        <span className="text-sm text-zaago-muted-foreground mr-2">Revenue Type:</span>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant={revenueType === 'all' ? 'default' : 'outline'}
+            onClick={() => setRevenueType('all')}
+            className={revenueType === 'all' ? 'bg-zaago-green hover:bg-zaago-green/90' : ''}
+          >
+            All
+          </Button>
+          <Button
+            size="sm"
+            variant={revenueType === 'regular' ? 'default' : 'outline'}
+            onClick={() => setRevenueType('regular')}
+            className={revenueType === 'regular' ? 'bg-zaago-green hover:bg-zaago-green/90' : ''}
+          >
+            Regular
+          </Button>
+          <Button
+            size="sm"
+            variant={revenueType === 'subscription' ? 'default' : 'outline'}
+            onClick={() => setRevenueType('subscription')}
+            className={revenueType === 'subscription' ? 'bg-zaago-green hover:bg-zaago-green/90' : ''}
+          >
+            <RefreshCcw className="w-3 h-3 mr-1" />
+            Subscription
+          </Button>
+        </div>
+      </motion.div>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         {[
@@ -193,15 +236,20 @@ const Dashboard = () => {
             color: 'text-blue-500'
           },
           {
-            label: 'Delivered Today',
+            label: selectedPeriod === 'today' ? 'Delivered Today' : selectedPeriod === 'week' ? 'Delivered This Week' : 'Delivered This Month',
             value: stats.deliveredToday.toString(),
             icon: Truck,
             trend: '+18%',
             color: 'text-zaago-green'
           },
           {
-            label: selectedPeriod === 'today' ? 'Today Revenue' : selectedPeriod === 'week' ? 'Week Revenue' : 'Month Revenue',
-            value: `₹${selectedPeriod === 'today' ? stats.todayRevenue.toFixed(2) : selectedPeriod === 'week' ? stats.weekRevenue.toFixed(2) : stats.monthRevenue.toFixed(2)}`,
+            label: `${selectedPeriod === 'today' ? 'Today' : selectedPeriod === 'week' ? 'Week' : 'Month'} Revenue${revenueType !== 'all' ? ` (${revenueType})` : ''}`,
+            value: `₹${(revenueType === 'all' 
+              ? stats.totalRevenue 
+              : revenueType === 'regular' 
+                ? stats.regularRevenue 
+                : stats.subscriptionRevenue
+            ).toFixed(2)}`,
             icon: DollarSign,
             trend: '+23%',
             color: 'text-zaago-green'
@@ -226,6 +274,44 @@ const Dashboard = () => {
           </motion.div>
         ))}
       </div>
+
+      {/* Subscription Revenue Breakdown */}
+      {revenueType === 'all' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.3 }}
+        >
+          <Card className="bg-zaago-card/50 border-zaago-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
+                <RefreshCcw className="w-5 h-5 text-zaago-green" />
+                Revenue Breakdown
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-3 rounded-lg bg-zaago-accent/30">
+                  <p className="text-xs text-zaago-muted-foreground mb-1">Regular Revenue</p>
+                  <p className="text-lg font-bold text-foreground">₹{stats.regularRevenue.toFixed(2)}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-zaago-accent/30">
+                  <p className="text-xs text-zaago-muted-foreground mb-1">Subscription Revenue</p>
+                  <p className="text-lg font-bold text-foreground">₹{stats.subscriptionRevenue.toFixed(2)}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-zaago-accent/30">
+                  <p className="text-xs text-zaago-muted-foreground mb-1">Active Subscriptions</p>
+                  <p className="text-lg font-bold text-foreground">{stats.activeSubscriptions}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-zaago-accent/30">
+                  <p className="text-xs text-zaago-muted-foreground mb-1">Subscription Orders</p>
+                  <p className="text-lg font-bold text-foreground">{stats.subscriptionOrdersCount}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
 
 
