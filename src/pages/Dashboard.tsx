@@ -36,7 +36,6 @@ const Dashboard = () => {
     subscriptionRevenue: 0,
     totalRevenue: 0,
     activeSubscriptions: 0,
-    subscriptionOrdersCount: 0,
     pendingRevenue: 0,
     pendingSubscriptionRevenue: 0,
     projectedDailySubscription: 0
@@ -81,7 +80,6 @@ const Dashboard = () => {
           subscriptionRevenue: Number(stats_obj?.subscription_revenue) || 0,
           totalRevenue: Number(stats_obj?.total_revenue) || 0,
           activeSubscriptions: Number(stats_obj?.active_subscriptions) || 0,
-          subscriptionOrdersCount: Number(stats_obj?.subscription_orders_count) || 0,
           pendingRevenue: Number(stats_obj?.pending_revenue) || 0,
           pendingSubscriptionRevenue: Number(stats_obj?.pending_subscription_revenue) || 0,
           projectedDailySubscription: Number(stats_obj?.projected_daily_subscription) || 0
@@ -318,8 +316,8 @@ const Dashboard = () => {
                   <p className="text-lg font-bold text-foreground">{stats.activeSubscriptions}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-zaago-accent/30">
-                  <p className="text-xs text-zaago-muted-foreground mb-1">Subscription Orders</p>
-                  <p className="text-lg font-bold text-foreground">{stats.subscriptionOrdersCount}</p>
+                  <p className="text-xs text-zaago-muted-foreground mb-1">Projected Daily</p>
+                  <p className="text-lg font-bold text-foreground">₹{stats.projectedDailySubscription.toFixed(2)}</p>
                 </div>
               </div>
             </CardContent>
