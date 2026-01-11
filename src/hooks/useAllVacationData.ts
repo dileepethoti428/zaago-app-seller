@@ -19,7 +19,12 @@ export interface VacationPeriodWithSubscription {
       id: string;
       full_name: string;
       phone: string;
+      email: string | null;
       address: string | null;
+      city: string | null;
+      pincode: string | null;
+      latitude: number | null;
+      longitude: number | null;
     } | null;
     product: {
       id: string;
@@ -43,6 +48,14 @@ export interface VacationCompensationWithDetails {
   delivery_agent: {
     id: string;
     name: string;
+    phone: string | null;
+    profile_image: string | null;
+    vehicle_type: string | null;
+    vehicle_number: string | null;
+    average_rating: number | null;
+    total_deliveries: number | null;
+    is_online: boolean | null;
+    performance_score: number | null;
   } | null;
   subscription: {
     id: string;
@@ -52,6 +65,10 @@ export interface VacationCompensationWithDetails {
       id: string;
       full_name: string;
       phone: string;
+      email: string | null;
+      address: string | null;
+      city: string | null;
+      pincode: string | null;
     } | null;
     product: {
       id: string;
@@ -129,7 +146,7 @@ export const useAllVacationData = () => {
           if (subscription?.customer_id) {
             const { data: customerData } = await supabase
               .from('customers')
-              .select('id, full_name, phone, address')
+              .select('id, full_name, phone, email, address, city, pincode, latitude, longitude')
               .eq('id', subscription.customer_id)
               .single();
             customer = customerData;
@@ -160,7 +177,7 @@ export const useAllVacationData = () => {
       // Fetch all compensations
       const { data: compensations, error: compError } = await supabase
         .from('vacation_compensations' as any)
-        .select('*, delivery_agents(id, name)')
+        .select('*, delivery_agents(id, name, phone, profile_image, vehicle_type, vehicle_number, average_rating, total_deliveries, is_online, performance_score)')
         .order('compensation_delivery_date', { ascending: true });
 
       if (compError) {
@@ -189,7 +206,7 @@ export const useAllVacationData = () => {
           if (subscription?.customer_id) {
             const { data: customerData } = await supabase
               .from('customers')
-              .select('id, full_name, phone')
+              .select('id, full_name, phone, email, address, city, pincode')
               .eq('id', subscription.customer_id)
               .single();
             customer = customerData;
