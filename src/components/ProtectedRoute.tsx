@@ -12,8 +12,10 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const publicRoutes = ['/login', '/forgot-password', '/reset-password', '/privacy-policy', '/terms-conditions'];
+
   useEffect(() => {
-    if (!loading && !user && location.pathname !== '/login') {
+    if (!loading && !user && !publicRoutes.includes(location.pathname)) {
       navigate('/login');
     } else if (!loading && user) {
       // Only check bank details on initial login, not on every route change
@@ -100,16 +102,16 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // Show login page if not authenticated
-  if (!user && location.pathname !== '/login') {
+  // Show public pages if not authenticated
+  if (!user && !publicRoutes.includes(location.pathname)) {
     return null; // Will redirect in useEffect
   }
 
-  // Show main app if authenticated and not on login page
-  if (user && location.pathname !== '/login') {
+  // Show main app if authenticated and not on public page
+  if (user && !publicRoutes.includes(location.pathname)) {
     return <>{children}</>;
   }
 
-  // Show login page
+  // Show public pages (login, forgot-password, reset-password, etc.)
   return <>{children}</>;
 }
