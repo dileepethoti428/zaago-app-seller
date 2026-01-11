@@ -14,6 +14,7 @@ import { SubscriptionOrderCard } from '@/components/SubscriptionOrderCard';
 import { AssignAgentModal } from '@/components/AssignAgentModal';
 import { CustomerDetailsDialog } from '@/components/CustomerDetailsDialog';
 import { EditCustomerDialog } from '@/components/EditCustomerDialog';
+import { VacationDatesSection } from '@/components/VacationDatesSection';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getCurrentISTTime, isAfter11_30PM_IST, getTomorrowDateIST, isDateTomorrow } from '@/utils/timeZone';
 import { formatDateForDisplay, formatDateWithLabel } from '@/utils/subscriptionDateCalculator';
@@ -638,14 +639,13 @@ const Subscriptions = () => {
                       </div>
                     </div>
 
-                    {vacationInfo && (
-                      <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
-                        <p className="text-sm text-orange-400">
-                          🏖️ Vacation Period:{' '}
-                          {format(parseISO(vacationInfo.start_date), 'MMM d')} -{' '}
-                          {format(parseISO(vacationInfo.end_date), 'MMM d, yyyy')}
-                        </p>
-                      </div>
+                    {/* Vacation Dates Section with Compensation */}
+                    {subscription.vacation && subscription.vacation.length > 0 && (
+                      <VacationDatesSection
+                        subscriptionId={subscription.id}
+                        vacationPeriods={subscription.vacation}
+                        locationId={subscription.location_id}
+                      />
                     )}
 
                     {subscription.special_instructions && (
