@@ -9,7 +9,11 @@ import {
   Truck, 
   Clock,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Phone,
+  MapPin,
+  Star,
+  Circle
 } from 'lucide-react';
 import { useAllVacationData } from '@/hooks/useAllVacationData';
 import { format, parseISO } from 'date-fns';
@@ -146,31 +150,60 @@ const VacationCompensations = () => {
               {vacationPeriods.map((period) => (
                 <div
                   key={period.id}
-                  className="flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-lg gap-4"
+                  className="p-4 border rounded-lg gap-4"
                 >
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">
-                        {period.subscription?.customer?.full_name || 'Unknown Customer'}
-                      </span>
+                  {/* Customer Details */}
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div className="space-y-3 flex-1">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-primary" />
+                        <span className="font-semibold">
+                          {period.subscription?.customer?.full_name || 'Unknown Customer'}
+                        </span>
+                        <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+                          Active
+                        </Badge>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                        {period.subscription?.customer?.phone && (
+                          <a 
+                            href={`tel:${period.subscription.customer.phone}`}
+                            className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+                          >
+                            <Phone className="h-4 w-4" />
+                            <span>{period.subscription.customer.phone}</span>
+                          </a>
+                        )}
+                        {period.subscription?.customer?.address && (
+                          <div className="flex items-start gap-2 text-muted-foreground">
+                            <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
+                            <span className="line-clamp-2">
+                              {period.subscription.customer.address}
+                              {period.subscription.customer.city && `, ${period.subscription.customer.city}`}
+                              {period.subscription.customer.pincode && ` - ${period.subscription.customer.pincode}`}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-4 text-sm border-t pt-3 mt-3">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Package className="h-4 w-4" />
+                          <span className="font-medium">{period.subscription?.product?.name || 'Unknown Product'}</span>
+                          <Badge variant="secondary" className="ml-1">
+                            {period.subscription?.quantity || 1} units
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span>
+                            {format(parseISO(period.start_date), 'MMM d')} - {format(parseISO(period.end_date), 'MMM d, yyyy')}
+                          </span>
+                          <Badge variant="secondary">{period.total_days} days</Badge>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Package className="h-4 w-4" />
-                      <span>{period.subscription?.product?.name || 'Unknown Product'}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span>
-                        {format(parseISO(period.start_date), 'MMM d')} - {format(parseISO(period.end_date), 'MMM d, yyyy')}
-                      </span>
-                      <Badge variant="secondary">{period.total_days} days</Badge>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
-                      Active
-                    </Badge>
                   </div>
                 </div>
               ))}
@@ -198,34 +231,63 @@ const VacationCompensations = () => {
               {pendingCompensations.map((comp) => (
                 <div
                   key={comp.id}
-                  className="flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-lg border-orange-500/20 bg-orange-500/5 gap-4"
+                  className="p-4 border rounded-lg border-orange-500/20 bg-orange-500/5"
                 >
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">
-                        {comp.subscription?.customer?.full_name || 'Unknown Customer'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Package className="h-4 w-4" />
-                      <span>{comp.subscription?.product?.name || 'Unknown Product'}</span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 text-sm">
-                      <span className="text-muted-foreground">Vacation:</span>
-                      <Badge variant="outline">
-                        {format(parseISO(comp.original_vacation_date), 'MMM d, yyyy')}
+                  {/* Customer Section */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-primary" />
+                        <span className="font-semibold">
+                          {comp.subscription?.customer?.full_name || 'Unknown Customer'}
+                        </span>
+                      </div>
+                      <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20">
+                        Pending Agent
                       </Badge>
-                      <span className="text-muted-foreground">→</span>
-                      <span className="text-muted-foreground">Compensation:</span>
-                      <Badge variant="secondary" className="bg-orange-500/10 text-orange-600">
-                        {format(parseISO(comp.compensation_delivery_date), 'MMM d, yyyy')}
-                      </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                      {comp.subscription?.customer?.phone && (
+                        <a 
+                          href={`tel:${comp.subscription.customer.phone}`}
+                          className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          <Phone className="h-4 w-4" />
+                          <span>{comp.subscription.customer.phone}</span>
+                        </a>
+                      )}
+                      {comp.subscription?.customer?.address && (
+                        <div className="flex items-start gap-2 text-muted-foreground">
+                          <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
+                          <span className="line-clamp-1">
+                            {comp.subscription.customer.city || comp.subscription.customer.address}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-4 text-sm border-t pt-3 mt-3">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Package className="h-4 w-4" />
+                        <span>{comp.subscription?.product?.name || 'Unknown Product'}</span>
+                        <Badge variant="secondary" className="ml-1">
+                          {comp.subscription?.quantity || 1} units
+                        </Badge>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-muted-foreground">Vacation:</span>
+                        <Badge variant="outline">
+                          {format(parseISO(comp.original_vacation_date), 'MMM d, yyyy')}
+                        </Badge>
+                        <span className="text-muted-foreground">→</span>
+                        <span className="text-muted-foreground">Compensation:</span>
+                        <Badge variant="secondary" className="bg-orange-500/10 text-orange-600">
+                          {format(parseISO(comp.compensation_delivery_date), 'MMM d, yyyy')}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
-                  <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20 w-fit">
-                    Pending Agent
-                  </Badge>
                 </div>
               ))}
             </div>
@@ -252,32 +314,101 @@ const VacationCompensations = () => {
               {assignedCompensations.map((comp) => (
                 <div
                   key={comp.id}
-                  className="flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-lg border-purple-500/20 bg-purple-500/5 gap-4"
+                  className="p-4 border rounded-lg border-purple-500/20 bg-purple-500/5"
                 >
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">
-                        {comp.subscription?.customer?.full_name || 'Unknown Customer'}
-                      </span>
+                  <div className="space-y-4">
+                    {/* Customer Section */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-primary" />
+                          <span className="font-semibold">
+                            {comp.subscription?.customer?.full_name || 'Unknown Customer'}
+                          </span>
+                        </div>
+                        <Badge variant="outline" className="bg-purple-500/10 text-purple-500 border-purple-500/20">
+                          Assigned
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                        {comp.subscription?.customer?.phone && (
+                          <a 
+                            href={`tel:${comp.subscription.customer.phone}`}
+                            className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+                          >
+                            <Phone className="h-4 w-4" />
+                            <span>{comp.subscription.customer.phone}</span>
+                          </a>
+                        )}
+                        {comp.subscription?.customer?.address && (
+                          <div className="flex items-start gap-2 text-muted-foreground">
+                            <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
+                            <span className="line-clamp-1">
+                              {comp.subscription.customer.city || comp.subscription.customer.address}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Package className="h-4 w-4" />
-                      <span>{comp.subscription?.product?.name || 'Unknown Product'}</span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 text-sm">
-                      <span className="text-muted-foreground">Delivery:</span>
-                      <Badge variant="secondary" className="bg-purple-500/10 text-purple-600">
-                        {format(parseISO(comp.compensation_delivery_date), 'MMM d, yyyy')}
-                      </Badge>
-                      <span className="text-muted-foreground">•</span>
-                      <Truck className="h-4 w-4 text-purple-500" />
-                      <span>{comp.delivery_agent?.name || 'Unknown Agent'}</span>
+
+                    {/* Agent Section */}
+                    {comp.delivery_agent && (
+                      <div className="p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Truck className="h-4 w-4 text-purple-500" />
+                          <span className="font-medium text-sm">Assigned Agent</span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">{comp.delivery_agent.name}</span>
+                            {comp.delivery_agent.is_online && (
+                              <Circle className="h-2 w-2 fill-green-500 text-green-500" />
+                            )}
+                          </div>
+                          {comp.delivery_agent.phone && (
+                            <a 
+                              href={`tel:${comp.delivery_agent.phone}`}
+                              className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+                            >
+                              <Phone className="h-4 w-4" />
+                              <span>{comp.delivery_agent.phone}</span>
+                            </a>
+                          )}
+                          {comp.delivery_agent.average_rating && (
+                            <div className="flex items-center gap-1">
+                              <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                              <span>{comp.delivery_agent.average_rating.toFixed(1)}</span>
+                            </div>
+                          )}
+                          {comp.delivery_agent.vehicle_type && (
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <span className="capitalize">{comp.delivery_agent.vehicle_type}</span>
+                              {comp.delivery_agent.vehicle_number && (
+                                <span>({comp.delivery_agent.vehicle_number})</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Delivery Info */}
+                    <div className="flex flex-wrap items-center gap-4 text-sm border-t pt-3">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Package className="h-4 w-4" />
+                        <span>{comp.subscription?.product?.name || 'Unknown Product'}</span>
+                        <Badge variant="secondary" className="ml-1">
+                          {comp.subscription?.quantity || 1} units
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <Badge variant="secondary" className="bg-purple-500/10 text-purple-600">
+                          {format(parseISO(comp.compensation_delivery_date), 'MMM d, yyyy')}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
-                  <Badge variant="outline" className="bg-purple-500/10 text-purple-500 border-purple-500/20 w-fit">
-                    Assigned
-                  </Badge>
                 </div>
               ))}
             </div>
@@ -304,28 +435,55 @@ const VacationCompensations = () => {
               {deliveredCompensations.map((comp) => (
                 <div
                   key={comp.id}
-                  className="flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-lg border-green-500/20 bg-green-500/5 gap-4"
+                  className="p-4 border rounded-lg border-green-500/20 bg-green-500/5"
                 >
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">
-                        {comp.subscription?.customer?.full_name || 'Unknown Customer'}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 text-sm">
-                      <span className="text-muted-foreground">Delivered:</span>
-                      <Badge variant="secondary" className="bg-green-500/10 text-green-600">
-                        {format(parseISO(comp.compensation_delivery_date), 'MMM d, yyyy')}
+                  <div className="space-y-3">
+                    {/* Customer Section */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-primary" />
+                        <span className="font-semibold">
+                          {comp.subscription?.customer?.full_name || 'Unknown Customer'}
+                        </span>
+                      </div>
+                      <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+                        Delivered
                       </Badge>
-                      <span className="text-muted-foreground">•</span>
-                      <span className="text-muted-foreground">For vacation:</span>
-                      <span>{format(parseISO(comp.original_vacation_date), 'MMM d')}</span>
+                    </div>
+
+                    {/* Agent Info (if available) */}
+                    {comp.delivery_agent && (
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <Truck className="h-4 w-4 text-green-500" />
+                          <span className="font-medium">{comp.delivery_agent.name}</span>
+                        </div>
+                        {comp.delivery_agent.average_rating && (
+                          <div className="flex items-center gap-1">
+                            <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                            <span>{comp.delivery_agent.average_rating.toFixed(1)}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Delivery Info */}
+                    <div className="flex flex-wrap items-center gap-4 text-sm border-t pt-3">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Package className="h-4 w-4" />
+                        <span>{comp.subscription?.product?.name || 'Unknown Product'}</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-muted-foreground">Delivered:</span>
+                        <Badge variant="secondary" className="bg-green-500/10 text-green-600">
+                          {format(parseISO(comp.compensation_delivery_date), 'MMM d, yyyy')}
+                        </Badge>
+                        <span className="text-muted-foreground">•</span>
+                        <span className="text-muted-foreground">For vacation:</span>
+                        <span>{format(parseISO(comp.original_vacation_date), 'MMM d')}</span>
+                      </div>
                     </div>
                   </div>
-                  <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20 w-fit">
-                    Delivered
-                  </Badge>
                 </div>
               ))}
             </div>
