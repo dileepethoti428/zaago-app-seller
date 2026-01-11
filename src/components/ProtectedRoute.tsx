@@ -14,26 +14,13 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   const publicRoutes = ['/login', '/forgot-password', '/reset-password', '/privacy-policy', '/terms-conditions'];
 
-  // Detect if this is a Supabase recovery link (password reset)
-  const isRecoveryLink = window.location.hash.includes('type=recovery') || 
-                         window.location.href.includes('type=recovery');
-
   useEffect(() => {
-    // If this is a recovery link, redirect to reset-password immediately
-    if (isRecoveryLink && location.pathname === '/') {
-      console.log('Recovery link detected, redirecting to reset-password');
-      navigate('/reset-password', { replace: true });
-      return;
-    }
-
-    // Skip login redirect for recovery links
-    if (!loading && !user && !publicRoutes.includes(location.pathname) && !isRecoveryLink) {
+    if (!loading && !user && !publicRoutes.includes(location.pathname)) {
       navigate('/login');
-    } else if (!loading && user && !isRecoveryLink) {
-      // Only check bank details on initial login, not on every route change
+    } else if (!loading && user) {
       checkBankDetailsAndRedirect();
     }
-  }, [user, loading, location.pathname, isRecoveryLink]);
+  }, [user, loading, location.pathname]);
 
   const checkBankDetailsAndRedirect = async () => {
     if (!user) return;
