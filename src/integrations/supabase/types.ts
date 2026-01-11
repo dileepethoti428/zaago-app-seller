@@ -7242,8 +7242,17 @@ export type Database = {
         | { Args: { seller_user_id: string }; Returns: Json }
         | { Args: { period?: string; seller_user_id: string }; Returns: Json }
       get_seller_stats_with_period: {
-        Args: { seller_user_id: string; time_period?: string }
-        Returns: Json
+        Args: { period?: string; seller_user_id: string }
+        Returns: {
+          active_orders: number
+          active_subscriptions: number
+          delivered_count: number
+          regular_revenue: number
+          subscription_orders_count: number
+          subscription_revenue: number
+          total_products: number
+          total_revenue: number
+        }[]
       }
       get_seller_subscription_orders_overview: {
         Args: { p_date: string; p_seller_user_id: string }
