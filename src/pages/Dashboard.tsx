@@ -36,7 +36,10 @@ const Dashboard = () => {
     subscriptionRevenue: 0,
     totalRevenue: 0,
     activeSubscriptions: 0,
-    subscriptionOrdersCount: 0
+    subscriptionOrdersCount: 0,
+    pendingRevenue: 0,
+    pendingSubscriptionRevenue: 0,
+    projectedDailySubscription: 0
   });
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,7 +81,10 @@ const Dashboard = () => {
           subscriptionRevenue: Number(stats_obj?.subscription_revenue) || 0,
           totalRevenue: Number(stats_obj?.total_revenue) || 0,
           activeSubscriptions: Number(stats_obj?.active_subscriptions) || 0,
-          subscriptionOrdersCount: Number(stats_obj?.subscription_orders_count) || 0
+          subscriptionOrdersCount: Number(stats_obj?.subscription_orders_count) || 0,
+          pendingRevenue: Number(stats_obj?.pending_revenue) || 0,
+          pendingSubscriptionRevenue: Number(stats_obj?.pending_subscription_revenue) || 0,
+          projectedDailySubscription: Number(stats_obj?.projected_daily_subscription) || 0
         });
       }
 
@@ -290,7 +296,7 @@ const Dashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <div className="p-3 rounded-lg bg-zaago-accent/30">
                   <p className="text-xs text-zaago-muted-foreground mb-1">Regular Revenue</p>
                   <p className="text-lg font-bold text-foreground">₹{stats.regularRevenue.toFixed(2)}</p>
@@ -298,6 +304,14 @@ const Dashboard = () => {
                 <div className="p-3 rounded-lg bg-zaago-accent/30">
                   <p className="text-xs text-zaago-muted-foreground mb-1">Subscription Revenue</p>
                   <p className="text-lg font-bold text-foreground">₹{stats.subscriptionRevenue.toFixed(2)}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-zaago-accent/30 border border-amber-500/30">
+                  <p className="text-xs text-zaago-muted-foreground mb-1">Pending Revenue</p>
+                  <p className="text-lg font-bold text-amber-500">₹{stats.pendingRevenue.toFixed(2)}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-zaago-accent/30 border border-blue-500/30">
+                  <p className="text-xs text-zaago-muted-foreground mb-1">Projected Daily Sub.</p>
+                  <p className="text-lg font-bold text-blue-500">₹{stats.projectedDailySubscription.toFixed(2)}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-zaago-accent/30">
                   <p className="text-xs text-zaago-muted-foreground mb-1">Active Subscriptions</p>

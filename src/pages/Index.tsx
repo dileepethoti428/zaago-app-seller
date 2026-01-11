@@ -28,7 +28,10 @@ const Index = () => {
     regularRevenue: 0,
     subscriptionRevenue: 0,
     activeSubscriptions: 0,
-    subscriptionOrdersCount: 0
+    subscriptionOrdersCount: 0,
+    pendingRevenue: 0,
+    pendingSubscriptionRevenue: 0,
+    projectedDailySubscription: 0
   });
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -123,7 +126,10 @@ const Index = () => {
         regularRevenue,
         subscriptionRevenue,
         activeSubscriptions,
-        subscriptionOrdersCount
+        subscriptionOrdersCount,
+        pendingRevenue: Number(stats_obj?.pending_revenue) || 0,
+        pendingSubscriptionRevenue: Number(stats_obj?.pending_subscription_revenue) || 0,
+        projectedDailySubscription: Number(stats_obj?.projected_daily_subscription) || 0
       });
 
       setRecentActivity(recentActivity);
@@ -429,7 +435,7 @@ const Index = () => {
           </Badge>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <div className="bg-background/50 border border-zaago-border rounded-lg p-4 text-center">
             <ShoppingCart className="w-5 h-5 text-purple-500 mx-auto mb-2" />
             <p className="text-xl font-bold text-foreground">₹{revenueBreakdown.regularRevenue.toFixed(2)}</p>
@@ -439,6 +445,16 @@ const Index = () => {
             <RefreshCcw className="w-5 h-5 text-zaago-green mx-auto mb-2" />
             <p className="text-xl font-bold text-zaago-green">₹{revenueBreakdown.subscriptionRevenue.toFixed(2)}</p>
             <p className="text-xs text-zaago-muted-foreground">Subscription Revenue</p>
+          </div>
+          <div className="bg-background/50 border border-amber-500/30 rounded-lg p-4 text-center">
+            <Clock className="w-5 h-5 text-amber-500 mx-auto mb-2" />
+            <p className="text-xl font-bold text-amber-500">₹{revenueBreakdown.pendingRevenue.toFixed(2)}</p>
+            <p className="text-xs text-zaago-muted-foreground">Pending Revenue</p>
+          </div>
+          <div className="bg-background/50 border border-blue-500/30 rounded-lg p-4 text-center">
+            <DollarSign className="w-5 h-5 text-blue-500 mx-auto mb-2" />
+            <p className="text-xl font-bold text-blue-500">₹{revenueBreakdown.projectedDailySubscription.toFixed(2)}</p>
+            <p className="text-xs text-zaago-muted-foreground">Projected Daily Sub.</p>
           </div>
           <div className="bg-background/50 border border-blue-500/30 rounded-lg p-4 text-center">
             <Calendar className="w-5 h-5 text-blue-500 mx-auto mb-2" />

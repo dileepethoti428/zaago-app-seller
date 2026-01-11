@@ -7247,6 +7247,9 @@ export type Database = {
           active_orders: number
           active_subscriptions: number
           delivered_count: number
+          pending_revenue: number
+          pending_subscription_revenue: number
+          projected_daily_subscription: number
           regular_revenue: number
           subscription_orders_count: number
           subscription_revenue: number
