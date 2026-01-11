@@ -58,8 +58,8 @@ const Dashboard = () => {
     
     setLoading(true);
     try {
-      // Fetch seller stats using the updated function with period parameter
-      const { data: statsData, error: statsError } = await supabase.rpc('get_seller_stats', {
+      // Fetch seller stats using the working RPC with period parameter
+      const { data: statsData, error: statsError } = await supabase.rpc('get_seller_stats_with_period', {
         seller_user_id: user.id,
         period: selectedPeriod
       });
@@ -67,18 +67,18 @@ const Dashboard = () => {
       if (statsError) {
         console.error('Error fetching stats:', statsError);
       } else if (statsData) {
-        // Cast the data to any to handle the Json type safely
-        const stats_obj = statsData as any;
+        // Handle array response from RPC
+        const stats_obj = Array.isArray(statsData) ? statsData[0] : statsData;
         
         setStats({
-          totalProducts: stats_obj?.total_products || 0,
-          activeOrders: stats_obj?.active_orders || 0,
-          deliveredToday: stats_obj?.delivered_count || 0,
-          regularRevenue: stats_obj?.regular_revenue || 0,
-          subscriptionRevenue: stats_obj?.subscription_revenue || 0,
-          totalRevenue: stats_obj?.total_revenue || 0,
-          activeSubscriptions: stats_obj?.active_subscriptions || 0,
-          subscriptionOrdersCount: stats_obj?.subscription_orders_count || 0
+          totalProducts: Number(stats_obj?.total_products) || 0,
+          activeOrders: Number(stats_obj?.active_orders) || 0,
+          deliveredToday: Number(stats_obj?.delivered_count) || 0,
+          regularRevenue: Number(stats_obj?.regular_revenue) || 0,
+          subscriptionRevenue: Number(stats_obj?.subscription_revenue) || 0,
+          totalRevenue: Number(stats_obj?.total_revenue) || 0,
+          activeSubscriptions: Number(stats_obj?.active_subscriptions) || 0,
+          subscriptionOrdersCount: Number(stats_obj?.subscription_orders_count) || 0
         });
       }
 

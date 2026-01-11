@@ -316,24 +316,22 @@ export default function DeliveriesPage() {
         return;
       }
 
-      // Use the new seller stats function
-      const { data: statsData, error } = await supabase.rpc('get_seller_stats', {
-        seller_user_id: user.id
+      // Fetch stats for each period using the working RPC
+      const [todayRes, weekRes, monthRes] = await Promise.all([
+        supabase.rpc('get_seller_stats_with_period', { seller_user_id: user.id, period: 'today' }),
+        supabase.rpc('get_seller_stats_with_period', { seller_user_id: user.id, period: 'week' }),
+        supabase.rpc('get_seller_stats_with_period', { seller_user_id: user.id, period: 'month' })
+      ]);
+
+      const todayData = Array.isArray(todayRes.data) ? todayRes.data[0] : todayRes.data;
+      const weekData = Array.isArray(weekRes.data) ? weekRes.data[0] : weekRes.data;
+      const monthData = Array.isArray(monthRes.data) ? monthRes.data[0] : monthRes.data;
+
+      setStats({
+        today: Number(todayData?.delivered_count) || 0,
+        thisWeek: Number(weekData?.delivered_count) || 0,
+        thisMonth: Number(monthData?.delivered_count) || 0,
       });
-
-      if (error) {
-        console.error('Error fetching seller stats:', error);
-        return;
-      }
-
-      if (statsData && typeof statsData === 'object') {
-        const stats_obj = statsData as any;
-        setStats({
-          today: stats_obj.today_orders || 0,
-          thisWeek: stats_obj.week_orders || 0,
-          thisMonth: stats_obj.month_orders || 0,
-        });
-      }
     } catch (error) {
       console.error('Error fetching stats:', error);
     }

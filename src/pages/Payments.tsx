@@ -80,19 +80,20 @@ export default function Payments() {
 
   const fetchRevenueStats = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_seller_stats', {
+      const { data, error } = await supabase.rpc('get_seller_stats_with_period', {
         seller_user_id: user?.id,
         period: selectedPeriod
       });
 
       if (error) throw error;
 
-      const stats_obj = data as any;
+      // Handle array response from RPC
+      const stats_obj = Array.isArray(data) ? data[0] : data;
       setRevenueStats({
-        regularRevenue: stats_obj?.regular_revenue || 0,
-        subscriptionRevenue: stats_obj?.subscription_revenue || 0,
-        totalRevenue: stats_obj?.total_revenue || 0,
-        activeSubscriptions: stats_obj?.active_subscriptions || 0
+        regularRevenue: Number(stats_obj?.regular_revenue) || 0,
+        subscriptionRevenue: Number(stats_obj?.subscription_revenue) || 0,
+        totalRevenue: Number(stats_obj?.total_revenue) || 0,
+        activeSubscriptions: Number(stats_obj?.active_subscriptions) || 0
       });
     } catch (error) {
       console.error('Error fetching revenue stats:', error);
