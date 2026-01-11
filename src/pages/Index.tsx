@@ -28,7 +28,6 @@ const Index = () => {
     regularRevenue: 0,
     subscriptionRevenue: 0,
     activeSubscriptions: 0,
-    subscriptionOrdersCount: 0,
     pendingRevenue: 0,
     pendingSubscriptionRevenue: 0,
     projectedDailySubscription: 0
@@ -101,7 +100,6 @@ const Index = () => {
       const regularRevenue = Number(stats_obj?.regular_revenue) || 0;
       const subscriptionRevenue = Number(stats_obj?.subscription_revenue) || 0;
       const activeSubscriptions = Number(stats_obj?.active_subscriptions) || 0;
-      const subscriptionOrdersCount = Number(stats_obj?.subscription_orders_count) || 0;
 
       // Get recent activity using seller orders
       const { data: recentOrders, error: ordersError } = await supabase.rpc('get_seller_orders', {
@@ -126,7 +124,6 @@ const Index = () => {
         regularRevenue,
         subscriptionRevenue,
         activeSubscriptions,
-        subscriptionOrdersCount,
         pendingRevenue: Number(stats_obj?.pending_revenue) || 0,
         pendingSubscriptionRevenue: Number(stats_obj?.pending_subscription_revenue) || 0,
         projectedDailySubscription: Number(stats_obj?.projected_daily_subscription) || 0
@@ -463,8 +460,8 @@ const Index = () => {
           </div>
           <div className="bg-background/50 border border-amber-500/30 rounded-lg p-4 text-center">
             <Truck className="w-5 h-5 text-amber-500 mx-auto mb-2" />
-            <p className="text-xl font-bold text-amber-500">{revenueBreakdown.subscriptionOrdersCount}</p>
-            <p className="text-xs text-zaago-muted-foreground">Subscription Deliveries</p>
+            <p className="text-xl font-bold text-amber-500">₹{revenueBreakdown.projectedDailySubscription.toFixed(2)}</p>
+            <p className="text-xs text-zaago-muted-foreground">Projected Daily</p>
           </div>
         </div>
       </motion.div>

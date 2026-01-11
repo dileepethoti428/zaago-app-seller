@@ -42,6 +42,8 @@ import Checkout from "./pages/Checkout";
 import ProductSuggestions from "./pages/ProductSuggestions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsConditions from "./pages/TermsConditions";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import { CustomerNotifications } from "@/components/CustomerNotifications";
 import { AgentNotifications } from "@/components/AgentNotifications";
 import { SellerNotifications } from "@/components/SellerNotifications";
@@ -145,6 +147,8 @@ const AppContent = () => {
         <Route path="/application-rejected" element={<ApplicationRejected />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-conditions" element={<TermsConditions />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/" element={<Layout />}>
           <Route index element={<Index />} />
           <Route path="dashboard" element={<Dashboard />} />

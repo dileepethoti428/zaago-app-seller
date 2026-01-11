@@ -246,6 +246,16 @@ export default function LoginPage() {
                 />
               </div>
               {isSignUp && <p className="text-sm text-zinc-500 mt-2">Password must be at least 6 characters</p>}
+              {!isSignUp && (
+                <div className="mt-2 text-right">
+                  <Link
+                    to="/forgot-password"
+                    className="text-green-500 hover:text-green-400 text-sm font-medium transition-colors"
+                  >
+                    Forgot Password?
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Additional signup fields */}
