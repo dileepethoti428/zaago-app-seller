@@ -2,6 +2,27 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+// Helper to sanitize numeric values - never send empty strings to integer/numeric columns
+const sanitizeNumericField = (value: any): number | null => {
+  if (value === '' || value === undefined || value === null) return null;
+  const num = Number(value);
+  return isNaN(num) ? null : num;
+};
+
+// Helper to clean update payload - removes empty strings for numeric fields
+const cleanOrderPayload = (payload: Record<string, any>): Record<string, any> => {
+  const numericFields = ['notification_count', 'distance_km', 'delivery_payout', 'otp_attempts'];
+  const cleaned = { ...payload };
+  
+  numericFields.forEach(field => {
+    if (field in cleaned) {
+      cleaned[field] = sanitizeNumericField(cleaned[field]);
+    }
+  });
+  
+  return cleaned;
+};
+
 export const useSellerOrderActions = () => {
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
   const [optimisticUpdates, setOptimisticUpdates] = useState<{ [key: string]: string }>({});
@@ -36,17 +57,21 @@ export const useSellerOrderActions = () => {
         const newStatus = 'packed';
 
         // Update order with acceptance details and directly set to packed
+        const updatePayload = cleanOrderPayload({
+          status: newStatus,
+          seller_accepted_at: now.toISOString(),
+          accepted_at: now.toISOString(),
+          packed_at: now.toISOString(),
+          visible: false,
+          acceptance_window_expired: false,
+          updated_at: now.toISOString()
+        });
+
+        console.log('Accept order update payload:', JSON.stringify(updatePayload, null, 2));
+
         const { error: updateError } = await supabase
           .from('orders')
-          .update({
-            status: newStatus,
-            seller_accepted_at: now.toISOString(),
-            accepted_at: now.toISOString(),
-            packed_at: now.toISOString(),
-            visible: false,
-            acceptance_window_expired: false,
-            updated_at: now.toISOString()
-          })
+          .update(updatePayload)
           .eq('id', orderId);
 
         if (updateError) throw updateError;
