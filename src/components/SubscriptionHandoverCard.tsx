@@ -13,9 +13,6 @@ import {
   ChevronRight, 
   Package, 
   Users, 
-  Clock, 
-  Sunrise,
-  AlertTriangle,
   Phone
 } from 'lucide-react';
 import { useSubscriptionHandover, HandoverDate, HandoverAgent } from '@/hooks/useSubscriptionHandover';
@@ -30,29 +27,12 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-function isUrgentDelivery(timeSlot: string | null): boolean {
-  if (!timeSlot) return false;
-  const now = new Date();
-  const currentHour = now.getHours();
-  
-  // Extract start hour from time slot (e.g., "5:30-7:00 AM" -> 5)
-  const match = timeSlot.match(/(\d{1,2}):/);
-  if (!match) return false;
-  
-  const slotHour = parseInt(match[1], 10);
-  // Urgent if delivery is within 1 hour
-  return slotHour <= currentHour + 1 && slotHour >= currentHour;
-}
-
 interface AgentCardProps {
   agent: HandoverAgent;
-  isToday: boolean;
 }
 
-function AgentCard({ agent, isToday }: AgentCardProps) {
+function AgentCard({ agent }: AgentCardProps) {
   const [isOpen, setIsOpen] = useState(true);
-  
-  const hasUrgentProducts = isToday && agent.products.some(p => isUrgentDelivery(p.deliveryTimeSlot));
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -60,31 +40,18 @@ function AgentCard({ agent, isToday }: AgentCardProps) {
         <div
           className={cn(
             "flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors",
-            "hover:bg-muted/50 border",
-            hasUrgentProducts ? "border-destructive/50 bg-destructive/5" : "border-border"
+            "hover:bg-muted/50 border border-border"
           )}
         >
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={agent.agentProfileImage || undefined} />
-                <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                  {getInitials(agent.agentName)}
-                </AvatarFallback>
-              </Avatar>
-              {hasUrgentProducts && (
-                <div className="absolute -top-1 -right-1">
-                  <AlertTriangle className="h-4 w-4 text-destructive" />
-                </div>
-              )}
-            </div>
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={agent.agentProfileImage || undefined} />
+              <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                {getInitials(agent.agentName)}
+              </AvatarFallback>
+            </Avatar>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-sm">{agent.agentName}</span>
-                {hasUrgentProducts && (
-                  <Badge variant="destructive" className="text-xs">URGENT</Badge>
-                )}
-              </div>
+              <span className="font-medium text-sm">{agent.agentName}</span>
               {agent.agentPhone && (
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Phone className="h-3 w-3" />
@@ -109,7 +76,7 @@ function AgentCard({ agent, isToday }: AgentCardProps) {
         <div className="mt-2 ml-4 space-y-2">
           {agent.products.map((product) => (
             <div
-              key={`${product.productId}-${product.deliveryTimeSlot}`}
+              key={product.productId}
               className="flex items-center justify-between p-2 rounded-md bg-muted/30 border border-border/50"
             >
               <div className="flex items-center gap-3">
@@ -126,20 +93,9 @@ function AgentCard({ agent, isToday }: AgentCardProps) {
                 )}
                 <span className="text-sm font-medium">{product.productName}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs font-mono">
-                  {product.totalQuantity} {product.productUnit}
-                </Badge>
-                {product.deliveryTimeSlot && (
-                  <Badge 
-                    variant={isUrgentDelivery(product.deliveryTimeSlot) ? "destructive" : "secondary"}
-                    className="text-xs"
-                  >
-                    <Clock className="h-3 w-3 mr-1" />
-                    {product.deliveryTimeSlot}
-                  </Badge>
-                )}
-              </div>
+              <Badge variant="outline" className="text-xs font-mono">
+                {product.totalQuantity} {product.productUnit}
+              </Badge>
             </div>
           ))}
         </div>
@@ -210,12 +166,6 @@ export function SubscriptionHandoverCard() {
               <Package className="h-3 w-3" />
               {summary.totalOrders} Orders
             </Badge>
-            {summary.hasEarlyMorning && (
-              <Badge variant="secondary" className="gap-1 bg-warning/20 text-warning-foreground border-warning/30">
-                <Sunrise className="h-3 w-3" />
-                Early Morning
-              </Badge>
-            )}
           </div>
         )}
       </CardHeader>
@@ -243,8 +193,7 @@ export function SubscriptionHandoverCard() {
             {agents.map((agent) => (
               <AgentCard 
                 key={agent.agentId} 
-                agent={agent} 
-                isToday={selectedDate === 'today'}
+                agent={agent}
               />
             ))}
           </div>

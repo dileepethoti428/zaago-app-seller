@@ -13,7 +13,6 @@ export interface HandoverProduct {
   productUnit: string;
   productImage: string | null;
   totalQuantity: number;
-  deliveryTimeSlot: string | null;
 }
 
 export interface HandoverAgent {
@@ -36,7 +35,6 @@ interface RawHandoverData {
   product_unit: string;
   product_image: string | null;
   total_quantity: number;
-  delivery_time_slot: string | null;
 }
 
 const IST_TIMEZONE = 'Asia/Kolkata';
@@ -46,13 +44,6 @@ function getISTDate(dateType: HandoverDate): string {
   const istNow = toZonedTime(now, IST_TIMEZONE);
   const targetDate = dateType === 'tomorrow' ? addDays(istNow, 1) : istNow;
   return format(targetDate, 'yyyy-MM-dd');
-}
-
-function isEarlyMorningSlot(timeSlot: string | null): boolean {
-  if (!timeSlot) return false;
-  // Check if time slot contains early morning times (before 7:00 AM)
-  const earlyPatterns = ['5:', '6:', '05:', '06:', '4:', '04:'];
-  return earlyPatterns.some(pattern => timeSlot.includes(pattern));
 }
 
 function groupDataByAgent(data: RawHandoverData[]): HandoverAgent[] {
@@ -78,7 +69,6 @@ function groupDataByAgent(data: RawHandoverData[]): HandoverAgent[] {
       productUnit: row.product_unit || 'units',
       productImage: row.product_image,
       totalQuantity: row.total_quantity,
-      deliveryTimeSlot: row.delivery_time_slot,
     });
   }
 
@@ -158,14 +148,10 @@ export function useSubscriptionHandover(selectedDate: HandoverDate) {
   const summary = useMemo(() => {
     const totalAgents = agents.length;
     const totalOrders = agents.reduce((sum, agent) => sum + agent.totalOrders, 0);
-    const hasEarlyMorning = agents.some(agent =>
-      agent.products.some(product => isEarlyMorningSlot(product.deliveryTimeSlot))
-    );
 
     return {
       totalAgents,
       totalOrders,
-      hasEarlyMorning,
     };
   }, [agents]);
 

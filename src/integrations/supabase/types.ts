@@ -7881,7 +7881,6 @@ export type Database = {
           agent_name: string
           agent_phone: string
           agent_profile_image: string
-          delivery_time_slot: string
           product_id: string
           product_image: string
           product_name: string
