@@ -3085,6 +3085,7 @@ export type Database = {
           pickup_address: string | null
           pickup_location: Json | null
           pickup_status: string | null
+          price_breakdown: Json | null
           seller_accepted_at: string | null
           seller_id: string | null
           seller_latitude: number | null
@@ -3143,6 +3144,7 @@ export type Database = {
           pickup_address?: string | null
           pickup_location?: Json | null
           pickup_status?: string | null
+          price_breakdown?: Json | null
           seller_accepted_at?: string | null
           seller_id?: string | null
           seller_latitude?: number | null
@@ -3201,6 +3203,7 @@ export type Database = {
           pickup_address?: string | null
           pickup_location?: Json | null
           pickup_status?: string | null
+          price_breakdown?: Json | null
           seller_accepted_at?: string | null
           seller_id?: string | null
           seller_latitude?: number | null
@@ -3659,6 +3662,54 @@ export type Database = {
           user_data?: Json | null
           verified?: boolean | null
           whatsapp_message_id?: string | null
+        }
+        Relationships: []
+      }
+      pricing_config: {
+        Row: {
+          created_at: string | null
+          delivery_charge_enabled: boolean | null
+          delivery_fee: number | null
+          free_delivery_above: number | null
+          gst_enabled: boolean | null
+          gst_percentage: number | null
+          handling_fee: number | null
+          handling_fee_enabled: boolean | null
+          id: string
+          minimum_cart_value: number | null
+          small_cart_fee: number | null
+          small_cart_fee_enabled: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          delivery_charge_enabled?: boolean | null
+          delivery_fee?: number | null
+          free_delivery_above?: number | null
+          gst_enabled?: boolean | null
+          gst_percentage?: number | null
+          handling_fee?: number | null
+          handling_fee_enabled?: boolean | null
+          id?: string
+          minimum_cart_value?: number | null
+          small_cart_fee?: number | null
+          small_cart_fee_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          delivery_charge_enabled?: boolean | null
+          delivery_fee?: number | null
+          free_delivery_above?: number | null
+          gst_enabled?: boolean | null
+          gst_percentage?: number | null
+          handling_fee?: number | null
+          handling_fee_enabled?: boolean | null
+          id?: string
+          minimum_cart_value?: number | null
+          small_cart_fee?: number | null
+          small_cart_fee_enabled?: boolean | null
+          updated_at?: string | null
         }
         Relationships: []
       }
