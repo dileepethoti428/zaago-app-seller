@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.export-stock-report]
 verify_jwt = false
+
+[functions.scan-missed-deliveries]
+verify_jwt = false
