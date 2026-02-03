@@ -1,264 +1,230 @@
 
-
-# Seller-Wise Data Isolation for Top Products Analytics
+# Seller-Specific Performance Trend Analytics Implementation
 
 ## Overview
 
-This plan implements secure, seller-specific Top Products analytics with database-level filtering to prevent any cross-seller data leakage. The current `get_top_products_analytics` function aggregates data across ALL sellers - we need a new seller-scoped version.
+This implementation adds a comprehensive Performance Trend analytics dashboard component that provides seller-specific order metrics with interactive charts. All data is filtered at the database level to ensure complete seller isolation.
 
 ---
 
-## Current State Analysis
+## Database Schema Analysis
 
-### Existing Implementation
-- **`get_top_products_analytics` RPC**: Returns top products globally without seller filtering
-- **No seller_id index on orders table**: Missing for performance
-- **Products table**: Has `seller_id` column with indexes
-- **Orders table**: Has `seller_id` column but no index on it
+### Orders Table (Existing)
+Key columns for analytics:
+- `seller_id` (UUID) - Direct seller reference
+- `status` (TEXT) - Order status (placed, confirmed, out_for_delivery, delivered, cancelled, etc.)
+- `total` (NUMERIC) - Order total for revenue calculation
+- `created_at` (TIMESTAMPTZ) - Order creation time
+- `delivered_at` (TIMESTAMPTZ) - Delivery completion time
+- `delivery_date` (DATE) - Scheduled delivery date
 
-### Security Gap
-The current RPC doesn't accept a `seller_user_id` parameter, so it cannot filter by seller at the database level.
+### Existing Index
+The `idx_orders_seller_id` index was already created during Top Products implementation.
 
 ---
 
 ## Implementation Plan
 
-### Phase 1: Database Performance Optimization
+### Phase 1: Database - Create Secure RPC Function
 
-Add missing index on `orders.seller_id` for fast filtering:
+Create a new PostgreSQL function `get_seller_performance_trends` that:
 
-```sql
-CREATE INDEX IF NOT EXISTS idx_orders_seller_id 
-ON public.orders (seller_id);
+1. **Validates seller identity**: Checks `auth.uid() = seller_user_id` to prevent cross-seller access
+2. **Accepts parameters**:
+   - `seller_user_id` (UUID) - Must match auth.uid()
+   - `time_range` (TEXT) - '1d', '1w', '1m', '3m', '6m', '1y'
+   - `metric_type` (TEXT) - 'orders', 'revenue', 'efficiency'
+3. **Returns time-series data**:
+   - `period_start` (TIMESTAMPTZ)
+   - `period_label` (TEXT) - Formatted date label
+   - `total_orders` (INTEGER)
+   - `delivered_orders` (INTEGER)
+   - `failed_orders` (INTEGER)
+   - `total_revenue` (NUMERIC)
+   - `completion_rate` (NUMERIC)
 
-CREATE INDEX IF NOT EXISTS idx_orders_seller_delivered 
-ON public.orders (seller_id, delivered_at) 
-WHERE status = 'delivered';
-```
+**Aggregation Logic by Time Range:**
+- 1D: Hourly aggregation (24 data points)
+- 1W: Daily aggregation (7 data points)
+- 1M: Daily aggregation (30 data points)
+- 3M+: Weekly aggregation
 
-### Phase 2: Create Secure Seller-Scoped RPC Function
-
-Create a new RPC function that enforces seller filtering at the database level:
-
-```sql
-CREATE OR REPLACE FUNCTION public.get_seller_top_products_analytics(
+**SQL Function Structure:**
+```text
+CREATE FUNCTION get_seller_performance_trends(
   seller_user_id UUID,
-  time_period TEXT DEFAULT '1_month',
-  sort_by TEXT DEFAULT 'revenue',
-  limit_count INTEGER DEFAULT 5
+  time_range TEXT DEFAULT '1m',
+  metric_type TEXT DEFAULT 'orders'
 )
-RETURNS TABLE (
-  product_id UUID,
-  product_name TEXT,
-  product_image_url TEXT,
-  total_quantity INTEGER,
-  total_revenue NUMERIC,
-  total_orders INTEGER,
-  period_label TEXT
-)
+RETURNS TABLE (...)
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
-DECLARE
-  start_date DATE;
 BEGIN
-  -- Verify the caller is the actual seller (prevents API manipulation)
+  -- Auth validation
   IF auth.uid() != seller_user_id THEN
-    RAISE EXCEPTION 'Unauthorized: Cannot access other seller data';
+    RAISE EXCEPTION 'Unauthorized';
   END IF;
-
-  -- Calculate start date based on period
-  CASE time_period
-    WHEN 'today' THEN start_date := CURRENT_DATE;
-    WHEN 'week' THEN start_date := CURRENT_DATE - INTERVAL '7 days';
-    WHEN 'month' THEN start_date := CURRENT_DATE - INTERVAL '30 days';
-    WHEN '6_months' THEN start_date := CURRENT_DATE - INTERVAL '6 months';
-    WHEN '1_year' THEN start_date := CURRENT_DATE - INTERVAL '1 year';
-    ELSE start_date := CURRENT_DATE - INTERVAL '30 days';
-  END CASE;
-
-  RETURN QUERY
-  WITH seller_orders AS (
-    -- Get only orders containing this seller's products
-    SELECT 
-      o.id AS order_id,
-      o.delivered_at,
-      item
-    FROM orders o
-    CROSS JOIN jsonb_array_elements(o.items) AS item
-    INNER JOIN products p ON (item->>'id')::UUID = p.id
-    WHERE o.status = 'delivered'
-      AND o.delivered_at IS NOT NULL
-      AND DATE(o.delivered_at) >= start_date
-      AND p.seller_id = seller_user_id  -- CRITICAL: Database-level seller filter
-  )
-  SELECT 
-    p.id AS product_id,
-    p.name AS product_name,
-    p.image_url AS product_image_url,
-    COALESCE(SUM((so.item->>'quantity')::INTEGER), 0)::INTEGER AS total_quantity,
-    COALESCE(SUM(
-      (so.item->>'quantity')::INTEGER * 
-      COALESCE((so.item->>'unit_price')::NUMERIC, p.price)
-    ), 0) AS total_revenue,
-    COUNT(DISTINCT so.order_id)::INTEGER AS total_orders,
-    time_period AS period_label
-  FROM products p
-  LEFT JOIN seller_orders so ON (so.item->>'id')::UUID = p.id
-  WHERE p.seller_id = seller_user_id  -- Only this seller's products
-    AND p.is_active = TRUE
-  GROUP BY p.id, p.name, p.image_url, p.price
-  HAVING COALESCE(SUM((so.item->>'quantity')::INTEGER), 0) > 0
-  ORDER BY 
-    CASE sort_by
-      WHEN 'revenue' THEN COALESCE(SUM((so.item->>'quantity')::INTEGER * COALESCE((so.item->>'unit_price')::NUMERIC, p.price)), 0)
-      WHEN 'quantity' THEN COALESCE(SUM((so.item->>'quantity')::INTEGER), 0)
-      WHEN 'orders' THEN COUNT(DISTINCT so.order_id)
-      ELSE COALESCE(SUM((so.item->>'quantity')::INTEGER * COALESCE((so.item->>'unit_price')::NUMERIC, p.price)), 0)
-    END DESC
-  LIMIT limit_count;
+  
+  -- Calculate start_date based on time_range
+  -- Aggregate orders grouped by appropriate interval
+  -- Return formatted results
 END;
-$$;
+$$
 ```
 
-**Security Features:**
-1. `seller_user_id` parameter matched against `auth.uid()` - prevents API manipulation
-2. All JOINs filter by `seller_id = seller_user_id`
-3. `SECURITY DEFINER` with explicit auth check
-4. No possibility of accessing another seller's data
+### Phase 2: Create Summary RPC Function
 
-### Phase 3: Create React Hook
+Create `get_seller_performance_summary` for the stat cards:
 
-Create `src/hooks/useTopProductsAnalytics.ts`:
+**Returns:**
+- `total_orders` - Count of all orders in range
+- `delivered_orders` - Count of delivered orders
+- `failed_orders` - Count of failed/cancelled orders
+- `total_revenue` - Sum of order totals for delivered orders
+- `completion_rate` - (delivered / total) * 100
+- `avg_daily_orders` - total_orders / days_in_range
 
-```typescript
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/context/AuthContext';
+---
 
-export interface TopProduct {
-  product_id: string;
-  product_name: string;
-  product_image_url: string | null;
-  total_quantity: number;
-  total_revenue: number;
-  total_orders: number;
-  period_label: string;
-}
+### Phase 3: React Hook - usePerformanceTrends
 
-type SortBy = 'revenue' | 'quantity' | 'orders';
-type TimePeriod = 'today' | 'week' | 'month' | '6_months' | '1_year';
+Create `src/hooks/usePerformanceTrends.ts`:
 
-export const useTopProductsAnalytics = (
-  timePeriod: TimePeriod = 'month',
-  sortBy: SortBy = 'revenue',
-  limit: number = 5
-) => {
-  const { user } = useAuth();
+```text
+Exports:
+- usePerformanceTrends(timeRange, metricType)
+  - Calls get_seller_performance_trends RPC
+  - Returns { data, isLoading, error }
+  
+- usePerformanceSummary(timeRange)
+  - Calls get_seller_performance_summary RPC
+  - Returns summary stats for cards
 
-  return useQuery({
-    queryKey: ['top-products-analytics', user?.id, timePeriod, sortBy, limit],
-    queryFn: async (): Promise<TopProduct[]> => {
-      if (!user?.id) return [];
-
-      const { data, error } = await supabase.rpc('get_seller_top_products_analytics', {
-        seller_user_id: user.id,
-        time_period: timePeriod,
-        sort_by: sortBy,
-        limit_count: limit
-      });
-
-      if (error) {
-        console.error('Error fetching top products:', error);
-        throw error;
-      }
-
-      return data || [];
-    },
-    enabled: !!user?.id,
-    staleTime: 30000, // 30 seconds
-    refetchInterval: 60000 // 1 minute
-  });
-};
-```
-
-### Phase 4: Create UI Component
-
-Create `src/components/TopProductsCard.tsx`:
-
-```typescript
-// Features:
-// - Time period dropdown (Today, Week, Month, 6 Months, 1 Year)
-// - Sort by dropdown (Revenue, Orders, Quantity)
-// - Displays top 5 products with:
-//   - Product image
-//   - Product name
-//   - Total revenue (₹X.XX)
-//   - Total orders count
-//   - Total quantity sold
-// - Loading skeleton
-// - Empty state: "No data for selected period"
-// - Uses motion animations consistent with other dashboard cards
-```
-
-### Phase 5: Integrate into Dashboard
-
-Update `src/pages/Dashboard.tsx` to include the TopProductsCard:
-
-```typescript
-import { TopProductsCard } from '@/components/TopProductsCard';
-
-// Add between existing sections
-<TopProductsCard />
+Types:
+- TimeRange = '1d' | '1w' | '1m' | '3m' | '6m' | '1y'
+- MetricType = 'orders' | 'revenue' | 'efficiency'
+- ChartType = 'area' | 'line' | 'stacked'
+- TrendDataPoint = {
+    period_start: string
+    period_label: string
+    total_orders: number
+    delivered_orders: number
+    failed_orders: number
+    total_revenue: number
+    completion_rate: number
+  }
 ```
 
 ---
 
-## Files to Create/Modify
+### Phase 4: UI Component - PerformanceTrendCard
 
-| File | Action | Description |
-|------|--------|-------------|
-| `supabase/migrations/xxx_seller_top_products.sql` | CREATE | Add indexes and RPC function |
-| `src/hooks/useTopProductsAnalytics.ts` | CREATE | React Query hook for fetching data |
-| `src/components/TopProductsCard.tsx` | CREATE | UI component for displaying top products |
-| `src/pages/Dashboard.tsx` | MODIFY | Add TopProductsCard to dashboard |
+Create `src/components/PerformanceTrendCard.tsx`:
+
+**Layout Structure:**
+```text
++-----------------------------------------------+
+|  Performance Trends            [Time Filters] |
+|  Track your order performance   1D 1W 1M 3M 1Y|
++-----------------------------------------------+
+|  +--------+ +--------+ +--------+ +--------+  |
+|  | Total  | | Compl. | | Avg    | | Deliv. |  |
+|  | Volume | | Rate   | | Daily  | | Orders |  |
+|  |  142   | | 94.2%  | |  4.7   | |  134   |  |
+|  +--------+ +--------+ +--------+ +--------+  |
++-----------------------------------------------+
+|  [Orders] [Revenue] [Efficiency]              |
++-----------------------------------------------+
+|  [Area] [Line] [Stack]                        |
++-----------------------------------------------+
+|                                               |
+|     📈 Interactive Chart Area                 |
+|     (Recharts AreaChart/LineChart)            |
+|                                               |
++-----------------------------------------------+
+```
+
+**Features:**
+1. **Time Range Buttons**: 1D, 1W, 1M, 3M, 6M, 1Y
+2. **Summary Stat Cards**: Total Volume, Completion Rate, Avg Daily, Delivered
+3. **Metric Tabs**: Orders, Revenue, Efficiency
+4. **Chart Type Toggle**: Area, Line, Stacked Bar
+5. **Chart**: Responsive Recharts with hover tooltips
+6. **Empty State**: "No orders in selected period" with icon
+7. **Loading State**: Skeleton loaders for stats and chart
+
+**Chart Behavior by Tab:**
+- **Orders Tab**: Plot total_orders per period (Y-axis: count)
+- **Revenue Tab**: Plot total_revenue per period (Y-axis: ₹)
+- **Efficiency Tab**: Plot completion_rate per period (Y-axis: %)
+
+**Chart Type Behavior:**
+- **Area**: Filled area chart showing cumulative trend
+- **Line**: Simple line chart for point-to-point comparison
+- **Stacked**: BarChart with delivered vs failed stacked
 
 ---
 
-## Security Validation
+### Phase 5: Dashboard Integration
 
-| Requirement | Implementation |
-|-------------|----------------|
-| seller_id from auth session | Uses `auth.uid()` in RPC - never passed from frontend |
-| Database-level filtering | RPC filters with `p.seller_id = seller_user_id` in CTE and main query |
-| Prevent API manipulation | RPC validates `auth.uid() = seller_user_id` before query execution |
-| No cross-seller leakage | All JOINs include seller filter; tested with `EXPLAIN ANALYZE` |
+Update `src/pages/Dashboard.tsx`:
+- Import and add `<PerformanceTrendCard />` below TopProductsCard
+- Component is self-contained with its own state management
 
 ---
 
-## Performance Considerations
+## File Changes Summary
 
-1. **New Indexes**: `idx_orders_seller_id` and `idx_orders_seller_delivered` for fast order filtering
-2. **CTE Pattern**: Uses CTE to pre-filter seller orders before aggregation
-3. **Limit Applied**: Always limits to 5 products max
-4. **Stale Time**: 30-second cache to reduce database load
-
----
-
-## Empty State Handling
-
-- If seller has zero delivered orders → Display: "No sales data for selected period"
-- If seller has < 5 products with sales → Show only available products
-- If seller account is new → Display welcoming empty state with CTA
+| File | Action | Purpose |
+|------|--------|---------|
+| `supabase/migrations/xxx_performance_trends_rpc.sql` | CREATE | RPC functions for trend data |
+| `src/hooks/usePerformanceTrends.ts` | CREATE | React Query hooks for data fetching |
+| `src/components/PerformanceTrendCard.tsx` | CREATE | Main UI component with charts |
+| `src/pages/Dashboard.tsx` | MODIFY | Add PerformanceTrendCard |
 
 ---
 
-## Testing Checklist
+## Security Implementation
 
-1. Verify seller A cannot see seller B's products
-2. Verify time period filtering works correctly
-3. Verify sort by (revenue/orders/quantity) changes ranking
-4. Verify dashboard updates instantly when period changes
-5. Verify empty state displays correctly for new sellers
-6. Test with browser dev tools - ensure no other seller IDs appear in network requests
+| Requirement | Solution |
+|-------------|----------|
+| seller_id from auth session | RPC uses `auth.uid()` internally |
+| Server-side enforcement | `IF auth.uid() != seller_user_id THEN RAISE EXCEPTION` |
+| No frontend seller_id | Hook reads `user.id` from `useAuth()` context only |
+| Cross-seller prevention | All WHERE clauses include `seller_id = seller_user_id` |
 
+---
+
+## Technical Details
+
+### Recharts Components Used
+- `AreaChart`, `Area` - For area charts
+- `LineChart`, `Line` - For line charts  
+- `BarChart`, `Bar` - For stacked bar charts
+- `XAxis`, `YAxis`, `CartesianGrid`, `Tooltip`, `Legend`, `ResponsiveContainer`
+
+### React Query Configuration
+- `queryKey`: Includes user.id, timeRange, metricType for proper cache invalidation
+- `staleTime`: 30 seconds
+- `refetchInterval`: 60 seconds
+- `enabled`: Only when user is authenticated
+
+### Time Range Calculations
+| Range | Start Date | Aggregation |
+|-------|------------|-------------|
+| 1D | NOW() - 24 hours | Hourly |
+| 1W | NOW() - 7 days | Daily |
+| 1M | NOW() - 30 days | Daily |
+| 3M | NOW() - 90 days | Weekly |
+| 6M | NOW() - 180 days | Weekly |
+| 1Y | NOW() - 365 days | Monthly |
+
+---
+
+## Empty/Edge States
+
+1. **No orders at all**: Show "Start selling to see your performance trends!"
+2. **No orders in range**: Show "No data for selected period. Try a longer time range."
+3. **Loading**: Skeleton placeholders for cards and chart area
+4. **Error**: Toast notification with retry button
