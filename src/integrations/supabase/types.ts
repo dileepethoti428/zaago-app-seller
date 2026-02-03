@@ -7812,6 +7812,29 @@ export type Database = {
         Args: { target_seller_id: string }
         Returns: Json
       }
+      get_seller_performance_summary: {
+        Args: { seller_user_id: string; time_range?: string }
+        Returns: {
+          avg_daily_orders: number
+          completion_rate: number
+          delivered_orders: number
+          failed_orders: number
+          total_orders: number
+          total_revenue: number
+        }[]
+      }
+      get_seller_performance_trends: {
+        Args: { seller_user_id: string; time_range?: string }
+        Returns: {
+          completion_rate: number
+          delivered_orders: number
+          failed_orders: number
+          period_label: string
+          period_start: string
+          total_orders: number
+          total_revenue: number
+        }[]
+      }
       get_seller_sales_analytics: {
         Args: { target_seller_id: string; time_period?: string }
         Returns: Json
