@@ -25,6 +25,7 @@ import { StockAlertsRefillSuggestions } from '@/components/StockAlertsRefillSugg
 import { WeeklyRefillTrendReport } from '@/components/WeeklyRefillTrendReport';
 import { TopProductsCard } from '@/components/TopProductsCard';
 import { PerformanceTrendCard } from '@/components/PerformanceTrendCard';
+import { SubscriptionHandoverCard } from '@/components/SubscriptionHandoverCard';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -147,6 +148,9 @@ const Dashboard = () => {
 
       {/* Tomorrow's Subscription Forecast */}
       <TomorrowSubscriptionForecast />
+
+      {/* Subscription Delivery Handover */}
+      <SubscriptionHandoverCard />
 
       {/* Stock Alerts & Refill Suggestions */}
       <StockAlertsRefillSuggestions />
