@@ -77,6 +77,26 @@ export const useRealtimeSync = () => {
     // Products are now handled by React Query refetchOnWindowFocus
     // No need for real-time subscription - reduces 500+ events/hour
 
+    // Vacation compensations real-time sync
+    const compensationsChannel = supabase
+      .channel('compensations-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'vacation_compensations',
+        },
+        () => {
+          // Invalidate compensation queries
+          queryClient.invalidateQueries({ queryKey: ['all-vacation-data'] });
+          queryClient.invalidateQueries({ queryKey: ['vacation-compensations'] });
+          queryClient.invalidateQueries({ queryKey: ['vacation-dates-status'] });
+        }
+      )
+      .subscribe();
+
+    channels.push(compensationsChannel);
     // Notifications real-time sync
     const notificationsChannel = supabase
       .channel('notifications-changes')

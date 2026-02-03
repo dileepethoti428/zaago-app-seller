@@ -1119,6 +1119,47 @@ export type Database = {
         }
         Relationships: []
       }
+      compensation_logs: {
+        Row: {
+          action: string
+          compensation_id: string
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          new_status: string | null
+          performed_by: string | null
+          previous_status: string | null
+        }
+        Insert: {
+          action: string
+          compensation_id: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          new_status?: string | null
+          performed_by?: string | null
+          previous_status?: string | null
+        }
+        Update: {
+          action?: string
+          compensation_id?: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          new_status?: string | null
+          performed_by?: string | null
+          previous_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compensation_logs_compensation_id_fkey"
+            columns: ["compensation_id"]
+            isOneToOne: false
+            referencedRelation: "vacation_compensations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_messages: {
         Row: {
           created_at: string
@@ -5803,10 +5844,22 @@ export type Database = {
       vacation_compensations: {
         Row: {
           assigned_agent_id: string | null
+          cancelled_at: string | null
+          cancelled_reason: string | null
           compensation_delivery_date: string
+          compensation_type: string | null
           created_at: string | null
+          customer_id: string | null
+          daily_order_id: string | null
+          delivered_at: string | null
+          delivery_failed_at: string | null
           id: string
+          notes: string | null
+          order_id: string | null
           original_vacation_date: string
+          product_id: string | null
+          quantity: number | null
+          reason: string | null
           seller_id: string
           status: string | null
           subscription_id: string
@@ -5815,10 +5868,22 @@ export type Database = {
         }
         Insert: {
           assigned_agent_id?: string | null
+          cancelled_at?: string | null
+          cancelled_reason?: string | null
           compensation_delivery_date: string
+          compensation_type?: string | null
           created_at?: string | null
+          customer_id?: string | null
+          daily_order_id?: string | null
+          delivered_at?: string | null
+          delivery_failed_at?: string | null
           id?: string
+          notes?: string | null
+          order_id?: string | null
           original_vacation_date: string
+          product_id?: string | null
+          quantity?: number | null
+          reason?: string | null
           seller_id: string
           status?: string | null
           subscription_id: string
@@ -5827,10 +5892,22 @@ export type Database = {
         }
         Update: {
           assigned_agent_id?: string | null
+          cancelled_at?: string | null
+          cancelled_reason?: string | null
           compensation_delivery_date?: string
+          compensation_type?: string | null
           created_at?: string | null
+          customer_id?: string | null
+          daily_order_id?: string | null
+          delivered_at?: string | null
+          delivery_failed_at?: string | null
           id?: string
+          notes?: string | null
+          order_id?: string | null
           original_vacation_date?: string
+          product_id?: string | null
+          quantity?: number | null
+          reason?: string | null
           seller_id?: string
           status?: string | null
           subscription_id?: string
@@ -5843,6 +5920,55 @@ export type Database = {
             columns: ["assigned_agent_id"]
             isOneToOne: false
             referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vacation_compensations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vacation_compensations_daily_order_id_fkey"
+            columns: ["daily_order_id"]
+            isOneToOne: false
+            referencedRelation: "customer_next_delivery"
+            referencedColumns: ["order_id"]
+          },
+          {
+            foreignKeyName: "vacation_compensations_daily_order_id_fkey"
+            columns: ["daily_order_id"]
+            isOneToOne: false
+            referencedRelation: "daily_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vacation_compensations_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vacation_compensations_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders_with_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vacation_compensations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vacation_compensations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_sellers"
             referencedColumns: ["id"]
           },
           {

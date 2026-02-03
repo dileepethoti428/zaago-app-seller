@@ -37,12 +37,24 @@ export interface VacationPeriodWithSubscription {
 export interface VacationCompensationWithDetails {
   id: string;
   subscription_id: string;
-  vacation_period_id: string;
+  vacation_period_id: string | null;
+  order_id: string | null;
+  daily_order_id: string | null;
+  customer_id: string | null;
+  product_id: string | null;
   original_vacation_date: string;
-  compensation_delivery_date: string;
+  compensation_delivery_date: string | null;
   seller_id: string;
   assigned_agent_id: string | null;
   status: 'pending' | 'assigned' | 'delivered' | 'cancelled';
+  reason: 'vacation' | 'technical_error' | 'delivery_failed' | 'agent_issue' | 'seller_failure';
+  compensation_type: 'extra_delivery' | 'refund' | 'credit';
+  quantity: number;
+  notes: string | null;
+  delivery_failed_at: string | null;
+  delivered_at: string | null;
+  cancelled_at: string | null;
+  cancelled_reason: string | null;
   created_at: string;
   updated_at: string;
   delivery_agent: {
@@ -73,6 +85,7 @@ export interface VacationCompensationWithDetails {
     product: {
       id: string;
       name: string;
+      image_url: string | null;
     } | null;
   } | null;
 }
@@ -83,6 +96,11 @@ export interface VacationSummary {
   pendingCompensations: number;
   assignedCompensations: number;
   deliveredCompensations: number;
+  // New counts by reason
+  vacationCount: number;
+  deliveryFailedCount: number;
+  agentIssueCount: number;
+  technicalErrorCount: number;
 }
 
 export const useAllVacationData = () => {
@@ -90,19 +108,29 @@ export const useAllVacationData = () => {
 
   return useQuery({
     queryKey: ['all-vacation-data', user?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<{
+      vacationPeriods: VacationPeriodWithSubscription[];
+      compensations: VacationCompensationWithDetails[];
+      summary: VacationSummary;
+    }> => {
+      const emptyResult = {
+        vacationPeriods: [] as VacationPeriodWithSubscription[],
+        compensations: [] as VacationCompensationWithDetails[],
+        summary: {
+          totalActiveVacations: 0,
+          totalVacationDays: 0,
+          pendingCompensations: 0,
+          assignedCompensations: 0,
+          deliveredCompensations: 0,
+          vacationCount: 0,
+          deliveryFailedCount: 0,
+          agentIssueCount: 0,
+          technicalErrorCount: 0,
+        }
+      };
+
       if (!user?.id) {
-        return {
-          vacationPeriods: [],
-          compensations: [],
-          summary: {
-            totalActiveVacations: 0,
-            totalVacationDays: 0,
-            pendingCompensations: 0,
-            assignedCompensations: 0,
-            deliveredCompensations: 0,
-          }
-        };
+        return emptyResult;
       }
 
       // First, get seller's product IDs
@@ -120,17 +148,7 @@ export const useAllVacationData = () => {
 
       // If seller has no products, return empty data
       if (sellerProductIds.length === 0) {
-        return {
-          vacationPeriods: [],
-          compensations: [],
-          summary: {
-            totalActiveVacations: 0,
-            totalVacationDays: 0,
-            pendingCompensations: 0,
-            assignedCompensations: 0,
-            deliveredCompensations: 0,
-          }
-        };
+        return emptyResult;
       }
 
       // Get subscriptions for seller's products
@@ -148,17 +166,7 @@ export const useAllVacationData = () => {
 
       // If no subscriptions, return empty data
       if (sellerSubscriptionIds.length === 0) {
-        return {
-          vacationPeriods: [],
-          compensations: [],
-          summary: {
-            totalActiveVacations: 0,
-            totalVacationDays: 0,
-            pendingCompensations: 0,
-            assignedCompensations: 0,
-            deliveredCompensations: 0,
-          }
-        };
+        return emptyResult;
       }
 
       // Fetch vacation periods only for seller's subscriptions
@@ -231,11 +239,12 @@ export const useAllVacationData = () => {
         })
       );
 
-      // Fetch compensations only for this seller
+      // Fetch compensations only for this seller (including new columns)
       const { data: compensations, error: compError } = await supabase
         .from('vacation_compensations' as any)
         .select('*, delivery_agents(id, name, phone, profile_image, vehicle_type, vehicle_number, average_rating, total_deliveries, is_online, performance_score)')
         .eq('seller_id', user.id)
+        .neq('status', 'cancelled')
         .order('compensation_delivery_date', { ascending: true });
 
       if (compError) {
@@ -293,13 +302,18 @@ export const useAllVacationData = () => {
         })
       );
 
-      // Calculate summary
+      // Calculate summary with reason counts
       const summary: VacationSummary = {
         totalActiveVacations: periodsWithDetails.length,
         totalVacationDays: periodsWithDetails.reduce((sum, p) => sum + p.total_days, 0),
         pendingCompensations: compensationsWithDetails.filter(c => c.status === 'pending').length,
         assignedCompensations: compensationsWithDetails.filter(c => c.status === 'assigned').length,
         deliveredCompensations: compensationsWithDetails.filter(c => c.status === 'delivered').length,
+        // Counts by reason
+        vacationCount: compensationsWithDetails.filter(c => c.reason === 'vacation').length,
+        deliveryFailedCount: compensationsWithDetails.filter(c => c.reason === 'delivery_failed').length,
+        agentIssueCount: compensationsWithDetails.filter(c => c.reason === 'agent_issue').length,
+        technicalErrorCount: compensationsWithDetails.filter(c => c.reason === 'technical_error').length,
       };
 
       return {
