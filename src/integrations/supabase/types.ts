@@ -429,6 +429,27 @@ export type Database = {
           },
         ]
       }
+      agent_push_tokens: {
+        Row: {
+          agent_id: string
+          created_at: string | null
+          fcm_token: string
+          id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string | null
+          fcm_token: string
+          id?: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string | null
+          fcm_token?: string
+          id?: string
+        }
+        Relationships: []
+      }
       agent_settings: {
         Row: {
           agent_id: string
@@ -2473,6 +2494,7 @@ export type Database = {
       notification_queue: {
         Row: {
           body: string
+          claimed_at: string | null
           created_at: string | null
           data: Json | null
           debug_source: string | null
@@ -2481,13 +2503,16 @@ export type Database = {
           last_error: string | null
           order_id: string | null
           processed: boolean | null
+          processed_at: string | null
+          processed_by: string[] | null
           retry_count: number | null
-          target: string | null
+          target: string
           title: string
           user_id: string
         }
         Insert: {
           body: string
+          claimed_at?: string | null
           created_at?: string | null
           data?: Json | null
           debug_source?: string | null
@@ -2496,13 +2521,16 @@ export type Database = {
           last_error?: string | null
           order_id?: string | null
           processed?: boolean | null
+          processed_at?: string | null
+          processed_by?: string[] | null
           retry_count?: number | null
-          target?: string | null
+          target: string
           title: string
           user_id: string
         }
         Update: {
           body?: string
+          claimed_at?: string | null
           created_at?: string | null
           data?: Json | null
           debug_source?: string | null
@@ -2511,8 +2539,10 @@ export type Database = {
           last_error?: string | null
           order_id?: string | null
           processed?: boolean | null
+          processed_at?: string | null
+          processed_by?: string[] | null
           retry_count?: number | null
-          target?: string | null
+          target?: string
           title?: string
           user_id?: string
         }
@@ -6681,6 +6711,64 @@ export type Database = {
         Args: { p_check_date?: string; p_user_id: string }
         Returns: Json
       }
+      claim_notification_jobs: {
+        Args: { batch_size: number; target_app: string }
+        Returns: {
+          body: string
+          claimed_at: string | null
+          created_at: string | null
+          data: Json | null
+          debug_source: string | null
+          event_type: string
+          id: string
+          last_error: string | null
+          order_id: string | null
+          processed: boolean | null
+          processed_at: string | null
+          processed_by: string[] | null
+          retry_count: number | null
+          target: string
+          title: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "notification_queue"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      claim_notification_jobs_by_consumer: {
+        Args: {
+          allowed_event_types: string[]
+          batch_size: number
+          consumer: string
+        }
+        Returns: {
+          body: string
+          claimed_at: string | null
+          created_at: string | null
+          data: Json | null
+          debug_source: string | null
+          event_type: string
+          id: string
+          last_error: string | null
+          order_id: string | null
+          processed: boolean | null
+          processed_at: string | null
+          processed_by: string[] | null
+          retry_count: number | null
+          target: string
+          title: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "notification_queue"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       cleanup_abandoned_payment_orders: { Args: never; Returns: number }
       cleanup_expired_otps: { Args: never; Returns: number }
       clear_user_cart: { Args: { cart_user_id: string }; Returns: undefined }
@@ -7836,7 +7924,7 @@ export type Database = {
         Returns: undefined
       }
       mark_payout_paid: { Args: { payout_id: string }; Returns: undefined }
-      notify_nearby_delivery_agents: {
+      notify_nearby_delivery_agents_for_order: {
         Args: { p_order_id: string }
         Returns: undefined
       }
