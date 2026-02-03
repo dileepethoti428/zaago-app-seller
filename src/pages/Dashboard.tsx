@@ -23,6 +23,7 @@ import { TodaysOrdersSummary } from '@/components/TodaysOrdersSummary';
 import { TomorrowSubscriptionForecast } from '@/components/TomorrowSubscriptionForecast';
 import { StockAlertsRefillSuggestions } from '@/components/StockAlertsRefillSuggestions';
 import { WeeklyRefillTrendReport } from '@/components/WeeklyRefillTrendReport';
+import { TopProductsCard } from '@/components/TopProductsCard';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -151,6 +152,9 @@ const Dashboard = () => {
 
       {/* Weekly Refill Trend Report */}
       <WeeklyRefillTrendReport />
+
+      {/* Top Products Analytics */}
+      <TopProductsCard />
 
       {/* Header */}
       <motion.div
