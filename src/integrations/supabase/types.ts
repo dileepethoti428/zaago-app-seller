@@ -7861,6 +7861,23 @@ export type Database = {
           unassigned_orders: number
         }[]
       }
+      get_seller_top_products_analytics: {
+        Args: {
+          limit_count?: number
+          seller_user_id: string
+          sort_by?: string
+          time_period?: string
+        }
+        Returns: {
+          period_label: string
+          product_id: string
+          product_image_url: string
+          product_name: string
+          total_orders: number
+          total_quantity: number
+          total_revenue: number
+        }[]
+      }
       get_seller_unassigned_orders: {
         Args: { p_date: string; p_seller_user_id: string }
         Returns: {
