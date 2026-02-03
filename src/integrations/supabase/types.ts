@@ -330,6 +330,41 @@ export type Database = {
           },
         ]
       }
+      agent_handover_confirmations: {
+        Row: {
+          agent_id: string
+          confirmed_at: string | null
+          created_at: string | null
+          handover_date: string
+          id: string
+          seller_id: string
+        }
+        Insert: {
+          agent_id: string
+          confirmed_at?: string | null
+          created_at?: string | null
+          handover_date: string
+          id?: string
+          seller_id: string
+        }
+        Update: {
+          agent_id?: string
+          confirmed_at?: string | null
+          created_at?: string | null
+          handover_date?: string
+          id?: string
+          seller_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_handover_confirmations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["agent_id"]
+          },
+        ]
+      }
       agent_notifications: {
         Row: {
           agent_id: string
