@@ -28,7 +28,9 @@ import {
   Settings,
   XCircle,
   RefreshCw,
-  CreditCard
+  CreditCard,
+  Search,
+  Loader2
 } from 'lucide-react';
 import { useAllVacationData, VacationCompensationWithDetails } from '@/hooks/useAllVacationData';
 import { 
@@ -38,6 +40,7 @@ import {
   useAssignAgentToCompensation,
   useSetCompensationDeliveryDate
 } from '@/hooks/useCompensationActions';
+import { useScanMissedDeliveries } from '@/hooks/useScanMissedDeliveries';
 import { format, parseISO } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { useQuery } from '@tanstack/react-query';
@@ -326,6 +329,7 @@ const VacationCompensations = () => {
   const { user } = useAuth();
   const { data, isLoading, error } = useAllVacationData();
   const [activeTab, setActiveTab] = useState('all');
+  const { scan, isScanning, scanResult, clearResult } = useScanMissedDeliveries();
 
   // Fetch delivery agents for assignment
   const { data: agents = [] } = useQuery({
@@ -400,10 +404,55 @@ const VacationCompensations = () => {
   return (
     <div className="container mx-auto p-4 space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <CalendarOff className="h-8 w-8 text-primary" />
-        <h1 className="text-2xl font-bold">Vacation Compensations</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <CalendarOff className="h-8 w-8 text-primary" />
+          <h1 className="text-2xl font-bold">Vacation Compensations</h1>
+        </div>
+        <Button
+          onClick={() => scan(30)}
+          disabled={isScanning}
+          className="gap-2"
+        >
+          {isScanning ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Search className="h-4 w-4" />
+          )}
+          {isScanning ? 'Scanning...' : 'Scan for Missed Deliveries'}
+        </Button>
       </div>
+
+      {/* Scan Result Banner */}
+      {scanResult && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <p className="font-semibold text-primary">
+                  Scan Complete!
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Found {scanResult.orders_found + scanResult.daily_orders_found + scanResult.stale_pending_found} undelivered orders.
+                  Created {scanResult.compensations_created} new compensations.
+                  {scanResult.stale_pending_found > 0 && (
+                    <span className="block mt-1">
+                      Including {scanResult.stale_pending_found} stale pending orders that were never delivered.
+                    </span>
+                  )}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={clearResult}
+              >
+                <XCircle className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -632,7 +681,20 @@ const VacationCompensations = () => {
             <div className="text-center py-12 text-muted-foreground">
               <CalendarOff className="h-16 w-16 mx-auto mb-4 opacity-50" />
               <p className="text-lg font-medium">No compensations found</p>
-              <p className="text-sm">Compensations will appear here when delivery failures occur</p>
+              <p className="text-sm mb-4">Click "Scan for Missed Deliveries" to detect undelivered orders and create compensation records</p>
+              <Button
+                onClick={() => scan(30)}
+                disabled={isScanning}
+                variant="outline"
+                className="gap-2"
+              >
+                {isScanning ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Search className="h-4 w-4" />
+                )}
+                {isScanning ? 'Scanning...' : 'Scan Now'}
+              </Button>
             </div>
           )}
         </TabsContent>

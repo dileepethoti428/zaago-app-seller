@@ -6487,7 +6487,7 @@ export type Database = {
           assigned_agent_id: string | null
           cancelled_at: string | null
           cancelled_reason: string | null
-          compensation_delivery_date: string
+          compensation_delivery_date: string | null
           compensation_type: string | null
           created_at: string | null
           customer_id: string | null
@@ -6505,13 +6505,13 @@ export type Database = {
           status: string | null
           subscription_id: string
           updated_at: string | null
-          vacation_period_id: string
+          vacation_period_id: string | null
         }
         Insert: {
           assigned_agent_id?: string | null
           cancelled_at?: string | null
           cancelled_reason?: string | null
-          compensation_delivery_date: string
+          compensation_delivery_date?: string | null
           compensation_type?: string | null
           created_at?: string | null
           customer_id?: string | null
@@ -6529,13 +6529,13 @@ export type Database = {
           status?: string | null
           subscription_id: string
           updated_at?: string | null
-          vacation_period_id: string
+          vacation_period_id?: string | null
         }
         Update: {
           assigned_agent_id?: string | null
           cancelled_at?: string | null
           cancelled_reason?: string | null
-          compensation_delivery_date?: string
+          compensation_delivery_date?: string | null
           compensation_type?: string | null
           created_at?: string | null
           customer_id?: string | null
@@ -6553,7 +6553,7 @@ export type Database = {
           status?: string | null
           subscription_id?: string
           updated_at?: string | null
-          vacation_period_id?: string
+          vacation_period_id?: string | null
         }
         Relationships: [
           {
