@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSellerSubscriptions, useAcceptSubscriptionDelivery, useRejectSubscriptionDelivery } from '@/hooks/useSubscriptions';
+import { useSubscriptionMissedCounts } from '@/hooks/useSubscriptionDeliveryHistory';
 import { useRemovePrimaryAgent } from '@/hooks/useAssignPrimaryAgent';
 import { useTodaySubscriptionOrder } from '@/hooks/useSubscriptionOrders';
 import { useSubscriptionDeliveryActions } from '@/hooks/useSubscriptionDeliveryActions';
@@ -55,10 +56,12 @@ const Subscriptions = () => {
     open: boolean;
     customerInfo: any;
     assignedAgent: any;
+    subscriptionInfo: any;
   }>({
     open: false,
     customerInfo: null,
     assignedAgent: null,
+    subscriptionInfo: null,
   });
   const [editCustomerDialog, setEditCustomerDialog] = useState<{
     open: boolean;
@@ -71,6 +74,10 @@ const Subscriptions = () => {
   });
 
   const { data: subscriptions, isLoading, refetch } = useSellerSubscriptions();
+
+  // Compute missed delivery counts
+  const subscriptionIds = useMemo(() => (subscriptions || []).map(s => s.id), [subscriptions]);
+  const { data: missedCounts } = useSubscriptionMissedCounts(subscriptionIds);
   const { acceptDelivery, skipDelivery, isProcessing } = useSubscriptionDeliveryActions();
   const { mutate: removePrimaryAgent, isPending: isRemovingAgent } = useRemovePrimaryAgent();
 
@@ -358,6 +365,15 @@ const Subscriptions = () => {
             <h1 className="text-3xl font-bold">Subscriptions</h1>
             <p className="text-muted-foreground">Manage recurring customer deliveries</p>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
         </div>
       </div>
 
@@ -448,6 +464,13 @@ const Subscriptions = () => {
                               open: true,
                               customerInfo: subscription.customer_info,
                               assignedAgent: (subscription as any).primary_agent || null,
+                              subscriptionInfo: {
+                                id: subscription.id,
+                                customer_id: subscription.customer_id,
+                                product_id: subscription.product_id,
+                                product_name: subscription.products?.name,
+                                quantity: subscription.quantity,
+                              },
                             })}
                             title="View customer details"
                           >
@@ -503,6 +526,12 @@ const Subscriptions = () => {
                         >
                           {subscription.primary_agent_id ? '✓ Agent Assigned' : '⚠ Agent Not Assigned'}
                         </Badge>
+                        {/* Missed deliveries badge */}
+                        {missedCounts && missedCounts[subscription.id] > 0 && (
+                          <Badge className="bg-destructive/20 text-destructive border-destructive/30">
+                            {missedCounts[subscription.id]} Missed
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     
@@ -684,9 +713,10 @@ const Subscriptions = () => {
       {/* Customer Details Dialog */}
       <CustomerDetailsDialog
         isOpen={customerDetailsDialog.open}
-        onClose={() => setCustomerDetailsDialog({ open: false, customerInfo: null, assignedAgent: null })}
+        onClose={() => setCustomerDetailsDialog({ open: false, customerInfo: null, assignedAgent: null, subscriptionInfo: null })}
         customerInfo={customerDetailsDialog.customerInfo}
         assignedAgent={customerDetailsDialog.assignedAgent}
+        subscriptionInfo={customerDetailsDialog.subscriptionInfo}
       />
 
       {/* Edit Customer Dialog */}
