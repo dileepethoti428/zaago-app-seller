@@ -1,123 +1,135 @@
 
-# Fix: Vacation Compensations Not Showing for Undelivered Orders
 
-## Root Cause Analysis
+# Subscription Page Enhancements
 
-After thorough investigation, I found **3 critical issues** preventing compensations from appearing:
+## Feature 1: Refresh Button
 
-### Issue 1: Database NOT NULL Constraints Blocking All Inserts
-
-The `vacation_compensations` table has two columns that are `NOT NULL` but should be nullable:
-
-| Column | Current | Problem |
-|--------|---------|---------|
-| `vacation_period_id` | NOT NULL | Non-vacation failures (technical error, agent issue) have no vacation period -- insert fails |
-| `compensation_delivery_date` | NOT NULL | Delivery date is decided later by seller -- insert fails |
-
-This means **both the database triggers AND the edge function silently fail** when trying to create compensation records. Every INSERT hits a NOT NULL violation and gets swallowed by the `EXCEPTION WHEN OTHERS` handler.
-
-### Issue 2: Edge Function Only Scans for Explicit Failure Statuses
-
-The `scan-missed-deliveries` function looks for daily_orders with statuses like `failed`, `undelivered`, `cancelled_agent`. But in your database:
-
-- **All undelivered orders are stuck at `pending` status** (396 pending, 64 delivered)
-- Orders from past dates (Feb 3-7) that were never delivered remain as `pending`
-- The function never picks them up because `pending` is not in the scan list
-
-### Issue 3: Edge Function Only Scans Yesterday
-
-The function only checks yesterday's date, missing all the accumulated undelivered orders from previous days.
-
-### Current State
-- `vacation_compensations` table: **0 records** (empty)
-- Past-due `pending` daily_orders: **30+ records** going back to Feb 3
+Add a manual refresh button next to the page title so you can reload subscription data anytime.
 
 ---
 
-## Solution
+## Feature 2: Enhanced "View" with Delivery Calendar and Compensation Assignment
 
-### Step 1: Database Migration -- Fix NOT NULL Constraints
+When you click "View" on a subscription, the dialog will be expanded to include:
 
-Make `vacation_period_id` and `compensation_delivery_date` nullable so compensations can be created for all failure types:
+### A. Delivery History Calendar
+- Fetch the last 30 days of `daily_orders` for that subscription
+- Show a visual calendar grid where each date displays:
+  - Green tick for `delivered` status
+  - Red X for `pending` (past dates = missed) or failed statuses
+  - Gray dot for future dates with scheduled orders
+  - Empty for dates with no order (non-delivery days)
 
-```text
-ALTER TABLE vacation_compensations
-  ALTER COLUMN vacation_period_id DROP NOT NULL;
+### B. Missed Delivery Compensation Action
+- Clicking on a red X (missed delivery) date opens a compensation assignment flow:
+  1. Select a new delivery date for the compensation order
+  2. Select a delivery agent (reusing the existing agent selection UI from `AssignAgentModal`)
+  3. Creates a `vacation_compensations` record with `reason = 'delivery_failed'`
+  4. Creates a `daily_orders` entry for the compensation date
 
-ALTER TABLE vacation_compensations
-  ALTER COLUMN compensation_delivery_date DROP NOT NULL;
-```
-
-### Step 2: Update Edge Function -- Scan Stale Pending Orders
-
-Modify `scan-missed-deliveries` to also detect daily_orders with status `pending` that are past their delivery date. Scan back up to 30 days instead of just yesterday.
-
-Key changes:
-- Add scan for `pending` daily_orders where `date < today`
-- Mark these as `delivery_failed` reason (undelivered)
-- Scan a configurable date range (default: last 30 days)
-- Accept optional parameters from the UI (seller_id, date range)
-
-### Step 3: Add "Scan for Missed Deliveries" Button to UI
-
-Add a button on the Vacation Compensations page that:
-- Calls the `scan-missed-deliveries` edge function
-- Shows a loading state and results summary
-- Auto-refreshes the compensation list after scan
-
-### Step 4: Add Manual Compensation Creation
-
-Add a "Create Compensation" button allowing sellers to manually create a compensation for any subscription, choosing the reason (technical issue, vacation, agent not delivered, etc.).
+### C. Compensation Status on Subscription Card
+- Show a red badge on subscription cards that have pending missed deliveries needing compensation
+- Example: "2 Missed" badge in red next to the subscription status badges
 
 ---
 
-## Files to Change
+## Files to Create/Modify
 
-| File | Action | Changes |
+| File | Action | Purpose |
 |------|--------|---------|
-| Database migration | CREATE | Make `vacation_period_id` and `compensation_delivery_date` nullable |
-| `supabase/functions/scan-missed-deliveries/index.ts` | MODIFY | Add stale pending order scanning, multi-day scan, seller_id filter |
-| `src/hooks/useAllVacationData.ts` | MODIFY | Add `scanForMissedDeliveries` function, refresh after scan |
-| `src/pages/VacationCompensations.tsx` | MODIFY | Add scan button, manual compensation creation, improved empty state |
+| `src/pages/Subscriptions.tsx` | MODIFY | Add refresh button in header; add red "missed" badge per subscription |
+| `src/components/CustomerDetailsDialog.tsx` | MODIFY | Expand into a full subscription detail view with calendar tab |
+| `src/hooks/useSubscriptionDeliveryHistory.ts` | CREATE | Fetch daily_orders history for a subscription (last 30 days) |
+| `src/hooks/useCreateCompensationOrder.ts` | CREATE | Mutation to create compensation record + daily_order for a missed delivery |
+| `src/components/SubscriptionDeliveryCalendar.tsx` | CREATE | Calendar grid showing delivery status per date with click-to-compensate |
+| `src/components/CompensationAssignmentDialog.tsx` | CREATE | Dialog to pick date + agent for a compensation delivery |
 
 ---
 
-## Updated UI Flow
+## UI Design
 
-### Header with Scan Button
+### Refresh Button (Header)
 ```text
 +-----------------------------------------------------------+
-|  Vacation Compensations                                    |
-|  [Scan for Missed Deliveries]  [+ Create Compensation]    |
+|  Subscriptions                              [Refresh icon] |
+|  Manage recurring customer deliveries                      |
 +-----------------------------------------------------------+
 ```
 
-### After Scanning
+### Subscription Card - Missed Badge
 ```text
-+-----------------------------------------------------------+
-|  Scan Complete!                                            |
-|  Found 28 undelivered orders. Created 28 compensations.   |
-+-----------------------------------------------------------+
-|                                                            |
-|  [Summary Cards: Vacations | Failed | Pending | ...]      |
-|                                                            |
-|  [Compensation Cards with actions...]                     |
-+-----------------------------------------------------------+
+[Active] [Agent Assigned] [2 Missed - red badge]
+```
+
+### Enhanced View Dialog - Tabs
+```text
++---------------------------------------------------+
+|  Customer Details                                  |
+|  [Details]  [Delivery Calendar]                    |
++---------------------------------------------------+
+|                                                    |
+|  February 2026                                     |
+|  Mo Tu We Th Fr Sa Su                              |
+|   3  4  5  6  7  8  9                              |
+|  [tick][tick][X][tick][X][tick][--]                  |
+|  10 11 12 13 14 15                                 |
+|  [tick][X][tick][tick][tick][--]                      |
+|                                                    |
+|  Legend: tick=Delivered  X=Missed  --=No delivery    |
+|                                                    |
+|  Click on X to assign compensation order           |
++---------------------------------------------------+
+```
+
+### Compensation Assignment (on clicking red X)
+```text
++-------------------------------------------+
+|  Assign Compensation for Feb 6 (Missed)   |
+|                                           |
+|  Customer: Ramesh                         |
+|  Product: Cow Milk x1                     |
+|                                           |
+|  Select Compensation Date:                |
+|  [Date Picker - future dates only]        |
+|                                           |
+|  Select Delivery Agent:                   |
+|  [Agent list - same as AssignAgentModal]  |
+|                                           |
+|        [Cancel]  [Assign Compensation]    |
++-------------------------------------------+
 ```
 
 ---
 
 ## Technical Details
 
-### Edge Function Update
+### useSubscriptionDeliveryHistory Hook
+- Queries `daily_orders` where `subscription_id = X` and `date >= 30 days ago`
+- Also queries `vacation_compensations` for the same subscription to identify dates that already have compensation assigned
+- Returns a map of `date -> { status, hasCompensation, compensationStatus }`
 
-The updated `scan-missed-deliveries` will:
-1. Accept optional `seller_id` and `days_back` parameters
-2. Scan daily_orders where `status = 'pending' AND date < CURRENT_DATE`
-3. Also scan for explicit failure statuses (existing behavior)
-4. Skip orders that already have compensation records
-5. Handle the now-nullable `vacation_period_id` and `compensation_delivery_date`
+### useCreateCompensationOrder Hook
+- Inserts into `vacation_compensations` with:
+  - `subscription_id`, `customer_id`, `product_id` from the subscription
+  - `original_vacation_date` = the missed date
+  - `compensation_delivery_date` = selected date
+  - `assigned_agent_id` = selected agent
+  - `reason` = 'delivery_failed' / 'technical_issue' / 'agent_not_delivered'
+  - `status` = 'pending'
+  - `seller_id` = current user
+- Optionally creates a `daily_orders` entry for the compensation date
+- Invalidates relevant queries
 
-### Unique Constraint Consideration
+### Missed Count per Subscription
+- Count `daily_orders` where `status = 'pending'` AND `date < today` for each subscription
+- Subtract any that already have compensation in `vacation_compensations`
+- Display as red badge on the subscription card
 
-The existing unique constraint `UNIQUE (subscription_id, original_vacation_date)` will prevent duplicate compensations per subscription per date, which is the desired behavior.
+### Data Flow
+1. Subscription page loads with `useSellerSubscriptions` (existing)
+2. For missed count badges: a new query fetches missed counts grouped by subscription_id
+3. On "View" click: dialog opens with two tabs (Details + Calendar)
+4. Calendar tab fetches delivery history for that specific subscription
+5. Clicking a missed date opens the compensation assignment dialog
+6. After assigning, calendar refreshes to show the compensation status
+
