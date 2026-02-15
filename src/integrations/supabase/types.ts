@@ -2380,6 +2380,122 @@ export type Database = {
         }
         Relationships: []
       }
+      farmer_bank_details: {
+        Row: {
+          account_holder_name: string
+          account_number: string
+          account_type: string | null
+          bank_branch: string | null
+          bank_name: string
+          created_at: string
+          farmer_id: string
+          id: string
+          ifsc_code: string
+          is_primary: boolean | null
+          is_verified: boolean | null
+          pan_number: string | null
+          updated_at: string
+          upi_id: string | null
+        }
+        Insert: {
+          account_holder_name: string
+          account_number: string
+          account_type?: string | null
+          bank_branch?: string | null
+          bank_name: string
+          created_at?: string
+          farmer_id: string
+          id?: string
+          ifsc_code: string
+          is_primary?: boolean | null
+          is_verified?: boolean | null
+          pan_number?: string | null
+          updated_at?: string
+          upi_id?: string | null
+        }
+        Update: {
+          account_holder_name?: string
+          account_number?: string
+          account_type?: string | null
+          bank_branch?: string | null
+          bank_name?: string
+          created_at?: string
+          farmer_id?: string
+          id?: string
+          ifsc_code?: string
+          is_primary?: boolean | null
+          is_verified?: boolean | null
+          pan_number?: string | null
+          updated_at?: string
+          upi_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farmer_bank_details_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "farmers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      farmer_earnings: {
+        Row: {
+          created_at: string
+          farmer_id: string
+          id: string
+          order_id: string | null
+          product_id: string | null
+          quantity: number | null
+          settlement_id: string | null
+          status: string
+          total_amount: number | null
+          unit_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          farmer_id: string
+          id?: string
+          order_id?: string | null
+          product_id?: string | null
+          quantity?: number | null
+          settlement_id?: string | null
+          status?: string
+          total_amount?: number | null
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          farmer_id?: string
+          id?: string
+          order_id?: string | null
+          product_id?: string | null
+          quantity?: number | null
+          settlement_id?: string | null
+          status?: string
+          total_amount?: number | null
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farmer_earnings_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "farmers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "farmer_earnings_settlement_id_fkey"
+            columns: ["settlement_id"]
+            isOneToOne: false
+            referencedRelation: "money_settlements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       farmers: {
         Row: {
           address: string | null
@@ -2807,6 +2923,119 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      money_settlement_items: {
+        Row: {
+          commission: number | null
+          created_at: string
+          description: string | null
+          earning_amount: number | null
+          id: string
+          order_amount: number | null
+          order_date: string | null
+          order_id: string | null
+          settlement_id: string
+        }
+        Insert: {
+          commission?: number | null
+          created_at?: string
+          description?: string | null
+          earning_amount?: number | null
+          id?: string
+          order_amount?: number | null
+          order_date?: string | null
+          order_id?: string | null
+          settlement_id: string
+        }
+        Update: {
+          commission?: number | null
+          created_at?: string
+          description?: string | null
+          earning_amount?: number | null
+          id?: string
+          order_amount?: number | null
+          order_date?: string | null
+          order_id?: string | null
+          settlement_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "money_settlement_items_settlement_id_fkey"
+            columns: ["settlement_id"]
+            isOneToOne: false
+            referencedRelation: "money_settlements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      money_settlements: {
+        Row: {
+          bank_details_id: string | null
+          commission_deducted: number | null
+          created_at: string
+          gross_amount: number
+          id: string
+          net_amount: number
+          notes: string | null
+          orders_count: number | null
+          other_deductions: number | null
+          party_id: string
+          party_type: string
+          period_end_date: string
+          period_start_date: string
+          settled_at: string | null
+          settled_by: string | null
+          settlement_period: string
+          status: string
+          tds_deducted: number | null
+          transaction_ref: string | null
+          updated_at: string
+        }
+        Insert: {
+          bank_details_id?: string | null
+          commission_deducted?: number | null
+          created_at?: string
+          gross_amount?: number
+          id?: string
+          net_amount?: number
+          notes?: string | null
+          orders_count?: number | null
+          other_deductions?: number | null
+          party_id: string
+          party_type: string
+          period_end_date: string
+          period_start_date: string
+          settled_at?: string | null
+          settled_by?: string | null
+          settlement_period: string
+          status?: string
+          tds_deducted?: number | null
+          transaction_ref?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bank_details_id?: string | null
+          commission_deducted?: number | null
+          created_at?: string
+          gross_amount?: number
+          id?: string
+          net_amount?: number
+          notes?: string | null
+          orders_count?: number | null
+          other_deductions?: number | null
+          party_id?: string
+          party_type?: string
+          period_end_date?: string
+          period_start_date?: string
+          settled_at?: string | null
+          settled_by?: string | null
+          settlement_period?: string
+          status?: string
+          tds_deducted?: number | null
+          transaction_ref?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       non_delivery_days: {
         Row: {
@@ -4021,6 +4250,11 @@ export type Database = {
           minimum_cart_value: number | null
           small_cart_fee: number | null
           small_cart_fee_enabled: boolean | null
+          subscription_deliveries_per_day: number
+          subscription_payout_enabled: boolean
+          subscription_payout_per_day: number
+          subscription_per_order_payout: number | null
+          subscription_per_order_payout_enabled: boolean | null
           updated_at: string | null
         }
         Insert: {
@@ -4036,6 +4270,11 @@ export type Database = {
           minimum_cart_value?: number | null
           small_cart_fee?: number | null
           small_cart_fee_enabled?: boolean | null
+          subscription_deliveries_per_day?: number
+          subscription_payout_enabled?: boolean
+          subscription_payout_per_day?: number
+          subscription_per_order_payout?: number | null
+          subscription_per_order_payout_enabled?: boolean | null
           updated_at?: string | null
         }
         Update: {
@@ -4051,6 +4290,11 @@ export type Database = {
           minimum_cart_value?: number | null
           small_cart_fee?: number | null
           small_cart_fee_enabled?: boolean | null
+          subscription_deliveries_per_day?: number
+          subscription_payout_enabled?: boolean
+          subscription_payout_per_day?: number
+          subscription_per_order_payout?: number | null
+          subscription_per_order_payout_enabled?: boolean | null
           updated_at?: string | null
         }
         Relationships: []
@@ -5000,6 +5244,113 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      seller_bank_details: {
+        Row: {
+          account_holder_name: string
+          account_number: string
+          account_type: string | null
+          bank_branch: string | null
+          bank_name: string
+          created_at: string
+          gst_number: string | null
+          id: string
+          ifsc_code: string
+          is_primary: boolean | null
+          is_verified: boolean | null
+          pan_number: string | null
+          seller_id: string
+          updated_at: string
+          upi_id: string | null
+        }
+        Insert: {
+          account_holder_name: string
+          account_number: string
+          account_type?: string | null
+          bank_branch?: string | null
+          bank_name: string
+          created_at?: string
+          gst_number?: string | null
+          id?: string
+          ifsc_code: string
+          is_primary?: boolean | null
+          is_verified?: boolean | null
+          pan_number?: string | null
+          seller_id: string
+          updated_at?: string
+          upi_id?: string | null
+        }
+        Update: {
+          account_holder_name?: string
+          account_number?: string
+          account_type?: string | null
+          bank_branch?: string | null
+          bank_name?: string
+          created_at?: string
+          gst_number?: string | null
+          id?: string
+          ifsc_code?: string
+          is_primary?: boolean | null
+          is_verified?: boolean | null
+          pan_number?: string | null
+          seller_id?: string
+          updated_at?: string
+          upi_id?: string | null
+        }
+        Relationships: []
+      }
+      seller_earnings: {
+        Row: {
+          commission_amount: number | null
+          commission_rate: number | null
+          created_at: string
+          id: string
+          net_earning: number | null
+          order_amount: number | null
+          order_id: string | null
+          payment_method: string | null
+          seller_id: string
+          settlement_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          commission_amount?: number | null
+          commission_rate?: number | null
+          created_at?: string
+          id?: string
+          net_earning?: number | null
+          order_amount?: number | null
+          order_id?: string | null
+          payment_method?: string | null
+          seller_id: string
+          settlement_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          commission_amount?: number | null
+          commission_rate?: number | null
+          created_at?: string
+          id?: string
+          net_earning?: number | null
+          order_amount?: number | null
+          order_id?: string | null
+          payment_method?: string | null
+          seller_id?: string
+          settlement_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_earnings_settlement_id_fkey"
+            columns: ["settlement_id"]
+            isOneToOne: false
+            referencedRelation: "money_settlements"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       seller_product_suggestion_status: {
         Row: {
