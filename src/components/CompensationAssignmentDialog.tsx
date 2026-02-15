@@ -73,7 +73,7 @@ export const CompensationAssignmentDialog = ({
         <DialogHeader>
           <DialogTitle>Assign Compensation</DialogTitle>
           <DialogDescription>
-            Missed delivery on {format(new Date(missedDate), 'MMM d, yyyy')}
+            {missedDate ? `Missed delivery on ${format(new Date(missedDate + 'T00:00:00'), 'MMM d, yyyy')}` : 'Assign compensation delivery'}
           </DialogDescription>
         </DialogHeader>
 
