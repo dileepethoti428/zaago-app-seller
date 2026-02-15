@@ -124,7 +124,7 @@ export const CustomerDetailsDialog = ({
       </Dialog>
 
       {/* Compensation Assignment Dialog */}
-      {subscriptionInfo && (
+      {subscriptionInfo && compensationDialog.open && compensationDialog.missedDate && (
         <CompensationAssignmentDialog
           open={compensationDialog.open}
           onOpenChange={(open) => setCompensationDialog(prev => ({ ...prev, open }))}
