@@ -145,14 +145,15 @@ const Subscriptions = () => {
       alternate: 0,
       agentAssigned: 0,
       agentNotAssigned: 0,
+      hasMissed: 0,
     };
 
     let active = 0, inactive = 0, onVacation = 0;
     let everyday = 0, weekend = 0, alternate = 0;
     let agentAssigned = 0, agentNotAssigned = 0;
+    let hasMissed = 0;
 
     subscriptions.forEach((sub) => {
-      // Check vacation status
       const activeVacation = sub.vacation?.find((v) => {
         if (v.status !== 'active') return false;
         const today = new Date();
@@ -162,19 +163,18 @@ const Subscriptions = () => {
       });
       const isOnVacationNow = !!activeVacation;
 
-      // Status counts
       if (isOnVacationNow) onVacation++;
       else if (sub.is_active) active++;
       else inactive++;
 
-      // Delivery type counts
       if (sub.subscription_type === 'everyday') everyday++;
       else if (sub.subscription_type === 'weekend') weekend++;
       else if (sub.subscription_type === 'alternate') alternate++;
 
-      // Agent assignment counts
       if (sub.primary_agent_id) agentAssigned++;
       else agentNotAssigned++;
+
+      if (missedCounts && missedCounts[sub.id] > 0) hasMissed++;
     });
 
     return {
@@ -187,8 +187,9 @@ const Subscriptions = () => {
       alternate,
       agentAssigned,
       agentNotAssigned,
+      hasMissed,
     };
-  }, [subscriptions]);
+  }, [subscriptions, missedCounts]);
 
   const filteredSubscriptions = useMemo(() => {
     if (!subscriptions) return [];
@@ -220,6 +221,7 @@ const Subscriptions = () => {
       if (statusFilter === 'active') matchesStatus = sub.is_active && !isOnVacation;
       else if (statusFilter === 'inactive') matchesStatus = !sub.is_active;
       else if (statusFilter === 'on_vacation') matchesStatus = isOnVacation;
+      else if (statusFilter === 'has_missed') matchesStatus = !!(missedCounts && missedCounts[sub.id] > 0);
 
       // Delivery type filter
       const matchesDeliveryType =
@@ -232,7 +234,7 @@ const Subscriptions = () => {
 
       return matchesSearch && matchesStatus && matchesDeliveryType && matchesAgentFilter;
     });
-  }, [subscriptions, searchTerm, statusFilter, deliveryTypeFilter, agentFilter]);
+  }, [subscriptions, searchTerm, statusFilter, deliveryTypeFilter, agentFilter, missedCounts]);
 
   const shouldShowActions = (subscription: any) => {
     if (!subscription.is_active || !subscription.next_delivery_date) return false;
@@ -396,6 +398,7 @@ const Subscriptions = () => {
             <SelectItem value="active">Active ({subscriptionCounts.active})</SelectItem>
             <SelectItem value="inactive">Inactive ({subscriptionCounts.inactive})</SelectItem>
             <SelectItem value="on_vacation">On Vacation ({subscriptionCounts.onVacation})</SelectItem>
+            <SelectItem value="has_missed">Has Missed ({subscriptionCounts.hasMissed})</SelectItem>
           </SelectContent>
         </Select>
         <Select value={deliveryTypeFilter} onValueChange={setDeliveryTypeFilter}>

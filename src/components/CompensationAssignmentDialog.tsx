@@ -51,13 +51,17 @@ export const CompensationAssignmentDialog = ({
   const handleAssign = async () => {
     if (!selectedDate || !selectedAgentId) return;
 
+    const selectedAgent = agents?.find(a => a.id === selectedAgentId);
+    if (!selectedAgent) return;
+
     await createCompensation.mutateAsync({
       subscriptionId,
       customerId,
       productId,
       originalMissedDate: missedDate,
       compensationDate: format(selectedDate, 'yyyy-MM-dd'),
-      agentId: selectedAgentId,
+      agentId: selectedAgent.id,          // row ID for vacation_compensations
+      agentUserId: selectedAgent.agent_id, // user UUID for daily_orders
       quantity,
       reason: 'delivery_failed',
     });
@@ -122,12 +126,12 @@ export const CompensationAssignmentDialog = ({
               ) : agents && agents.length > 0 ? (
                 agents.map((agent) => {
                   const isAtCapacity = agent.available_slots <= 0;
-                  const isSelected = selectedAgentId === agent.agent_id;
+                  const isSelected = selectedAgentId === agent.id;
 
                   return (
                     <button
                       key={agent.agent_id}
-                      onClick={() => setSelectedAgentId(agent.agent_id)}
+                      onClick={() => setSelectedAgentId(agent.id)}
                       className={cn(
                         'w-full flex items-center justify-between p-3 border rounded-lg text-left transition-colors',
                         isSelected ? 'border-primary bg-primary/5' : 'border-border bg-card hover:bg-muted/50'
