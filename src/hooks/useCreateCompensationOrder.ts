@@ -9,7 +9,8 @@ interface CreateCompensationParams {
   productId: string;
   originalMissedDate: string;
   compensationDate: string;
-  agentId: string;
+  agentId: string;       // delivery_agents.id (row ID) - for vacation_compensations FK
+  agentUserId: string;   // delivery_agents.agent_id (user UUID) - for daily_orders FK
   quantity: number;
   reason?: string;
 }
@@ -53,7 +54,7 @@ export const useCreateCompensationOrder = () => {
           date: params.compensationDate,
           quantity: params.quantity,
           status: 'pending',
-          assigned_agent_id: params.agentId,
+          assigned_agent_id: params.agentUserId,
           assigned_by: 'seller_manual',
         });
 
