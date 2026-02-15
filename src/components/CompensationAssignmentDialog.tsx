@@ -46,6 +46,8 @@ export const CompensationAssignmentDialog = ({
   const { data: agents, isLoading: agentsLoading } = useDeliveryAgentsNearSeller();
   const createCompensation = useCreateCompensationOrder();
 
+  if (!open || !missedDate) return null;
+
   const handleAssign = async () => {
     if (!selectedDate || !selectedAgentId) return;
 
