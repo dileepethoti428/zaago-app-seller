@@ -15,6 +15,7 @@ import {
   Users,
   CalendarClock,
   AlertTriangle,
+  FileText,
   CalendarOff
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -44,6 +45,7 @@ const navigationLinks = [
   { href: '/products', label: 'Products', icon: Package },
   { href: '/products/new', label: 'Add Product', icon: PlusCircle },
   { href: '/notifications', label: 'Notifications', icon: Bell },
+  { href: '/sales-report', label: 'Sales Report', icon: FileText },
   { href: '/settings', label: 'Settings', icon: Settings },
   { href: '/profile', label: 'Profile', icon: User },
 ];

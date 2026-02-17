@@ -306,7 +306,7 @@ const Dashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 <div className="p-3 rounded-lg bg-zaago-accent/30">
                   <p className="text-xs text-zaago-muted-foreground mb-1">Regular Revenue</p>
                   <p className="text-lg font-bold text-foreground">₹{stats.regularRevenue.toFixed(2)}</p>
@@ -319,17 +319,13 @@ const Dashboard = () => {
                   <p className="text-xs text-zaago-muted-foreground mb-1">Pending Revenue</p>
                   <p className="text-lg font-bold text-amber-500">₹{stats.pendingRevenue.toFixed(2)}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-zaago-accent/30 border border-blue-500/30">
-                  <p className="text-xs text-zaago-muted-foreground mb-1">Projected Daily Sub.</p>
-                  <p className="text-lg font-bold text-blue-500">₹{stats.projectedDailySubscription.toFixed(2)}</p>
-                </div>
                 <div className="p-3 rounded-lg bg-zaago-accent/30">
                   <p className="text-xs text-zaago-muted-foreground mb-1">Active Subscriptions</p>
                   <p className="text-lg font-bold text-foreground">{stats.activeSubscriptions}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-zaago-accent/30">
-                  <p className="text-xs text-zaago-muted-foreground mb-1">Projected Daily</p>
-                  <p className="text-lg font-bold text-foreground">₹{stats.projectedDailySubscription.toFixed(2)}</p>
+                  <p className="text-xs text-zaago-muted-foreground mb-1">Total Revenue</p>
+                  <p className="text-lg font-bold text-foreground">₹{stats.totalRevenue.toFixed(2)}</p>
                 </div>
               </div>
             </CardContent>

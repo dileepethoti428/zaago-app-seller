@@ -1,11 +1,12 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { format, subDays, addDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth, isSameDay, parseISO, isBefore } from 'date-fns';
 import { CheckCircle, XCircle, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DeliveryDayStatus } from '@/hooks/useSubscriptionDeliveryHistory';
 import { getCurrentISTTime } from '@/utils/timeZone';
-import { useState } from 'react';
+import { CompensationDetailDialog } from '@/components/CompensationDetailDialog';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SubscriptionDeliveryCalendarProps {
   history: Record<string, DeliveryDayStatus>;
@@ -20,6 +21,10 @@ export const SubscriptionDeliveryCalendar = ({
 }: SubscriptionDeliveryCalendarProps) => {
   const today = getCurrentISTTime();
   const [currentMonth, setCurrentMonth] = useState(today);
+  const [compensationDetail, setCompensationDetail] = useState<{
+    open: boolean;
+    details: any;
+  }>({ open: false, details: null });
 
   const calendarDays = useMemo(() => {
     const monthStart = startOfMonth(currentMonth);
@@ -45,20 +50,49 @@ export const SubscriptionDeliveryCalendar = ({
 
     if (entry.status === 'delivered') return 'delivered';
 
-    // Past dates with pending/failed = missed
     if (dateStr < todayStr && ['pending', 'failed', 'undelivered', 'cancelled_agent', 'delivery_failed'].includes(entry.status)) {
       if (entry.hasCompensation) return 'compensated';
       return 'missed';
     }
 
-    // Today or future with pending = scheduled
     if (dateStr >= todayStr && entry.status === 'pending') return 'scheduled';
 
-    // Other statuses
     if (['accepted', 'assigned', 'packed', 'accepted_by_seller'].includes(entry.status)) return 'in_progress';
     if (['skipped_by_seller', 'cancelled'].includes(entry.status)) return 'skipped';
 
     return 'none';
+  };
+
+  const handleCompensatedClick = async (dateStr: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('vacation_compensations')
+        .select(`
+          id, quantity, compensation_delivery_date, original_vacation_date, status,
+          product_id,
+          products ( name ),
+          delivery_agents ( name )
+        `)
+        .eq('original_vacation_date', dateStr)
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        setCompensationDetail({
+          open: true,
+          details: {
+            productName: (data as any).products?.name || 'Unknown',
+            quantity: data.quantity || 0,
+            agentName: (data as any).delivery_agents?.name || 'Unassigned',
+            status: data.status || 'pending',
+            originalMissedDate: data.original_vacation_date,
+            compensationDate: data.compensation_delivery_date || data.original_vacation_date,
+          },
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching compensation details:', err);
+    }
   };
 
   const weekDays = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
@@ -102,11 +136,13 @@ export const SubscriptionDeliveryCalendar = ({
           return (
             <button
               key={i}
-              disabled={status !== 'missed'}
+              disabled={status !== 'missed' && status !== 'compensated'}
               onClick={() => {
                 if (status === 'missed') {
                   const entry = history[dateStr];
                   onMissedDateClick(dateStr, entry?.dailyOrderId || null);
+                } else if (status === 'compensated') {
+                  handleCompensatedClick(dateStr);
                 }
               }}
               className={`
@@ -115,7 +151,7 @@ export const SubscriptionDeliveryCalendar = ({
                 ${isToday ? 'ring-1 ring-primary' : ''}
                 ${status === 'missed' ? 'cursor-pointer hover:bg-destructive/10 bg-destructive/5' : ''}
                 ${status === 'delivered' ? 'bg-green-500/10' : ''}
-                ${status === 'compensated' ? 'bg-blue-500/10' : ''}
+                ${status === 'compensated' ? 'bg-blue-500/10 cursor-pointer hover:bg-blue-500/20' : ''}
                 ${status === 'scheduled' ? 'bg-muted/50' : ''}
                 ${status === 'none' ? '' : ''}
               `}
@@ -138,9 +174,15 @@ export const SubscriptionDeliveryCalendar = ({
       <div className="flex flex-wrap gap-3 text-xs text-muted-foreground pt-2 border-t border-border">
         <div className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-green-500" /> Delivered</div>
         <div className="flex items-center gap-1"><XCircle className="h-3 w-3 text-destructive" /> Missed (click to compensate)</div>
-        <div className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-blue-500" /> Compensated</div>
+        <div className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-blue-500" /> Compensated (click for details)</div>
         <div className="flex items-center gap-1"><Circle className="h-3 w-3 text-muted-foreground" /> Scheduled</div>
       </div>
+
+      <CompensationDetailDialog
+        open={compensationDetail.open}
+        onOpenChange={(open) => setCompensationDetail(prev => ({ ...prev, open }))}
+        details={compensationDetail.details}
+      />
     </div>
   );
 };

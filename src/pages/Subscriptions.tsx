@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 
 import { AcceptanceDeadlineTimer } from '@/components/AcceptanceDeadlineTimer';
 import { SubscriptionOrderCard } from '@/components/SubscriptionOrderCard';
+import { TodayCompensationBanner } from '@/components/TodayCompensationBanner';
 
 import { AssignAgentModal } from '@/components/AssignAgentModal';
 import { CustomerDetailsDialog } from '@/components/CustomerDetailsDialog';
@@ -361,6 +362,8 @@ const Subscriptions = () => {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
+      {/* Today's Compensation Handovers Banner */}
+      <TodayCompensationBanner />
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>

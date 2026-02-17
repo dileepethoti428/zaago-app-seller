@@ -129,6 +129,27 @@ export default function LoginPage() {
           throw error;
         }
 
+        // Check if seller is deactivated
+        const { data: { user: loggedInUser } } = await supabase.auth.getUser();
+        if (loggedInUser) {
+          const { data: sellerData } = await supabase
+            .from('sellers')
+            .select('is_deactivated')
+            .eq('user_id', loggedInUser.id)
+            .maybeSingle();
+
+          if (sellerData?.is_deactivated) {
+            await supabase.auth.signOut();
+            toast({
+              title: "Account Deactivated",
+              description: "Your account has been deactivated by admin. Contact admin for reactivation.",
+              variant: "destructive",
+            });
+            setLoading(false);
+            return;
+          }
+        }
+
         toast({
           title: "Welcome back!",
           description: "Logged in successfully.",

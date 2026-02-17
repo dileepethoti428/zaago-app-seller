@@ -12,7 +12,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const publicRoutes = ['/login', '/forgot-password', '/reset-password', '/privacy-policy', '/terms-conditions'];
+  const publicRoutes = ['/login', '/forgot-password', '/reset-password', '/privacy-policy', '/terms-conditions', '/account-deactivated'];
 
   useEffect(() => {
     if (!loading && !user && !publicRoutes.includes(location.pathname)) {
@@ -27,7 +27,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
     // Whitelist of pages that don't need seller approval checks
     const publicRoutes = ['/login'];
-    const approvalPages = ['/bank-details', '/pending-approval', '/application-rejected'];
+    const approvalPages = ['/bank-details', '/pending-approval', '/application-rejected', '/account-deactivated'];
     const customerRoutes = ['/customer-orders', '/products-customer', '/cart', '/checkout'];
     const protectedRoutes = [...publicRoutes, ...approvalPages, ...customerRoutes];
     
@@ -39,7 +39,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     try {
       const { data, error } = await supabase
         .from('sellers')
-        .select('bank_name, approval_status')
+        .select('bank_name, approval_status, is_deactivated')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -53,6 +53,14 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         // Only redirect to bank details if coming from login
         if (location.pathname === '/login') {
           navigate('/bank-details');
+        }
+        return;
+      }
+
+      // Check if seller is deactivated
+      if ((data as any).is_deactivated) {
+        if (location.pathname !== '/account-deactivated') {
+          navigate('/account-deactivated');
         }
         return;
       }

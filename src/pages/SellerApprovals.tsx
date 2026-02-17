@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, XCircle, Clock, User, Building, Phone, Mail } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, User, Building, Phone, Mail, ShieldOff, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 interface SellerApplication {
@@ -17,6 +17,7 @@ interface SellerApplication {
   created_at: string;
   user_email?: string;
   rejection_reason?: string;
+  is_deactivated?: boolean;
 }
 
 export default function SellerApprovals() {
@@ -42,7 +43,8 @@ export default function SellerApprovals() {
           phone,
           approval_status,
           created_at,
-          rejection_reason
+          rejection_reason,
+          is_deactivated
         `)
         .order('created_at', { ascending: false });
 
@@ -110,6 +112,31 @@ export default function SellerApprovals() {
     }
   };
 
+  const handleDeactivateToggle = async (applicationId: string, currentlyDeactivated: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('sellers')
+        .update({ is_deactivated: !currentlyDeactivated })
+        .eq('id', applicationId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Seller ${!currentlyDeactivated ? 'deactivated' : 'activated'} successfully`,
+      });
+
+      fetchApplications();
+    } catch (error) {
+      console.error('Error toggling deactivation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update seller status",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -151,6 +178,9 @@ export default function SellerApprovals() {
                   <p className="text-muted-foreground">Applied on {new Date(app.created_at).toLocaleDateString()}</p>
                 </div>
                 {getStatusBadge(app.approval_status)}
+                {app.is_deactivated && (
+                  <Badge variant="destructive"><ShieldOff className="w-3 h-3 mr-1" />Deactivated</Badge>
+                )}
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -223,6 +253,22 @@ export default function SellerApprovals() {
                       Cancel
                     </Button>
                   </div>
+                </div>
+              )}
+
+              {app.approval_status === 'approved' && (
+                <div className="pt-4">
+                  <Button
+                    variant={app.is_deactivated ? 'default' : 'destructive'}
+                    onClick={() => handleDeactivateToggle(app.id, !!app.is_deactivated)}
+                    className="w-full"
+                  >
+                    {app.is_deactivated ? (
+                      <><ShieldCheck className="w-4 h-4 mr-2" />Activate Seller</>
+                    ) : (
+                      <><ShieldOff className="w-4 h-4 mr-2" />Deactivate Seller</>
+                    )}
+                  </Button>
                 </div>
               )}
             </CardContent>

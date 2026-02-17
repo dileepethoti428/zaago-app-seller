@@ -43,6 +43,8 @@ import ProductSuggestions from "./pages/ProductSuggestions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsConditions from "./pages/TermsConditions";
 import ForgotPassword from "./pages/ForgotPassword";
+import AccountDeactivated from "./pages/AccountDeactivated";
+import SalesReport from "./pages/SalesReport";
 import ResetPassword from "./pages/ResetPassword";
 import { CustomerNotifications } from "@/components/CustomerNotifications";
 import { AgentNotifications } from "@/components/AgentNotifications";
@@ -149,6 +151,7 @@ const AppContent = () => {
         <Route path="/bank-details" element={<BankDetails />} />
         <Route path="/pending-approval" element={<PendingApproval />} />
         <Route path="/application-rejected" element={<ApplicationRejected />} />
+        <Route path="/account-deactivated" element={<AccountDeactivated />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-conditions" element={<TermsConditions />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -182,6 +185,7 @@ const AppContent = () => {
           <Route path="cart" element={<Cart />} />
           <Route path="checkout" element={<Checkout />} />
           <Route path="product-suggestions" element={<ProductSuggestions />} />
+          <Route path="sales-report" element={<SalesReport />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
