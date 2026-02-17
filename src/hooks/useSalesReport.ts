@@ -30,10 +30,13 @@ export const useSalesReport = (startDate: string | null, endDate: string | null)
           status,
           customer_name,
           order_items (
-            product_name,
+            product_id,
             quantity,
             unit_price,
-            total_price
+            total_price,
+            products (
+              name
+            )
           )
         `)
         .eq('seller_id', user.id)
@@ -74,7 +77,7 @@ export const useSalesReport = (startDate: string | null, endDate: string | null)
               date: order.created_at,
               orderId: order.id,
               customerName: order.customer_name || 'Unknown',
-              productName: item.product_name || 'Unknown',
+              productName: (item as any).products?.name || 'Unknown',
               quantity: item.quantity || 1,
               unitPrice: item.unit_price || 0,
               total: item.total_price || 0,
