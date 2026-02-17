@@ -22,22 +22,48 @@ export const exportSalesReportPDF = (
   // Summary
   const totalRevenue = items.reduce((sum, item) => sum + item.total, 0);
   const totalQty = items.reduce((sum, item) => sum + item.quantity, 0);
-  doc.text(`Total Items Sold: ${totalQty}  |  Total Revenue: ₹${totalRevenue.toFixed(2)}`, 14, 44);
+  doc.text(`Total Items Sold: ${totalQty}  |  Total Revenue: Rs.${totalRevenue.toFixed(2)}`, 14, 44);
 
-  // Table
-  const tableData = items.map((item) => [
-    format(parseISO(item.date), 'dd/MM/yy'),
-    item.orderId.slice(0, 8),
-    item.customerName.length > 15 ? item.customerName.slice(0, 15) + '...' : item.customerName,
-    item.productName.length > 20 ? item.productName.slice(0, 20) + '...' : item.productName,
-    item.quantity.toString(),
-    `₹${item.unitPrice.toFixed(2)}`,
-    `₹${item.total.toFixed(2)}`,
-  ]);
+  // Product Summary Table
+  const productSummary: Record<string, { qty: number; revenue: number }> = {};
+  items.forEach((item) => {
+    const name = item.productName || 'Unknown';
+    if (!productSummary[name]) productSummary[name] = { qty: 0, revenue: 0 };
+    productSummary[name].qty += item.quantity;
+    productSummary[name].revenue += item.total;
+  });
+
+  const summaryData = Object.entries(productSummary)
+    .sort((a, b) => b[1].revenue - a[1].revenue)
+    .map(([name, data]) => [
+      name.length > 25 ? name.slice(0, 25) + '...' : name,
+      data.qty.toString(),
+      `Rs.${data.revenue.toFixed(2)}`,
+    ]);
 
   autoTable(doc, {
     startY: 50,
-    head: [['Date', 'Order ID', 'Customer', 'Product', 'Qty', 'Unit Price', 'Total']],
+    head: [['Product', 'Qty Sold', 'Revenue']],
+    body: summaryData,
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [34, 139, 34] },
+  });
+
+  // Detailed Items Table
+  const finalY = (doc as any).lastAutoTable?.finalY || 80;
+
+  const tableData = items.map((item) => [
+    format(parseISO(item.date), 'dd/MM/yy'),
+    item.orderId.slice(0, 8),
+    item.productName.length > 25 ? item.productName.slice(0, 25) + '...' : item.productName,
+    item.quantity.toString(),
+    `Rs.${item.unitPrice.toFixed(2)}`,
+    `Rs.${item.total.toFixed(2)}`,
+  ]);
+
+  autoTable(doc, {
+    startY: finalY + 10,
+    head: [['Date', 'Order ID', 'Product', 'Qty', 'Unit Price', 'Total']],
     body: tableData,
     styles: { fontSize: 8 },
     headStyles: { fillColor: [34, 139, 34] },

@@ -123,7 +123,48 @@ export default function SalesReport() {
         </Card>
       </div>
 
-      {/* Table */}
+      {/* Product Summary */}
+      {items && items.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Product Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Product</TableHead>
+                    <TableHead className="text-right">Qty Sold</TableHead>
+                    <TableHead className="text-right">Revenue</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Object.entries(
+                    (items || []).reduce<Record<string, { qty: number; revenue: number }>>((acc, item) => {
+                      const name = item.productName || 'Unknown';
+                      if (!acc[name]) acc[name] = { qty: 0, revenue: 0 };
+                      acc[name].qty += item.quantity;
+                      acc[name].revenue += item.total;
+                      return acc;
+                    }, {})
+                  )
+                    .sort((a, b) => b[1].revenue - a[1].revenue)
+                    .map(([name, data]) => (
+                      <TableRow key={name}>
+                        <TableCell className="font-medium">{name}</TableCell>
+                        <TableCell className="text-right">{data.qty}</TableCell>
+                        <TableCell className="text-right font-medium">₹{data.revenue.toFixed(2)}</TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Detailed Table */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Sold Items ({dateRangeLabel})</CardTitle>
@@ -145,7 +186,6 @@ export default function SalesReport() {
                   <TableRow>
                     <TableHead>Date</TableHead>
                     <TableHead>Order ID</TableHead>
-                    <TableHead>Customer</TableHead>
                     <TableHead>Product</TableHead>
                     <TableHead className="text-right">Qty</TableHead>
                     <TableHead className="text-right">Unit Price</TableHead>
@@ -161,7 +201,6 @@ export default function SalesReport() {
                       <TableCell className="font-mono text-xs">
                         {item.orderId.slice(0, 8)}
                       </TableCell>
-                      <TableCell className="text-sm max-w-[120px] truncate">{item.customerName}</TableCell>
                       <TableCell className="text-sm max-w-[150px] truncate">{item.productName}</TableCell>
                       <TableCell className="text-right">{item.quantity}</TableCell>
                       <TableCell className="text-right">₹{item.unitPrice.toFixed(2)}</TableCell>
