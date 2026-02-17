@@ -1,39 +1,25 @@
 
-# Fix: Product Names Missing in Sales Report
 
-## Root Cause
+# Simplify Sales Report: Product Summary Only
 
-The sales report query joins with the `order_items` table, but that table is essentially empty (only 1 row). Your order data stores items as a **JSONB array** inside the `orders.items` column. Each item in that array has fields like `name`, `price`, `quantity`.
+## What Changes
 
-This is why everything shows as "N/A" -- the query finds no `order_items` rows, so it falls back to the "no items" branch.
+Remove the detailed "Sold Items" table entirely -- both on-screen and in the PDF. Keep only the **Product Summary** table that shows aggregated data per product (Product Name, Qty Sold, Revenue). This is the useful view for predicting what to stock.
 
-## Fix
+### On-Screen (SalesReport.tsx)
+- Remove the entire "Sold Items" card (lines 167-215) that shows Date, Order ID, Product, Qty, Unit Price, Total per row
+- Keep: date filters, summary cards (Total Items, Quantity Sold, Total Revenue), and Product Summary table
 
-Update `src/hooks/useSalesReport.ts` to:
-- Stop querying `order_items` and `products` tables
-- Instead, select `orders.items` (the JSONB column)
-- Parse each item from the JSONB array to extract `name`, `price`, and `quantity`
+### PDF Export (salesReportExport.ts)
+- Remove the detailed items table (lines 52-70) that lists every individual order line
+- Keep: title, date range, summary stats, and the Product Summary table only
 
-The PDF export file (`salesReportExport.ts`) is already correct and needs no changes -- the format matches exactly what you want. Once the data feeds in properly, product names will appear correctly in both the on-screen table and the PDF.
+### Files to Change
 
-## Technical Details
+| File | Change |
+|------|--------|
+| `src/pages/SalesReport.tsx` | Delete the "Sold Items" detailed table card (lines 167-215) |
+| `src/utils/salesReportExport.ts` | Delete the detailed items table section (lines 52-70) |
 
-### File: `src/hooks/useSalesReport.ts`
+No changes needed to the hook or data fetching -- only the display is being simplified.
 
-**Current query** (broken):
-```
-.select(`id, created_at, total, status, customer_name,
-  order_items ( product_id, quantity, unit_price, total_price, products (name) )`)
-```
-
-**New query**:
-```
-.select(`id, created_at, total, status, items`)
-```
-
-**New mapping logic**: Parse `order.items` (JSONB array) where each element has:
-- `name` -- the product name
-- `price` -- the unit price
-- `quantity` -- quantity ordered
-
-Calculate `total` as `price * quantity` for each item. This will populate the Product Summary table in the PDF with actual product names and quantities.
