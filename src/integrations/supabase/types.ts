@@ -5509,6 +5509,7 @@ export type Database = {
           id: string
           ifsc_code: string | null
           is_bank_verified: boolean | null
+          is_deactivated: boolean | null
           is_deleted: boolean | null
           latitude: number | null
           location_id: number | null
@@ -5547,6 +5548,7 @@ export type Database = {
           id?: string
           ifsc_code?: string | null
           is_bank_verified?: boolean | null
+          is_deactivated?: boolean | null
           is_deleted?: boolean | null
           latitude?: number | null
           location_id?: number | null
@@ -5585,6 +5587,7 @@ export type Database = {
           id?: string
           ifsc_code?: string | null
           is_bank_verified?: boolean | null
+          is_deactivated?: boolean | null
           is_deleted?: boolean | null
           latitude?: number | null
           location_id?: number | null
