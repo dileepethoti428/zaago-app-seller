@@ -5,7 +5,6 @@ import { useAuth } from '@/context/AuthContext';
 export interface SalesReportItem {
   date: string;
   orderId: string;
-  customerName: string;
   productName: string;
   quantity: number;
   unitPrice: number;
@@ -64,7 +63,6 @@ export const useSalesReport = (startDate: string | null, endDate: string | null)
           items.push({
             date: order.created_at,
             orderId: order.id,
-            customerName: order.customer_name || 'Unknown',
             productName: 'N/A',
             quantity: 1,
             unitPrice: order.total || 0,
@@ -76,7 +74,6 @@ export const useSalesReport = (startDate: string | null, endDate: string | null)
             items.push({
               date: order.created_at,
               orderId: order.id,
-              customerName: order.customer_name || 'Unknown',
               productName: (item as any).products?.name || 'Unknown',
               quantity: item.quantity || 1,
               unitPrice: item.unit_price || 0,
