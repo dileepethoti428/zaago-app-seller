@@ -1,46 +1,39 @@
 
 
-# Fix Plan: Revenue Data, Sales Report, and Config Restoration
+# Sales Report Improvements
 
-## Problem Summary
+## Changes Overview
 
-Three issues have been identified:
+Two fixes:
 
-1. **Revenue/Dashboard shows zero data** -- The `get_seller_stats_with_period` RPC function is completely broken due to a variable naming conflict. The function uses a variable called `start_date`, but the `subscriptions` table also has a column called `start_date`. PostgreSQL cannot tell which one you mean, so the entire function fails silently, returning no data to both the homepage and dashboard.
+### 1. Remove Customer Column, Focus on Product Data
 
-2. **Sales Report shows zero data** -- The sales report query tries to fetch `product_name` from the `order_items` table, but that column does not exist. The table only has `product_id`. The query needs to join with the `products` table to get the product name.
+The sales report will be restructured to help sellers understand **what products sold and how much**, removing customer names entirely.
 
-3. **Edge function configs were lost** -- When the Supabase project was reconnected, the `config.toml` file was overwritten and lost all edge function JWT verification settings, which could cause edge functions to reject requests.
+**On-screen table columns**: Date, Order ID, Product, Qty, Unit Price, Total
 
-## Fixes
+**Additionally**, add a **Product Summary** section at the top that aggregates totals by product name -- this helps sellers predict future demand:
 
-### Fix 1: Repair the RPC Function (Database Migration)
+```text
++------------------------------------------+
+| Product Summary                          |
+|------------------------------------------|
+| Product         | Qty Sold | Revenue     |
+| Cow Milk        |    120   | Rs.8,400    |
+| Curd            |     85   | Rs.4,250    |
+| Paneer          |     45   | Rs.6,750    |
++------------------------------------------+
+```
 
-Rename the `start_date` variable to `v_start_date` inside the `get_seller_stats_with_period` function to avoid the naming conflict with the `subscriptions.start_date` column. The function logic stays exactly the same.
+### 2. Fix Rupee Symbol in PDF
 
-### Fix 2: Fix Sales Report Query
+jsPDF's default font does not support the `₹` character, which is why it renders as `1`. The fix is to replace all `₹` with `Rs.` in the PDF export, which works reliably with the default font.
 
-Update `src/hooks/useSalesReport.ts` to:
-- Remove `product_name` from the `order_items` select
-- Instead, join through `product_id` to the `products` table to get `products(name)`
-- Map the product name from the joined data
+## Files to Change
 
-### Fix 3: Restore Edge Function Configs
-
-Restore `supabase/config.toml` with all the edge function `verify_jwt = false` settings that were lost during reconnection.
-
----
-
-## Technical Details
-
-### Database Change (SQL Migration)
-
-Replace the `get_seller_stats_with_period` function, changing every reference from `start_date` to `v_start_date` to resolve the PostgreSQL ambiguity error.
-
-### Code Changes
-
-| File | Change |
-|------|--------|
-| `src/hooks/useSalesReport.ts` | Update select query to join `order_items.product_id` with `products(name)` instead of selecting non-existent `product_name` column |
-| `supabase/config.toml` | Restore all 12 edge function configurations with `verify_jwt = false` |
+| File | Changes |
+|------|---------|
+| `src/hooks/useSalesReport.ts` | Remove `customerName` from the interface and query mapping |
+| `src/pages/SalesReport.tsx` | Remove Customer column from table; add a Product Summary card showing aggregated qty and revenue per product |
+| `src/utils/salesReportExport.ts` | Remove Customer column from PDF table; replace all `₹` with `Rs.` in summary text and table cells; remove customer from header row |
 
