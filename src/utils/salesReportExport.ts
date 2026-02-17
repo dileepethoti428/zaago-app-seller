@@ -49,26 +49,6 @@ export const exportSalesReportPDF = (
     headStyles: { fillColor: [34, 139, 34] },
   });
 
-  // Detailed Items Table
-  const finalY = (doc as any).lastAutoTable?.finalY || 80;
-
-  const tableData = items.map((item) => [
-    format(parseISO(item.date), 'dd/MM/yy'),
-    item.orderId.slice(0, 8),
-    item.productName.length > 25 ? item.productName.slice(0, 25) + '...' : item.productName,
-    item.quantity.toString(),
-    `Rs.${item.unitPrice.toFixed(2)}`,
-    `Rs.${item.total.toFixed(2)}`,
-  ]);
-
-  autoTable(doc, {
-    startY: finalY + 10,
-    head: [['Date', 'Order ID', 'Product', 'Qty', 'Unit Price', 'Total']],
-    body: tableData,
-    styles: { fontSize: 8 },
-    headStyles: { fillColor: [34, 139, 34] },
-  });
-
   // Footer
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {

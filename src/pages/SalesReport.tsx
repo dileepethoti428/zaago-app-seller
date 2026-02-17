@@ -164,55 +164,6 @@ export default function SalesReport() {
         </Card>
       )}
 
-      {/* Detailed Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Sold Items ({dateRangeLabel})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
-            </div>
-          ) : !items || items.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>No sold items found for this period</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Order ID</TableHead>
-                    <TableHead>Product</TableHead>
-                    <TableHead className="text-right">Qty</TableHead>
-                    <TableHead className="text-right">Unit Price</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((item, idx) => (
-                    <TableRow key={`${item.orderId}-${idx}`}>
-                      <TableCell className="text-xs whitespace-nowrap">
-                        {format(new Date(item.date), 'dd MMM yy')}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {item.orderId.slice(0, 8)}
-                      </TableCell>
-                      <TableCell className="text-sm max-w-[150px] truncate">{item.productName}</TableCell>
-                      <TableCell className="text-right">{item.quantity}</TableCell>
-                      <TableCell className="text-right">₹{item.unitPrice.toFixed(2)}</TableCell>
-                      <TableCell className="text-right font-medium">₹{item.total.toFixed(2)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </motion.div>
   );
 }
