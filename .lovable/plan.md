@@ -1,39 +1,39 @@
 
+# Fix: Product Names Missing in Sales Report
 
-# Sales Report Improvements
+## Root Cause
 
-## Changes Overview
+The sales report query joins with the `order_items` table, but that table is essentially empty (only 1 row). Your order data stores items as a **JSONB array** inside the `orders.items` column. Each item in that array has fields like `name`, `price`, `quantity`.
 
-Two fixes:
+This is why everything shows as "N/A" -- the query finds no `order_items` rows, so it falls back to the "no items" branch.
 
-### 1. Remove Customer Column, Focus on Product Data
+## Fix
 
-The sales report will be restructured to help sellers understand **what products sold and how much**, removing customer names entirely.
+Update `src/hooks/useSalesReport.ts` to:
+- Stop querying `order_items` and `products` tables
+- Instead, select `orders.items` (the JSONB column)
+- Parse each item from the JSONB array to extract `name`, `price`, and `quantity`
 
-**On-screen table columns**: Date, Order ID, Product, Qty, Unit Price, Total
+The PDF export file (`salesReportExport.ts`) is already correct and needs no changes -- the format matches exactly what you want. Once the data feeds in properly, product names will appear correctly in both the on-screen table and the PDF.
 
-**Additionally**, add a **Product Summary** section at the top that aggregates totals by product name -- this helps sellers predict future demand:
+## Technical Details
 
-```text
-+------------------------------------------+
-| Product Summary                          |
-|------------------------------------------|
-| Product         | Qty Sold | Revenue     |
-| Cow Milk        |    120   | Rs.8,400    |
-| Curd            |     85   | Rs.4,250    |
-| Paneer          |     45   | Rs.6,750    |
-+------------------------------------------+
+### File: `src/hooks/useSalesReport.ts`
+
+**Current query** (broken):
+```
+.select(`id, created_at, total, status, customer_name,
+  order_items ( product_id, quantity, unit_price, total_price, products (name) )`)
 ```
 
-### 2. Fix Rupee Symbol in PDF
+**New query**:
+```
+.select(`id, created_at, total, status, items`)
+```
 
-jsPDF's default font does not support the `₹` character, which is why it renders as `1`. The fix is to replace all `₹` with `Rs.` in the PDF export, which works reliably with the default font.
+**New mapping logic**: Parse `order.items` (JSONB array) where each element has:
+- `name` -- the product name
+- `price` -- the unit price
+- `quantity` -- quantity ordered
 
-## Files to Change
-
-| File | Changes |
-|------|---------|
-| `src/hooks/useSalesReport.ts` | Remove `customerName` from the interface and query mapping |
-| `src/pages/SalesReport.tsx` | Remove Customer column from table; add a Product Summary card showing aggregated qty and revenue per product |
-| `src/utils/salesReportExport.ts` | Remove Customer column from PDF table; replace all `₹` with `Rs.` in summary text and table cells; remove customer from header row |
-
+Calculate `total` as `price * quantity` for each item. This will populate the Product Summary table in the PDF with actual product names and quantities.
