@@ -22,22 +22,7 @@ export const useSalesReport = (startDate: string | null, endDate: string | null)
 
       let query = supabase
         .from('orders')
-        .select(`
-          id,
-          created_at,
-          total,
-          status,
-          customer_name,
-          order_items (
-            product_id,
-            quantity,
-            unit_price,
-            total_price,
-            products (
-              name
-            )
-          )
-        `)
+        .select('id, created_at, total, status, items')
         .eq('seller_id', user.id)
         .eq('status', 'delivered')
         .order('created_at', { ascending: false });
@@ -56,11 +41,11 @@ export const useSalesReport = (startDate: string | null, endDate: string | null)
         return [];
       }
 
-      const items: SalesReportItem[] = [];
+      const result: SalesReportItem[] = [];
       (data || []).forEach((order: any) => {
-        const orderItems = order.order_items || [];
+        const orderItems = Array.isArray(order.items) ? order.items : [];
         if (orderItems.length === 0) {
-          items.push({
+          result.push({
             date: order.created_at,
             orderId: order.id,
             productName: 'N/A',
@@ -71,20 +56,22 @@ export const useSalesReport = (startDate: string | null, endDate: string | null)
           });
         } else {
           orderItems.forEach((item: any) => {
-            items.push({
+            const qty = item.quantity || 1;
+            const price = item.price || 0;
+            result.push({
               date: order.created_at,
               orderId: order.id,
-              productName: (item as any).products?.name || 'Unknown',
-              quantity: item.quantity || 1,
-              unitPrice: item.unit_price || 0,
-              total: item.total_price || 0,
+              productName: item.name || 'Unknown',
+              quantity: qty,
+              unitPrice: price,
+              total: qty * price,
               status: order.status,
             });
           });
         }
       });
 
-      return items;
+      return result;
     },
     enabled: !!user?.id,
   });
