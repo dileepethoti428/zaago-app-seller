@@ -1,9 +1,20 @@
-import { LogOut, ShieldOff } from 'lucide-react';
+import { LogOut, ShieldOff, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function AccountDeactivated() {
   const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (_) {
+      // Session may already be cleared
+    }
+    navigate('/login', { replace: true });
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
@@ -16,11 +27,17 @@ export default function AccountDeactivated() {
           Your seller account has been deactivated by the administrator. 
           You cannot access the app until your account is reactivated.
         </p>
-        <p className="text-sm text-muted-foreground">
-          Kindly contact customer care.
-        </p>
+        <a
+          href="https://wa.me/917842343642"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-sm font-medium text-green-600 hover:text-green-700 underline"
+        >
+          <MessageCircle className="w-4 h-4" />
+          Contact us on WhatsApp: +91-7842343642
+        </a>
         <Button
-          onClick={() => signOut()}
+          onClick={handleSignOut}
           variant="outline"
           className="w-full"
         >
