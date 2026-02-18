@@ -49,6 +49,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           const { data: { session }, error } = await supabase.auth.getSession();
           if (!error) {
+            // Check if seller is deactivated before restoring session
+            if (session?.user) {
+              const { data: seller } = await supabase
+                .from('sellers')
+                .select('is_deactivated, status')
+                .eq('user_id', session.user.id)
+                .maybeSingle();
+
+              if (seller?.is_deactivated || seller?.status === 'inactive') {
+                await supabase.auth.signOut();
+                setSession(null);
+                setUser(null);
+                setLoading(false);
+                return;
+              }
+            }
             setSession(session);
             setUser(session?.user ?? null);
             setLoading(false);
@@ -95,11 +111,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Check if seller account is deactivated
       const { data: seller } = await supabase
         .from('sellers')
-        .select('is_deactivated')
+        .select('is_deactivated, status')
         .eq('user_id', data.user.id)
         .maybeSingle();
 
-      if (seller?.is_deactivated) {
+      if (seller?.is_deactivated || seller?.status === 'inactive') {
         await supabase.auth.signOut();
         toast({
           variant: "destructive",
