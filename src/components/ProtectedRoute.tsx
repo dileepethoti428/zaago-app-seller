@@ -39,7 +39,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     try {
       const { data, error } = await supabase
         .from('sellers')
-        .select('bank_name, approval_status, is_deactivated')
+        .select('bank_name, approval_status, is_deactivated, status')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -58,7 +58,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       }
 
       // Check if seller is deactivated
-      if ((data as any).is_deactivated) {
+      if ((data as any).is_deactivated || (data as any).status === 'inactive') {
         if (location.pathname !== '/account-deactivated') {
           navigate('/account-deactivated');
         }
