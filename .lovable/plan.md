@@ -1,25 +1,25 @@
 
 
-# Simplify Sales Report: Product Summary Only
+# Block Deactivated Sellers at Login
 
-## What Changes
+## Problem
+When a seller's account is marked as inactive/deactivated by admin, they can still log in successfully. The `ProtectedRoute` tries to redirect them to `/account-deactivated` afterward, but the login itself succeeds -- which is confusing.
 
-Remove the detailed "Sold Items" table entirely -- both on-screen and in the PDF. Keep only the **Product Summary** table that shows aggregated data per product (Product Name, Qty Sold, Revenue). This is the useful view for predicting what to stock.
+## Solution
+Check the `sellers.is_deactivated` flag immediately after successful login in the `signIn` function. If the seller is deactivated, sign them out right away and show an error message: **"Your account has been deactivated. Kindly contact customer care."**
 
-### On-Screen (SalesReport.tsx)
-- Remove the entire "Sold Items" card (lines 167-215) that shows Date, Order ID, Product, Qty, Unit Price, Total per row
-- Keep: date filters, summary cards (Total Items, Quantity Sold, Total Revenue), and Product Summary table
+## Changes
 
-### PDF Export (salesReportExport.ts)
-- Remove the detailed items table (lines 52-70) that lists every individual order line
-- Keep: title, date range, summary stats, and the Product Summary table only
+### File: `src/context/AuthContext.tsx`
 
-### Files to Change
+In the `signIn` function, after `signInWithPassword` succeeds:
+1. Query the `sellers` table for the logged-in user's `is_deactivated` status
+2. If `is_deactivated` is `true`, immediately call `supabase.auth.signOut()`
+3. Show a toast: "Your account has been deactivated. Kindly contact customer care."
+4. Return an error so the login page doesn't navigate away
 
-| File | Change |
-|------|--------|
-| `src/pages/SalesReport.tsx` | Delete the "Sold Items" detailed table card (lines 167-215) |
-| `src/utils/salesReportExport.ts` | Delete the detailed items table section (lines 52-70) |
+### File: `src/pages/AccountDeactivated.tsx`
 
-No changes needed to the hook or data fetching -- only the display is being simplified.
+Update the message text to say: **"Kindly contact customer care"** instead of "Please contact admin for reactivation."
 
+No other files need changes.
