@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -89,6 +89,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           title: "Login Failed",
           description: error.message,
         });
+        return { error };
+      }
+
+      // Check if seller account is deactivated
+      const { data: seller } = await supabase
+        .from('sellers')
+        .select('is_deactivated')
+        .eq('user_id', data.user.id)
+        .maybeSingle();
+
+      if (seller?.is_deactivated) {
+        await supabase.auth.signOut();
+        toast({
+          variant: "destructive",
+          title: "Account Deactivated",
+          description: "Your account has been deactivated. Kindly contact customer care.",
+        });
+        return { error: { message: 'Account deactivated' } };
       }
       
       return { error };

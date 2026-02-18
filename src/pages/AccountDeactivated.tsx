@@ -17,7 +17,7 @@ export default function AccountDeactivated() {
           You cannot access the app until your account is reactivated.
         </p>
         <p className="text-sm text-muted-foreground">
-          Please contact admin for reactivation.
+          Kindly contact customer care.
         </p>
         <Button
           onClick={() => signOut()}
