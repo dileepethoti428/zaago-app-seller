@@ -1,20 +1,21 @@
 
 
-# Fix Account Deactivated Page
+# Update Favicon and Website Logo
 
-## Two Issues to Fix
+## What will change
 
-### 1. Add WhatsApp Contact Link
-Replace the static "Kindly contact customer care." text with a clickable WhatsApp link to **+91-7842343642**.
+The uploaded Zaago logo image will replace the current favicon and logo files used across the app.
 
-### 2. Fix Sign Out Button
-The Sign Out button doesn't work because the session was already cleared during the deactivation check (in `getSessionWithRetry`). When the user taps "Sign Out", `supabase.auth.signOut()` fails silently since there's no active session. Fix: after calling `signOut()`, force-navigate to the login page regardless of success/failure.
+## Steps
 
-## Changes
+1. **Copy the uploaded image** to the `public/` folder as `zaago-new-logo.jpeg`
+2. **Replace favicon reference** in `index.html` -- change `/zaago-favicon.png` to `/zaago-new-logo.jpeg`
+3. **Replace apple-touch-icon** in `index.html` -- change `/zaago-logo.png` to `/zaago-new-logo.jpeg`
+4. **Update `manifest.json`** -- change both icon entries from `/zaago-logo.png` to `/zaago-new-logo.jpeg`
+5. **Update notification icon** in `src/components/SellerNotifications.tsx` -- change `/zaago-logo.png` to `/zaago-new-logo.jpeg`
 
-### File: `src/pages/AccountDeactivated.tsx`
-- Replace the "Kindly contact customer care." paragraph with a WhatsApp link: `https://wa.me/917842343642`
-- Update the Sign Out button to:
-  - Clear state via `signOut()`
-  - Then navigate to `/login` using `useNavigate` from react-router-dom, ensuring the user always leaves this page
+### Files to modify
+- `index.html` (favicon + apple-touch-icon)
+- `public/manifest.json` (PWA icons)
+- `src/components/SellerNotifications.tsx` (notification icon)
 
