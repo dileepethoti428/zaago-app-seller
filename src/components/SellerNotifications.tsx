@@ -176,7 +176,7 @@ export const SellerNotifications = () => {
         if (Notification.permission === 'granted') {
           const notif = new Notification('🚨 NEW ORDER - RESPOND NOW!', {
             body: 'New Order Received! Please respond to the order request.',
-            icon: '/zaago-logo.png',
+            icon: '/zaago-new-logo.jpeg',
             tag: 'new-order-urgent',
             requireInteraction: true,
           });

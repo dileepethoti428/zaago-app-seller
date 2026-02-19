@@ -9,15 +9,15 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/zaago-logo.png",
+      "src": "/zaago-new-logo.jpeg",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any maskable"
     },
     {
-      "src": "/zaago-logo.png",
+      "src": "/zaago-new-logo.jpeg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any maskable"
     }
   ],
