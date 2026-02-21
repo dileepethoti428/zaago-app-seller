@@ -1,21 +1,17 @@
 
+# Add Scrollbar to Pages
 
-# Update Favicon and Website Logo
+## Problem
+The Orders, Subscriptions, Delivery Agents, and Products pages don't have a visible scrollbar, making it hard to know there's more content below.
 
-## What will change
+## Solution
+Wrap the `<main>` content area in `Layout.tsx` with the existing `ScrollArea` component from the UI library. This gives all pages inside the layout a styled, visible scrollbar without modifying each page individually.
 
-The uploaded Zaago logo image will replace the current favicon and logo files used across the app.
+## Changes
 
-## Steps
+### File: `src/components/Layout.tsx`
+- Import the `ScrollArea` component
+- Wrap the `<main>` element's content with `ScrollArea` so the main content area gets a visible vertical scrollbar
+- Set the main area to use `overflow-hidden` and give `ScrollArea` full height so it controls scrolling
 
-1. **Copy the uploaded image** to the `public/` folder as `zaago-new-logo.jpeg`
-2. **Replace favicon reference** in `index.html` -- change `/zaago-favicon.png` to `/zaago-new-logo.jpeg`
-3. **Replace apple-touch-icon** in `index.html` -- change `/zaago-logo.png` to `/zaago-new-logo.jpeg`
-4. **Update `manifest.json`** -- change both icon entries from `/zaago-logo.png` to `/zaago-new-logo.jpeg`
-5. **Update notification icon** in `src/components/SellerNotifications.tsx` -- change `/zaago-logo.png` to `/zaago-new-logo.jpeg`
-
-### Files to modify
-- `index.html` (favicon + apple-touch-icon)
-- `public/manifest.json` (PWA icons)
-- `src/components/SellerNotifications.tsx` (notification icon)
-
+This is a single-file change that applies the scrollbar to all four pages (and any other pages using this layout).
