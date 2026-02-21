@@ -1046,6 +1046,36 @@ export type Database = {
           },
         ]
       }
+      bonuses: {
+        Row: {
+          amount: number
+          created_at: string | null
+          created_by: string | null
+          id: string
+          party_id: string
+          party_type: string
+          reason: string | null
+        }
+        Insert: {
+          amount?: number
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          party_id: string
+          party_type: string
+          reason?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          party_id?: string
+          party_type?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
       cart_items: {
         Row: {
           created_at: string
@@ -7384,6 +7414,8 @@ export type Database = {
       }
       orders_with_agents: {
         Row: {
+          acceptance_window_expired: boolean | null
+          accepted_at: string | null
           address: Json | null
           agent_email: string | null
           agent_id: string | null
@@ -7391,6 +7423,8 @@ export type Database = {
           agent_notification_sent: boolean | null
           agent_notification_sent_at: string | null
           agent_phone: string | null
+          assigned_agent_id: string | null
+          assignment_type: string | null
           created_at: string | null
           customer_name: string | null
           customer_phone: string | null
@@ -7398,15 +7432,35 @@ export type Database = {
           delivered_at: string | null
           delivery_address_id: string | null
           delivery_date: string | null
+          delivery_latitude: number | null
+          delivery_longitude: number | null
+          delivery_otp: string | null
+          delivery_payout: number | null
           delivery_time: string | null
           delivery_time_slot: string | null
+          distance_km: number | null
           id: string | null
           items: Json | null
+          last_notified_at: string | null
+          last_notified_status: string | null
+          notification_count: number | null
+          notification_sent: boolean | null
+          otp_attempts: number | null
+          otp_expires_at: string | null
+          otp_verified: boolean | null
+          otp_verified_at: string | null
+          otp_verified_by: string | null
+          packed_at: string | null
           payment_id: string | null
+          payment_method: string | null
           payment_status: string | null
           pickup_address: string | null
           pickup_location: Json | null
           pickup_status: string | null
+          price_breakdown: Json | null
+          seller_accepted_at: string | null
+          seller_address: Json | null
+          seller_id: string | null
           seller_latitude: number | null
           seller_longitude: number | null
           seller_name: string | null
@@ -7416,8 +7470,11 @@ export type Database = {
           status: string | null
           subscription_id: string | null
           total: number | null
+          tracking_id: string | null
           updated_at: string | null
           user_id: string | null
+          visible: boolean | null
+          visible_until: string | null
         }
         Relationships: [
           {
@@ -7428,10 +7485,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "orders_assigned_agent_id_fkey"
+            columns: ["assigned_agent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "orders_delivery_address_id_fkey"
             columns: ["delivery_address_id"]
             isOneToOne: false
             referencedRelation: "delivery_addresses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_otp_verified_by_fkey"
+            columns: ["otp_verified_by"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
             referencedColumns: ["id"]
           },
           {
