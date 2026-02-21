@@ -12,9 +12,9 @@ const Layout = () => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
         <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <Topbar />
-          <main className="flex-1 overflow-hidden">
+          <main className="flex-1 overflow-hidden h-0">
             <ScrollArea className="h-full">
               <div className="p-3 sm:p-4 md:p-6 zaago-mobile-container">
                 <Outlet />
