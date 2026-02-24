@@ -101,6 +101,36 @@ export const storage = {
     }
   },
 
+  setWithExpiry: (key: string, value: any, ttlMs: number): void => {
+    try {
+      const item = { data: value, expiry: Date.now() + ttlMs };
+      localStorage.setItem(key, JSON.stringify(item));
+    } catch (error) {
+      console.warn('Failed to save to localStorage:', error);
+    }
+  },
+
+  getWithExpiry: <T>(key: string): T | null => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      const item = JSON.parse(raw);
+      // Support both expiry-aware and plain formats
+      if (item && typeof item === 'object' && 'expiry' in item && 'data' in item) {
+        if (Date.now() > item.expiry) {
+          localStorage.removeItem(key);
+          return null;
+        }
+        return item.data as T;
+      }
+      // Fallback: plain stored value (no expiry)
+      return item as T;
+    } catch (error) {
+      console.warn('Failed to read from localStorage:', error);
+      return null;
+    }
+  },
+
   remove: (key: string): void => {
     try {
       localStorage.removeItem(key);

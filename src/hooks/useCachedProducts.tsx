@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import { useLocation } from './useLocation';
+import { useCachedLocation } from './useCachedLocation';
 import { createLocationCacheKey } from '@/lib/cache';
 import { useNetworkStatus } from '@/lib/network';
 
@@ -22,7 +22,7 @@ interface ProductWithDistance {
 
 export const useCachedProducts = (maxDistance: number = 15) => {
   const { user } = useAuth();
-  const { location } = useLocation();
+  const { location } = useCachedLocation();
   const isOnline = useNetworkStatus();
 
   const queryKey = location 
