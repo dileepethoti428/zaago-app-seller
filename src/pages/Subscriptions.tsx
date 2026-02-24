@@ -20,7 +20,43 @@ import { VacationDatesSection } from '@/components/VacationDatesSection';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getCurrentISTTime, isAfter11_30PM_IST, getTomorrowDateIST, isDateTomorrow } from '@/utils/timeZone';
 import { formatDateForDisplay, formatDateWithLabel } from '@/utils/subscriptionDateCalculator';
-import { Search, RefreshCw, Calendar, User, Phone, MapPin, Package, CheckCircle, XCircle, Clock, CalendarClock, UserPlus, UserMinus, Eye, Pencil } from 'lucide-react';
+import { Search, RefreshCw, Calendar, User, Phone, MapPin, Package, CheckCircle, XCircle, Clock, CalendarClock, UserPlus, UserMinus, Eye, Pencil, Tag } from 'lucide-react';
+
+const formatTimeSlot = (slot: string): string => {
+  const map: Record<string, string> = {
+    'morning-early': 'Early Morning',
+    'morning': 'Morning',
+    'morning-late': 'Late Morning',
+    'evening-early': 'Early Evening',
+    'evening': 'Evening',
+    'evening-late': 'Late Evening',
+  };
+  return map[slot] || slot?.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'N/A';
+};
+
+const formatScheduleType = (type: string, deliveryDays?: string[] | null): string => {
+  const map: Record<string, string> = {
+    'everyday': 'Everyday',
+    'alternative': 'Alternate Days',
+    'weekend': 'Weekends',
+  };
+  if (type === 'custom' && deliveryDays?.length) {
+    return `Custom (${deliveryDays.join(', ')})`;
+  }
+  return map[type] || type?.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'N/A';
+};
+
+const formatPlanDuration = (startDate: string, endDate: string): string => {
+  if (!startDate || !endDate) return 'N/A';
+  const days = Math.round((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 3600 * 24));
+  if (days <= 7) return '1 Week Plan';
+  if (days <= 14) return '2 Weeks Plan';
+  if (days <= 31) return '1 Month Plan';
+  if (days <= 93) return '3 Months Plan';
+  if (days <= 186) return '6 Months Plan';
+  if (days <= 366) return '1 Year Plan';
+  return `${Math.round(days / 30)} Months Plan`;
+};
 import { format, addDays, parseISO, isSameDay, isWithinInterval, differenceInMinutes, setHours, setMinutes, setSeconds } from 'date-fns';
 import { motion } from 'framer-motion';
 import {
@@ -646,12 +682,21 @@ const Subscriptions = () => {
                       </div>
 
                       <div className="space-y-2 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span className="capitalize">
-                            {subscription.subscription_type.replace('_', ' ')} •{' '}
-                            {subscription.delivery_time_slot}
-                          </span>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                            <Calendar className="h-3 w-3" />
+                            {formatScheduleType(subscription.subscription_type, (subscription as any).delivery_days)}
+                          </Badge>
+                          <Badge variant="outline" className="flex items-center gap-1 text-xs">
+                            <Clock className="h-3 w-3" />
+                            {formatTimeSlot(subscription.delivery_time_slot)}
+                          </Badge>
+                          {subscription.start_date && subscription.end_date && (
+                            <Badge variant="default" className="flex items-center gap-1 text-xs">
+                              <Tag className="h-3 w-3" />
+                              {formatPlanDuration(subscription.start_date, subscription.end_date)}
+                            </Badge>
+                          )}
                         </div>
 
                         {/* Location ID */}
