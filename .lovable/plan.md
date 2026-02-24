@@ -1,47 +1,60 @@
 
-# Reduce Location API Calls with 1-Day Caching
 
-## Problem
-Every time the app opens, the `useLocation` hook in the Topbar fetches GPS coordinates and calls the Google Places API for reverse geocoding. This happens repeatedly on every page navigation because the Topbar is always mounted via the Layout. There is no persistent caching, so the same location data is fetched fresh each time.
+# Show Delivery Schedule, Time Slot, and Plan on Subscription Cards
 
-## Solution
-Consolidate all location usage to use `useCachedLocation` with a 1-day localStorage cache, and stop using the uncached `useLocation` hook.
+## What Changes
+Each subscription card will display three clearly labeled info badges/tags instead of the current single-line text:
 
-### Changes
+1. **Delivery Schedule** -- Everyday, Alternative, Weekend, or Custom (with days listed)
+2. **Delivery Time** -- Human-readable labels like "Early Morning", "Late Morning", "Evening" etc.
+3. **Plan Duration** -- Calculated from start and end dates (e.g., "1 Week", "1 Month", "6 Months")
 
-**1. `src/lib/cache.ts` - Add expiry-aware localStorage caching**
-- Update the `storage.set` method to store a timestamp alongside the data
-- Add a `storage.getWithExpiry` method that checks if data has expired
-- Default expiry: 24 hours (86,400,000 ms)
+## Current State
+Line 648-654 in `Subscriptions.tsx` shows:
+```
+Everyday • morning-early
+```
+This is hard to read and hides the plan duration entirely.
 
-**2. `src/hooks/useCachedLocation.tsx` - Use 1-day cache TTL**
-- Change `LOCATION_CACHE_KEY` storage to use the expiry-aware method
-- Set cache TTL to 24 hours
-- Increase `staleTime` from 10 minutes to 24 hours so React Query doesn't refetch the database query constantly
-- Increase `gcTime` accordingly
-- Only call GPS + Google Places if no valid cached data exists within 24 hours
+## New Display
+Replace that single line with three styled badges:
 
-**3. `src/components/Topbar.tsx` - Switch to `useCachedLocation`**
-- Replace `import { useLocation }` with `import { useCachedLocation }`
-- Replace `useLocation()` call with `useCachedLocation()`
-- This is the main place causing repeated API calls on every app open
+```
+[Calendar icon] Everyday    [Clock icon] Early Morning    [Tag icon] 1 Month Plan
+[Calendar icon] Alternative [Clock icon] Late Evening     [Tag icon] 6 Months Plan  
+[Calendar icon] Custom (Sat, Sun) [Clock icon] Morning   [Tag icon] 1 Week Plan
+```
 
-**4. `src/hooks/useCachedProducts.tsx` - Switch to `useCachedLocation`**
-- Replace `useLocation` import and usage with `useCachedLocation`
+## Technical Details
 
-**5. `src/hooks/useProductsWithLocation.tsx` - Switch to `useCachedLocation`**
-- Replace `useLocation` import and usage with `useCachedLocation`
+### File: `src/pages/Subscriptions.tsx`
 
-### How the caching works after changes
+**1. Add a helper function** to format delivery time slots into readable labels:
+- `morning-early` -> "Early Morning"
+- `morning` -> "Morning"  
+- `morning-late` -> "Late Morning"
+- `evening-early` -> "Early Evening"
+- `evening-late` -> "Late Evening"
 
-1. User opens app -> check localStorage for location with timestamp
-2. If location exists and is less than 24 hours old -> use it immediately, no API calls
-3. If location is missing or older than 24 hours -> fetch GPS, call Google Places, save to localStorage with new timestamp
-4. Manual refresh button in Topbar still works (calls `getCurrentLocation(true)` to force refresh)
+**2. Add a helper function** to compute plan duration from `start_date` and `end_date`:
+- Difference <= 7 days -> "1 Week"
+- Difference <= 14 days -> "2 Weeks"
+- Difference <= 31 days -> "1 Month"
+- Difference <= 93 days -> "3 Months"
+- Difference <= 186 days -> "6 Months"
+- Difference <= 366 days -> "1 Year"
+- Otherwise show exact month count
+
+**3. Add a helper function** to format schedule type:
+- `everyday` -> "Everyday"
+- `alternative` -> "Alternate Days"
+- `weekend` -> "Weekends"
+- `custom` -> "Custom" + show delivery_days if available (e.g., "Custom (Sat, Sun)")
+
+**4. Replace lines 648-655** (the current single-line display) with three badge rows showing schedule, time, and plan duration using colored Badge components for visual clarity.
+
+### No database changes needed
+All required data (`subscription_type`, `delivery_time_slot`, `start_date`, `end_date`, `delivery_days`) already exists in the subscriptions table.
 
 ### Files to modify
-- `src/lib/cache.ts` (add expiry-aware storage)
-- `src/hooks/useCachedLocation.tsx` (24-hour TTL)
-- `src/components/Topbar.tsx` (switch hook)
-- `src/hooks/useCachedProducts.tsx` (switch hook)
-- `src/hooks/useProductsWithLocation.tsx` (switch hook)
+- `src/pages/Subscriptions.tsx` (add helpers + update card display)
