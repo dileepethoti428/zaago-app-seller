@@ -176,24 +176,26 @@ export default function UnassignedOrders() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as DateType)} defaultValue="tomorrow">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="today" className="flex items-center gap-2">
-            Today (Live)
-            {todayCount > 0 && (
-              <Badge variant="destructive" className="ml-1">
-                {todayCount}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="tomorrow" className="flex items-center gap-2">
-            Tomorrow (Planning)
-            {tomorrowCount > 0 && (
-              <Badge variant="secondary" className="ml-1">
-                {tomorrowCount}
-              </Badge>
-            )}
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-3 px-3">
+          <TabsList className="grid w-full max-w-md grid-cols-2 min-w-[320px]">
+            <TabsTrigger value="today" className="flex items-center gap-2">
+              Today (Live)
+              {todayCount > 0 && (
+                <Badge variant="destructive" className="ml-1">
+                  {todayCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="tomorrow" className="flex items-center gap-2">
+              Tomorrow (Planning)
+              {tomorrowCount > 0 && (
+                <Badge variant="secondary" className="ml-1">
+                  {tomorrowCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Warning Banner for Today */}
         {activeTab === 'today' && todayCount > 0 && (
@@ -206,8 +208,9 @@ export default function UnassignedOrders() {
         )}
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
-          <Card>
+        <div className="overflow-x-auto -mx-3 px-3 pb-2 mt-4">
+          <div className="flex gap-4 min-w-max">
+          <Card className="min-w-[180px] flex-1">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Total Unassigned
@@ -218,7 +221,7 @@ export default function UnassignedOrders() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="min-w-[180px] flex-1">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <UserX className="h-4 w-4 text-destructive" />
@@ -230,7 +233,7 @@ export default function UnassignedOrders() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="min-w-[180px] flex-1">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Users className="h-4 w-4 text-amber-500" />
@@ -241,6 +244,7 @@ export default function UnassignedOrders() {
               <p className="text-3xl font-bold text-amber-500">{atCapacityCount}</p>
             </CardContent>
           </Card>
+          </div>
         </div>
 
         {/* Tab Content */}
