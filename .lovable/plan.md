@@ -1,31 +1,47 @@
 
-# Fix Horizontal Scrolling Inside Pages
+# Reduce Location API Calls with 1-Day Caching
 
-## Root Cause
-The Radix ScrollArea component that handles vertical scrolling for the layout has two behaviors that kill horizontal scrolling inside pages:
-
-1. **The viewport sets `overflow-x: hidden`** (inline style) because we only render a vertical scrollbar. This clips all horizontal overflow.
-2. **The content wrapper uses `display: table`** (inline style), which makes the inner content expand to fit children's intrinsic widths instead of constraining them.
-
-Together, these prevent any `overflow-x-auto` inside pages from working -- the content either expands beyond the viewport (table layout) or gets clipped (overflow-x hidden).
+## Problem
+Every time the app opens, the `useLocation` hook in the Topbar fetches GPS coordinates and calls the Google Places API for reverse geocoding. This happens repeatedly on every page navigation because the Topbar is always mounted via the Layout. There is no persistent caching, so the same location data is fetched fresh each time.
 
 ## Solution
-Modify the `ScrollArea` component to allow controlling overflow behavior, then use native scrolling in the Layout instead.
-
-### Option chosen: Replace ScrollArea with native overflow in Layout
-
-Since we only need vertical scrolling in the layout (not a custom styled scrollbar), the simplest fix is to replace `ScrollArea` with a plain `div` that has `overflow-y: auto` and `overflow-x: hidden`. This avoids Radix's viewport restrictions entirely while keeping the vertical scroll behavior.
+Consolidate all location usage to use `useCachedLocation` with a 1-day localStorage cache, and stop using the uncached `useLocation` hook.
 
 ### Changes
 
-**File 1: `src/components/Layout.tsx`**
-- Remove the `ScrollArea` import
-- Replace `<ScrollArea className="h-full">` with `<div className="h-full overflow-y-auto overflow-x-hidden">`
-- This keeps vertical scrolling working (as confirmed by user) while no longer blocking horizontal scrolling inside child pages
+**1. `src/lib/cache.ts` - Add expiry-aware localStorage caching**
+- Update the `storage.set` method to store a timestamp alongside the data
+- Add a `storage.getWithExpiry` method that checks if data has expired
+- Default expiry: 24 hours (86,400,000 ms)
 
-**No other files need changes.** The `overflow-x-auto` wrappers already added to DeliveryAgents, UnassignedOrders, Subscriptions, and Products pages will start working once the parent stops clipping horizontal overflow.
+**2. `src/hooks/useCachedLocation.tsx` - Use 1-day cache TTL**
+- Change `LOCATION_CACHE_KEY` storage to use the expiry-aware method
+- Set cache TTL to 24 hours
+- Increase `staleTime` from 10 minutes to 24 hours so React Query doesn't refetch the database query constantly
+- Increase `gcTime` accordingly
+- Only call GPS + Google Places if no valid cached data exists within 24 hours
 
-### Why this is safe
-- The only thing we lose is the thin custom-styled Radix scrollbar thumb -- the browser's native scrollbar will show instead
-- All horizontal scroll sections will immediately work
-- Vertical scrolling continues to work exactly as before
+**3. `src/components/Topbar.tsx` - Switch to `useCachedLocation`**
+- Replace `import { useLocation }` with `import { useCachedLocation }`
+- Replace `useLocation()` call with `useCachedLocation()`
+- This is the main place causing repeated API calls on every app open
+
+**4. `src/hooks/useCachedProducts.tsx` - Switch to `useCachedLocation`**
+- Replace `useLocation` import and usage with `useCachedLocation`
+
+**5. `src/hooks/useProductsWithLocation.tsx` - Switch to `useCachedLocation`**
+- Replace `useLocation` import and usage with `useCachedLocation`
+
+### How the caching works after changes
+
+1. User opens app -> check localStorage for location with timestamp
+2. If location exists and is less than 24 hours old -> use it immediately, no API calls
+3. If location is missing or older than 24 hours -> fetch GPS, call Google Places, save to localStorage with new timestamp
+4. Manual refresh button in Topbar still works (calls `getCurrentLocation(true)` to force refresh)
+
+### Files to modify
+- `src/lib/cache.ts` (add expiry-aware storage)
+- `src/hooks/useCachedLocation.tsx` (24-hour TTL)
+- `src/components/Topbar.tsx` (switch hook)
+- `src/hooks/useCachedProducts.tsx` (switch hook)
+- `src/hooks/useProductsWithLocation.tsx` (switch hook)
