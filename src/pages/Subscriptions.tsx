@@ -382,8 +382,9 @@ const Subscriptions = () => {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
+      <div className="overflow-x-auto -mx-3 px-3 pb-2">
+        <div className="flex gap-4 min-w-max items-end">
+        <div className="relative min-w-[220px] flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
             placeholder="Search by customer name, phone, or ID..."
@@ -393,7 +394,7 @@ const Subscriptions = () => {
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
@@ -405,7 +406,7 @@ const Subscriptions = () => {
           </SelectContent>
         </Select>
         <Select value={deliveryTypeFilter} onValueChange={setDeliveryTypeFilter}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by type" />
           </SelectTrigger>
           <SelectContent>
@@ -416,7 +417,7 @@ const Subscriptions = () => {
           </SelectContent>
         </Select>
         <Select value={agentFilter} onValueChange={setAgentFilter}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by agent" />
           </SelectTrigger>
           <SelectContent>
@@ -425,6 +426,7 @@ const Subscriptions = () => {
             <SelectItem value="not_assigned">Agent Not Assigned ({subscriptionCounts.agentNotAssigned})</SelectItem>
           </SelectContent>
         </Select>
+        </div>
       </div>
 
       {isLoading ? (

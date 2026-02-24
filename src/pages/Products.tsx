@@ -438,9 +438,10 @@ const Products = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.3 }}
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+        className="overflow-x-auto -mx-3 px-3 pb-2"
       >
-        <Card className="bg-zaago-card/50 border-zaago-border">
+        <div className="flex gap-4 min-w-max">
+        <Card className="min-w-[180px] flex-1 bg-zaago-card/50 border-zaago-border">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -454,7 +455,7 @@ const Products = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-zaago-card/50 border-zaago-border">
+        <Card className="min-w-[180px] flex-1 bg-zaago-card/50 border-zaago-border">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -468,7 +469,7 @@ const Products = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-zaago-card/50 border-zaago-border">
+        <Card className="min-w-[180px] flex-1 bg-zaago-card/50 border-zaago-border">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -482,7 +483,7 @@ const Products = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-zaago-card/50 border-zaago-border">
+        <Card className="min-w-[180px] flex-1 bg-zaago-card/50 border-zaago-border">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -495,6 +496,7 @@ const Products = () => {
             </div>
           </CardContent>
         </Card>
+        </div>
       </motion.div>
 
       {/* Search and Filter */}

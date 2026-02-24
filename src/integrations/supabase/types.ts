@@ -50,6 +50,51 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_pricing_settings: {
+        Row: {
+          bottle_deposit: number
+          crate_deposit: number
+          created_at: string
+          delivery_fee_per_delivery: number
+          discount_percentage: number
+          id: string
+          is_active: boolean
+          milk_price_per_litre: number
+          other_charges: number
+          setup_fee: number
+          tax_percentage: number
+          updated_at: string
+        }
+        Insert: {
+          bottle_deposit?: number
+          crate_deposit?: number
+          created_at?: string
+          delivery_fee_per_delivery?: number
+          discount_percentage?: number
+          id?: string
+          is_active?: boolean
+          milk_price_per_litre?: number
+          other_charges?: number
+          setup_fee?: number
+          tax_percentage?: number
+          updated_at?: string
+        }
+        Update: {
+          bottle_deposit?: number
+          crate_deposit?: number
+          created_at?: string
+          delivery_fee_per_delivery?: number
+          discount_percentage?: number
+          id?: string
+          is_active?: boolean
+          milk_price_per_litre?: number
+          other_charges?: number
+          setup_fee?: number
+          tax_percentage?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_secret_codes: {
         Row: {
           code: string
@@ -6226,6 +6271,60 @@ export type Database = {
           },
         ]
       }
+      subscription_pricing_settings: {
+        Row: {
+          bottle_deposit: number
+          crate_deposit: number
+          created_at: string
+          delivery_fee_per_delivery: number
+          discount_1month: number | null
+          discount_1week: number | null
+          discount_6months: number | null
+          discount_percentage: number
+          id: string
+          is_active: boolean
+          milk_price_per_litre: number
+          other_charges: number | null
+          setup_fee: number
+          tax_percentage: number
+          updated_at: string
+        }
+        Insert: {
+          bottle_deposit?: number
+          crate_deposit?: number
+          created_at?: string
+          delivery_fee_per_delivery?: number
+          discount_1month?: number | null
+          discount_1week?: number | null
+          discount_6months?: number | null
+          discount_percentage?: number
+          id?: string
+          is_active?: boolean
+          milk_price_per_litre: number
+          other_charges?: number | null
+          setup_fee?: number
+          tax_percentage?: number
+          updated_at?: string
+        }
+        Update: {
+          bottle_deposit?: number
+          crate_deposit?: number
+          created_at?: string
+          delivery_fee_per_delivery?: number
+          discount_1month?: number | null
+          discount_1week?: number | null
+          discount_6months?: number | null
+          discount_percentage?: number
+          id?: string
+          is_active?: boolean
+          milk_price_per_litre?: number
+          other_charges?: number | null
+          setup_fee?: number
+          tax_percentage?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscription_vacation_periods: {
         Row: {
           created_at: string
@@ -6346,15 +6445,20 @@ export type Database = {
           next_delivery_date: string
           notification_advance_hours: number | null
           payment_id: string | null
+          plan_type: string | null
+          price_snapshot: Json | null
           primary_agent_id: string | null
           product_id: string
           quantity: number
+          quantity_per_day: number | null
           source: string | null
           special_instructions: string | null
           start_date: string
           status: string
           subscription_type: string
+          total_amount: number | null
           total_credit_earned: number | null
+          total_deliveries: number | null
           updated_at: string
           user_id: string | null
           vacation_days_used: number | null
@@ -6379,15 +6483,20 @@ export type Database = {
           next_delivery_date: string
           notification_advance_hours?: number | null
           payment_id?: string | null
+          plan_type?: string | null
+          price_snapshot?: Json | null
           primary_agent_id?: string | null
           product_id: string
           quantity?: number
+          quantity_per_day?: number | null
           source?: string | null
           special_instructions?: string | null
           start_date?: string
           status?: string
           subscription_type: string
+          total_amount?: number | null
           total_credit_earned?: number | null
+          total_deliveries?: number | null
           updated_at?: string
           user_id?: string | null
           vacation_days_used?: number | null
@@ -6412,15 +6521,20 @@ export type Database = {
           next_delivery_date?: string
           notification_advance_hours?: number | null
           payment_id?: string | null
+          plan_type?: string | null
+          price_snapshot?: Json | null
           primary_agent_id?: string | null
           product_id?: string
           quantity?: number
+          quantity_per_day?: number | null
           source?: string | null
           special_instructions?: string | null
           start_date?: string
           status?: string
           subscription_type?: string
+          total_amount?: number | null
           total_credit_earned?: number | null
+          total_deliveries?: number | null
           updated_at?: string
           user_id?: string | null
           vacation_days_used?: number | null

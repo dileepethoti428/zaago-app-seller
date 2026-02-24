@@ -143,8 +143,9 @@ export default function DeliveryAgents() {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-          <Card>
+        <div className="overflow-x-auto -mx-3 px-3 pb-2">
+          <div className="flex gap-4 min-w-max">
+          <Card className="min-w-[180px] flex-1">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-primary/10 rounded-lg">
@@ -157,7 +158,7 @@ export default function DeliveryAgents() {
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="min-w-[180px] flex-1">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-green-500/10 rounded-lg">
@@ -170,7 +171,7 @@ export default function DeliveryAgents() {
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="min-w-[180px] flex-1">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-orange-500/10 rounded-lg">
@@ -185,7 +186,7 @@ export default function DeliveryAgents() {
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="min-w-[180px] flex-1">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-primary/10 rounded-lg">
@@ -200,7 +201,7 @@ export default function DeliveryAgents() {
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="min-w-[180px] flex-1">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-500/10 rounded-lg">
@@ -215,6 +216,7 @@ export default function DeliveryAgents() {
               </div>
             </CardContent>
           </Card>
+          </div>
         </div>
 
         {/* Agents Table */}
