@@ -5,7 +5,7 @@ import { useCart } from '@/context/CartContext';
 import { LogOut, User, MapPin, Navigation, ShoppingCart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
-import { useLocation } from '@/hooks/useLocation';
+import { useCachedLocation } from '@/hooks/useCachedLocation';
 import { LocationSelector } from './LocationSelector';
 import { useState } from 'react';
 
@@ -13,7 +13,7 @@ export default function Topbar() {
   const { user, signOut } = useAuth();
   const { itemCount } = useCart();
   const { toast } = useToast();
-  const { location, loading: locationLoading, getCurrentLocation } = useLocation();
+  const { location, loading: locationLoading, getCurrentLocation } = useCachedLocation();
   const [showLocationSelector, setShowLocationSelector] = useState(false);
 
   const handleLogout = async () => {

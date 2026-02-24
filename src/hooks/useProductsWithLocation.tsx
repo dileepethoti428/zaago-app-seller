@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useLocation } from './useLocation';
+import { useCachedLocation } from './useCachedLocation';
 import { useAuth } from '@/context/AuthContext';
 
 interface ProductWithDistance {
@@ -22,7 +22,7 @@ export const useProductsWithLocation = (maxDistance: number = 15) => {
   const [products, setProducts] = useState<ProductWithDistance[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { location } = useLocation();
+  const { location } = useCachedLocation();
   const { user } = useAuth();
 
   useEffect(() => {
