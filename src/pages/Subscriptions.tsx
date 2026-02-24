@@ -183,9 +183,10 @@ const Subscriptions = () => {
       agentAssigned: 0,
       agentNotAssigned: 0,
       hasMissed: 0,
+      expired: 0,
     };
 
-    let active = 0, inactive = 0, onVacation = 0;
+    let active = 0, inactive = 0, onVacation = 0, expired = 0;
     let everyday = 0, weekend = 0, alternate = 0;
     let agentAssigned = 0, agentNotAssigned = 0;
     let hasMissed = 0;
@@ -200,7 +201,9 @@ const Subscriptions = () => {
       });
       const isOnVacationNow = !!activeVacation;
 
-      if (isOnVacationNow) onVacation++;
+      const isExpiredNow = sub.end_date && new Date(sub.end_date) < new Date();
+      if (isExpiredNow) expired++;
+      else if (isOnVacationNow) onVacation++;
       else if (sub.is_active) active++;
       else inactive++;
 
@@ -225,6 +228,7 @@ const Subscriptions = () => {
       agentAssigned,
       agentNotAssigned,
       hasMissed,
+      expired,
     };
   }, [subscriptions, missedCounts]);
 
@@ -259,6 +263,7 @@ const Subscriptions = () => {
       else if (statusFilter === 'inactive') matchesStatus = !sub.is_active;
       else if (statusFilter === 'on_vacation') matchesStatus = isOnVacation;
       else if (statusFilter === 'has_missed') matchesStatus = !!(missedCounts && missedCounts[sub.id] > 0);
+      else if (statusFilter === 'expired') matchesStatus = !!(sub.end_date && new Date(sub.end_date) < new Date());
 
       // Delivery type filter
       const matchesDeliveryType =
@@ -439,6 +444,7 @@ const Subscriptions = () => {
             <SelectItem value="inactive">Inactive ({subscriptionCounts.inactive})</SelectItem>
             <SelectItem value="on_vacation">On Vacation ({subscriptionCounts.onVacation})</SelectItem>
             <SelectItem value="has_missed">Has Missed ({subscriptionCounts.hasMissed})</SelectItem>
+            <SelectItem value="expired">Expired ({subscriptionCounts.expired})</SelectItem>
           </SelectContent>
         </Select>
         <Select value={deliveryTypeFilter} onValueChange={setDeliveryTypeFilter}>
@@ -695,6 +701,11 @@ const Subscriptions = () => {
                             <Badge variant="default" className="flex items-center gap-1 text-xs">
                               <Tag className="h-3 w-3" />
                               {formatPlanDuration(subscription.start_date, subscription.end_date)}
+                            </Badge>
+                          )}
+                          {subscription.end_date && new Date(subscription.end_date) < new Date() && (
+                            <Badge variant="destructive" className="flex items-center gap-1 text-xs">
+                              Expired
                             </Badge>
                           )}
                         </div>
