@@ -629,7 +629,7 @@ const VacationCompensations = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                   {pendingList.map((comp: VacationCompensationWithDetails) => (
                     <CompensationCard key={comp.id} comp={comp} agents={agents} />
                   ))}
