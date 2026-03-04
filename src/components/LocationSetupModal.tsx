@@ -58,7 +58,7 @@ export const LocationSetupModal = ({ open, onOpenChange, onLocationSet }: Locati
           </DialogTitle>
           <DialogDescription className="text-left">
             You need to set your store location before you can mark orders as packed. 
-            This helps delivery agents find your store.
+            This helps delivery partners find your store.
           </DialogDescription>
         </DialogHeader>
         

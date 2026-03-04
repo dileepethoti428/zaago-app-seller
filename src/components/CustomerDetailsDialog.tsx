@@ -231,7 +231,7 @@ const CustomerDetailFields = ({
         <Truck className="h-4 w-4 text-blue-500" />
       </div>
       <div className="flex-1">
-        <p className="text-sm text-muted-foreground">Assigned Delivery Agent</p>
+        <p className="text-sm text-muted-foreground">Assigned Delivery Partner</p>
         {assignedAgent ? (
           <div className="space-y-1">
             <p className="font-medium">{assignedAgent.name}</p>

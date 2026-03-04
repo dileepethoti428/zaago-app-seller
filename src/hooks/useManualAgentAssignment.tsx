@@ -92,11 +92,11 @@ export function useCreateDeliveryAgent() {
       queryClient.invalidateQueries({ queryKey: ['delivery-agents-list'] });
       queryClient.invalidateQueries({ queryKey: ['daily-orders-counts'] });
       queryClient.invalidateQueries({ queryKey: ['unassigned-orders'] });
-      toast.success('Delivery agent created successfully');
+      toast.success('Delivery partner created successfully');
     },
     onError: (error) => {
       console.error('Error creating delivery agent:', error);
-      toast.error('Failed to create delivery agent');
+      toast.error('Failed to create delivery partner');
     },
   });
 }

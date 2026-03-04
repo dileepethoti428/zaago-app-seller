@@ -40,7 +40,7 @@ const navigationLinks = [
   { href: '/customer-orders', label: 'Orders', icon: ShoppingCart },
   { href: '/subscriptions', label: 'Subscriptions', icon: CalendarClock },
   { href: '/vacation-compensations', label: 'Vacation Comp.', icon: CalendarOff },
-  { href: '/delivery-agents', label: 'Delivery Agents', icon: Truck },
+  { href: '/delivery-agents', label: 'Delivery Partners', icon: Truck },
   { href: '/unassigned-orders', label: 'Unassigned Orders', icon: AlertTriangle },
   { href: '/products', label: 'Products', icon: Package },
   { href: '/products/new', label: 'Add Product', icon: PlusCircle },

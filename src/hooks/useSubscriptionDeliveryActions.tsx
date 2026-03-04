@@ -52,7 +52,7 @@ export const useSubscriptionDeliveryActions = () => {
         toast({
           title: 'Delivery Accepted',
           description: data.assigned 
-            ? 'Order has been accepted, assigned to delivery agent, and marked as packed.'
+            ? 'Order has been accepted, assigned to delivery partner, and marked as packed.'
             : 'Order has been accepted and will be assigned when an agent comes online.',
         });
       } else {

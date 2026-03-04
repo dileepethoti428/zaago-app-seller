@@ -620,8 +620,8 @@ const Subscriptions = () => {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Remove assigned agent?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Use this if the delivery agent quit or can no longer deliver to this subscription. 
-                                  The subscription will not be assigned to them anymore and you'll need to assign a new agent.
+                                  Use this if the delivery partner quit or can no longer deliver to this subscription. 
+                                  The subscription will not be assigned to them anymore and you'll need to assign a new partner.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>

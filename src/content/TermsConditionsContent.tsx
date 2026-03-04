@@ -40,7 +40,7 @@ export const TermsConditionsContent = () => {
           <li>Not share your account with third parties or allow unauthorized access</li>
           <li>Immediately notify Zaago of any unauthorized use of your account</li>
           <li>Be solely responsible for all activities that occur under your account</li>
-          <li>Maintain professional conduct in all interactions with customers, delivery agents, and platform support</li>
+          <li>Maintain professional conduct in all interactions with customers, delivery partners, and platform support</li>
         </ul>
       </section>
 
@@ -90,7 +90,7 @@ export const TermsConditionsContent = () => {
         <h3 className="text-lg font-medium mb-3">4.2 Order Fulfillment Timelines</h3>
         <ul className="list-disc pl-6 space-y-2 text-muted-foreground mb-4">
           <li>Prepare orders within the committed preparation time</li>
-          <li>Ensure products are properly packed and ready for delivery agent pickup</li>
+          <li>Ensure products are properly packed and ready for delivery partner pickup</li>
           <li>Maintain quality and hygiene standards during order preparation</li>
           <li>Communicate any delays proactively through the platform</li>
         </ul>

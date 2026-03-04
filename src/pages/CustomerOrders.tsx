@@ -685,7 +685,7 @@ const CustomerOrders: React.FC = () => {
                               <div className="flex items-center gap-2">
                                 <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 flex items-center gap-2">
                                   <Truck className="w-4 h-4" />
-                                  Assigned to Delivery Agent
+                                  Assigned to Delivery Partner
                                 </Badge>
                               </div>
                             )}
