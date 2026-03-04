@@ -1,31 +1,29 @@
 
-# Show Expired Subscriptions
 
-## What Changes
-Add an "Expired" status to the subscription cards and filter dropdown. A subscription is expired when its `end_date` is in the past (before today).
+# Replace Edge Function with Client-Side Scan for Missed Deliveries
 
-## Changes
+## Problem
+The `scan-missed-deliveries` edge function fails with "Failed to send request to Edge Function". This is likely due to the external Supabase project's edge function not being deployed or accessible.
 
-### File: `src/pages/Subscriptions.tsx`
+## Solution
+Move all the scanning logic directly into the `useScanMissedDeliveries` hook. The edge function only uses standard Supabase queries (select, insert) -- all of which can be done client-side with the authenticated user's session. No service role key is actually needed since the seller is querying their own data through RLS.
 
-**1. Add expired count to `subscriptionCounts` (lines 174-229)**
-- Add an `expired` counter initialized to 0
-- In the `forEach` loop, check if `sub.end_date` exists and `new Date(sub.end_date) < today` -- if so, increment `expired`
-- Return `expired` in the counts object
+### File: `src/hooks/useScanMissedDeliveries.ts` -- Full rewrite
 
-**2. Update status filter logic (lines 256-261)**
-- Add: `else if (statusFilter === 'expired') matchesStatus = sub.end_date && new Date(sub.end_date) < new Date()`
-- This filters to only show subscriptions whose plan has ended
+Replace the `supabase.functions.invoke()` call with direct client-side logic that mirrors the edge function:
 
-**3. Add "Expired" option in the status filter dropdown (lines 437-442)**
-- Add a new `SelectItem` with value `"expired"` showing the expired count:
-  `<SelectItem value="expired">Expired ({subscriptionCounts.expired})</SelectItem>`
+1. **Scan regular orders** with failed statuses (`delivery_failed`, `undelivered`, `technical_error`, `agent_unavailable`, `not_delivered`) for the seller in the last N days
+2. **Scan daily_orders** with failed statuses (`failed`, `undelivered`, `cancelled_agent`, `not_delivered`, `delivery_failed`)  
+3. **Scan stale pending daily_orders** (status = `pending`, date < today)
+4. For each found order, check if a compensation already exists (by `order_id` or `daily_order_id` or `subscription_id + date`)
+5. If no compensation exists, look up subscription/product details and insert a new `vacation_compensations` record
+6. Check for active vacation periods to set the correct `reason`
 
-**4. Show an "Expired" badge on subscription cards (around lines 694-699)**
-- After the plan duration badge, add a red/destructive badge when `end_date` is past today:
-  ```
-  if (isExpired) -> <Badge variant="destructive">Expired</Badge>
-  ```
+The logic is identical to what the edge function does, just executed client-side. Each compensation is saved incrementally (one insert at a time) so partial progress is preserved.
 
-### No database or hook changes needed
-The `end_date` field already exists on subscriptions and is already fetched.
+### Helper function for IST date
+Reuse the same `getISTDateString` logic from the edge function.
+
+### No other files need changes
+The hook's return interface (`ScanResult`) stays the same, so the VacationCompensations page works without modification.
+
