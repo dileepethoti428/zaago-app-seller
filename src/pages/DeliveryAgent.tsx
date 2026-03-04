@@ -222,7 +222,7 @@ export default function DeliveryAgent() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-primary mb-2">Delivery Agent Dashboard</h1>
+            <h1 className="text-3xl font-bold text-primary mb-2">Delivery Partner Dashboard</h1>
             <p className="text-secondary">Available orders ready for pickup</p>
           </div>
         </div>

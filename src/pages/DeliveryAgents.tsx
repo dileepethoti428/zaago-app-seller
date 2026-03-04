@@ -100,12 +100,12 @@ export default function DeliveryAgents() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2">
               <Truck className="h-7 w-7 text-primary" />
-              Delivery Agents
+              Delivery Partners
             </h1>
             <p className="text-muted-foreground mt-1">
               {showGPSView 
-                ? `Agents within 10km of your location (${agents?.length || 0} found)`
-                : `Manage agents assigned to your location (${agents?.length || 0} agents)`
+                ? `Partners within 10km of your location (${agents?.length || 0} found)`
+                : `Manage partners assigned to your location (${agents?.length || 0} partners)`
               }
             </p>
           </div>
@@ -392,12 +392,12 @@ export default function DeliveryAgents() {
                 <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 {showGPSView ? (
                   <>
-                    <p>No active delivery agents within 10km of your location.</p>
+                    <p>No active delivery partners within 10km of your location.</p>
                     <p className="text-sm mt-1">Make sure your seller profile has GPS coordinates set.</p>
                   </>
                 ) : (
                   <>
-                    <p>No delivery agents assigned to your location.</p>
+                    <p>No delivery partners assigned to your location.</p>
                     <Button 
                       className="mt-4" 
                       onClick={() => setShowGPSView(true)}

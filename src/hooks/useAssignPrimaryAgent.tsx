@@ -35,14 +35,14 @@ export const useAssignPrimaryAgent = () => {
       queryClient.invalidateQueries({ queryKey: ['seller-subscriptions'] });
       toast({
         title: 'Agent Assigned',
-        description: 'Delivery agent has been assigned successfully.',
+        description: 'Delivery partner has been assigned successfully.',
       });
     },
     onError: (error) => {
       console.error('Error assigning agent:', error);
       toast({
         title: 'Assignment Failed',
-        description: 'Failed to assign delivery agent. Please try again.',
+        description: 'Failed to assign delivery partner. Please try again.',
         variant: 'destructive',
       });
     },
@@ -71,14 +71,14 @@ export const useRemovePrimaryAgent = () => {
       queryClient.invalidateQueries({ queryKey: ['seller-subscriptions'] });
       toast({
         title: 'Agent Removed',
-        description: 'Delivery agent has been removed from this subscription.',
+        description: 'Delivery partner has been removed from this subscription.',
       });
     },
     onError: (error) => {
       console.error('Error removing agent:', error);
       toast({
         title: 'Removal Failed',
-        description: 'Failed to remove delivery agent. Please try again.',
+        description: 'Failed to remove delivery partner. Please try again.',
         variant: 'destructive',
       });
     },

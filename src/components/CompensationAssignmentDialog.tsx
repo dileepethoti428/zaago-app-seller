@@ -117,7 +117,7 @@ export const CompensationAssignmentDialog = ({
 
           {/* Agent Selection */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Select Delivery Agent</label>
+            <label className="text-sm font-medium">Select Delivery Partner</label>
             <div className="space-y-2 max-h-[200px] overflow-y-auto">
               {agentsLoading ? (
                 <div className="flex items-center justify-center py-4">
@@ -171,7 +171,7 @@ export const CompensationAssignmentDialog = ({
                 })
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-4">
-                  No delivery agents found nearby.
+                  No delivery partners found nearby.
                 </p>
               )}
             </div>

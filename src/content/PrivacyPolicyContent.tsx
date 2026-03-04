@@ -29,10 +29,10 @@ export const PrivacyPolicyContent = () => {
         <h2 className="text-xl font-semibold mb-4">2. Definitions</h2>
         <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
           <li><strong>"Seller"</strong> means any individual or business entity that registers on the Zaago Seller App to list, sell, and fulfill orders for products.</li>
-          <li><strong>"Platform"</strong> means the Zaago ecosystem including the Seller App, Customer App, Delivery Agent App, and Admin Dashboard.</li>
+          <li><strong>"Platform"</strong> means the Zaago ecosystem including the Seller App, Customer App, Delivery Partner App, and Admin Dashboard.</li>
           <li><strong>"Customer"</strong> means any end-user who purchases products from Sellers through the Zaago Customer App.</li>
           <li><strong>"Admin"</strong> means the Zaago platform administrators who manage and oversee platform operations.</li>
-          <li><strong>"Delivery Agent"</strong> means individuals or entities who fulfill delivery services for orders placed on the Platform.</li>
+          <li><strong>"Delivery Partner"</strong> means individuals or entities who fulfill delivery services for orders placed on the Platform.</li>
           <li><strong>"Personal Data"</strong> means any information that identifies or can be used to identify you directly or indirectly.</li>
           <li><strong>"Sensitive Personal Data"</strong> includes financial information, payment details, and other data protected under applicable law.</li>
         </ul>
@@ -112,7 +112,7 @@ export const PrivacyPolicyContent = () => {
         
         <h3 className="text-lg font-medium mb-3">4.1 Order Processing</h3>
         <p className="text-muted-foreground mb-4">
-          We use your data to facilitate order management, including receiving new orders, updating order status, coordinating with delivery agents, and ensuring timely fulfillment of customer orders.
+          We use your data to facilitate order management, including receiving new orders, updating order status, coordinating with delivery partners, and ensuring timely fulfillment of customer orders.
         </p>
 
         <h3 className="text-lg font-medium mb-3">4.2 Payments & Settlements</h3>
@@ -145,9 +145,9 @@ export const PrivacyPolicyContent = () => {
           We share limited seller information with customers including your store name, business address (general area, not exact address), product details, ratings, and contact details only when necessary for order-related communication.
         </p>
 
-        <h3 className="text-lg font-medium mb-3">5.2 With Delivery Agents</h3>
+        <h3 className="text-lg font-medium mb-3">5.2 With Delivery Partners</h3>
         <p className="text-muted-foreground mb-4">
-          To facilitate order pickup and delivery, we share your store address, order details, and contact information with assigned delivery agents.
+          To facilitate order pickup and delivery, we share your store address, order details, and contact information with assigned delivery partners.
         </p>
 
         <h3 className="text-lg font-medium mb-3">5.3 With Admin and Internal Teams</h3>

@@ -69,7 +69,7 @@ export function SubscriptionHandoverCard() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-lg">Subscription Delivery Handover</CardTitle>
-              <CardDescription>Hand over products to delivery agents</CardDescription>
+              <CardDescription>Hand over products to delivery partners</CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <Select value={selectedDate} onValueChange={(v) => setSelectedDate(v as HandoverDate)}>

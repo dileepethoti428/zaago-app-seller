@@ -25,7 +25,7 @@ export const useProductActions = () => {
       if (result.success) {
         toast({
           title: "Product Accepted! ✅",
-          description: result.message || 'Product accepted and delivery agent notified',
+          description: result.message || 'Product accepted and delivery partner notified',
           variant: "default"
         });
         return true;

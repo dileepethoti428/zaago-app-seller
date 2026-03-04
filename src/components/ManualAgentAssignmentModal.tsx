@@ -65,7 +65,7 @@ export function ManualAgentAssignmentModal({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Assign to Delivery Agent</DialogTitle>
+          <DialogTitle>Assign to Delivery Partner</DialogTitle>
           <DialogDescription>
             {showGPSView 
               ? 'Showing agents within 10km of your location.'
@@ -165,8 +165,8 @@ export function ManualAgentAssignmentModal({
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               {showGPSView 
-                ? 'No delivery agents found within 10km of your location.'
-                : 'No delivery agents assigned to this location.'
+                ? 'No delivery partners found within 10km of your location.'
+                : 'No delivery partners assigned to this location.'
               }
             </div>
           )}

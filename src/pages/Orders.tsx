@@ -516,7 +516,7 @@ const Orders = () => {
                                 className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
                               >
                                 <Truck className="w-4 h-4" />
-                                Notify Delivery Agents
+                                Notify Delivery Partners
                               </Button>
                             )}
                             

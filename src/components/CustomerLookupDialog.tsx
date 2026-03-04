@@ -63,7 +63,7 @@ export const CustomerLookupDialog = () => {
         <DialogHeader>
           <DialogTitle>Customer Lookup</DialogTitle>
           <DialogDescription>
-            Enter a tracking ID to view complete order, customer, seller, and delivery agent details
+            Enter a tracking ID to view complete order, customer, seller, and delivery partner details
           </DialogDescription>
         </DialogHeader>
 
@@ -355,7 +355,7 @@ export const CustomerLookupDialog = () => {
                     <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-70 transition-opacity">
                       <CardTitle className="flex items-center gap-2">
                         <Truck className="h-5 w-5" />
-                        Delivery Agent Details
+                        Delivery Partner Details
                       </CardTitle>
                       <ChevronDown className="h-5 w-5" />
                     </CollapsibleTrigger>
@@ -475,7 +475,7 @@ export const CustomerLookupDialog = () => {
                         <Alert>
                           <AlertCircle className="h-4 w-4" />
                           <AlertDescription>
-                            No delivery agent has been assigned to this order yet.
+                            No delivery partner has been assigned to this order yet.
                           </AlertDescription>
                         </Alert>
                       )}

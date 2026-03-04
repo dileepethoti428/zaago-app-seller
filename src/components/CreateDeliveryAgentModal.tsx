@@ -74,9 +74,9 @@ export function CreateDeliveryAgentModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create New Delivery Agent</DialogTitle>
+          <DialogTitle>Create New Delivery Partner</DialogTitle>
           <DialogDescription>
-            Add a new delivery agent to your location.
+            Add a new delivery partner to your location.
             {pendingOrderId && ' The order will be automatically assigned to this agent.'}
           </DialogDescription>
         </DialogHeader>
