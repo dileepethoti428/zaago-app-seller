@@ -16,7 +16,8 @@ import {
   CalendarClock,
   AlertTriangle,
   FileText,
-  CalendarOff
+  CalendarOff,
+  IndianRupee
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -46,6 +47,7 @@ const navigationLinks = [
   { href: '/products/new', label: 'Add Product', icon: PlusCircle },
   { href: '/notifications', label: 'Notifications', icon: Bell },
   { href: '/sales-report', label: 'Sales Report', icon: FileText },
+  { href: '/cod-settlements', label: 'COD Settlements', icon: IndianRupee },
   { href: '/settings', label: 'Settings', icon: Settings },
   { href: '/profile', label: 'Profile', icon: User },
 ];
