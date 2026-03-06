@@ -1,26 +1,47 @@
 
 
-# Fix: "Accept Order" Fails Due to Missing RLS Policy
+# Fix: "Accept Order" Fails Due to Wrong Column Names in COD Settlement Trigger
 
 ## Root Cause
-The `orders` table has **no UPDATE RLS policy for sellers**. When a seller clicks "Accept Order," the code tries to update the order's status (`seller_id = auth.uid()`), but all existing UPDATE policies check against `user_id` (customer) or `agent_id` (delivery partner). The seller's `auth.uid()` doesn't match any of these, so Supabase silently rejects the update, causing the error.
+
+The `auto_create_cod_settlement` trigger function (created in the COD Settlements migration) references **two column names that don't exist** in the `orders` table:
+
+- `NEW.delivery_agent_id` — actual column is `agent_id`
+- `NEW.total_amount` — actual column is `total`
+
+PostgreSQL evaluates `NEW.delivery_agent_id` even before checking the IF condition, causing the error **`record "new" has no field "delivery_agent_id"`** on EVERY order update — not just delivered ones. This is why "Accept Order" fails.
+
+The Supabase database logs confirm this error is happening repeatedly.
 
 ## Fix
-Add a single database migration with an UPDATE RLS policy for sellers:
+
+One migration to replace the trigger function with corrected column names:
 
 ```sql
-CREATE POLICY "Sellers can update their orders"
-  ON public.orders
-  FOR UPDATE
-  TO authenticated
-  USING (seller_id = auth.uid())
-  WITH CHECK (seller_id = auth.uid());
+CREATE OR REPLACE FUNCTION auto_create_cod_settlement()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  IF NEW.status = 'delivered'
+    AND (OLD.status IS DISTINCT FROM 'delivered')
+    AND NEW.payment_method = 'COD'
+    AND NEW.agent_id IS NOT NULL
+    AND NEW.seller_id IS NOT NULL
+  THEN
+    INSERT INTO public.cod_settlements (order_id, agent_id, seller_id, amount)
+    VALUES (NEW.id, NEW.agent_id, NEW.seller_id, NEW.total)
+    ON CONFLICT (order_id) DO NOTHING;
+  END IF;
+  RETURN NEW;
+END;
+$$;
 ```
 
-This allows sellers to update orders where they are the assigned seller, enabling accept, reject, pack, and notify actions to work properly.
+Changes:
+- `NEW.delivery_agent_id` → `NEW.agent_id`
+- `NEW.total_amount` → `NEW.total`
 
-## Files Changed
-- **1 new migration file** — adds the missing RLS policy
-
-No frontend code changes needed. The existing `useSellerOrderActions` hook already has proper error handling; it just couldn't update because of the missing policy.
+No frontend changes needed.
 
