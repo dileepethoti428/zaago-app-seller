@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useCodSettlements, type TimePeriod, type StatusFilter } from '@/hooks/useCodSettlements';
 import { Skeleton } from '@/components/ui/skeleton';
+import AgentCodDetailDialog from '@/components/AgentCodDetailDialog';
 
 const periodOptions: { value: TimePeriod; label: string }[] = [
   { value: 'all', label: 'All Time' },
@@ -21,6 +22,7 @@ export default function CodSettlements() {
   const [search, setSearch] = useState('');
   const [period, setPeriod] = useState<TimePeriod>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [selectedAgent, setSelectedAgent] = useState<{ id: string; name: string; image: string | null } | null>(null);
 
   const { data: agents, isLoading, settle, isSettling } = useCodSettlements(period, statusFilter, search);
 
@@ -93,7 +95,11 @@ export default function CodSettlements() {
           </Card>
         ) : (
           agents.map(agent => (
-            <Card key={agent.agent_id} className="hover:shadow-md transition-shadow">
+            <Card
+              key={agent.agent_id}
+              className="hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => setSelectedAgent({ id: agent.agent_id, name: agent.agent_name, image: agent.profile_image })}
+            >
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-11 w-11">
@@ -129,12 +135,12 @@ export default function CodSettlements() {
                     {agent.pending_count > 0 && (
                       <Button
                         size="sm"
-                        onClick={() => settle(agent.agent_id)}
+                        onClick={(e) => { e.stopPropagation(); settle(agent.agent_id); }}
                         disabled={isSettling}
                         className="rounded-full"
                       >
                         <CheckCircle className="h-4 w-4 mr-1" />
-                        Settle
+                        Settle All
                       </Button>
                     )}
                   </div>
@@ -144,6 +150,16 @@ export default function CodSettlements() {
           ))
         )}
       </div>
+
+      <AgentCodDetailDialog
+        open={!!selectedAgent}
+        onOpenChange={(open) => { if (!open) setSelectedAgent(null); }}
+        agentId={selectedAgent?.id || null}
+        agentName={selectedAgent?.name || ''}
+        profileImage={selectedAgent?.image || null}
+        period={period}
+        statusFilter={statusFilter}
+      />
     </div>
   );
 }
