@@ -1205,6 +1205,64 @@ export type Database = {
         }
         Relationships: []
       }
+      cod_settlements: {
+        Row: {
+          agent_id: string
+          amount: number
+          created_at: string | null
+          id: string
+          order_id: string
+          seller_id: string
+          settled_at: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id: string
+          amount: number
+          created_at?: string | null
+          id?: string
+          order_id: string
+          seller_id: string
+          settled_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string
+          amount?: number
+          created_at?: string | null
+          id?: string
+          order_id?: string
+          seller_id?: string
+          settled_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cod_settlements_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cod_settlements_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cod_settlements_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders_with_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collection_centers: {
         Row: {
           address: string | null
@@ -8671,20 +8729,22 @@ export type Database = {
           customer_name: string
           customer_phone: string
           customer_pincode: string
-          date: string
           delivery_address: Json
           delivery_latitude: number
           delivery_longitude: number
           delivery_time_slot: string
-          id: string
           is_on_vacation: boolean
           location_id: number
+          order_date: string
+          order_id: string
+          order_status: string
           product_id: string
-          product_image: string
+          product_image_url: string
           product_name: string
           product_price: number
           quantity: number
-          status: string
+          seller_latitude: number
+          seller_longitude: number
           subscription_id: string
         }[]
       }
@@ -8702,20 +8762,22 @@ export type Database = {
           customer_name: string
           customer_phone: string
           customer_pincode: string
-          date: string
           delivery_address: Json
           delivery_latitude: number
           delivery_longitude: number
           delivery_time_slot: string
-          id: string
           is_on_vacation: boolean
           location_id: number
+          order_date: string
+          order_id: string
+          order_status: string
           product_id: string
-          product_image: string
+          product_image_url: string
           product_name: string
           product_price: number
           quantity: number
-          status: string
+          seller_latitude: number
+          seller_longitude: number
           subscription_id: string
         }[]
       }
@@ -8733,20 +8795,22 @@ export type Database = {
           customer_name: string
           customer_phone: string
           customer_pincode: string
-          date: string
           delivery_address: Json
           delivery_latitude: number
           delivery_longitude: number
           delivery_time_slot: string
-          id: string
           is_on_vacation: boolean
           location_id: number
+          order_date: string
+          order_id: string
+          order_status: string
           product_id: string
-          product_image: string
+          product_image_url: string
           product_name: string
           product_price: number
           quantity: number
-          status: string
+          seller_latitude: number
+          seller_longitude: number
           subscription_id: string
         }[]
       }

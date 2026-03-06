@@ -45,6 +45,7 @@ import TermsConditions from "./pages/TermsConditions";
 import ForgotPassword from "./pages/ForgotPassword";
 import AccountDeactivated from "./pages/AccountDeactivated";
 import SalesReport from "./pages/SalesReport";
+import CodSettlements from "./pages/CodSettlements";
 import ResetPassword from "./pages/ResetPassword";
 import { CustomerNotifications } from "@/components/CustomerNotifications";
 import { AgentNotifications } from "@/components/AgentNotifications";
@@ -186,6 +187,7 @@ const AppContent = () => {
           <Route path="checkout" element={<Checkout />} />
           <Route path="product-suggestions" element={<ProductSuggestions />} />
           <Route path="sales-report" element={<SalesReport />} />
+          <Route path="cod-settlements" element={<CodSettlements />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
