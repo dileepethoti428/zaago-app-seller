@@ -1,32 +1,24 @@
 
 
-# Fix: "Accept Order" Fails Due to Wrong Column Names in COD Settlement Trigger
+# Fix: COD Settlements Not Showing
 
 ## Root Cause
 
-The `auto_create_cod_settlement` trigger function (created in the COD Settlements migration) references **two column names that don't exist** in the `orders` table:
+The `auto_create_cod_settlement` trigger function checks for `NEW.payment_method = 'COD'` (uppercase), but the actual data stores it as `'cod'` (lowercase). The condition never matches, so no settlement records are ever created.
 
-- `NEW.delivery_agent_id` — actual column is `agent_id`
-- `NEW.total_amount` — actual column is `total`
+## Fix (1 migration)
 
-PostgreSQL evaluates `NEW.delivery_agent_id` even before checking the IF condition, causing the error **`record "new" has no field "delivery_agent_id"`** on EVERY order update — not just delivered ones. This is why "Accept Order" fails.
-
-The Supabase database logs confirm this error is happening repeatedly.
-
-## Fix
-
-One migration to replace the trigger function with corrected column names:
+1. **Update the trigger function** to use case-insensitive comparison: `LOWER(NEW.payment_method) = 'cod'`
+2. **Backfill existing delivered COD orders** — insert settlement records for all existing delivered COD orders that are missing from `cod_settlements`
 
 ```sql
+-- Fix trigger
 CREATE OR REPLACE FUNCTION auto_create_cod_settlement()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
   IF NEW.status = 'delivered'
     AND (OLD.status IS DISTINCT FROM 'delivered')
-    AND NEW.payment_method = 'COD'
+    AND LOWER(NEW.payment_method) = 'cod'
     AND NEW.agent_id IS NOT NULL
     AND NEW.seller_id IS NOT NULL
   THEN
@@ -37,11 +29,17 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-```
 
-Changes:
-- `NEW.delivery_agent_id` → `NEW.agent_id`
-- `NEW.total_amount` → `NEW.total`
+-- Backfill existing delivered COD orders
+INSERT INTO public.cod_settlements (order_id, agent_id, seller_id, amount)
+SELECT id, agent_id, seller_id, total
+FROM public.orders
+WHERE LOWER(payment_method) = 'cod'
+  AND status = 'delivered'
+  AND agent_id IS NOT NULL
+  AND seller_id IS NOT NULL
+ON CONFLICT (order_id) DO NOTHING;
+```
 
 No frontend changes needed.
 
