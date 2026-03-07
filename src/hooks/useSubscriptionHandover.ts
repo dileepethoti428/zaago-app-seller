@@ -7,12 +7,18 @@ import { toZonedTime } from 'date-fns-tz';
 
 export type HandoverDate = 'today' | 'tomorrow';
 
+export interface HandoverCustomer {
+  customerName: string;
+  quantity: number;
+}
+
 export interface HandoverProduct {
   productId: string;
   productName: string;
   productUnit: string;
   productImage: string | null;
   totalQuantity: number;
+  customers: HandoverCustomer[];
 }
 
 export interface HandoverAgent {
@@ -35,6 +41,8 @@ interface RawHandoverData {
   product_unit: string;
   product_image: string | null;
   total_quantity: number;
+  customer_name: string;
+  customer_quantity: number;
 }
 
 const IST_TIMEZONE = 'Asia/Kolkata';
@@ -63,17 +71,29 @@ function groupDataByAgent(data: RawHandoverData[]): HandoverAgent[] {
 
     const agent = agentMap.get(row.agent_id)!;
     agent.totalOrders += row.total_orders;
-    agent.products.push({
-      productId: row.product_id,
-      productName: row.product_name,
-      productUnit: row.product_unit || 'units',
-      productImage: row.product_image,
-      totalQuantity: row.total_quantity,
+
+    // Find or create product entry
+    let product = agent.products.find(p => p.productId === row.product_id);
+    if (!product) {
+      product = {
+        productId: row.product_id,
+        productName: row.product_name,
+        productUnit: row.product_unit || 'units',
+        productImage: row.product_image,
+        totalQuantity: 0,
+        customers: [],
+      };
+      agent.products.push(product);
+    }
+
+    product.totalQuantity += row.customer_quantity;
+    product.customers.push({
+      customerName: row.customer_name,
+      quantity: row.customer_quantity,
     });
   }
 
-  // Sort agents by name
-  return Array.from(agentMap.values()).sort((a, b) => 
+  return Array.from(agentMap.values()).sort((a, b) =>
     a.agentName.localeCompare(b.agentName)
   );
 }
@@ -103,11 +123,10 @@ export function useSubscriptionHandover(selectedDate: HandoverDate) {
       return (data as RawHandoverData[]) || [];
     },
     enabled: !!user?.id,
-    staleTime: 30000, // 30 seconds
-    refetchInterval: 30000, // Auto-refetch every 30 seconds
+    staleTime: 30000,
+    refetchInterval: 30000,
   });
 
-  // Set up realtime subscription for live updates
   useEffect(() => {
     if (!user?.id) return;
 
@@ -117,8 +136,8 @@ export function useSubscriptionHandover(selectedDate: HandoverDate) {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'subscriptions' },
         () => {
-          queryClient.invalidateQueries({ 
-            queryKey: ['subscription-handover', user.id] 
+          queryClient.invalidateQueries({
+            queryKey: ['subscription-handover', user.id]
           });
         }
       )
@@ -126,8 +145,8 @@ export function useSubscriptionHandover(selectedDate: HandoverDate) {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'subscription_vacation_periods' },
         () => {
-          queryClient.invalidateQueries({ 
-            queryKey: ['subscription-handover', user.id] 
+          queryClient.invalidateQueries({
+            queryKey: ['subscription-handover', user.id]
           });
         }
       )
@@ -138,21 +157,15 @@ export function useSubscriptionHandover(selectedDate: HandoverDate) {
     };
   }, [user?.id, queryClient]);
 
-  // Group data by agent
   const agents = useMemo(() => {
     if (!rawData) return [];
     return groupDataByAgent(rawData);
   }, [rawData]);
 
-  // Calculate summary stats
   const summary = useMemo(() => {
     const totalAgents = agents.length;
     const totalOrders = agents.reduce((sum, agent) => sum + agent.totalOrders, 0);
-
-    return {
-      totalAgents,
-      totalOrders,
-    };
+    return { totalAgents, totalOrders };
   }, [agents]);
 
   return {

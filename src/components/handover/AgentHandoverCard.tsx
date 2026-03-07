@@ -16,6 +16,7 @@ import {
   Check,
   Undo2,
   Loader2,
+  User,
 } from 'lucide-react';
 import type { HandoverAgent } from '@/hooks/useSubscriptionHandover';
 import type { HandoverConfirmation } from '@/hooks/useHandoverConfirmation';
@@ -115,27 +116,50 @@ export function AgentHandoverCard({
               {agent.products.map((product) => (
                 <div
                   key={product.productId}
-                  className="flex items-center justify-between p-2 rounded-md bg-muted/30 border border-border/50"
+                  className="rounded-md bg-muted/30 border border-border/50 overflow-hidden"
                 >
-                  <div className="flex items-center gap-3">
-                    {product.productImage ? (
-                      <img
-                        src={product.productImage}
-                        alt={product.productName}
-                        className="h-8 w-8 rounded object-cover"
-                      />
-                    ) : (
-                      <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    )}
-                    <span className="text-sm font-medium">
-                      {product.productName}
-                    </span>
+                  <div className="flex items-center justify-between p-2">
+                    <div className="flex items-center gap-3">
+                      {product.productImage ? (
+                        <img
+                          src={product.productImage}
+                          alt={product.productName}
+                          className="h-8 w-8 rounded object-cover"
+                        />
+                      ) : (
+                        <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
+                      <span className="text-sm font-medium">
+                        {product.productName}
+                      </span>
+                    </div>
+                    <Badge variant="outline" className="text-xs font-mono">
+                      {product.totalQuantity} {product.productUnit}
+                    </Badge>
                   </div>
-                  <Badge variant="outline" className="text-xs font-mono">
-                    {product.totalQuantity} {product.productUnit}
-                  </Badge>
+                  {/* Customer breakdown */}
+                  {product.customers && product.customers.length > 0 && (
+                    <div className="px-2 pb-2 pt-0">
+                      <div className="ml-11 space-y-0.5">
+                        {product.customers.map((customer, idx) => (
+                          <div
+                            key={`${customer.customerName}-${idx}`}
+                            className="flex items-center justify-between text-xs text-muted-foreground"
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <User className="h-3 w-3" />
+                              <span>{customer.customerName}</span>
+                            </div>
+                            <span className="font-mono">
+                              {customer.quantity} {product.productUnit}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

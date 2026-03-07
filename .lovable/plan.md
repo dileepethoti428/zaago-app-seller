@@ -1,66 +1,38 @@
 
 
-# Fix: Subscription Handover - Customer Visibility + Date Advancement
+# Agent Detail View for COD Settlements
 
-## Root Cause Analysis
+## What We're Building
+When clicking on a delivery partner card on the COD Settlements page, a detail view opens showing all individual COD orders for that agent. Each order shows order ID, amount, status (pending/settled), and date. Sellers can settle individual orders one at a time instead of bulk-settling all at once.
 
-After querying the database directly:
+## Implementation
 
-1. **Siva IS excluded** from today's handover — the vacation filter works correctly
-2. **The 2 orders belong to "Dileep"**, not Siva — but the handover UI doesn't show customer names, so this isn't visible to you
-3. **Siva's `next_delivery_date` is stuck at Mar 5** — the edge function that advances this date has hit its execution limit and can't run
+### 1. New Hook: `useAgentCodOrders`
+- Fetches individual `cod_settlements` rows for a specific `agent_id` + `seller_id`
+- Joins with `orders` table to get order number/details
+- Supports the same period/status filters from the parent page
+- Includes a mutation to settle a single settlement by `id`
 
-## What We'll Fix
+### 2. New Component: `AgentCodDetailDialog`
+- A dialog/sheet that opens when clicking an agent card
+- Shows agent name/avatar at the top
+- Lists individual COD orders with:
+  - Order ID (shortened)
+  - Amount (₹)
+  - Status badge (pending = orange, settled = green)
+  - Date
+  - "Settle" button per pending order
+- Summary at the top: total pending amount, total settled
 
-### 1. Add Customer-Level Detail to Handover
-Update the RPC and UI to show individual customer names and quantities under each product, so you can verify exactly whose orders are included.
+### 3. Update `CodSettlements.tsx`
+- Add state for selected agent (`selectedAgentId`)
+- Make agent cards clickable (wrap in `onClick`)
+- Render the detail dialog when an agent is selected
 
-**RPC change**: Return individual subscription rows with customer names (from `customers` table) instead of just aggregated totals.
+### Files Changed
+- **`src/hooks/useAgentCodOrders.ts`** — new hook for individual order settlements
+- **`src/components/AgentCodDetailDialog.tsx`** — new detail dialog component
+- **`src/pages/CodSettlements.tsx`** — add click handler and dialog integration
 
-**UI change**: Under each product in the `AgentHandoverCard`, show a breakdown like:
-```
-Vegetables — 2 per piece
-  • Dileep — 1
-  • Dileep — 1
-```
-
-### 2. Fix `next_delivery_date` Advancement Without Edge Functions
-Since the edge function can't run, we need to advance `next_delivery_date` directly. Two options:
-- **Option A**: A database trigger/function that auto-advances `next_delivery_date` when the current date passes it
-- **Option B**: Advance dates client-side when the seller views the handover (detect stale dates and update them)
-
-I'll go with **Option A** — a SQL function that the handover RPC calls to auto-fix stale `next_delivery_date` values before returning results. This ensures dates stay current without edge functions.
-
-## Files Changed
-
-- **New DB migration** — Update `get_seller_subscription_handover_direct` to include customer names per subscription, and add a helper function to advance stale `next_delivery_date` values
-- **`src/hooks/useSubscriptionHandover.ts`** — Update types to include customer-level breakdown
-- **`src/components/handover/AgentHandoverCard.tsx`** — Show customer names under each product
-
-## Technical Detail
-
-### Updated RPC Return Structure
-```sql
--- Returns one row per agent + product + customer (instead of just agent + product)
-SELECT
-  da.agent_id, da.name, ...,
-  p.id AS product_id, p.name AS product_name, ...,
-  c.full_name AS customer_name,
-  s.quantity AS customer_quantity
-FROM subscriptions s
-JOIN customers c ON c.id = s.customer_id
-...
-```
-
-### Stale Date Auto-Fix
-```sql
--- Before returning handover data, advance any stale next_delivery_dates
-UPDATE subscriptions
-SET next_delivery_date = calculate_next_delivery(delivery_days, subscription_type, CURRENT_DATE)
-WHERE is_active = true
-  AND next_delivery_date < CURRENT_DATE
-  AND seller products match
-```
-
-This runs only when handover is viewed, fixing stale dates on-the-fly.
+No database changes needed — the existing `cod_settlements` table already has all required fields and the RLS policies are in place.
 
