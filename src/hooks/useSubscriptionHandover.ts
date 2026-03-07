@@ -94,7 +94,7 @@ export function useSubscriptionHandover(selectedDate: HandoverDate) {
     queryFn: async () => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase.rpc('get_seller_subscription_handover_data', {
+      const { data, error } = await supabase.rpc('get_seller_subscription_handover_direct', {
         seller_user_id: user.id,
         handover_date: handoverDate,
       });
