@@ -1,38 +1,43 @@
 
 
-# Agent Detail View for COD Settlements
+# Fix: Subscription Handover Shows Orders for Customers on Vacation
 
-## What We're Building
-When clicking on a delivery partner card on the COD Settlements page, a detail view opens showing all individual COD orders for that agent. Each order shows order ID, amount, status (pending/settled), and date. Sellers can settle individual orders one at a time instead of bulk-settling all at once.
+## Root Cause
 
-## Implementation
+The `process-daily-subscriptions` edge function creates daily orders **without first checking** if the subscription has an active vacation period covering today. It only uses vacation data to calculate the *next* delivery date (lines 226-249), but never skips order creation for the current day.
 
-### 1. New Hook: `useAgentCodOrders`
-- Fetches individual `cod_settlements` rows for a specific `agent_id` + `seller_id`
-- Joins with `orders` table to get order number/details
-- Supports the same period/status filters from the parent page
-- Includes a mutation to settle a single settlement by `id`
+The RPC function `get_seller_subscription_handover_data` correctly excludes vacation customers from the handover view, but the underlying `daily_orders` records are already created, and the handover query runs against `daily_orders` -- so if the vacation check in the RPC works, the real problem is that orders created by `process-daily-subscriptions` are **not being filtered** before insertion.
 
-### 2. New Component: `AgentCodDetailDialog`
-- A dialog/sheet that opens when clicking an agent card
-- Shows agent name/avatar at the top
-- Lists individual COD orders with:
-  - Order ID (shortened)
-  - Amount (₹)
-  - Status badge (pending = orange, settled = green)
-  - Date
-  - "Settle" button per pending order
-- Summary at the top: total pending amount, total settled
+## Fix
 
-### 3. Update `CodSettlements.tsx`
-- Add state for selected agent (`selectedAgentId`)
-- Make agent cards clickable (wrap in `onClick`)
-- Render the detail dialog when an agent is selected
+**Update `process-daily-subscriptions` edge function** to check for active vacation periods BEFORE creating the order. Add a vacation check right after the `shouldDeliver` logic (around line 100):
 
-### Files Changed
-- **`src/hooks/useAgentCodOrders.ts`** — new hook for individual order settlements
-- **`src/components/AgentCodDetailDialog.tsx`** — new detail dialog component
-- **`src/pages/CodSettlements.tsx`** — add click handler and dialog integration
+```typescript
+// Check if subscription is on vacation today
+const { data: activeVacation } = await supabase
+  .from('subscription_vacation_periods')
+  .select('id')
+  .eq('subscription_id', subscription.id)
+  .eq('status', 'active')
+  .lte('start_date', today)
+  .gte('end_date', today)
+  .limit(1);
 
-No database changes needed — the existing `cod_settlements` table already has all required fields and the RLS policies are in place.
+if (activeVacation && activeVacation.length > 0) {
+  console.log(`🏖️ Skipping subscription ${subscription.id} - customer on vacation`);
+  // Still advance next_delivery_date past vacation
+  // ... (keep existing vacation skip logic for next date)
+  continue;
+}
+```
+
+This ensures:
+1. No `daily_orders` or `orders` records are created for vacation days
+2. The `next_delivery_date` is still advanced past the vacation period
+3. The handover view stays clean without relying solely on the RPC filter
+
+**File changed:**
+- `supabase/functions/process-daily-subscriptions/index.ts`
+
+No database migration needed.
 
