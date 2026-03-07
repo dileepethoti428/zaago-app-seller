@@ -9312,6 +9312,8 @@ export type Database = {
           agent_name: string
           agent_phone: string
           agent_profile_image: string
+          customer_name: string
+          customer_quantity: number
           product_id: string
           product_image: string
           product_name: string
