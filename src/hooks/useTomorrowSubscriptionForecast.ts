@@ -1,34 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import { format, addDays, parseISO, differenceInDays, getDay } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
-
-interface VacationPeriod {
-  id: string;
-  start_date: string;
-  end_date: string;
-  status: string;
-}
-
-interface SubscriptionProduct {
-  id: string;
-  name: string;
-  unit: string;
-}
-
-interface Subscription {
-  id: string;
-  product_id: string;
-  quantity: number;
-  subscription_type: string;
-  delivery_days: string[] | null;
-  start_date: string;
-  end_date: string | null;
-  is_active: boolean;
-  products: SubscriptionProduct | null;
-  subscription_vacation_periods: VacationPeriod[];
-}
 
 export interface ForecastItem {
   productId: string;
@@ -54,62 +28,6 @@ const IST_TIMEZONE = 'Asia/Kolkata';
 const getTomorrowIST = (): Date => {
   const nowIST = toZonedTime(new Date(), IST_TIMEZONE);
   return addDays(nowIST, 1);
-};
-
-const isDateInVacation = (date: Date, vacationPeriods: VacationPeriod[]): boolean => {
-  const dateStr = format(date, 'yyyy-MM-dd');
-  
-  return vacationPeriods.some(vacation => {
-    if (vacation.status !== 'active') return false;
-    const startDate = vacation.start_date;
-    const endDate = vacation.end_date;
-    return dateStr >= startDate && dateStr <= endDate;
-  });
-};
-
-const shouldDeliverTomorrow = (sub: Subscription, tomorrowDate: Date): boolean => {
-  // Check if subscription is active
-  if (!sub.is_active) return false;
-
-  const tomorrowStr = format(tomorrowDate, 'yyyy-MM-dd');
-
-  // Check if within date range
-  if (sub.start_date && tomorrowStr < sub.start_date) return false;
-  if (sub.end_date && tomorrowStr > sub.end_date) return false;
-
-  // Check if tomorrow falls in a vacation period
-  if (isDateInVacation(tomorrowDate, sub.subscription_vacation_periods || [])) return false;
-
-  // Apply subscription type rules
-  const dayOfWeek = getDay(tomorrowDate); // 0=Sunday, 6=Saturday
-  const dayName = format(tomorrowDate, 'EEEE').toLowerCase(); // monday, tuesday, etc.
-
-  switch (sub.subscription_type) {
-    case 'everyday':
-    case 'daily':
-      return true;
-    
-    case 'weekend':
-      return dayOfWeek === 0 || dayOfWeek === 6; // Saturday or Sunday
-    
-    case 'alternative':
-    case 'alternate': {
-      // Every alternate day from start
-      if (!sub.start_date) return true;
-      const startDate = parseISO(sub.start_date);
-      const daysSinceStart = differenceInDays(tomorrowDate, startDate);
-      return daysSinceStart >= 0 && daysSinceStart % 2 === 0;
-    }
-    
-    case 'custom': {
-      // delivery_days is an array like ["monday", "wednesday", "friday"]
-      const deliveryDays = sub.delivery_days || [];
-      return deliveryDays.some(day => day.toLowerCase() === dayName);
-    }
-    
-    default:
-      return false;
-  }
 };
 
 export const useTomorrowSubscriptionForecast = () => {
@@ -163,18 +81,14 @@ export const useTomorrowSubscriptionForecast = () => {
       const productIds = products.map(p => p.id);
       const productMap = new Map(products.map(p => [p.id, p]));
 
-      // 2. Fetch active subscriptions for seller's products with vacation periods
+      // 2. Fetch active subscriptions matching next_delivery_date = tomorrow
       const { data: subscriptions, error: subsError } = await supabase
         .from('subscriptions')
         .select(`
           id,
           product_id,
+          customer_id,
           quantity,
-          subscription_type,
-          delivery_days,
-          start_date,
-          end_date,
-          is_active,
           subscription_vacation_periods (
             id,
             start_date,
@@ -183,24 +97,35 @@ export const useTomorrowSubscriptionForecast = () => {
           )
         `)
         .in('product_id', productIds)
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .eq('next_delivery_date', tomorrowStr);
 
       if (subsError) throw subsError;
 
-      // 3. Filter subscriptions that should deliver tomorrow
+      // 3. Filter out subscriptions with active vacation for tomorrow
       const eligibleSubscriptions = (subscriptions || []).filter(sub => {
-        const subWithProduct = {
-          ...sub,
-          products: productMap.get(sub.product_id) || null,
-          subscription_vacation_periods: sub.subscription_vacation_periods || []
-        } as Subscription;
-        return shouldDeliverTomorrow(subWithProduct, tomorrowDate);
+        const vacations = sub.subscription_vacation_periods || [];
+        const onVacation = vacations.some(v =>
+          v.status === 'active' && tomorrowStr >= v.start_date && tomorrowStr <= v.end_date
+        );
+        return !onVacation;
       });
 
-      // 4. Aggregate by product
+      // 4. Deduplicate by customer_id + product_id, keeping highest quantity
+      const dedupMap = new Map<string, typeof eligibleSubscriptions[0]>();
+      for (const sub of eligibleSubscriptions) {
+        const key = `${sub.customer_id}::${sub.product_id}`;
+        const existing = dedupMap.get(key);
+        if (!existing || (sub.quantity || 1) > (existing.quantity || 1)) {
+          dedupMap.set(key, sub);
+        }
+      }
+      const dedupedSubscriptions = Array.from(dedupMap.values());
+
+      // 5. Aggregate by product
       const productForecastMap = new Map<string, ForecastItem>();
 
-      eligibleSubscriptions.forEach(sub => {
+      dedupedSubscriptions.forEach(sub => {
         const product = productMap.get(sub.product_id);
         if (!product) return;
 
@@ -221,7 +146,7 @@ export const useTomorrowSubscriptionForecast = () => {
         .sort((a, b) => b.totalQuantity - a.totalQuantity);
 
       const totalForecastItems = productForecast.reduce((sum, p) => sum + p.totalQuantity, 0);
-      const totalActiveSubscriptions = eligibleSubscriptions.length;
+      const totalActiveSubscriptions = dedupedSubscriptions.length;
 
       setData({
         tomorrowDate: tomorrowStr,
