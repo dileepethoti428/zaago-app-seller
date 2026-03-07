@@ -94,7 +94,7 @@ export function useSubscriptionHandover(selectedDate: HandoverDate) {
     queryFn: async () => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase.rpc('get_seller_subscription_handover_data', {
+      const { data, error } = await supabase.rpc('get_seller_subscription_handover_direct', {
         seller_user_id: user.id,
         handover_date: handoverDate,
       });
@@ -115,7 +115,7 @@ export function useSubscriptionHandover(selectedDate: HandoverDate) {
       .channel('handover-realtime')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'daily_orders' },
+        { event: '*', schema: 'public', table: 'subscriptions' },
         () => {
           queryClient.invalidateQueries({ 
             queryKey: ['subscription-handover', user.id] 
@@ -124,7 +124,7 @@ export function useSubscriptionHandover(selectedDate: HandoverDate) {
       )
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'subscriptions' },
+        { event: '*', schema: 'public', table: 'subscription_vacation_periods' },
         () => {
           queryClient.invalidateQueries({ 
             queryKey: ['subscription-handover', user.id] 
