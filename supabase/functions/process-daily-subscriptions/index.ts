@@ -99,6 +99,22 @@ serve(async (req) => {
           continue;
         }
 
+        // Check if subscription is on vacation today BEFORE creating orders
+        const { data: activeVacation } = await supabase
+          .from('subscription_vacation_periods')
+          .select('id')
+          .eq('subscription_id', subscription.id)
+          .eq('status', 'active')
+          .lte('start_date', today)
+          .gte('end_date', today)
+          .limit(1);
+
+        if (activeVacation && activeVacation.length > 0) {
+          console.log(`🏖️ Skipping subscription ${subscription.id} - customer on vacation today`);
+          subscriptionsProcessed++;
+          continue;
+        }
+
         // Fetch product details
         const { data: product, error: productError } = await supabase
           .from('products')
