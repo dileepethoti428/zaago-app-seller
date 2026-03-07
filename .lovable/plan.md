@@ -1,38 +1,40 @@
 
 
-# Agent Detail View for COD Settlements
+# Fix: Data Mismatch Between Forecast and Handover
 
-## What We're Building
-When clicking on a delivery partner card on the COD Settlements page, a detail view opens showing all individual COD orders for that agent. Each order shows order ID, amount, status (pending/settled), and date. Sellers can settle individual orders one at a time instead of bulk-settling all at once.
+## Root Cause (3 issues found)
 
-## Implementation
+### 1. Dileep has 10 duplicate active subscriptions
+Dileep has **10 separate active subscription records** for the same product (Vegetables), all with `next_delivery_date = 2026-03-08`. These were created on different dates (Feb 13 to Mar 6) and appear to be test/duplicate entries. This inflates counts in both views.
 
-### 1. New Hook: `useAgentCodOrders`
-- Fetches individual `cod_settlements` rows for a specific `agent_id` + `seller_id`
-- Joins with `orders` table to get order number/details
-- Supports the same period/status filters from the parent page
-- Includes a mutation to settle a single settlement by `id`
+### 2. Different filtering logic
+- **Forecast** uses complex client-side subscription_type logic (`shouldDeliverTomorrow` checking daily/alternate/weekend/custom rules)
+- **Handover** simply checks `next_delivery_date = handover_date`
 
-### 2. New Component: `AgentCodDetailDialog`
-- A dialog/sheet that opens when clicking an agent card
-- Shows agent name/avatar at the top
-- Lists individual COD orders with:
-  - Order ID (shortened)
-  - Amount (₹)
-  - Status badge (pending = orange, settled = green)
-  - Date
-  - "Settle" button per pending order
-- Summary at the top: total pending amount, total settled
+These two approaches produce different results for the same date.
 
-### 3. Update `CodSettlements.tsx`
-- Add state for selected agent (`selectedAgentId`)
-- Make agent cards clickable (wrap in `onClick`)
-- Render the detail dialog when an agent is selected
+### 3. Handover excludes unassigned subscriptions
+- **Handover** only shows subscriptions where an agent is assigned (3 of Dileep's 10 subs, 1 Poori, 1 Siva = 5 shown)
+- **Forecast** shows ALL subscriptions regardless of agent assignment (10 Dileep + 1 Poori + 1 Poornima + 2 Siva = 14)
+- **Poornima Reddy** appears in forecast but NOT in handover (no agent assigned)
 
-### Files Changed
-- **`src/hooks/useAgentCodOrders.ts`** — new hook for individual order settlements
-- **`src/components/AgentCodDetailDialog.tsx`** — new detail dialog component
-- **`src/pages/CodSettlements.tsx`** — add click handler and dialog integration
+### About Siva
+Siva's vacation record is `start_date: 2026-03-05, end_date: 2026-03-05` -- it only covered March 5. Siva is **not on vacation** for March 8, so Siva correctly appears in tomorrow's data. If Siva should still be on vacation, the vacation end date needs to be extended in the app.
 
-No database changes needed — the existing `cod_settlements` table already has all required fields and the RLS policies are in place.
+## Fix Plan
+
+### 1. Clean up duplicate subscriptions (DB migration)
+Deduplicate Dileep's subscriptions: keep only the most recent active subscription per customer + product combination. Deactivate the rest.
+
+### 2. Update Forecast to use `next_delivery_date`
+Replace the complex `shouldDeliverTomorrow` client-side logic in `useTomorrowSubscriptionForecast.ts` with a simple query filtering by `next_delivery_date = tomorrow`. This matches the handover RPC logic, ensuring both views use the same source of truth.
+
+Also add the same vacation period exclusion filter.
+
+### 3. Add deduplication guard in handover RPC
+Update the RPC to `GROUP BY customer_id, product_id` so even if duplicate subscriptions exist, each customer only appears once per product with summed quantity.
+
+## Files Changed
+- **New DB migration** -- deactivate duplicate subscriptions, update handover RPC with dedup
+- **`src/hooks/useTomorrowSubscriptionForecast.ts`** -- simplify to use `next_delivery_date = tomorrow` filter with vacation exclusion
 
