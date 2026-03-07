@@ -115,7 +115,7 @@ export function useSubscriptionHandover(selectedDate: HandoverDate) {
       .channel('handover-realtime')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'daily_orders' },
+        { event: '*', schema: 'public', table: 'subscriptions' },
         () => {
           queryClient.invalidateQueries({ 
             queryKey: ['subscription-handover', user.id] 
@@ -124,7 +124,7 @@ export function useSubscriptionHandover(selectedDate: HandoverDate) {
       )
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'subscriptions' },
+        { event: '*', schema: 'public', table: 'subscription_vacation_periods' },
         () => {
           queryClient.invalidateQueries({ 
             queryKey: ['subscription-handover', user.id] 
