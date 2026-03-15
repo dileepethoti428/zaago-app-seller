@@ -18,7 +18,7 @@ interface LocationData {
 
 const LOCATION_CACHE_KEY = 'user_location';
 const LOCATION_QUERY_KEY = 'user-location';
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
 export const useCachedLocation = () => {
   const [error, setError] = useState<string | null>(null);
@@ -48,8 +48,8 @@ export const useCachedLocation = () => {
       return data || null;
     },
     enabled: !!user && isOnline,
-    staleTime: ONE_DAY_MS, // 24 hours
-    gcTime: ONE_DAY_MS, // Keep for 24 hours
+    staleTime: ONE_MONTH_MS, // 30 days
+    gcTime: ONE_MONTH_MS, // Keep for 30 days
     retry: false,
   });
 
@@ -154,8 +154,8 @@ export const useCachedLocation = () => {
         ...addressData,
       };
 
-      // Cache location locally with 24-hour TTL
-      storage.setWithExpiry(LOCATION_CACHE_KEY, locationData, ONE_DAY_MS);
+      // Cache location locally with 30-day TTL
+      storage.setWithExpiry(LOCATION_CACHE_KEY, locationData, ONE_MONTH_MS);
 
       // Update React Query cache
       queryClient.setQueryData([LOCATION_QUERY_KEY, user?.id], locationData);
