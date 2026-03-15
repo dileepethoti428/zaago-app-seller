@@ -18,7 +18,7 @@ interface LocationData {
 
 const LOCATION_CACHE_KEY = 'user_location';
 const LOCATION_QUERY_KEY = 'user-location';
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
 export const useCachedLocation = () => {
   const [error, setError] = useState<string | null>(null);

@@ -889,6 +889,19 @@ export default function EditProductPage() {
                   <Camera className="w-4 h-4" />
                   Product Images
                 </label>
+
+                {/* Image Upload Guidelines */}
+                <div className="rounded-lg border border-border bg-muted/40 p-3 space-y-1.5 text-xs text-muted-foreground">
+                  <p className="font-semibold text-foreground text-xs mb-2">📸 Image Upload Guidelines</p>
+                  <div className="grid grid-cols-1 gap-1">
+                    <span>📐 <strong>Aspect Ratio:</strong> 1:1 (Square)</span>
+                    <span>📏 <strong>Recommended:</strong> 1000×1000 px &nbsp;|&nbsp; <strong>Minimum:</strong> 500×500 px</span>
+                    <span>💾 <strong>Max File Size:</strong> 5 MB</span>
+                    <span>🗂 <strong>Formats:</strong> JPG, JPEG, PNG only</span>
+                    <span>🎯 Product should cover <strong>80–90%</strong> of frame</span>
+                    <span>🚫 Avoid watermarks or text overlays</span>
+                  </div>
+                </div>
                 
                 {/* Existing Images */}
                 {existingImages.length > 0 && (

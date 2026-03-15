@@ -748,12 +748,25 @@ export default function AddProductPage() {
                   <Camera className="w-4 h-4" />
                   Product Image
                 </label>
+
+                {/* Image Upload Guidelines */}
+                <div className="rounded-lg border border-border bg-muted/40 p-3 space-y-1.5 text-xs text-muted-foreground">
+                  <p className="font-semibold text-foreground text-xs mb-2">📸 Image Upload Guidelines</p>
+                  <div className="grid grid-cols-1 gap-1">
+                    <span>📐 <strong>Aspect Ratio:</strong> 1:1 (Square)</span>
+                    <span>📏 <strong>Recommended:</strong> 1000×1000 px &nbsp;|&nbsp; <strong>Minimum:</strong> 500×500 px</span>
+                    <span>💾 <strong>Max File Size:</strong> 5 MB</span>
+                    <span>🗂 <strong>Formats:</strong> JPG, JPEG, PNG only</span>
+                    <span>🎯 Product should cover <strong>80–90%</strong> of frame</span>
+                    <span>🚫 Avoid watermarks or text overlays</span>
+                  </div>
+                </div>
                 
                 {/* Image Upload Area */}
                 <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/jpg,image/png"
                     multiple
                     onChange={handleImageSelect}
                     className="hidden"
@@ -762,7 +775,7 @@ export default function AddProductPage() {
                   <label htmlFor="image-upload" className="cursor-pointer block">
                     <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-foreground mb-2">Drop images here or click to upload</p>
-                    <p className="text-sm text-muted-foreground">Multiple PNG, JPG files up to 5MB each</p>
+                    <p className="text-sm text-muted-foreground">JPG, PNG files up to 5MB each</p>
                   </label>
                 </div>
 
