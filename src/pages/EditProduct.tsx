@@ -957,7 +957,7 @@ export default function EditProductPage() {
                 <div className="border-2 border-dashed border-border rounded-2xl p-6 text-center hover:border-primary/50 transition-colors">
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/jpg,image/png"
                     multiple
                     onChange={handleImageSelect}
                     className="hidden"
@@ -966,7 +966,7 @@ export default function EditProductPage() {
                   <label htmlFor="image-upload" className="cursor-pointer block">
                     <Upload className="w-8 h-8 text-secondary mx-auto mb-3" />
                     <p className="text-secondary mb-1">Add more images</p>
-                    <p className="text-xs text-secondary">Multiple PNG, JPG files up to 5MB each</p>
+                    <p className="text-xs text-secondary">JPG, PNG files up to 5MB each</p>
                   </label>
                 </div>
               </div>

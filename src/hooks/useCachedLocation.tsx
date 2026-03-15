@@ -48,8 +48,8 @@ export const useCachedLocation = () => {
       return data || null;
     },
     enabled: !!user && isOnline,
-    staleTime: ONE_DAY_MS, // 24 hours
-    gcTime: ONE_DAY_MS, // Keep for 24 hours
+    staleTime: ONE_MONTH_MS, // 30 days
+    gcTime: ONE_MONTH_MS, // Keep for 30 days
     retry: false,
   });
 
