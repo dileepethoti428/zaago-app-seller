@@ -154,8 +154,8 @@ export const useCachedLocation = () => {
         ...addressData,
       };
 
-      // Cache location locally with 24-hour TTL
-      storage.setWithExpiry(LOCATION_CACHE_KEY, locationData, ONE_DAY_MS);
+      // Cache location locally with 30-day TTL
+      storage.setWithExpiry(LOCATION_CACHE_KEY, locationData, ONE_MONTH_MS);
 
       // Update React Query cache
       queryClient.setQueryData([LOCATION_QUERY_KEY, user?.id], locationData);
