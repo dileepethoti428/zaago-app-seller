@@ -782,6 +782,7 @@ const Subscriptions = () => {
             </Button>
           </div>
         )}
+        </>
       )}
 
       {/* Assign Agent Modal */}
