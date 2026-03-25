@@ -372,173 +372,204 @@ const Orders = () => {
         </Select>
 
         <div className="mt-6 space-y-4">
-          <h2 className="text-xl font-bold text-foreground">
-            {tabCounts.find(t => t.value === activeTab)?.label} ({filteredOrders.length})
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-foreground">
+              {tabCounts.find(t => t.value === activeTab)?.label} ({filteredOrders.length})
+            </h2>
+            {filteredOrders.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                Showing {Math.min(visibleCount, filteredOrders.length)} of {filteredOrders.length} orders
+              </p>
+            )}
+          </div>
 
               {loading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zaago-green"></div>
                 </div>
               ) : filteredOrders.length > 0 ? (
-                <div className="grid gap-4">
-                  {filteredOrders.map((order) => (
-                    <motion.div
-                      key={order.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-zaago-card/50 border border-zaago-border rounded-xl p-6 hover:bg-zaago-accent/30 transition-all duration-200"
-                    >
-                      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                        {/* Order Header */}
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-3">
-                            {getStatusIcon(order.status)}
-                            <div className="flex flex-col">
-                              <div className="flex items-center gap-3 mb-1">
-                                <h3 className="font-semibold text-foreground text-lg">
-                                  Order #{order.id.toString().slice(0, 8)}
-                                </h3>
-                                {getStatusBadge(order.status, order.acceptance_window_expired)}
+                <>
+                  <div className="grid gap-4">
+                    {filteredOrders.slice(0, visibleCount).map((order) => (
+                      <motion.div
+                        key={order.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-zaago-card/50 border border-zaago-border rounded-xl p-6 hover:bg-zaago-accent/30 transition-all duration-200"
+                      >
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                          {/* Order Header */}
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-3">
+                              {getStatusIcon(order.status)}
+                              <div className="flex flex-col">
+                                <div className="flex items-center gap-3 mb-1">
+                                  <h3 className="font-semibold text-foreground text-lg">
+                                    Order #{order.id.toString().slice(0, 8)}
+                                  </h3>
+                                  {getStatusBadge(order.status, order.acceptance_window_expired)}
+                                  
+                                  {/* Visibility Window Timer */}
+                                  {order.visible_until && order.subscription_id && (
+                                    <OrderAcceptanceTimer 
+                                      visibleUntil={order.visible_until}
+                                      isExpired={order.acceptance_window_expired || false}
+                                    />
+                                  )}
+                                </div>
                                 
-                                {/* Visibility Window Timer */}
-                                {order.visible_until && order.subscription_id && (
-                                  <OrderAcceptanceTimer 
-                                    visibleUntil={order.visible_until}
-                                    isExpired={order.acceptance_window_expired || false}
-                                  />
-                                )}
+                                {/* Timestamps */}
+                                <div className="space-y-0.5">
+                                  <p className="text-zaago-muted-foreground text-sm">
+                                    Created: {new Date(order.created_at).toLocaleString('en-IN', {
+                                      timeZone: 'Asia/Kolkata',
+                                      dateStyle: 'medium',
+                                      timeStyle: 'short'
+                                    })}
+                                  </p>
+                                  
+                                  {order.seller_accepted_at && (
+                                    <p className="text-green-400 text-sm">
+                                      Accepted: {new Date(order.seller_accepted_at).toLocaleString('en-IN', {
+                                        timeZone: 'Asia/Kolkata',
+                                        dateStyle: 'medium',
+                                        timeStyle: 'short'
+                                      })}
+                                    </p>
+                                  )}
+                                  
+                                  {order.visible_until && !order.seller_accepted_at && (
+                                    <p className={`text-sm ${order.acceptance_window_expired ? 'text-red-400' : 'text-orange-400'}`}>
+                                      Deadline: {new Date(order.visible_until).toLocaleString('en-IN', {
+                                        timeZone: 'Asia/Kolkata',
+                                        dateStyle: 'medium',
+                                        timeStyle: 'short'
+                                      })}
+                                    </p>
+                                  )}
+                                </div>
                               </div>
-                              
-                              {/* Timestamps */}
-                              <div className="space-y-0.5">
-                                <p className="text-zaago-muted-foreground text-sm">
-                                  Created: {new Date(order.created_at).toLocaleString('en-IN', {
-                                    timeZone: 'Asia/Kolkata',
-                                    dateStyle: 'medium',
-                                    timeStyle: 'short'
-                                  })}
+                            </div>
+                          </div>
+
+                          {/* Order Details */}
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-6 lg:gap-8">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 lg:gap-8">
+                              <div className="text-center sm:text-left">
+                                <p className="text-zaago-muted-foreground text-sm mb-1">Customer</p>
+                                <p className="text-foreground font-semibold text-base">
+                                  {order.customer_name || 'Customer'}
                                 </p>
-                                
-                                {order.seller_accepted_at && (
-                                  <p className="text-green-400 text-sm">
-                                    Accepted: {new Date(order.seller_accepted_at).toLocaleString('en-IN', {
-                                      timeZone: 'Asia/Kolkata',
-                                      dateStyle: 'medium',
-                                      timeStyle: 'short'
-                                    })}
-                                  </p>
-                                )}
-                                
-                                {order.visible_until && !order.seller_accepted_at && (
-                                  <p className={`text-sm ${order.acceptance_window_expired ? 'text-red-400' : 'text-orange-400'}`}>
-                                    Deadline: {new Date(order.visible_until).toLocaleString('en-IN', {
-                                      timeZone: 'Asia/Kolkata',
-                                      dateStyle: 'medium',
-                                      timeStyle: 'short'
-                                    })}
-                                  </p>
-                                )}
+                              </div>
+                              <div className="text-center sm:text-left">
+                                <p className="text-zaago-muted-foreground text-sm mb-1">Items</p>
+                                <p className="text-foreground font-semibold text-base">
+                                  {getItemsCount(order.items)} items
+                                </p>
+                              </div>
+                              <div className="text-center sm:text-left">
+                                <p className="text-zaago-muted-foreground text-sm mb-1">Total</p>
+                                <p className="text-zaago-green font-bold text-lg">₹{order.total}</p>
                               </div>
                             </div>
-                          </div>
-                        </div>
 
-                        {/* Order Details */}
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-6 lg:gap-8">
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 lg:gap-8">
-                            <div className="text-center sm:text-left">
-                              <p className="text-zaago-muted-foreground text-sm mb-1">Customer</p>
-                              <p className="text-foreground font-semibold text-base">
-                                {order.customer_name || 'Customer'}
-                              </p>
-                            </div>
-                            <div className="text-center sm:text-left">
-                              <p className="text-zaago-muted-foreground text-sm mb-1">Items</p>
-                              <p className="text-foreground font-semibold text-base">
-                                {getItemsCount(order.items)} items
-                              </p>
-                            </div>
-                            <div className="text-center sm:text-left">
-                              <p className="text-zaago-muted-foreground text-sm mb-1">Total</p>
-                              <p className="text-zaago-green font-bold text-lg">₹{order.total}</p>
-                            </div>
-                          </div>
-
-                          {/* Action Buttons */}
-                          <div className="flex flex-col sm:flex-row gap-2 justify-center sm:justify-end">
-                            {/* Seller Action Buttons */}
-                            {(order.status === 'new' || order.status === 'pending' || order.status === 'placed') && (
-                              <>
+                            {/* Action Buttons */}
+                            <div className="flex flex-col sm:flex-row gap-2 justify-center sm:justify-end">
+                              {/* Seller Action Buttons */}
+                              {(order.status === 'new' || order.status === 'pending' || order.status === 'placed') && (
+                                <>
+                                  <Button
+                                    onClick={() => acceptOrder(order.id, user?.id || '')}
+                                    disabled={isProcessing === order.id}
+                                    size="sm"
+                                    className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                                  >
+                                    <CheckSquare className="w-4 h-4" />
+                                    Accept Order
+                                  </Button>
+                                  <Button
+                                    onClick={() => rejectOrder(order.id, user?.id || '')}
+                                    disabled={isProcessing === order.id}
+                                    variant="destructive"
+                                    size="sm"
+                                    className="flex items-center gap-2"
+                                  >
+                                    <XSquare className="w-4 h-4" />
+                                    Reject
+                                  </Button>
+                                </>
+                              )}
+                              
+                              {(order.status === 'accepted' || order.status === 'accepted_by_seller' || order.status === 'accepted_late') && (
                                 <Button
-                                  onClick={() => acceptOrder(order.id, user?.id || '')}
+                                  onClick={async () => {
+                                    const success = await packOrder(order.id, user?.id || '');
+                                    if (!success) {
+                                      setShowLocationModal(true);
+                                    }
+                                  }}
                                   disabled={isProcessing === order.id}
                                   size="sm"
-                                  className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                                  className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
                                 >
-                                  <CheckSquare className="w-4 h-4" />
-                                  Accept Order
+                                  <Package className="w-4 h-4" />
+                                  Mark as Packed
                                 </Button>
-                                <Button
-                                  onClick={() => rejectOrder(order.id, user?.id || '')}
-                                  disabled={isProcessing === order.id}
-                                  variant="destructive"
-                                  size="sm"
-                                  className="flex items-center gap-2"
-                                >
-                                  <XSquare className="w-4 h-4" />
-                                  Reject
-                                </Button>
-                              </>
-                            )}
-                            
-                            {(order.status === 'accepted' || order.status === 'accepted_by_seller' || order.status === 'accepted_late') && (
-                              <Button
-                                onClick={async () => {
-                                  const success = await packOrder(order.id, user?.id || '');
-                                  // If pack failed due to location, show location setup modal
-                                  if (!success) {
-                                    setShowLocationModal(true);
-                                  }
-                                }}
-                                disabled={isProcessing === order.id}
-                                size="sm"
-                                className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-                              >
-                                <Package className="w-4 h-4" />
-                                Mark as Packed
-                              </Button>
-                            )}
+                              )}
 
-                            {order.status === 'packed' && (
-                              <Button
-                                onClick={() => notifyDeliveryAgents(order.id, user?.id || '')}
-                                disabled={isProcessing === order.id}
-                                size="sm"
-                                className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
-                              >
-                                <Truck className="w-4 h-4" />
-                                Notify Delivery Partners
-                              </Button>
-                            )}
-                            
-                            {/* View Details Button - Always available */}
-                            <Link to={`/orders/${order.id}`}>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full sm:w-auto border-zaago-border text-zaago-muted-foreground hover:bg-zaago-accent hover:text-foreground hover:border-zaago-green transition-all duration-200 flex items-center gap-2 px-4 py-2"
-                              >
-                                <Eye className="w-4 h-4" />
-                                View Details
-                              </Button>
-                            </Link>
+                              {order.status === 'packed' && (
+                                <Button
+                                  onClick={() => notifyDeliveryAgents(order.id, user?.id || '')}
+                                  disabled={isProcessing === order.id}
+                                  size="sm"
+                                  className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+                                >
+                                  <Truck className="w-4 h-4" />
+                                  Notify Delivery Partners
+                                </Button>
+                              )}
+                              
+                              {/* View Details Button - Always available */}
+                              <Link to={`/orders/${order.id}`}>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full sm:w-auto border-zaago-border text-zaago-muted-foreground hover:bg-zaago-accent hover:text-foreground hover:border-zaago-green transition-all duration-200 flex items-center gap-2 px-4 py-2"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                  View Details
+                                </Button>
+                              </Link>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {/* View More / View Less */}
+                  {filteredOrders.length > 5 && (
+                    <div className="flex flex-col items-center gap-2 pt-2">
+                      {visibleCount < filteredOrders.length ? (
+                        <Button
+                          variant="outline"
+                          onClick={() => setVisibleCount(prev => prev + 5)}
+                          className="border-zaago-border text-foreground hover:bg-zaago-accent hover:border-primary transition-all"
+                        >
+                          View More ({filteredOrders.length - visibleCount} remaining)
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          onClick={() => setVisibleCount(5)}
+                          className="border-zaago-border text-muted-foreground hover:bg-zaago-accent transition-all"
+                        >
+                          View Less
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="text-center py-12">
                   <Package className="w-16 h-16 text-zaago-muted mx-auto mb-4" />
