@@ -400,7 +400,7 @@ const Orders = () => {
             </h2>
             {filteredOrders.length > 0 && (
               <p className="text-sm text-muted-foreground">
-                Showing {Math.min(visibleCount, filteredOrders.length)} of {filteredOrders.length} orders
+                Showing {filteredOrders.length} orders{hasMore ? ' (more available)' : ''}
               </p>
             )}
           </div>
@@ -412,7 +412,7 @@ const Orders = () => {
               ) : filteredOrders.length > 0 ? (
                 <>
                   <div className="grid gap-4">
-                    {filteredOrders.slice(0, visibleCount).map((order) => (
+                    {filteredOrders.map((order) => (
                       <motion.div
                         key={order.id}
                         initial={{ opacity: 0, y: 10 }}
@@ -569,26 +569,20 @@ const Orders = () => {
                     ))}
                   </div>
 
-                  {/* View More / View Less */}
-                  {filteredOrders.length > visibleCount && (
+                  {/* Load More — server-side pagination */}
+                  {hasMore && (
                     <div className="flex flex-col items-center gap-2 pt-2">
-                      {visibleCount < filteredOrders.length ? (
-                        <Button
-                          variant="outline"
-                          onClick={() => setVisibleCount(prev => prev + 5)}
-                          className="border-zaago-border text-foreground hover:bg-zaago-accent hover:border-primary transition-all"
-                        >
-                          View More ({filteredOrders.length - visibleCount} remaining)
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          onClick={() => setVisibleCount(5)}
-                          className="border-zaago-border text-muted-foreground hover:bg-zaago-accent transition-all"
-                        >
-                          View Less
-                        </Button>
-                      )}
+                      <Button
+                        variant="outline"
+                        onClick={() => fetchOrders(offset, false)}
+                        disabled={loadingMore}
+                        className="border-zaago-border text-foreground hover:bg-zaago-accent hover:border-primary transition-all"
+                      >
+                        {loadingMore ? (
+                          <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                        ) : null}
+                        Load More Orders
+                      </Button>
                     </div>
                   )}
                 </>
