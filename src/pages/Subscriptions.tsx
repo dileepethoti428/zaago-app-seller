@@ -495,7 +495,7 @@ const Subscriptions = () => {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {filteredSubscriptions.map((subscription) => {
+          {filteredSubscriptions.slice(0, visibleCount).map((subscription) => {
             const vacationInfo = getVacationInfo(subscription);
             const showActions = shouldShowActions(subscription);
 
