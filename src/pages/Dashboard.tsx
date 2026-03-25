@@ -414,6 +414,16 @@ const Dashboard = () => {
                     </div>
                   )}
                 </div>
+                {recentOrders.length > 0 && (
+                  <div className="mt-4 pt-3 border-t border-zaago-border text-center">
+                    <Link
+                      to="/orders"
+                      className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                    >
+                      View All Orders →
+                    </Link>
+                  </div>
+                )}
               )}
             </CardContent>
           </Card>
