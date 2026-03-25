@@ -93,18 +93,14 @@ const Orders = () => {
           
           // Re-fetch orders when any order changes to get updated seller data
           if (payload.eventType === 'INSERT') {
-            // For new orders, check if they contain this seller's products
-            fetchOrders();
-            
-            // Show notification if this order contains seller's products
+            fetchOrders(0, true);
             toast({
               title: "New Order Alert! 🔔",
               description: "Check if this order contains your products",
               duration: 5000
             });
           } else if (payload.eventType === 'UPDATE') {
-            // Re-fetch to get updated order status
-            fetchOrders();
+            fetchOrders(0, true);
           }
         }
       )
@@ -238,7 +234,7 @@ const Orders = () => {
       console.error('Error updating order:', error);
       
       // Revert optimistic update
-      await fetchOrders();
+      await fetchOrders(0, true);
       
       toast({
         title: "Error",
