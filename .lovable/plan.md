@@ -1,38 +1,55 @@
 
+## Root Cause
 
-# Agent Detail View for COD Settlements
+There are **two separate issues** causing the wrong redirect:
 
-## What We're Building
-When clicking on a delivery partner card on the COD Settlements page, a detail view opens showing all individual COD orders for that agent. Each order shows order ID, amount, status (pending/settled), and date. Sellers can settle individual orders one at a time instead of bulk-settling all at once.
+### Issue 1 — Wrong `redirectTo` URL in `ForgotPassword.tsx`
+Line 29: `redirectTo: 'https://zaago-seller.vercel.app/reset-password'`
 
-## Implementation
+This is hardcoded to the **old URL** (`zaago-seller.vercel.app`). Your app is now at `zaago-seller-app.vercel.app`. So the reset email sends users to the old domain, which is `zaago.online` (some other app).
 
-### 1. New Hook: `useAgentCodOrders`
-- Fetches individual `cod_settlements` rows for a specific `agent_id` + `seller_id`
-- Joins with `orders` table to get order number/details
-- Supports the same period/status filters from the parent page
-- Includes a mutation to settle a single settlement by `id`
+### Issue 2 — Supabase "Redirect URLs" whitelist in the dashboard
+Even after fixing the code, Supabase will **block the redirect** unless `https://zaago-seller-app.vercel.app/reset-password` is explicitly added to the allowed redirect URLs list in the Supabase Auth settings.
 
-### 2. New Component: `AgentCodDetailDialog`
-- A dialog/sheet that opens when clicking an agent card
-- Shows agent name/avatar at the top
-- Lists individual COD orders with:
-  - Order ID (shortened)
-  - Amount (₹)
-  - Status badge (pending = orange, settled = green)
-  - Date
-  - "Settle" button per pending order
-- Summary at the top: total pending amount, total settled
+---
 
-### 3. Update `CodSettlements.tsx`
-- Add state for selected agent (`selectedAgentId`)
-- Make agent cards clickable (wrap in `onClick`)
-- Render the detail dialog when an agent is selected
+## What Needs to Happen
 
-### Files Changed
-- **`src/hooks/useAgentCodOrders.ts`** — new hook for individual order settlements
-- **`src/components/AgentCodDetailDialog.tsx`** — new detail dialog component
-- **`src/pages/CodSettlements.tsx`** — add click handler and dialog integration
+### 1. Code fix — Update `redirectTo` in `ForgotPassword.tsx`
+Change line 29 from:
+```
+redirectTo: `https://zaago-seller.vercel.app/reset-password`
+```
+to:
+```
+redirectTo: `https://zaago-seller-app.vercel.app/reset-password`
+```
 
-No database changes needed — the existing `cod_settlements` table already has all required fields and the RLS policies are in place.
+### 2. Supabase Dashboard — Add URL to Redirect Allow List
+You must manually add this URL in Supabase:
 
+**Go to**: Supabase Dashboard → Authentication → URL Configuration
+
+Add these two entries to **"Redirect URLs"**:
+```
+https://zaago-seller-app.vercel.app/reset-password
+https://zaago-seller-app.vercel.app/**
+```
+
+Also set the **"Site URL"** to:
+```
+https://zaago-seller-app.vercel.app
+```
+
+This is a one-time manual step you do in the Supabase dashboard — I cannot do this for you from code, but I'll give you the direct link.
+
+---
+
+## Files Changed
+- `src/pages/ForgotPassword.tsx` — update `redirectTo` URL to new domain
+
+## Dashboard Steps (Manual — You Do This)
+1. Open Supabase → Authentication → URL Configuration
+2. Set **Site URL** = `https://zaago-seller-app.vercel.app`
+3. Add to **Redirect URLs**: `https://zaago-seller-app.vercel.app/**`
+4. Save
