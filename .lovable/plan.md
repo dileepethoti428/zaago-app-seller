@@ -1,27 +1,47 @@
 
-## Understanding
+## Issues Found & Fixes Needed
 
-Two places need "View More" / pagination:
+### 1. Orders Page — View More not visible
+The condition at line 551 is `filteredOrders.length > 5` (strict greater-than). If there are exactly 5 orders, no button shows. More importantly, the button only shows when `filteredOrders.length > 5` AND the user might have fewer. Also the "Showing X of Y" counter and View More section is there but may not be scrolled to. The logic is correct — but needs the condition changed to `>= 5` so it always shows if there are 5+ items, AND the `visibleCount` initial should stay 5.
 
-1. **Dashboard.tsx** — "Recent Orders" card already slices to 5 (`ordersData.slice(0, 5)`). Need to add a "View All Orders" link/button at the bottom of that card.
+Actually re-reading: `filteredOrders.length > 5` means you need MORE than 5 orders to see the button. Change to `filteredOrders.length > visibleCount` — so the button appears whenever there are more items than currently shown, regardless of exact count.
 
-2. **Orders.tsx (Orders Management page)** — Currently renders ALL `filteredOrders` at once. Need to show only 5 initially, with a "View More" button that loads 5 more each time it's clicked (or shows all).
+### 2. Subscriptions Page — No View More at all
+Currently renders all `filteredSubscriptions` directly (line 492). Need to add `visibleCount` state + slice + View More/Less button + reset on filter changes.
+
+### 3. Products Page — No View More at all  
+Currently renders all `filteredProducts` directly (line 553). Need to add `visibleCount` state + slice + View More/Less button + reset on filter/search changes.
+
+### 4. COD Settlements Page — No View More at all
+Currently renders all `agents` directly (line 97). Need to add `visibleCount` state + slice + View More/Less button. Reset when period/statusFilter/search changes.
 
 ---
 
 ## Plan
 
-### 1. `src/pages/Dashboard.tsx` — Add "View All Orders" link
-- After the `recentOrders.map(...)` list (line ~415), add a "View All Orders" `<Link to="/orders">` button at the bottom of the Recent Orders card.
-- Already limited to 5 items at line 101, so no data change needed.
+### Fix 1 — `src/pages/Orders.tsx`
+- Change line 551 condition from `filteredOrders.length > 5` to `filteredOrders.length > visibleCount` so the button correctly appears whenever there are unseen items (logic is already there, just the wrong condition).
 
-### 2. `src/pages/Orders.tsx` — Add "View More" pagination
-- Add a `visibleCount` state initialized to `5`.
-- Slice `filteredOrders` to `filteredOrders.slice(0, visibleCount)` in the render (line 383).
-- After the orders list, show a "View More" button if `visibleCount < filteredOrders.length`, clicking it adds 5 more (`setVisibleCount(prev => prev + 5)`).
-- Also reset `visibleCount` to `5` whenever `activeTab` or `searchTerm` changes (in the existing `filterOrders` useEffect or a separate one).
-- Show a count like "Showing 5 of 158 orders" for clarity.
+### Fix 2 — `src/pages/Subscriptions.tsx`
+- Add `visibleCount` state initialized to `5`
+- Add `useEffect` to reset `visibleCount` to `5` when `searchTerm`, `statusFilter`, `deliveryTypeFilter`, or `agentFilter` changes
+- Change line 492 `filteredSubscriptions.map(...)` to `filteredSubscriptions.slice(0, visibleCount).map(...)`
+- After the grid, add "Showing X of Y" label + View More / View Less buttons (same pattern as Orders page)
+
+### Fix 3 — `src/pages/Products.tsx`
+- Add `visibleCount` state initialized to `5`  
+- Update the `useEffect` at line 73 to also call `setVisibleCount(5)` when filters change
+- Change line 553 `filteredProducts.map(...)` to `filteredProducts.slice(0, visibleCount).map(...)`
+- After the grid, add "Showing X of Y" label + View More / View Less buttons
+
+### Fix 4 — `src/pages/CodSettlements.tsx`
+- Add `visibleCount` state initialized to `5`
+- Add `useEffect` that resets `visibleCount` to `5` when `period`, `statusFilter`, or `search` changes
+- Change line 97 `agents.map(...)` to `agents.slice(0, visibleCount).map(...)`
+- After the list, add "Showing X of Y" label + View More / View Less buttons
 
 ## Files Changed
-- `src/pages/Dashboard.tsx` — add "View All Orders" button in Recent Orders card
-- `src/pages/Orders.tsx` — add `visibleCount` state + slice + "View More" button + reset on filter change
+- `src/pages/Orders.tsx` — fix View More condition
+- `src/pages/Subscriptions.tsx` — add visibleCount + View More
+- `src/pages/Products.tsx` — add visibleCount + View More
+- `src/pages/CodSettlements.tsx` — add visibleCount + View More
