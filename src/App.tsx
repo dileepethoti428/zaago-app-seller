@@ -68,8 +68,13 @@ const AppContent = () => {
   const [showOfflinePage, setShowOfflinePage] = useState(!navigator.onLine);
   const [isRetrying, setIsRetrying] = useState(false);
 
-  // Password recovery is now handled directly via BrowserRouter
-  // Supabase redirects to /reset-password which loads the ResetPassword component
+  // Detect password recovery flow from Supabase email link
+  // Supabase redirects to root with #type=recovery hash — we intercept and redirect
+  useEffect(() => {
+    if (window.location.hash.includes('type=recovery')) {
+      navigate('/reset-password');
+    }
+  }, [navigate]);
 
   // Auto-restore when back online
   useEffect(() => {
