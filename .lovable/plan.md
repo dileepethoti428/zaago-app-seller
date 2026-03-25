@@ -1,47 +1,42 @@
 
-## Issues Found & Fixes Needed
+## Root Cause
 
-### 1. Orders Page — View More not visible
-The condition at line 551 is `filteredOrders.length > 5` (strict greater-than). If there are exactly 5 orders, no button shows. More importantly, the button only shows when `filteredOrders.length > 5` AND the user might have fewer. Also the "Showing X of Y" counter and View More section is there but may not be scrolled to. The logic is correct — but needs the condition changed to `>= 5` so it always shows if there are 5+ items, AND the `visibleCount` initial should stay 5.
+The `fetchOrders()` function calls `supabase.rpc('get_seller_specific_orders', ...)` which returns **all 500+ orders** in a single shot. The front-end `visibleCount` slicing only controls rendering — all data is already fetched. This causes:
+- Slow page load (500+ rows transferred over the network)
+- High memory usage
+- UI lag
 
-Actually re-reading: `filteredOrders.length > 5` means you need MORE than 5 orders to see the button. Change to `filteredOrders.length > visibleCount` — so the button appears whenever there are more items than currently shown, regardless of exact count.
+The `View More` button works but pagination needs to happen at the **data fetch level**, not just rendering level.
 
-### 2. Subscriptions Page — No View More at all
-Currently renders all `filteredSubscriptions` directly (line 492). Need to add `visibleCount` state + slice + View More/Less button + reset on filter changes.
+## Fix Strategy: Server-side Pagination
 
-### 3. Products Page — No View More at all  
-Currently renders all `filteredProducts` directly (line 553). Need to add `visibleCount` state + slice + View More/Less button + reset on filter/search changes.
+Use Supabase's built-in `range()` pagination on the RPC call, OR fall back to fetching in pages of 10 with an offset. Since we're calling an RPC, the cleanest approach without modifying the DB function is:
 
-### 4. COD Settlements Page — No View More at all
-Currently renders all `agents` directly (line 97). Need to add `visibleCount` state + slice + View More/Less button. Reset when period/statusFilter/search changes.
+**Sort + limit at DB level using a wrapper query** — but since `rpc()` doesn't support `.range()` on custom functions easily, the best approach is:
 
----
+1. **Sort orders by `created_at DESC` so newest appear first** (already done client-side)
+2. **Add `offset` + `limit` parameters to the fetch** using Supabase `.range(from, to)` on the RPC result
+3. **Track `currentPage` or `offset` state** — "View More" fetches the next batch and appends
 
-## Plan
+### Implementation
 
-### Fix 1 — `src/pages/Orders.tsx`
-- Change line 551 condition from `filteredOrders.length > 5` to `filteredOrders.length > visibleCount` so the button correctly appears whenever there are unseen items (logic is already there, just the wrong condition).
+**`src/pages/Orders.tsx` changes:**
 
-### Fix 2 — `src/pages/Subscriptions.tsx`
-- Add `visibleCount` state initialized to `5`
-- Add `useEffect` to reset `visibleCount` to `5` when `searchTerm`, `statusFilter`, `deliveryTypeFilter`, or `agentFilter` changes
-- Change line 492 `filteredSubscriptions.map(...)` to `filteredSubscriptions.slice(0, visibleCount).map(...)`
-- After the grid, add "Showing X of Y" label + View More / View Less buttons (same pattern as Orders page)
+- Remove `setOrders(mappedOrders)` (replace all at once)  
+- Add `offset` state starting at `0`, page size constant `PAGE_SIZE = 10`
+- Add `hasMore` state (true if last fetch returned PAGE_SIZE results)
+- `fetchOrders(offset=0)`: fetches with `.range(offset, offset + PAGE_SIZE - 1)` on rpc, sets orders, sets hasMore
+- `loadMore()`: calls `fetchOrders(currentOffset + PAGE_SIZE)` and **appends** to existing orders
+- Remove `visibleCount` state entirely (no longer needed — pagination is server-side)
+- Replace `filteredOrders.slice(0, visibleCount).map(...)` with just `filteredOrders.map(...)`
+- Replace View More / View Less block with a single "Load More Orders" button that calls `loadMore()`, shown only when `hasMore === true`
+- When `activeTab` or `searchTerm` changes: reset offset to 0, clear orders, re-fetch from start
+- Show "Showing X orders" label (count of currently loaded orders)
 
-### Fix 3 — `src/pages/Products.tsx`
-- Add `visibleCount` state initialized to `5`  
-- Update the `useEffect` at line 73 to also call `setVisibleCount(5)` when filters change
-- Change line 553 `filteredProducts.map(...)` to `filteredProducts.slice(0, visibleCount).map(...)`
-- After the grid, add "Showing X of Y" label + View More / View Less buttons
-
-### Fix 4 — `src/pages/CodSettlements.tsx`
-- Add `visibleCount` state initialized to `5`
-- Add `useEffect` that resets `visibleCount` to `5` when `period`, `statusFilter`, or `search` changes
-- Change line 97 `agents.map(...)` to `agents.slice(0, visibleCount).map(...)`
-- After the list, add "Showing X of Y" label + View More / View Less buttons
+### Key benefit
+- Initial load: only 10 orders transferred
+- Each "View More" click: 10 more orders appended
+- 500+ orders never all loaded at once
 
 ## Files Changed
-- `src/pages/Orders.tsx` — fix View More condition
-- `src/pages/Subscriptions.tsx` — add visibleCount + View More
-- `src/pages/Products.tsx` — add visibleCount + View More
-- `src/pages/CodSettlements.tsx` — add visibleCount + View More
+- `src/pages/Orders.tsx` — replace client-side slice with server-side paginated fetch using `.range()`, add `offset` + `hasMore` state, update View More to load next page
