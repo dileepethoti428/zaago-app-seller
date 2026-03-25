@@ -762,6 +762,25 @@ const Subscriptions = () => {
             );
           })}
         </div>
+
+        {/* View More / View Less for Subscriptions */}
+        {filteredSubscriptions.length > visibleCount && (
+          <div className="flex flex-col items-center gap-2 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setVisibleCount(prev => prev + 5)}
+            >
+              View More ({filteredSubscriptions.length - visibleCount} remaining)
+            </Button>
+          </div>
+        )}
+        {visibleCount > 5 && filteredSubscriptions.length <= visibleCount && (
+          <div className="flex flex-col items-center gap-2 pt-2">
+            <Button variant="outline" onClick={() => setVisibleCount(5)}>
+              View Less
+            </Button>
+          </div>
+        )}
       )}
 
       {/* Assign Agent Modal */}
