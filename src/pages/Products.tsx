@@ -52,6 +52,7 @@ const Products = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(5);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -72,6 +73,7 @@ const Products = () => {
 
   useEffect(() => {
     filterProducts();
+    setVisibleCount(5);
   }, [products, searchTerm, statusFilter]);
 
   const setupRealtimeSubscription = () => {

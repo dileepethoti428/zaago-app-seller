@@ -87,6 +87,7 @@ const Subscriptions = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [deliveryTypeFilter, setDeliveryTypeFilter] = useState('all');
   const [agentFilter, setAgentFilter] = useState('all');
+  const [visibleCount, setVisibleCount] = useState(5);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedSubscription, setSelectedSubscription] = useState<{ id: string; locationId: number | null } | null>(null);
   const [customerDetailsDialog, setCustomerDetailsDialog] = useState<{

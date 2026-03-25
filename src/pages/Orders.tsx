@@ -548,7 +548,7 @@ const Orders = () => {
                   </div>
 
                   {/* View More / View Less */}
-                  {filteredOrders.length > 5 && (
+                  {filteredOrders.length > visibleCount && (
                     <div className="flex flex-col items-center gap-2 pt-2">
                       {visibleCount < filteredOrders.length ? (
                         <Button
