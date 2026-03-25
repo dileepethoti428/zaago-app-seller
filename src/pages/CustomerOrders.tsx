@@ -218,28 +218,28 @@ const CustomerOrders: React.FC = () => {
   const handleAcceptOrder = async (orderId: string, sellerId: string) => {
     const success = await acceptOrder(orderId, sellerId);
     if (success) {
-      fetchOrders();
+      fetchOrders(0, true);
     }
   };
 
   const handleRejectOrder = async (orderId: string, sellerId: string) => {
     const success = await rejectOrder(orderId, sellerId);
     if (success) {
-      fetchOrders();
+      fetchOrders(0, true);
     }
   };
 
   const handlePackOrder = async (orderId: string, sellerId: string) => {
     const success = await packOrder(orderId, sellerId);
     if (success) {
-      fetchOrders();
+      fetchOrders(0, true);
     }
   };
 
   const handleNotifyAgents = async (orderId: string, sellerId: string) => {
     const success = await notifyDeliveryAgents(orderId, sellerId);
     if (success) {
-      fetchOrders();
+      fetchOrders(0, true);
     }
   };
 
