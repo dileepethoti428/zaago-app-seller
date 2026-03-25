@@ -339,7 +339,7 @@ const Orders = () => {
         </div>
         
         <Button 
-          onClick={fetchOrders} 
+          onClick={() => fetchOrders(0, true)} 
           disabled={loading}
           className="bg-transparent border border-zaago-border text-foreground hover:bg-zaago-accent flex items-center gap-2"
           size="sm"
