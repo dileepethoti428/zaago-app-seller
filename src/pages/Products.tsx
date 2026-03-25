@@ -52,6 +52,7 @@ const Products = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(5);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -72,6 +73,7 @@ const Products = () => {
 
   useEffect(() => {
     filterProducts();
+    setVisibleCount(5);
   }, [products, searchTerm, statusFilter]);
 
   const setupRealtimeSubscription = () => {
@@ -540,7 +542,14 @@ const Products = () => {
         className="bg-zaago-card/50 border border-zaago-border rounded-xl overflow-hidden"
       >
         <div className="p-6 border-b border-zaago-border">
-          <h2 className="text-xl font-bold text-foreground">Products ({filteredProducts.length})</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-foreground">Products ({filteredProducts.length})</h2>
+            {filteredProducts.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                Showing {Math.min(visibleCount, filteredProducts.length)} of {filteredProducts.length}
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="p-6">
@@ -549,8 +558,9 @@ const Products = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zaago-green"></div>
             </div>
           ) : filteredProducts.length > 0 ? (
+            <>
             <div className="grid gap-4">
-              {filteredProducts.map((product) => (
+              {filteredProducts.slice(0, visibleCount).map((product) => (
                 <motion.div
                   key={product.id}
                   initial={{ opacity: 0, y: 10 }}
@@ -608,6 +618,31 @@ const Products = () => {
                 </motion.div>
               ))}
             </div>
+
+            {/* View More / View Less */}
+            {filteredProducts.length > visibleCount && (
+              <div className="flex flex-col items-center gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setVisibleCount(prev => prev + 5)}
+                  className="border-zaago-border text-foreground hover:bg-zaago-accent transition-all"
+                >
+                  View More ({filteredProducts.length - visibleCount} remaining)
+                </Button>
+              </div>
+            )}
+            {visibleCount > 5 && filteredProducts.length <= visibleCount && (
+              <div className="flex flex-col items-center gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setVisibleCount(5)}
+                  className="border-zaago-border text-muted-foreground hover:bg-zaago-accent transition-all"
+                >
+                  View Less
+                </Button>
+              </div>
+            )}
+            </>
           ) : (
             <div className="text-center py-12">
               <Package className="w-16 h-16 text-zaago-muted mx-auto mb-4" />

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, DollarSign, CheckCircle, Clock, IndianRupee } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -23,8 +23,13 @@ export default function CodSettlements() {
   const [period, setPeriod] = useState<TimePeriod>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selectedAgent, setSelectedAgent] = useState<{ id: string; name: string; image: string | null } | null>(null);
+  const [visibleCount, setVisibleCount] = useState(5);
 
   const { data: agents, isLoading, settle, isSettling } = useCodSettlements(period, statusFilter, search);
+
+  useEffect(() => {
+    setVisibleCount(5);
+  }, [period, statusFilter, search]);
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto">
@@ -94,7 +99,8 @@ export default function CodSettlements() {
             </CardContent>
           </Card>
         ) : (
-          agents.map(agent => (
+          <>
+          {agents.slice(0, visibleCount).map(agent => (
             <Card
               key={agent.agent_id}
               className="hover:shadow-md transition-shadow cursor-pointer"
@@ -147,7 +153,27 @@ export default function CodSettlements() {
                 </div>
               </CardContent>
             </Card>
-          ))
+          ))}
+
+          {/* View More / View Less */}
+          {agents.length > visibleCount && (
+            <div className="flex flex-col items-center gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setVisibleCount(prev => prev + 5)}
+              >
+                View More ({agents.length - visibleCount} remaining)
+              </Button>
+            </div>
+          )}
+          {visibleCount > 5 && agents.length <= visibleCount && (
+            <div className="flex flex-col items-center gap-2 pt-2">
+              <Button variant="outline" onClick={() => setVisibleCount(5)}>
+                View Less
+              </Button>
+            </div>
+          )}
+          </>
         )}
       </div>
 

@@ -87,6 +87,7 @@ const Subscriptions = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [deliveryTypeFilter, setDeliveryTypeFilter] = useState('all');
   const [agentFilter, setAgentFilter] = useState('all');
+  const [visibleCount, setVisibleCount] = useState(5);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedSubscription, setSelectedSubscription] = useState<{ id: string; locationId: number | null } | null>(null);
   const [customerDetailsDialog, setCustomerDetailsDialog] = useState<{
@@ -117,6 +118,11 @@ const Subscriptions = () => {
   const { data: missedCounts } = useSubscriptionMissedCounts(subscriptionIds);
   const { acceptDelivery, skipDelivery, isProcessing } = useSubscriptionDeliveryActions();
   const { mutate: removePrimaryAgent, isPending: isRemovingAgent } = useRemovePrimaryAgent();
+
+  // Reset visibleCount when filters change
+  useEffect(() => {
+    setVisibleCount(5);
+  }, [searchTerm, statusFilter, deliveryTypeFilter, agentFilter]);
 
   // Set up real-time subscription for both subscriptions and customers tables
   useEffect(() => {
@@ -488,8 +494,9 @@ const Subscriptions = () => {
           </div>
         </Card>
       ) : (
+        <>
         <div className="grid gap-4">
-          {filteredSubscriptions.map((subscription) => {
+          {filteredSubscriptions.slice(0, visibleCount).map((subscription) => {
             const vacationInfo = getVacationInfo(subscription);
             const showActions = shouldShowActions(subscription);
 
@@ -756,6 +763,26 @@ const Subscriptions = () => {
             );
           })}
         </div>
+
+        {/* View More / View Less for Subscriptions */}
+        {filteredSubscriptions.length > visibleCount && (
+          <div className="flex flex-col items-center gap-2 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setVisibleCount(prev => prev + 5)}
+            >
+              View More ({filteredSubscriptions.length - visibleCount} remaining)
+            </Button>
+          </div>
+        )}
+        {visibleCount > 5 && filteredSubscriptions.length <= visibleCount && (
+          <div className="flex flex-col items-center gap-2 pt-2">
+            <Button variant="outline" onClick={() => setVisibleCount(5)}>
+              View Less
+            </Button>
+          </div>
+        )}
+        </>
       )}
 
       {/* Assign Agent Modal */}
