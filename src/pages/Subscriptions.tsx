@@ -119,6 +119,11 @@ const Subscriptions = () => {
   const { acceptDelivery, skipDelivery, isProcessing } = useSubscriptionDeliveryActions();
   const { mutate: removePrimaryAgent, isPending: isRemovingAgent } = useRemovePrimaryAgent();
 
+  // Reset visibleCount when filters change
+  useEffect(() => {
+    setVisibleCount(5);
+  }, [searchTerm, statusFilter, deliveryTypeFilter, agentFilter]);
+
   // Set up real-time subscription for both subscriptions and customers tables
   useEffect(() => {
     if (!user?.id) return;
