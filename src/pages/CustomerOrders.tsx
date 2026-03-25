@@ -31,6 +31,8 @@ interface Order {
   payment_status?: string;
 }
 
+const PAGE_SIZE = 10;
+
 const CustomerOrders: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -38,6 +40,9 @@ const CustomerOrders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [offset, setOffset] = useState(0);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   
   // Filter states
@@ -46,7 +51,6 @@ const CustomerOrders: React.FC = () => {
   const [amountFilter, setAmountFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
 
-
   useEffect(() => {
     if (!user?.id) {
       console.warn('CustomerOrders: No user ID available');
@@ -54,7 +58,7 @@ const CustomerOrders: React.FC = () => {
       return;
     }
 
-    fetchOrders();
+    fetchOrders(0, true);
     const subscription = setupRealtimeSubscription();
     
     return () => {
@@ -75,25 +79,27 @@ const CustomerOrders: React.FC = () => {
         }, 
         (payload) => {
           console.log('Real-time order update:', payload);
-          // Only refetch if this order contains seller's products
-          // The RPC function will filter appropriately
-          fetchOrders();
+          fetchOrders(0, true);
         }
       )
       .subscribe();
   };
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (fromOffset = 0, reset = true) => {
     if (!user?.id) return;
     
-    setLoading(true);
+    if (reset) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+
     try {
-      console.log('Fetching orders for seller:', user.id);
-      
       const { data, error } = await supabase
         .rpc('get_seller_specific_orders', { 
           p_seller_user_id: user.id 
-        });
+        })
+        .range(fromOffset, fromOffset + PAGE_SIZE - 1);
       
       if (error) {
         console.error('Error fetching orders:', error);
@@ -105,15 +111,12 @@ const CustomerOrders: React.FC = () => {
         return;
       }
 
-      console.log('Fetched orders data:', data);
-      
       if (!data) {
-        console.log('No data returned from RPC function');
-        setOrders([]);
+        if (reset) setOrders([]);
+        setHasMore(false);
         return;
       }
 
-      // Map the RPC response to our Order interface
       const mappedOrders = (data || []).map((order: any) => ({
         id: order.order_id,
         status: order.order_status,
@@ -129,7 +132,14 @@ const CustomerOrders: React.FC = () => {
         seller_items: Array.isArray(order.seller_items) ? order.seller_items.length : 0
       }));
 
-      setOrders(mappedOrders);
+      if (reset) {
+        setOrders(mappedOrders);
+      } else {
+        setOrders(prev => [...prev, ...mappedOrders]);
+      }
+
+      setHasMore(data.length === PAGE_SIZE);
+      setOffset(fromOffset + data.length);
     } catch (error) {
       console.error('Error in fetchOrders:', error);
       toast({
@@ -139,6 +149,7 @@ const CustomerOrders: React.FC = () => {
       });
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -207,28 +218,28 @@ const CustomerOrders: React.FC = () => {
   const handleAcceptOrder = async (orderId: string, sellerId: string) => {
     const success = await acceptOrder(orderId, sellerId);
     if (success) {
-      fetchOrders();
+      fetchOrders(0, true);
     }
   };
 
   const handleRejectOrder = async (orderId: string, sellerId: string) => {
     const success = await rejectOrder(orderId, sellerId);
     if (success) {
-      fetchOrders();
+      fetchOrders(0, true);
     }
   };
 
   const handlePackOrder = async (orderId: string, sellerId: string) => {
     const success = await packOrder(orderId, sellerId);
     if (success) {
-      fetchOrders();
+      fetchOrders(0, true);
     }
   };
 
   const handleNotifyAgents = async (orderId: string, sellerId: string) => {
     const success = await notifyDeliveryAgents(orderId, sellerId);
     if (success) {
-      fetchOrders();
+      fetchOrders(0, true);
     }
   };
 
@@ -422,7 +433,7 @@ const CustomerOrders: React.FC = () => {
           </DropdownMenu>
 
           <Button 
-            onClick={fetchOrders} 
+            onClick={() => fetchOrders(0, true)} 
             disabled={loading}
             className="bg-transparent border border-zaago-border text-foreground hover:bg-zaago-accent flex items-center gap-2"
             size="sm"
@@ -725,6 +736,28 @@ const CustomerOrders: React.FC = () => {
                     <p>2. Set competitive prices</p>
                     <p>3. Wait for customers to place orders</p>
                   </div>
+                </div>
+              )}
+
+              {/* Load More */}
+              {hasMore && (
+                <div className="flex flex-col items-center gap-2 pt-2">
+                  <Button
+                    onClick={() => fetchOrders(offset, false)}
+                    disabled={loadingMore}
+                    variant="outline"
+                    className="border-zaago-border text-foreground hover:bg-zaago-accent"
+                  >
+                    {loadingMore ? (
+                      <>
+                        <div className="w-4 h-4 border border-current border-t-transparent rounded-full animate-spin mr-2" />
+                        Loading...
+                      </>
+                    ) : (
+                      'Load More Orders'
+                    )}
+                  </Button>
+                  <p className="text-xs text-zaago-muted-foreground">Showing {filteredOrders.length} orders</p>
                 </div>
               )}
         </motion.div>
