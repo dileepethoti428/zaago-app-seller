@@ -23,8 +23,13 @@ export default function CodSettlements() {
   const [period, setPeriod] = useState<TimePeriod>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selectedAgent, setSelectedAgent] = useState<{ id: string; name: string; image: string | null } | null>(null);
+  const [visibleCount, setVisibleCount] = useState(5);
 
   const { data: agents, isLoading, settle, isSettling } = useCodSettlements(period, statusFilter, search);
+
+  useEffect(() => {
+    setVisibleCount(5);
+  }, [period, statusFilter, search]);
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto">
