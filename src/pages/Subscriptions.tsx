@@ -494,6 +494,7 @@ const Subscriptions = () => {
           </div>
         </Card>
       ) : (
+        <>
         <div className="grid gap-4">
           {filteredSubscriptions.slice(0, visibleCount).map((subscription) => {
             const vacationInfo = getVacationInfo(subscription);
