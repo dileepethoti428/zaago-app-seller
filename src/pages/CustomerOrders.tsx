@@ -738,6 +738,28 @@ const CustomerOrders: React.FC = () => {
                   </div>
                 </div>
               )}
+
+              {/* Load More */}
+              {hasMore && (
+                <div className="flex flex-col items-center gap-2 pt-2">
+                  <Button
+                    onClick={() => fetchOrders(offset, false)}
+                    disabled={loadingMore}
+                    variant="outline"
+                    className="border-zaago-border text-foreground hover:bg-zaago-accent"
+                  >
+                    {loadingMore ? (
+                      <>
+                        <div className="w-4 h-4 border border-current border-t-transparent rounded-full animate-spin mr-2" />
+                        Loading...
+                      </>
+                    ) : (
+                      'Load More Orders'
+                    )}
+                  </Button>
+                  <p className="text-xs text-zaago-muted-foreground">Showing {filteredOrders.length} orders</p>
+                </div>
+              )}
         </motion.div>
 
       <LocationSetupModal 
