@@ -239,14 +239,21 @@ const Index = () => {
               </div>
             </div>
 
-            {(regularOrdersOverview?.toAcceptOrders || 0) > 0 && (
-              <Link to="/orders?filter=to_accept">
-                <Button variant="outline" className="w-full border-blue-500/50 text-blue-500 hover:bg-blue-500/10">
-                  <FileText className="w-4 h-4 mr-2" />
-                  View {regularOrdersOverview?.toAcceptOrders} Order{regularOrdersOverview?.toAcceptOrders !== 1 ? 's' : ''} - Accept Now
+            <div className="flex flex-col gap-2">
+              {(regularOrdersOverview?.toAcceptOrders || 0) > 0 && (
+                <Link to="/orders?filter=to_accept">
+                  <Button variant="outline" className="w-full border-blue-500/50 text-blue-500 hover:bg-blue-500/10">
+                    <FileText className="w-4 h-4 mr-2" />
+                    View {regularOrdersOverview?.toAcceptOrders} Order{regularOrdersOverview?.toAcceptOrders !== 1 ? 's' : ''} - Accept Now
+                  </Button>
+                </Link>
+              )}
+              <Link to="/orders">
+                <Button variant="ghost" className="w-full text-zaago-muted-foreground hover:text-foreground hover:bg-zaago-accent/30 text-sm">
+                  View All Orders →
                 </Button>
               </Link>
-            )}
+            </div>
           </>
         )}
       </motion.div>

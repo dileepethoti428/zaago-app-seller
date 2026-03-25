@@ -70,13 +70,12 @@ const Orders = () => {
     }
   }, [searchParams]);
 
-  // Reset and re-fetch from server when tab changes (server may have filtered data)
-  // For search: just re-apply filters on already-loaded data
+  // Reset and re-fetch from server when tab changes — pass activeTab explicitly to avoid stale closure
   useEffect(() => {
     if (user) {
       setOffset(0);
       setOrders([]);
-      fetchOrders(0, true);
+      fetchOrders(0, true, activeTab);
     }
   }, [activeTab]);
 
@@ -129,9 +128,35 @@ const Orders = () => {
     user_id: user?.id
   });
 
-  const fetchOrders = async (fromOffset: number = 0, reset: boolean = false) => {
+  const applyFilters = (orderList: any[], tab: string = activeTab, search: string = searchTerm) => {
+    let filtered = orderList;
+    if (tab !== 'all') {
+      if (tab === 'to_accept') {
+        filtered = filtered.filter(o => ['placed', 'pending', 'new'].includes(o.status));
+      } else if (tab === 'placed') {
+        filtered = filtered.filter(o => o.status === 'placed');
+      } else if (tab === 'new') {
+        filtered = filtered.filter(o => o.status === 'new' || o.status === 'pending');
+      } else {
+        filtered = filtered.filter(o => o.status === tab);
+      }
+    }
+    if (search) {
+      filtered = filtered.filter(o =>
+        o.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
+        o.customer_phone?.includes(search) ||
+        o.id?.toString().includes(search)
+      );
+    }
+    return filtered;
+  };
+
+  const fetchOrders = async (fromOffset: number = 0, reset: boolean = false, tabOverride?: string) => {
     if (!user?.id) return;
     
+    // Use tabOverride if provided (avoids stale closure), otherwise use current activeTab
+    const currentTab = tabOverride !== undefined ? tabOverride : activeTab;
+
     if (reset) {
       setLoading(true);
     } else {
@@ -157,11 +182,11 @@ const Orders = () => {
 
       if (reset) {
         setOrders(mappedOrders);
-        setFilteredOrders(applyFilters(mappedOrders));
+        setFilteredOrders(applyFilters(mappedOrders, currentTab, searchTerm));
       } else {
         setOrders(prev => {
           const updated = [...prev, ...mappedOrders];
-          setFilteredOrders(applyFilters(updated));
+          setFilteredOrders(applyFilters(updated, currentTab, searchTerm));
           return updated;
         });
       }
@@ -176,32 +201,9 @@ const Orders = () => {
     }
   };
 
-  const applyFilters = (orderList: any[]) => {
-    let filtered = orderList;
-    if (activeTab !== 'all') {
-      if (activeTab === 'to_accept') {
-        filtered = filtered.filter(o => ['placed', 'pending', 'new'].includes(o.status));
-      } else if (activeTab === 'placed') {
-        filtered = filtered.filter(o => o.status === 'placed');
-      } else if (activeTab === 'new') {
-        filtered = filtered.filter(o => o.status === 'new' || o.status === 'pending');
-      } else {
-        filtered = filtered.filter(o => o.status === activeTab);
-      }
-    }
-    if (searchTerm) {
-      filtered = filtered.filter(o =>
-        o.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        o.customer_phone?.includes(searchTerm) ||
-        o.id?.toString().includes(searchTerm)
-      );
-    }
-    return filtered;
-  };
-
   // Re-apply filters when searchTerm/activeTab changes on already-loaded orders
   useEffect(() => {
-    setFilteredOrders(applyFilters(orders));
+    setFilteredOrders(applyFilters(orders, activeTab, searchTerm));
   }, [searchTerm, activeTab]);
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
