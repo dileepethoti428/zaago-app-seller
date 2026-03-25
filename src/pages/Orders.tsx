@@ -38,6 +38,7 @@ const Orders = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [processingOrder, setProcessingOrder] = useState<string | null>(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(5);
 
   const [searchParams] = useSearchParams();
 
