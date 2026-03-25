@@ -387,33 +387,45 @@ const Dashboard = () => {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zaago-green"></div>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {recentOrders.length > 0 ? recentOrders.map((order) => (
-                    <div key={order.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-zaago-accent/50 transition-colors">
-                      <div className="flex items-center gap-3">
-                        {getStatusIcon(order.status)}
-                        <div>
-                          <p className="font-medium text-foreground text-sm">
-                            Order #{order.id.toString().slice(0, 8)}
-                          </p>
-                          <p className="text-zaago-muted-foreground text-xs">
-                            {order.customer_name || 'Customer'}
+                <>
+                  <div className="space-y-3">
+                    {recentOrders.length > 0 ? recentOrders.map((order) => (
+                      <div key={order.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-zaago-accent/50 transition-colors">
+                        <div className="flex items-center gap-3">
+                          {getStatusIcon(order.status)}
+                          <div>
+                            <p className="font-medium text-foreground text-sm">
+                              Order #{order.id.toString().slice(0, 8)}
+                            </p>
+                            <p className="text-zaago-muted-foreground text-xs">
+                              {order.customer_name || 'Customer'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-foreground text-sm">₹{order.total}</p>
+                          <p className={`text-xs capitalize ${getStatusColor(order.status)}`}>
+                            {order.status.replace('_', ' ')}
                           </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-foreground text-sm">₹{order.total}</p>
-                        <p className={`text-xs capitalize ${getStatusColor(order.status)}`}>
-                          {order.status.replace('_', ' ')}
-                        </p>
+                    )) : (
+                      <div className="text-center py-8 text-zaago-muted-foreground">
+                        No recent orders found
                       </div>
-                    </div>
-                  )) : (
-                    <div className="text-center py-8 text-zaago-muted-foreground">
-                      No recent orders found
+                    )}
+                  </div>
+                  {recentOrders.length > 0 && (
+                    <div className="mt-4 pt-3 border-t border-zaago-border text-center">
+                      <Link
+                        to="/orders"
+                        className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                      >
+                        View All Orders →
+                      </Link>
                     </div>
                   )}
-                </div>
+                </>
               )}
             </CardContent>
           </Card>
