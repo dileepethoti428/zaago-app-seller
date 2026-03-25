@@ -69,6 +69,7 @@ const Orders = () => {
 
   useEffect(() => {
     filterOrders();
+    setVisibleCount(5);
   }, [orders, searchTerm, activeTab]);
 
   const setupRealtimeSubscription = () => {
