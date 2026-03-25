@@ -70,13 +70,12 @@ const Orders = () => {
     }
   }, [searchParams]);
 
-  // Reset and re-fetch from server when tab changes (server may have filtered data)
-  // For search: just re-apply filters on already-loaded data
+  // Reset and re-fetch from server when tab changes — pass activeTab explicitly to avoid stale closure
   useEffect(() => {
     if (user) {
       setOffset(0);
       setOrders([]);
-      fetchOrders(0, true);
+      fetchOrders(0, true, activeTab);
     }
   }, [activeTab]);
 
