@@ -115,15 +115,35 @@ const Orders = () => {
     };
   };
 
-  const fetchOrders = async () => {
+  const mapOrder = (order: any) => ({
+    id: order.order_id,
+    total: order.seller_total,
+    status: order.order_status,
+    created_at: order.created_at,
+    updated_at: order.updated_at,
+    customer_name: order.customer_name,
+    customer_phone: order.customer_phone,
+    delivery_date: order.delivery_date,
+    items: order.seller_items,
+    address: order.address,
+    payment_status: order.payment_status,
+    agent_id: order.agent_id,
+    user_id: user?.id
+  });
+
+  const fetchOrders = async (fromOffset: number = 0, reset: boolean = false) => {
     if (!user?.id) return;
     
-    setLoading(true);
+    if (reset) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+
     try {
-      // Use the corrected seller-specific function to get orders containing this seller's products
-      const { data, error } = await supabase.rpc('get_seller_specific_orders', {
-        p_seller_user_id: user.id
-      });
+      const { data, error } = await supabase
+        .rpc('get_seller_specific_orders', { p_seller_user_id: user.id })
+        .range(fromOffset, fromOffset + PAGE_SIZE - 1);
 
       if (error) {
         console.error('Error fetching seller orders:', error);
@@ -135,60 +155,56 @@ const Orders = () => {
         return;
       }
 
-      // Map the data to match the expected order structure
-      const mappedOrders = (data || []).map((order: any) => ({
-        id: order.order_id,
-        total: order.seller_total, // Show only seller's portion
-        status: order.order_status,
-        created_at: order.created_at,
-        updated_at: order.updated_at,
-        customer_name: order.customer_name,
-        customer_phone: order.customer_phone,
-        delivery_date: order.delivery_date,
-        items: order.seller_items, // Show only seller's items
-        address: order.address,
-        payment_status: order.payment_status,
-        agent_id: order.agent_id,
-        user_id: user.id // This is the seller's user_id
-      }));
+      const mappedOrders = (data || []).map(mapOrder);
 
-      setOrders(mappedOrders);
+      if (reset) {
+        setOrders(mappedOrders);
+        setFilteredOrders(applyFilters(mappedOrders));
+      } else {
+        setOrders(prev => {
+          const updated = [...prev, ...mappedOrders];
+          setFilteredOrders(applyFilters(updated));
+          return updated;
+        });
+      }
+
+      setOffset(fromOffset + mappedOrders.length);
+      setHasMore(mappedOrders.length === PAGE_SIZE);
     } catch (error) {
       console.error('Error fetching orders:', error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
-  const filterOrders = () => {
-    let filtered = orders;
-
-    // Filter by tab
+  const applyFilters = (orderList: any[]) => {
+    let filtered = orderList;
     if (activeTab !== 'all') {
       if (activeTab === 'to_accept') {
-        // Show orders with status 'placed', 'pending', or 'new' (excludes payment_pending)
-        filtered = filtered.filter(order => ['placed', 'pending', 'new'].includes(order.status));
+        filtered = filtered.filter(o => ['placed', 'pending', 'new'].includes(o.status));
       } else if (activeTab === 'placed') {
-        filtered = filtered.filter(order => order.status === 'placed');
+        filtered = filtered.filter(o => o.status === 'placed');
       } else if (activeTab === 'new') {
-        // Treat 'new' tab as showing both 'new' and 'pending' statuses
-        filtered = filtered.filter(order => order.status === 'new' || order.status === 'pending');
+        filtered = filtered.filter(o => o.status === 'new' || o.status === 'pending');
       } else {
-        filtered = filtered.filter(order => order.status === activeTab);
+        filtered = filtered.filter(o => o.status === activeTab);
       }
     }
-
-    // Filter by search term
     if (searchTerm) {
-      filtered = filtered.filter(order => 
-        order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.customer_phone?.includes(searchTerm) ||
-        order.id.toString().includes(searchTerm)
+      filtered = filtered.filter(o =>
+        o.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        o.customer_phone?.includes(searchTerm) ||
+        o.id?.toString().includes(searchTerm)
       );
     }
-
-    setFilteredOrders(filtered);
+    return filtered;
   };
+
+  // Re-apply filters when searchTerm/activeTab changes on already-loaded orders
+  useEffect(() => {
+    setFilteredOrders(applyFilters(orders));
+  }, [searchTerm, activeTab]);
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     if (processingOrder) return;
