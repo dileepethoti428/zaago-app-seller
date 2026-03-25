@@ -1,47 +1,51 @@
 
-## 3 Bugs to Fix
+## Root Cause
 
-### Bug 1 — "View All Orders" not visible on the seller home/Index page
-The "View All Orders" link exists in `Dashboard.tsx` (line 418) but the user is looking at `src/pages/Index.tsx` — the seller home page that shows "Regular Orders Overview". That page has no "View All Orders" link after the recent orders summary. Fix: add a "View All Orders" link to Index.tsx's Regular Orders Overview card.
+The sidebar "Orders" link goes to `/customer-orders` → `CustomerOrders.tsx`. This page calls `get_seller_specific_orders` RPC **without any `.range()` limit** — all 500+ orders are loaded at once. There is no "View More" / pagination at all on this page.
 
-### Bug 2 — "View X Order - Accept Now" button works but shows wrong orders
-The button navigates to `/orders?filter=to_accept` which is correct. But on arrival, there's a **stale closure bug**:
-- `[user]` useEffect fires first → calls `fetchOrders(0, true)` → `applyFilters()` uses `activeTab = 'all'` (initial state) → shows all orders
-- `[searchParams]` useEffect fires → sets `activeTab = 'to_accept'`  
-- `[activeTab]` useEffect fires → re-fetches, but `applyFilters` inside `fetchOrders` is a closure still capturing `activeTab` asynchronously
-
-Fix: change `applyFilters` to accept `tab` and `search` as explicit parameters instead of reading from closed-over state, and pass the correct values when calling from `fetchOrders`.
-
-### Bug 3 — "To Accept" filter shows delivered orders
-Same root cause as Bug 2. The `applyFilters()` function (line 179) reads `activeTab` and `searchTerm` from the outer closure, but when called inside `fetchOrders`, these values may be stale (React state updates are async). So when `fetchOrders` is called from the `[activeTab]` effect, `applyFilters` might still see the old `activeTab` value.
-
-Fix: make `applyFilters(orderList, tab, search)` take explicit params, and pass the correct `tab` value when calling it from within `fetchOrders`.
+This is **different** from `Orders.tsx` (`/orders`) which already has server-side pagination from the previous fix.
 
 ---
 
-## Plan
+## Fix Plan for `src/pages/CustomerOrders.tsx`
 
-### Fix `src/pages/Orders.tsx`
+### 1. Add server-side pagination constants & state
+```ts
+const PAGE_SIZE = 10;
+const [offset, setOffset] = useState(0);
+const [hasMore, setHasMore] = useState(false);
+const [loadingMore, setLoadingMore] = useState(false);
+```
 
-1. Change `applyFilters(orderList)` signature to `applyFilters(orderList, tab = activeTab, search = searchTerm)` — uses params instead of closed-over state values.
+### 2. Update `fetchOrders` to use `.range()`
+```ts
+const { data, error } = await supabase
+  .rpc('get_seller_specific_orders', { p_seller_user_id: user.id })
+  .range(fromOffset, fromOffset + PAGE_SIZE - 1);
+```
+- If `reset=true` (initial load / filter change): replace `orders` state
+- If `reset=false` (load more): append to existing `orders`
+- Set `hasMore = data.length === PAGE_SIZE`
 
-2. In `fetchOrders(fromOffset, reset)`, pass the current `activeTab` explicitly when calling `applyFilters`:
-   ```ts
-   setFilteredOrders(applyFilters(mappedOrders, activeTab, searchTerm));
-   // and in append case:
-   setFilteredOrders(applyFilters(updated, activeTab, searchTerm));
-   ```
+### 3. Reset pagination when filters change
+Add a `useEffect` watching `statusFilter`, `dateFilter`, `amountFilter`, `sortBy`, `searchTerm` that calls `fetchOrders(0, true)` so the list resets to the first page whenever filters change.
 
-3. The `[activeTab]` useEffect already calls `fetchOrders(0, true)` — but since `activeTab` state has been updated before this effect runs, passing `activeTab` directly into the refactored `applyFilters` will now work correctly.
+### 4. Add "Load More" button after the orders list (line 711)
+```tsx
+{hasMore && (
+  <Button onClick={() => fetchOrders(offset, false)} disabled={loadingMore}>
+    {loadingMore ? 'Loading...' : `Load More Orders`}
+  </Button>
+)}
+<p className="text-center text-sm text-muted-foreground">
+  Showing {filteredOrders.length} orders
+</p>
+```
 
-4. Also ensure the `[searchTerm, activeTab]` useEffect passes values explicitly:
-   ```ts
-   setFilteredOrders(applyFilters(orders, activeTab, searchTerm));
-   ```
+### 5. Remove client-side filter/sort on all 500 orders
+The current `filteredOrders` computed variable does client-side filtering on all loaded orders. This still works correctly — it filters the **currently loaded batch**. The `.range()` pagination reduces what's loaded; filters still apply on top of the loaded set. This is acceptable since filters are UI-level.
 
-### Fix `src/pages/Index.tsx`
-Add a "View All Orders →" link at the bottom of the Regular Orders Overview card (after the stats grid, around line 249), linking to `/orders`.
+---
 
 ## Files Changed
-- `src/pages/Orders.tsx` — fix stale closure in `applyFilters` by passing `tab` and `search` as explicit params
-- `src/pages/Index.tsx` — add "View All Orders →" link at the bottom of the Regular Orders Overview card
+- `src/pages/CustomerOrders.tsx` — add `.range()` pagination to `fetchOrders`, add `offset`/`hasMore`/`loadingMore` state, add "Load More Orders" button, reset on filter changes
