@@ -1,42 +1,47 @@
 
-## Root Cause
+## 3 Bugs to Fix
 
-The `fetchOrders()` function calls `supabase.rpc('get_seller_specific_orders', ...)` which returns **all 500+ orders** in a single shot. The front-end `visibleCount` slicing only controls rendering — all data is already fetched. This causes:
-- Slow page load (500+ rows transferred over the network)
-- High memory usage
-- UI lag
+### Bug 1 — "View All Orders" not visible on the seller home/Index page
+The "View All Orders" link exists in `Dashboard.tsx` (line 418) but the user is looking at `src/pages/Index.tsx` — the seller home page that shows "Regular Orders Overview". That page has no "View All Orders" link after the recent orders summary. Fix: add a "View All Orders" link to Index.tsx's Regular Orders Overview card.
 
-The `View More` button works but pagination needs to happen at the **data fetch level**, not just rendering level.
+### Bug 2 — "View X Order - Accept Now" button works but shows wrong orders
+The button navigates to `/orders?filter=to_accept` which is correct. But on arrival, there's a **stale closure bug**:
+- `[user]` useEffect fires first → calls `fetchOrders(0, true)` → `applyFilters()` uses `activeTab = 'all'` (initial state) → shows all orders
+- `[searchParams]` useEffect fires → sets `activeTab = 'to_accept'`  
+- `[activeTab]` useEffect fires → re-fetches, but `applyFilters` inside `fetchOrders` is a closure still capturing `activeTab` asynchronously
 
-## Fix Strategy: Server-side Pagination
+Fix: change `applyFilters` to accept `tab` and `search` as explicit parameters instead of reading from closed-over state, and pass the correct values when calling from `fetchOrders`.
 
-Use Supabase's built-in `range()` pagination on the RPC call, OR fall back to fetching in pages of 10 with an offset. Since we're calling an RPC, the cleanest approach without modifying the DB function is:
+### Bug 3 — "To Accept" filter shows delivered orders
+Same root cause as Bug 2. The `applyFilters()` function (line 179) reads `activeTab` and `searchTerm` from the outer closure, but when called inside `fetchOrders`, these values may be stale (React state updates are async). So when `fetchOrders` is called from the `[activeTab]` effect, `applyFilters` might still see the old `activeTab` value.
 
-**Sort + limit at DB level using a wrapper query** — but since `rpc()` doesn't support `.range()` on custom functions easily, the best approach is:
+Fix: make `applyFilters(orderList, tab, search)` take explicit params, and pass the correct `tab` value when calling it from within `fetchOrders`.
 
-1. **Sort orders by `created_at DESC` so newest appear first** (already done client-side)
-2. **Add `offset` + `limit` parameters to the fetch** using Supabase `.range(from, to)` on the RPC result
-3. **Track `currentPage` or `offset` state** — "View More" fetches the next batch and appends
+---
 
-### Implementation
+## Plan
 
-**`src/pages/Orders.tsx` changes:**
+### Fix `src/pages/Orders.tsx`
 
-- Remove `setOrders(mappedOrders)` (replace all at once)  
-- Add `offset` state starting at `0`, page size constant `PAGE_SIZE = 10`
-- Add `hasMore` state (true if last fetch returned PAGE_SIZE results)
-- `fetchOrders(offset=0)`: fetches with `.range(offset, offset + PAGE_SIZE - 1)` on rpc, sets orders, sets hasMore
-- `loadMore()`: calls `fetchOrders(currentOffset + PAGE_SIZE)` and **appends** to existing orders
-- Remove `visibleCount` state entirely (no longer needed — pagination is server-side)
-- Replace `filteredOrders.slice(0, visibleCount).map(...)` with just `filteredOrders.map(...)`
-- Replace View More / View Less block with a single "Load More Orders" button that calls `loadMore()`, shown only when `hasMore === true`
-- When `activeTab` or `searchTerm` changes: reset offset to 0, clear orders, re-fetch from start
-- Show "Showing X orders" label (count of currently loaded orders)
+1. Change `applyFilters(orderList)` signature to `applyFilters(orderList, tab = activeTab, search = searchTerm)` — uses params instead of closed-over state values.
 
-### Key benefit
-- Initial load: only 10 orders transferred
-- Each "View More" click: 10 more orders appended
-- 500+ orders never all loaded at once
+2. In `fetchOrders(fromOffset, reset)`, pass the current `activeTab` explicitly when calling `applyFilters`:
+   ```ts
+   setFilteredOrders(applyFilters(mappedOrders, activeTab, searchTerm));
+   // and in append case:
+   setFilteredOrders(applyFilters(updated, activeTab, searchTerm));
+   ```
+
+3. The `[activeTab]` useEffect already calls `fetchOrders(0, true)` — but since `activeTab` state has been updated before this effect runs, passing `activeTab` directly into the refactored `applyFilters` will now work correctly.
+
+4. Also ensure the `[searchTerm, activeTab]` useEffect passes values explicitly:
+   ```ts
+   setFilteredOrders(applyFilters(orders, activeTab, searchTerm));
+   ```
+
+### Fix `src/pages/Index.tsx`
+Add a "View All Orders →" link at the bottom of the Regular Orders Overview card (after the stats grid, around line 249), linking to `/orders`.
 
 ## Files Changed
-- `src/pages/Orders.tsx` — replace client-side slice with server-side paginated fetch using `.range()`, add `offset` + `hasMore` state, update View More to load next page
+- `src/pages/Orders.tsx` — fix stale closure in `applyFilters` by passing `tab` and `search` as explicit params
+- `src/pages/Index.tsx` — add "View All Orders →" link at the bottom of the Regular Orders Overview card
