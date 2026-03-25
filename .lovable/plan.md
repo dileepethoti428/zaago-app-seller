@@ -1,55 +1,17 @@
 
-## Root Cause
+## Root Cause (Clear)
 
-There are **two separate issues** causing the wrong redirect:
+When Supabase sends the reset email, it redirects to `https://zaago-seller-app.vercel.app/#access_token=...&type=recovery`. The `#` means it lands on the **root route** (`/`), not `/reset-password`. The `AppContent` component loads, Supabase JS processes the hash and fires `PASSWORD_RECOVERY`, but nobody is listening at the root to redirect the user.
 
-### Issue 1 — Wrong `redirectTo` URL in `ForgotPassword.tsx`
-Line 29: `redirectTo: 'https://zaago-seller.vercel.app/reset-password'`
+The user doesn't want to change the Site URL in Supabase (it's used for another app). So we fix this purely in code.
 
-This is hardcoded to the **old URL** (`zaago-seller.vercel.app`). Your app is now at `zaago-seller-app.vercel.app`. So the reset email sends users to the old domain, which is `zaago.online` (some other app).
+## Fix
 
-### Issue 2 — Supabase "Redirect URLs" whitelist in the dashboard
-Even after fixing the code, Supabase will **block the redirect** unless `https://zaago-seller-app.vercel.app/reset-password` is explicitly added to the allowed redirect URLs list in the Supabase Auth settings.
+Add a `useEffect` in `AppContent` (in `App.tsx`) that:
+1. On mount, checks if `window.location.hash` contains `type=recovery`
+2. If yes, immediately calls `navigate('/reset-password')` — the hash/token stays in memory because Supabase JS has already parsed it, and the `ResetPassword` page will receive the `PASSWORD_RECOVERY` auth event correctly
 
----
-
-## What Needs to Happen
-
-### 1. Code fix — Update `redirectTo` in `ForgotPassword.tsx`
-Change line 29 from:
-```
-redirectTo: `https://zaago-seller.vercel.app/reset-password`
-```
-to:
-```
-redirectTo: `https://zaago-seller-app.vercel.app/reset-password`
-```
-
-### 2. Supabase Dashboard — Add URL to Redirect Allow List
-You must manually add this URL in Supabase:
-
-**Go to**: Supabase Dashboard → Authentication → URL Configuration
-
-Add these two entries to **"Redirect URLs"**:
-```
-https://zaago-seller-app.vercel.app/reset-password
-https://zaago-seller-app.vercel.app/**
-```
-
-Also set the **"Site URL"** to:
-```
-https://zaago-seller-app.vercel.app
-```
-
-This is a one-time manual step you do in the Supabase dashboard — I cannot do this for you from code, but I'll give you the direct link.
-
----
+This is one small addition to the existing comment block at line 71-72 in `App.tsx`.
 
 ## Files Changed
-- `src/pages/ForgotPassword.tsx` — update `redirectTo` URL to new domain
-
-## Dashboard Steps (Manual — You Do This)
-1. Open Supabase → Authentication → URL Configuration
-2. Set **Site URL** = `https://zaago-seller-app.vercel.app`
-3. Add to **Redirect URLs**: `https://zaago-seller-app.vercel.app/**`
-4. Save
+- `src/App.tsx` — add `useEffect` that detects `type=recovery` in URL hash and redirects to `/reset-password`
