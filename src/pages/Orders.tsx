@@ -34,11 +34,14 @@ const Orders = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [processingOrder, setProcessingOrder] = useState<string | null>(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(5);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const PAGE_SIZE = 10;
 
   const [searchParams] = useSearchParams();
 
@@ -54,7 +57,7 @@ const Orders = () => {
 
   useEffect(() => {
     if (user) {
-      fetchOrders();
+      fetchOrders(0, true);
       setupRealtimeSubscription();
     }
   }, [user]);
@@ -67,10 +70,15 @@ const Orders = () => {
     }
   }, [searchParams]);
 
+  // Reset and re-fetch from server when tab changes (server may have filtered data)
+  // For search: just re-apply filters on already-loaded data
   useEffect(() => {
-    filterOrders();
-    setVisibleCount(5);
-  }, [orders, searchTerm, activeTab]);
+    if (user) {
+      setOffset(0);
+      setOrders([]);
+      fetchOrders(0, true);
+    }
+  }, [activeTab]);
 
   const setupRealtimeSubscription = () => {
     const channel = supabase
@@ -87,18 +95,14 @@ const Orders = () => {
           
           // Re-fetch orders when any order changes to get updated seller data
           if (payload.eventType === 'INSERT') {
-            // For new orders, check if they contain this seller's products
-            fetchOrders();
-            
-            // Show notification if this order contains seller's products
+            fetchOrders(0, true);
             toast({
               title: "New Order Alert! 🔔",
               description: "Check if this order contains your products",
               duration: 5000
             });
           } else if (payload.eventType === 'UPDATE') {
-            // Re-fetch to get updated order status
-            fetchOrders();
+            fetchOrders(0, true);
           }
         }
       )
@@ -109,15 +113,35 @@ const Orders = () => {
     };
   };
 
-  const fetchOrders = async () => {
+  const mapOrder = (order: any) => ({
+    id: order.order_id,
+    total: order.seller_total,
+    status: order.order_status,
+    created_at: order.created_at,
+    updated_at: order.updated_at,
+    customer_name: order.customer_name,
+    customer_phone: order.customer_phone,
+    delivery_date: order.delivery_date,
+    items: order.seller_items,
+    address: order.address,
+    payment_status: order.payment_status,
+    agent_id: order.agent_id,
+    user_id: user?.id
+  });
+
+  const fetchOrders = async (fromOffset: number = 0, reset: boolean = false) => {
     if (!user?.id) return;
     
-    setLoading(true);
+    if (reset) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+
     try {
-      // Use the corrected seller-specific function to get orders containing this seller's products
-      const { data, error } = await supabase.rpc('get_seller_specific_orders', {
-        p_seller_user_id: user.id
-      });
+      const { data, error } = await supabase
+        .rpc('get_seller_specific_orders', { p_seller_user_id: user.id })
+        .range(fromOffset, fromOffset + PAGE_SIZE - 1);
 
       if (error) {
         console.error('Error fetching seller orders:', error);
@@ -129,60 +153,56 @@ const Orders = () => {
         return;
       }
 
-      // Map the data to match the expected order structure
-      const mappedOrders = (data || []).map((order: any) => ({
-        id: order.order_id,
-        total: order.seller_total, // Show only seller's portion
-        status: order.order_status,
-        created_at: order.created_at,
-        updated_at: order.updated_at,
-        customer_name: order.customer_name,
-        customer_phone: order.customer_phone,
-        delivery_date: order.delivery_date,
-        items: order.seller_items, // Show only seller's items
-        address: order.address,
-        payment_status: order.payment_status,
-        agent_id: order.agent_id,
-        user_id: user.id // This is the seller's user_id
-      }));
+      const mappedOrders = (data || []).map(mapOrder);
 
-      setOrders(mappedOrders);
+      if (reset) {
+        setOrders(mappedOrders);
+        setFilteredOrders(applyFilters(mappedOrders));
+      } else {
+        setOrders(prev => {
+          const updated = [...prev, ...mappedOrders];
+          setFilteredOrders(applyFilters(updated));
+          return updated;
+        });
+      }
+
+      setOffset(fromOffset + mappedOrders.length);
+      setHasMore(mappedOrders.length === PAGE_SIZE);
     } catch (error) {
       console.error('Error fetching orders:', error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
-  const filterOrders = () => {
-    let filtered = orders;
-
-    // Filter by tab
+  const applyFilters = (orderList: any[]) => {
+    let filtered = orderList;
     if (activeTab !== 'all') {
       if (activeTab === 'to_accept') {
-        // Show orders with status 'placed', 'pending', or 'new' (excludes payment_pending)
-        filtered = filtered.filter(order => ['placed', 'pending', 'new'].includes(order.status));
+        filtered = filtered.filter(o => ['placed', 'pending', 'new'].includes(o.status));
       } else if (activeTab === 'placed') {
-        filtered = filtered.filter(order => order.status === 'placed');
+        filtered = filtered.filter(o => o.status === 'placed');
       } else if (activeTab === 'new') {
-        // Treat 'new' tab as showing both 'new' and 'pending' statuses
-        filtered = filtered.filter(order => order.status === 'new' || order.status === 'pending');
+        filtered = filtered.filter(o => o.status === 'new' || o.status === 'pending');
       } else {
-        filtered = filtered.filter(order => order.status === activeTab);
+        filtered = filtered.filter(o => o.status === activeTab);
       }
     }
-
-    // Filter by search term
     if (searchTerm) {
-      filtered = filtered.filter(order => 
-        order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.customer_phone?.includes(searchTerm) ||
-        order.id.toString().includes(searchTerm)
+      filtered = filtered.filter(o =>
+        o.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        o.customer_phone?.includes(searchTerm) ||
+        o.id?.toString().includes(searchTerm)
       );
     }
-
-    setFilteredOrders(filtered);
+    return filtered;
   };
+
+  // Re-apply filters when searchTerm/activeTab changes on already-loaded orders
+  useEffect(() => {
+    setFilteredOrders(applyFilters(orders));
+  }, [searchTerm, activeTab]);
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     if (processingOrder) return;
@@ -216,7 +236,7 @@ const Orders = () => {
       console.error('Error updating order:', error);
       
       // Revert optimistic update
-      await fetchOrders();
+      await fetchOrders(0, true);
       
       toast({
         title: "Error",
@@ -317,7 +337,7 @@ const Orders = () => {
         </div>
         
         <Button 
-          onClick={fetchOrders} 
+          onClick={() => fetchOrders(0, true)} 
           disabled={loading}
           className="bg-transparent border border-zaago-border text-foreground hover:bg-zaago-accent flex items-center gap-2"
           size="sm"
@@ -378,7 +398,7 @@ const Orders = () => {
             </h2>
             {filteredOrders.length > 0 && (
               <p className="text-sm text-muted-foreground">
-                Showing {Math.min(visibleCount, filteredOrders.length)} of {filteredOrders.length} orders
+                Showing {filteredOrders.length} orders{hasMore ? ' (more available)' : ''}
               </p>
             )}
           </div>
@@ -390,7 +410,7 @@ const Orders = () => {
               ) : filteredOrders.length > 0 ? (
                 <>
                   <div className="grid gap-4">
-                    {filteredOrders.slice(0, visibleCount).map((order) => (
+                    {filteredOrders.map((order) => (
                       <motion.div
                         key={order.id}
                         initial={{ opacity: 0, y: 10 }}
@@ -547,26 +567,20 @@ const Orders = () => {
                     ))}
                   </div>
 
-                  {/* View More / View Less */}
-                  {filteredOrders.length > visibleCount && (
+                  {/* Load More — server-side pagination */}
+                  {hasMore && (
                     <div className="flex flex-col items-center gap-2 pt-2">
-                      {visibleCount < filteredOrders.length ? (
-                        <Button
-                          variant="outline"
-                          onClick={() => setVisibleCount(prev => prev + 5)}
-                          className="border-zaago-border text-foreground hover:bg-zaago-accent hover:border-primary transition-all"
-                        >
-                          View More ({filteredOrders.length - visibleCount} remaining)
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          onClick={() => setVisibleCount(5)}
-                          className="border-zaago-border text-muted-foreground hover:bg-zaago-accent transition-all"
-                        >
-                          View Less
-                        </Button>
-                      )}
+                      <Button
+                        variant="outline"
+                        onClick={() => fetchOrders(offset, false)}
+                        disabled={loadingMore}
+                        className="border-zaago-border text-foreground hover:bg-zaago-accent hover:border-primary transition-all"
+                      >
+                        {loadingMore ? (
+                          <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                        ) : null}
+                        Load More Orders
+                      </Button>
                     </div>
                   )}
                 </>
