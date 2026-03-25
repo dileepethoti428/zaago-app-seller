@@ -34,11 +34,14 @@ const Orders = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [processingOrder, setProcessingOrder] = useState<string | null>(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(5);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const PAGE_SIZE = 10;
 
   const [searchParams] = useSearchParams();
 
