@@ -70,13 +70,15 @@ const Orders = () => {
     }
   }, [searchParams]);
 
-  // Reset and re-fetch when tab or search changes
+  // Reset and re-fetch from server when tab changes (server may have filtered data)
+  // For search: just re-apply filters on already-loaded data
   useEffect(() => {
     if (user) {
       setOffset(0);
+      setOrders([]);
       fetchOrders(0, true);
     }
-  }, [activeTab, searchTerm]);
+  }, [activeTab]);
 
   const setupRealtimeSubscription = () => {
     const channel = supabase
