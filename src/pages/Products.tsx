@@ -542,7 +542,14 @@ const Products = () => {
         className="bg-zaago-card/50 border border-zaago-border rounded-xl overflow-hidden"
       >
         <div className="p-6 border-b border-zaago-border">
-          <h2 className="text-xl font-bold text-foreground">Products ({filteredProducts.length})</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-foreground">Products ({filteredProducts.length})</h2>
+            {filteredProducts.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                Showing {Math.min(visibleCount, filteredProducts.length)} of {filteredProducts.length}
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="p-6">
