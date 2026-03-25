@@ -57,7 +57,7 @@ const Orders = () => {
 
   useEffect(() => {
     if (user) {
-      fetchOrders();
+      fetchOrders(0, true);
       setupRealtimeSubscription();
     }
   }, [user]);
@@ -70,10 +70,13 @@ const Orders = () => {
     }
   }, [searchParams]);
 
+  // Reset and re-fetch when tab or search changes
   useEffect(() => {
-    filterOrders();
-    setVisibleCount(5);
-  }, [orders, searchTerm, activeTab]);
+    if (user) {
+      setOffset(0);
+      fetchOrders(0, true);
+    }
+  }, [activeTab, searchTerm]);
 
   const setupRealtimeSubscription = () => {
     const channel = supabase
