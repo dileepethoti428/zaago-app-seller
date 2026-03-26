@@ -1,51 +1,29 @@
 
+
 ## Root Cause
 
-The sidebar "Orders" link goes to `/customer-orders` → `CustomerOrders.tsx`. This page calls `get_seller_specific_orders` RPC **without any `.range()` limit** — all 500+ orders are loaded at once. There is no "View More" / pagination at all on this page.
+There are **two separate location hooks**, and the wrong one has no caching:
 
-This is **different** from `Orders.tsx` (`/orders`) which already has server-side pagination from the previous fix.
+1. **`useCachedLocation.tsx`** (used by `Topbar.tsx`) — Has localStorage caching with 30-day TTL. Checks cache before calling APIs. Works correctly.
 
----
+2. **`useLocation.tsx`** (used by `LocationSelector.tsx`, `ProductSuggestionForm.tsx`, `useProductsNearby.tsx`) — Has **ZERO caching**. Location is stored only in React state (`useState`). Every time the app reopens, state resets to `null`, triggering a fresh GPS request + Google Places API call.
 
-## Fix Plan for `src/pages/CustomerOrders.tsx`
+The `useLocation` hook at line 156 does: `if (user && !location) → getCurrentLocation(false)`. Since `location` is always `null` on app restart (React state resets), it calls the Google Places reverse geocode API every single time.
 
-### 1. Add server-side pagination constants & state
-```ts
-const PAGE_SIZE = 10;
-const [offset, setOffset] = useState(0);
-const [hasMore, setHasMore] = useState(false);
-const [loadingMore, setLoadingMore] = useState(false);
-```
+## Fix
 
-### 2. Update `fetchOrders` to use `.range()`
-```ts
-const { data, error } = await supabase
-  .rpc('get_seller_specific_orders', { p_seller_user_id: user.id })
-  .range(fromOffset, fromOffset + PAGE_SIZE - 1);
-```
-- If `reset=true` (initial load / filter change): replace `orders` state
-- If `reset=false` (load more): append to existing `orders`
-- Set `hasMore = data.length === PAGE_SIZE`
+Replace `useLocation.tsx` with a wrapper around `useCachedLocation` so all consumers share the same 30-day localStorage cache. This way, no matter which hook is used anywhere in the app, the cached location is checked first and the Google Places API is only called when the cache is empty or expired.
 
-### 3. Reset pagination when filters change
-Add a `useEffect` watching `statusFilter`, `dateFilter`, `amountFilter`, `sortBy`, `searchTerm` that calls `fetchOrders(0, true)` so the list resets to the first page whenever filters change.
+### Changes to `src/hooks/useLocation.tsx`
+- Remove the entire standalone implementation (GPS fetch, Google Places call, DB save — all duplicated from `useCachedLocation`)
+- Replace with a thin wrapper that re-exports `useCachedLocation` with the same interface (`location`, `loading`, `error`, `getCurrentLocation`, `startLocationUpdates`)
+- This ensures `LocationSelector`, `ProductSuggestionForm`, and `useProductsNearby` all use the cached version
 
-### 4. Add "Load More" button after the orders list (line 711)
-```tsx
-{hasMore && (
-  <Button onClick={() => fetchOrders(offset, false)} disabled={loadingMore}>
-    {loadingMore ? 'Loading...' : `Load More Orders`}
-  </Button>
-)}
-<p className="text-center text-sm text-muted-foreground">
-  Showing {filteredOrders.length} orders
-</p>
-```
-
-### 5. Remove client-side filter/sort on all 500 orders
-The current `filteredOrders` computed variable does client-side filtering on all loaded orders. This still works correctly — it filters the **currently loaded batch**. The `.range()` pagination reduces what's loaded; filters still apply on top of the loaded set. This is acceptable since filters are UI-level.
-
----
+### Result
+- On app reopen: localStorage cache is checked first (30-day TTL)
+- If cached location exists → no GPS, no Google Places API call, no Supabase edge function invocation
+- API only called when cache is expired or user forces refresh
 
 ## Files Changed
-- `src/pages/CustomerOrders.tsx` — add `.range()` pagination to `fetchOrders`, add `offset`/`hasMore`/`loadingMore` state, add "Load More Orders" button, reset on filter changes
+- `src/hooks/useLocation.tsx` — replace with wrapper around `useCachedLocation`
+
