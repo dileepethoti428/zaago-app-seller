@@ -750,6 +750,19 @@ const CustomerOrders: React.FC = () => {
                               </div>
                             )}
 
+                            {/* View Delivery Partner button */}
+                            {['assigned', 'in_transit', 'out_for_delivery', 'delivered'].includes(order.status) && order.agent_name && (
+                              <Button
+                                onClick={() => setSelectedAgentOrder(order)}
+                                variant="outline"
+                                className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300 flex items-center gap-2"
+                                size="sm"
+                              >
+                                <User className="w-4 h-4" />
+                                View Delivery Partner
+                              </Button>
+                            )}
+
                             {/* View Details button for packed/delivered orders */}
                             {['packed', 'in_transit', 'delivered'].includes(order.status) && (
                               <Link to={`/orders/${order.id}`} className="flex-1">
