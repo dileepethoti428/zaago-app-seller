@@ -31,6 +31,21 @@ interface Order {
   seller_total?: number;
   seller_items?: number;
   payment_status?: string;
+  assigned_agent_id?: string;
+  agent_name?: string;
+  agent_phone?: string;
+  agent_vehicle_type?: string;
+  agent_vehicle_number?: string;
+  agent_profile_image?: string;
+}
+
+interface AgentInfo {
+  id: string;
+  name: string;
+  phone: string | null;
+  vehicle_type: string | null;
+  vehicle_number: string | null;
+  profile_image: string | null;
 }
 
 const PAGE_SIZE = 10;
