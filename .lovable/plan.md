@@ -1,29 +1,37 @@
 
 
-## Root Cause
+## Add "View Delivery Partner" to Orders Page
 
-There are **two separate location hooks**, and the wrong one has no caching:
+### Problem
+After a delivery partner accepts an order, the seller has no way to see the partner's details (name, phone, vehicle number) on the Orders page.
 
-1. **`useCachedLocation.tsx`** (used by `Topbar.tsx`) — Has localStorage caching with 30-day TTL. Checks cache before calling APIs. Works correctly.
+### Solution
+Add a "View Delivery Partner" button on each order card for orders with status `assigned`, `in_transit`, or `delivered`. Clicking it opens a dialog showing the agent's name, phone (with call link), and vehicle number.
 
-2. **`useLocation.tsx`** (used by `LocationSelector.tsx`, `ProductSuggestionForm.tsx`, `useProductsNearby.tsx`) — Has **ZERO caching**. Location is stored only in React state (`useState`). Every time the app reopens, state resets to `null`, triggering a fresh GPS request + Google Places API call.
+### Implementation
 
-The `useLocation` hook at line 156 does: `if (user && !location) → getCurrentLocation(false)`. Since `location` is always `null` on app restart (React state resets), it calls the Google Places reverse geocode API every single time.
+#### 1. Add agent info fetching (`src/pages/CustomerOrders.tsx`)
 
-## Fix
+The `get_seller_specific_orders` RPC doesn't return agent details. After mapping orders, do a separate query to fetch agent info for orders that have an `assigned_agent_id`:
 
-Replace `useLocation.tsx` with a wrapper around `useCachedLocation` so all consumers share the same 30-day localStorage cache. This way, no matter which hook is used anywhere in the app, the cached location is checked first and the Google Places API is only called when the cache is empty or expired.
+- Extend the `Order` interface to include `assigned_agent_id` and optional `agent_name`, `agent_phone`, `agent_vehicle_number`, `agent_profile_image`
+- The RPC result likely includes `assigned_agent_id` — map it in `mappedOrders`
+- After fetching orders, collect all non-null `assigned_agent_id` values, query `delivery_agents` table for those IDs (selecting `name`, `phone`, `vehicle_number`, `vehicle_type`, `profile_image`), and merge agent data into the orders state
 
-### Changes to `src/hooks/useLocation.tsx`
-- Remove the entire standalone implementation (GPS fetch, Google Places call, DB save — all duplicated from `useCachedLocation`)
-- Replace with a thin wrapper that re-exports `useCachedLocation` with the same interface (`location`, `loading`, `error`, `getCurrentLocation`, `startLocationUpdates`)
-- This ensures `LocationSelector`, `ProductSuggestionForm`, and `useProductsNearby` all use the cached version
+#### 2. Add Delivery Partner dialog
 
-### Result
-- On app reopen: localStorage cache is checked first (30-day TTL)
-- If cached location exists → no GPS, no Google Places API call, no Supabase edge function invocation
-- API only called when cache is expired or user forces refresh
+Create a simple inline dialog/sheet in `CustomerOrders.tsx`:
+- State: `selectedAgentOrder` (the order whose agent to show)
+- Dialog content: Agent name, phone (clickable `tel:` link), vehicle number, vehicle type
+- Styled consistently with the dark theme
 
-## Files Changed
-- `src/hooks/useLocation.tsx` — replace with wrapper around `useCachedLocation`
+#### 3. Add "View Delivery Partner" button on order cards
+
+For orders with status `assigned`, `in_transit`, or `delivered` that have agent data:
+- Add a button next to the existing "View Details" button (around line 695-716)
+- Button text: "View Delivery Partner" with a `Truck` icon
+- On click: opens the agent details dialog
+
+### Files Changed
+- `src/pages/CustomerOrders.tsx` — extend Order interface, fetch agent data, add dialog + button
 
