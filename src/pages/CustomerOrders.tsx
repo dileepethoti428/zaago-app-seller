@@ -7,7 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Clock, Package, CheckCircle, Truck, MapPin, Search, RefreshCw, Eye, Phone, X, Filter, Calendar, DollarSign } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Clock, Package, CheckCircle, Truck, MapPin, Search, RefreshCw, Eye, Phone, X, Filter, Calendar, DollarSign, User } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useSellerOrderActions } from '@/hooks/useSellerOrderActions';
@@ -29,6 +31,21 @@ interface Order {
   seller_total?: number;
   seller_items?: number;
   payment_status?: string;
+  assigned_agent_id?: string;
+  agent_name?: string;
+  agent_phone?: string;
+  agent_vehicle_type?: string;
+  agent_vehicle_number?: string;
+  agent_profile_image?: string;
+}
+
+interface AgentInfo {
+  id: string;
+  name: string;
+  phone: string | null;
+  vehicle_type: string | null;
+  vehicle_number: string | null;
+  profile_image: string | null;
 }
 
 const PAGE_SIZE = 10;
@@ -50,6 +67,7 @@ const CustomerOrders: React.FC = () => {
   const [dateFilter, setDateFilter] = useState('all');
   const [amountFilter, setAmountFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+  const [selectedAgentOrder, setSelectedAgentOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     if (!user?.id) {
@@ -117,7 +135,7 @@ const CustomerOrders: React.FC = () => {
         return;
       }
 
-      const mappedOrders = (data || []).map((order: any) => ({
+      const mappedOrders: Order[] = (data || []).map((order: any) => ({
         id: order.order_id,
         status: order.order_status,
         created_at: order.created_at,
@@ -129,13 +147,44 @@ const CustomerOrders: React.FC = () => {
         items: order.seller_items,
         order_type: 'delivery',
         seller_total: order.seller_total,
-        seller_items: Array.isArray(order.seller_items) ? order.seller_items.length : 0
+        seller_items: Array.isArray(order.seller_items) ? order.seller_items.length : 0,
+        assigned_agent_id: order.agent_id || null,
       }));
 
+      // Fetch agent details for orders that have an assigned agent
+      const agentIds = [...new Set(mappedOrders.map(o => o.assigned_agent_id).filter(Boolean))] as string[];
+      let agentMap: Record<string, AgentInfo> = {};
+      
+      if (agentIds.length > 0) {
+        const { data: agents } = await supabase
+          .from('delivery_agents')
+          .select('id, name, phone, vehicle_type, vehicle_number, profile_image')
+          .in('id', agentIds);
+        
+        if (agents) {
+          agentMap = Object.fromEntries(agents.map(a => [a.id, a]));
+        }
+      }
+
+      const ordersWithAgents = mappedOrders.map(order => {
+        if (order.assigned_agent_id && agentMap[order.assigned_agent_id]) {
+          const agent = agentMap[order.assigned_agent_id];
+          return {
+            ...order,
+            agent_name: agent.name,
+            agent_phone: agent.phone || undefined,
+            agent_vehicle_type: agent.vehicle_type || undefined,
+            agent_vehicle_number: agent.vehicle_number || undefined,
+            agent_profile_image: agent.profile_image || undefined,
+          };
+        }
+        return order;
+      });
+
       if (reset) {
-        setOrders(mappedOrders);
+        setOrders(ordersWithAgents);
       } else {
-        setOrders(prev => [...prev, ...mappedOrders]);
+        setOrders(prev => [...prev, ...ordersWithAgents]);
       }
 
       setHasMore(data.length === PAGE_SIZE);
@@ -701,6 +750,19 @@ const CustomerOrders: React.FC = () => {
                               </div>
                             )}
 
+                            {/* View Delivery Partner button */}
+                            {['assigned', 'in_transit', 'out_for_delivery', 'delivered'].includes(order.status) && order.agent_name && (
+                              <Button
+                                onClick={() => setSelectedAgentOrder(order)}
+                                variant="outline"
+                                className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300 flex items-center gap-2"
+                                size="sm"
+                              >
+                                <User className="w-4 h-4" />
+                                View Delivery Partner
+                              </Button>
+                            )}
+
                             {/* View Details button for packed/delivered orders */}
                             {['packed', 'in_transit', 'delivered'].includes(order.status) && (
                               <Link to={`/orders/${order.id}`} className="flex-1">
@@ -761,6 +823,50 @@ const CustomerOrders: React.FC = () => {
                 </div>
               )}
         </motion.div>
+
+      {/* Delivery Partner Details Dialog */}
+      <Dialog open={!!selectedAgentOrder} onOpenChange={(open) => !open && setSelectedAgentOrder(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={selectedAgentOrder?.agent_profile_image || undefined} />
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  {selectedAgentOrder?.agent_name?.charAt(0)?.toUpperCase() || 'A'}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <span className="block text-foreground">{selectedAgentOrder?.agent_name}</span>
+                <span className="text-sm text-muted-foreground">Delivery Partner</span>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            {selectedAgentOrder?.agent_phone && (
+              <div className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-foreground">{selectedAgentOrder.agent_phone}</span>
+                </div>
+                <a href={`tel:${selectedAgentOrder.agent_phone}`}>
+                  <Button size="sm" variant="outline" className="text-xs">
+                    <Phone className="w-3 h-3 mr-1" /> Call
+                  </Button>
+                </a>
+              </div>
+            )}
+            {(selectedAgentOrder?.agent_vehicle_type || selectedAgentOrder?.agent_vehicle_number) && (
+              <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-3">
+                <Truck className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-foreground">
+                  {selectedAgentOrder.agent_vehicle_type || 'Vehicle'}
+                  {selectedAgentOrder.agent_vehicle_number && ` — ${selectedAgentOrder.agent_vehicle_number}`}
+                </span>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <LocationSetupModal 
         open={isLocationModalOpen} 
