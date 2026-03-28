@@ -824,6 +824,50 @@ const CustomerOrders: React.FC = () => {
               )}
         </motion.div>
 
+      {/* Delivery Partner Details Dialog */}
+      <Dialog open={!!selectedAgentOrder} onOpenChange={(open) => !open && setSelectedAgentOrder(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={selectedAgentOrder?.agent_profile_image || undefined} />
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  {selectedAgentOrder?.agent_name?.charAt(0)?.toUpperCase() || 'A'}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <span className="block text-foreground">{selectedAgentOrder?.agent_name}</span>
+                <span className="text-sm text-muted-foreground">Delivery Partner</span>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            {selectedAgentOrder?.agent_phone && (
+              <div className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-foreground">{selectedAgentOrder.agent_phone}</span>
+                </div>
+                <a href={`tel:${selectedAgentOrder.agent_phone}`}>
+                  <Button size="sm" variant="outline" className="text-xs">
+                    <Phone className="w-3 h-3 mr-1" /> Call
+                  </Button>
+                </a>
+              </div>
+            )}
+            {(selectedAgentOrder?.agent_vehicle_type || selectedAgentOrder?.agent_vehicle_number) && (
+              <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-3">
+                <Truck className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-foreground">
+                  {selectedAgentOrder.agent_vehicle_type || 'Vehicle'}
+                  {selectedAgentOrder.agent_vehicle_number && ` — ${selectedAgentOrder.agent_vehicle_number}`}
+                </span>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <LocationSetupModal 
         open={isLocationModalOpen} 
         onOpenChange={setIsLocationModalOpen}
