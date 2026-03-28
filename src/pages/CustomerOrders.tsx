@@ -67,6 +67,7 @@ const CustomerOrders: React.FC = () => {
   const [dateFilter, setDateFilter] = useState('all');
   const [amountFilter, setAmountFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+  const [selectedAgentOrder, setSelectedAgentOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     if (!user?.id) {
