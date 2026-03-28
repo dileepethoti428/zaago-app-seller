@@ -135,7 +135,7 @@ const CustomerOrders: React.FC = () => {
         return;
       }
 
-      const mappedOrders = (data || []).map((order: any) => ({
+      const mappedOrders: Order[] = (data || []).map((order: any) => ({
         id: order.order_id,
         status: order.order_status,
         created_at: order.created_at,
@@ -147,13 +147,44 @@ const CustomerOrders: React.FC = () => {
         items: order.seller_items,
         order_type: 'delivery',
         seller_total: order.seller_total,
-        seller_items: Array.isArray(order.seller_items) ? order.seller_items.length : 0
+        seller_items: Array.isArray(order.seller_items) ? order.seller_items.length : 0,
+        assigned_agent_id: order.agent_id || null,
       }));
 
+      // Fetch agent details for orders that have an assigned agent
+      const agentIds = [...new Set(mappedOrders.map(o => o.assigned_agent_id).filter(Boolean))] as string[];
+      let agentMap: Record<string, AgentInfo> = {};
+      
+      if (agentIds.length > 0) {
+        const { data: agents } = await supabase
+          .from('delivery_agents')
+          .select('id, name, phone, vehicle_type, vehicle_number, profile_image')
+          .in('id', agentIds);
+        
+        if (agents) {
+          agentMap = Object.fromEntries(agents.map(a => [a.id, a]));
+        }
+      }
+
+      const ordersWithAgents = mappedOrders.map(order => {
+        if (order.assigned_agent_id && agentMap[order.assigned_agent_id]) {
+          const agent = agentMap[order.assigned_agent_id];
+          return {
+            ...order,
+            agent_name: agent.name,
+            agent_phone: agent.phone || undefined,
+            agent_vehicle_type: agent.vehicle_type || undefined,
+            agent_vehicle_number: agent.vehicle_number || undefined,
+            agent_profile_image: agent.profile_image || undefined,
+          };
+        }
+        return order;
+      });
+
       if (reset) {
-        setOrders(mappedOrders);
+        setOrders(ordersWithAgents);
       } else {
-        setOrders(prev => [...prev, ...mappedOrders]);
+        setOrders(prev => [...prev, ...ordersWithAgents]);
       }
 
       setHasMore(data.length === PAGE_SIZE);
