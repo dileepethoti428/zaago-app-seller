@@ -313,6 +313,7 @@ export type Database = {
           payment_method: string | null
           payout_breakdown: Json | null
           payout_status: string
+          tip_amount: number | null
           updated_at: string | null
         }
         Insert: {
@@ -331,6 +332,7 @@ export type Database = {
           payment_method?: string | null
           payout_breakdown?: Json | null
           payout_status?: string
+          tip_amount?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -349,6 +351,7 @@ export type Database = {
           payment_method?: string | null
           payout_breakdown?: Json | null
           payout_status?: string
+          tip_amount?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -2261,6 +2264,7 @@ export type Database = {
           payment_method: string | null
           payment_status: string
           special_instructions: string | null
+          tip_amount: number | null
           total_amount: number
           updated_at: string
         }
@@ -2286,6 +2290,7 @@ export type Database = {
           payment_method?: string | null
           payment_status?: string
           special_instructions?: string | null
+          tip_amount?: number | null
           total_amount: number
           updated_at?: string
         }
@@ -2311,6 +2316,7 @@ export type Database = {
           payment_method?: string | null
           payment_status?: string
           special_instructions?: string | null
+          tip_amount?: number | null
           total_amount?: number
           updated_at?: string
         }
@@ -4044,6 +4050,7 @@ export type Database = {
           special_instructions: string | null
           status: string
           subscription_id: string | null
+          tip_amount: number | null
           total: number
           tracking_id: string
           updated_at: string
@@ -4103,6 +4110,7 @@ export type Database = {
           special_instructions?: string | null
           status?: string
           subscription_id?: string | null
+          tip_amount?: number | null
           total: number
           tracking_id: string
           updated_at?: string
@@ -4162,6 +4170,7 @@ export type Database = {
           special_instructions?: string | null
           status?: string
           subscription_id?: string | null
+          tip_amount?: number | null
           total?: number
           tracking_id?: string
           updated_at?: string
@@ -8467,23 +8476,15 @@ export type Database = {
         }
         Returns: Json
       }
-      complete_delivery_zepto:
-        | {
-            Args: {
-              p_agent_id: string
-              p_order_id: string
-              p_payment_method?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_live_distance_km?: number
-              p_order_id: string
-              p_payment_method: string
-            }
-            Returns: Json
-          }
+      complete_delivery_zepto: {
+        Args: {
+          p_agent_id: string
+          p_live_distance_km?: number
+          p_order_id: string
+          p_payment_method?: string
+        }
+        Returns: Json
+      }
       complete_qr_delivery_safe: {
         Args: {
           p_agent_id: string
