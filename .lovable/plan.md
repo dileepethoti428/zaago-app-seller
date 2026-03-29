@@ -1,37 +1,46 @@
 
 
-## Add "View Delivery Partner" to Orders Page
+## Revenue Bug — `o.total` includes delivery fee, tip, small cart fee
 
 ### Problem
-After a delivery partner accepts an order, the seller has no way to see the partner's details (name, phone, vehicle number) on the Orders page.
+The `orders.total` column contains the **customer's grand total** (product cost + delivery fee + small cart fee + tip + taxes). Three RPC functions use `SUM(o.total)` for seller revenue, inflating it with non-product charges.
 
-### Solution
-Add a "View Delivery Partner" button on each order card for orders with status `assigned`, `in_transit`, or `delivered`. Clicking it opens a dialog showing the agent's name, phone (with call link), and vehicle number.
+### Affected Functions
 
-### Implementation
+| Function | What it does wrong |
+|---|---|
+| `get_seller_stats_with_period` | Uses `SUM(o.total)` for `regular_revenue`, `pending_revenue`, `pending_subscription_revenue` |
+| `get_seller_performance_trends` | Uses `SUM(o.total)` for `total_revenue` |
+| `get_seller_performance_summary` | Uses `SUM(o.total)` for `total_revenue` |
 
-#### 1. Add agent info fetching (`src/pages/CustomerOrders.tsx`)
+**Already correct:** `get_seller_top_products_analytics` (uses JSONB items `quantity * unit_price`), `useSalesReport.ts` (uses `item.price * item.quantity` when items exist).
 
-The `get_seller_specific_orders` RPC doesn't return agent details. After mapping orders, do a separate query to fetch agent info for orders that have an `assigned_agent_id`:
+### Fix
 
-- Extend the `Order` interface to include `assigned_agent_id` and optional `agent_name`, `agent_phone`, `agent_vehicle_number`, `agent_profile_image`
-- The RPC result likely includes `assigned_agent_id` — map it in `mappedOrders`
-- After fetching orders, collect all non-null `assigned_agent_id` values, query `delivery_agents` table for those IDs (selecting `name`, `phone`, `vehicle_number`, `vehicle_type`, `profile_image`), and merge agent data into the orders state
+Replace `SUM(o.total)` with a calculation from the JSONB `items` array — `SUM(item.quantity * item.price)` filtered to seller's products only. This excludes delivery fees, tips, and other charges.
 
-#### 2. Add Delivery Partner dialog
+#### 1. `get_seller_stats_with_period` — 3 subqueries to fix
+Replace each `SUM(o.total)` with:
+```sql
+SUM(
+  (SELECT COALESCE(SUM((item->>'quantity')::int * (item->>'price')::numeric), 0)
+   FROM jsonb_array_elements(o.items) AS item
+   WHERE (item->>'seller_id') = seller_user_id::text
+      OR (item->>'id')::uuid IN (SELECT id FROM products WHERE seller_id = seller_user_id))
+)
+```
+Applied to: `regular_revenue`, `pending_revenue`, `pending_subscription_revenue`
 
-Create a simple inline dialog/sheet in `CustomerOrders.tsx`:
-- State: `selectedAgentOrder` (the order whose agent to show)
-- Dialog content: Agent name, phone (clickable `tel:` link), vehicle number, vehicle type
-- Styled consistently with the dark theme
+#### 2. `get_seller_performance_trends`
+Replace `SUM(o.total) FILTER (WHERE o.status = 'delivered')` with the same items-based sum.
 
-#### 3. Add "View Delivery Partner" button on order cards
+#### 3. `get_seller_performance_summary`
+Same replacement for `total_revenue`.
 
-For orders with status `assigned`, `in_transit`, or `delivered` that have agent data:
-- Add a button next to the existing "View Details" button (around line 695-716)
-- Button text: "View Delivery Partner" with a `Truck` icon
-- On click: opens the agent details dialog
+#### 4. `useSalesReport.ts` — minor fix
+The fallback case (empty items array) uses `order.total`. Change it to use `0` instead since we can't determine seller-only amount without items.
 
 ### Files Changed
-- `src/pages/CustomerOrders.tsx` — extend Order interface, fetch agent data, add dialog + button
+- Database migration: update 3 RPC functions
+- `src/hooks/useSalesReport.ts` — fix fallback for empty items
 
