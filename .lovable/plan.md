@@ -1,59 +1,33 @@
 
 
-## Fix: Revenue Still Using Original Price — Root Cause Found
+## Fix: Dashboard Revenue Shows 0 — Field Name Mismatch
 
-### The Real Problem
+### Root Cause
 
-The items JSONB stored in YOUR seller's orders **does not contain `discount_percentage` at all**. It's `null`/missing:
+The recent migration replaced `get_seller_stats_with_period` with a simplified version that returns different field names than what the frontend expects.
 
-```
-Paneer: price=450, discount_percentage=NULL  (product has 11% discount)
-Vegetables: price=10, discount_percentage=NULL (product has 3% discount)
-```
+**RPC now returns:** `total_orders`, `total_revenue`, `pending_orders`, `active_subscriptions`, `prev_total_orders`, `prev_total_revenue`
 
-The RPC functions we updated last time DO have the discount formula `price * (1 - discount_percentage/100)`, but since `discount_percentage` is missing from the JSONB, `COALESCE(NULL, 0)` = 0, so **no discount is applied**.
+**Frontend expects:** `total_products`, `active_orders`, `delivered_count`, `regular_revenue`, `subscription_revenue`, `total_revenue`, `active_subscriptions`, `pending_revenue`, `pending_subscription_revenue`, `projected_daily_subscription`
 
-Some other seller's orders DO have `discount_percentage` stored (e.g., "Cow Ghee" has `discount_percentage: 10`). The issue is the **Checkout page doesn't include `discount_percentage`** when building the order items array.
+Since the returned JSON keys don't match, every `Number(stats_obj?.regular_revenue)` etc. resolves to `0`.
 
-### Two-Part Fix
+### Fix
 
-#### 1. Fix RPC functions — Use product table's current discount for items missing discount data
+**Update the RPC function** via a database migration to restore all the fields the frontend needs:
+- `total_products` — count from products table for this seller
+- `active_orders` — orders with status in (placed, confirmed, out_for_delivery)
+- `delivered_count` — delivered orders in period
+- `regular_revenue` — revenue from non-subscription orders
+- `subscription_revenue` — revenue from subscription orders
+- `total_revenue` — sum of both
+- `active_subscriptions` — count of active subscriptions
+- `pending_revenue` — revenue from pending regular orders
+- `pending_subscription_revenue` — revenue from pending subscription orders
+- `projected_daily_subscription` — estimated daily subscription revenue
 
-Instead of relying solely on `(item->>'discount_percentage')`, JOIN with the `products` table to get the current `discount_percentage` when it's missing from the JSONB. This fixes all historical orders.
-
-Revenue formula becomes:
-```sql
-quantity * price * (1 - COALESCE(
-  (item->>'discount_percentage')::numeric,  -- use stored if available
-  p.discount_percentage,                     -- fallback to current product discount
-  0
-) / 100)
-```
-
-Update all 3 functions: `get_seller_stats_with_period`, `get_seller_performance_trends`, `get_seller_performance_summary`.
-
-#### 2. Fix order creation — Store `discount_percentage` in items JSONB going forward
-
-**`src/pages/Checkout.tsx`** (line 81-89): Add `discount_percentage` to the order items array so future orders have it stored.
-
-**`src/pages/CustomerProductDetail.tsx`** (line 129-141): Pass `discount_percentage` through to cart/order flow.
-
-**`src/pages/ProductsCustomer.tsx`** (line 59-69): Include `discount_percentage` in the product data passed to `addToCart`.
-
-**`src/context/CartContext.tsx`**: Store and pass through `discount_percentage`.
-
-**`supabase/functions/process-daily-subscriptions/index.ts`** (line 180-187): Add `discount_percentage` to subscription order items.
-
-#### 3. Fix `useSalesReport.ts` — Use product discount when item doesn't have it
-
-Fetch product discount_percentage alongside order data for items that don't have it stored.
+The discount-aware item pricing logic (JOIN with products for fallback discount) will be preserved.
 
 ### Files Changed
-- Database migration: update 3 RPC functions to JOIN products table for discount fallback
-- `src/pages/Checkout.tsx` — include discount_percentage in order items
-- `src/pages/ProductsCustomer.tsx` — pass discount_percentage to addToCart
-- `src/pages/CustomerProductDetail.tsx` — pass discount_percentage to addToCart
-- `src/context/CartContext.tsx` — store/pass discount_percentage
-- `supabase/functions/process-daily-subscriptions/index.ts` — add discount_percentage to subscription items
-- `src/hooks/useSalesReport.ts` — fallback to product's current discount
+- Database migration: recreate `get_seller_stats_with_period` with all required return fields
 
