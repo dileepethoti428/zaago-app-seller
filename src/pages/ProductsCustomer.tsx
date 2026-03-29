@@ -63,7 +63,8 @@ const ProductsCustomer = () => {
       price: product.discounted_price || product.product_price,
       image_url: product.product_image_url,
       seller_id: product.seller_id,
-      stock_quantity: product.stock_quantity
+      stock_quantity: product.stock_quantity,
+      discount_percentage: product.discount_percentage || 0
     };
     
     await addToCart(productData);
