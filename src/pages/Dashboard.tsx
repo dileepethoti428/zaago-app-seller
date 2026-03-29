@@ -65,7 +65,7 @@ const Dashboard = () => {
     try {
       // Fetch seller stats using the working RPC with period parameter
       const { data: statsData, error: statsError } = await supabase.rpc('get_seller_stats_with_period', {
-        seller_user_id: user.id,
+        seller_uuid: user.id,
         period: selectedPeriod
       });
 
@@ -73,7 +73,7 @@ const Dashboard = () => {
         console.error('Error fetching stats:', statsError);
       } else if (statsData) {
         // Handle array response from RPC
-        const stats_obj = Array.isArray(statsData) ? statsData[0] : statsData;
+        const stats_obj = (Array.isArray(statsData) ? statsData[0] : statsData) as any;
         
         setStats({
           totalProducts: Number(stats_obj?.total_products) || 0,
