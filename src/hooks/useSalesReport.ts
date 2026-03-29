@@ -69,7 +69,8 @@ export const useSalesReport = (startDate: string | null, endDate: string | null)
           orderItems.forEach((item: any) => {
             const qty = item.quantity || 1;
             const originalPrice = item.price || 0;
-            const discountPct = item.discount_percentage || 0;
+            const itemId = item.id || item.product_id || '';
+            const discountPct = item.discount_percentage ?? productDiscountMap[itemId] ?? 0;
             const price = originalPrice * (1 - discountPct / 100);
             result.push({
               date: order.created_at,
