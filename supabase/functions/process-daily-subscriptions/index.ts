@@ -178,12 +178,14 @@ serve(async (req) => {
           user_id: subscription.user_id,
           subscription_id: subscription.id,
           items: [{
+            id: product.id,
             product_id: product.id,
             name: product.name,
             price: Number(product.price),
             quantity: subscription.quantity,
             seller_id: product.seller_id,
-            image_url: product.image_url
+            image_url: product.image_url,
+            discount_percentage: Number(product.discount_percentage || 0)
           }],
           total: itemTotal,
           status: 'pending_seller_acceptance',

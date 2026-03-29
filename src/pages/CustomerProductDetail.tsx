@@ -135,7 +135,8 @@ const CustomerProductDetail = () => {
       price: selectedVariant?.price || product.price,
       image_url: product.image_url,
       seller_id: product.seller_id,
-      stock_quantity: product.stock_quantity
+      stock_quantity: product.stock_quantity,
+      discount_percentage: product.discount_percentage || 0
     };
     
     await addToCart(productData, 1, selectedVariant);

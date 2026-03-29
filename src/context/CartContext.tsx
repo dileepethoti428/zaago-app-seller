@@ -16,6 +16,7 @@ interface CartItem {
   variant_id?: string;
   variant_name?: string;
   gst_percentage?: number;
+  discount_percentage?: number;
 }
 
 interface CartContextType {
@@ -140,7 +141,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           seller_id: product.seller_id,
           stock_quantity: product.stock_quantity,
           variant_id: variant?.id,
-          variant_name: variant?.name
+          variant_name: variant?.name,
+          discount_percentage: product.discount_percentage || 0
         };
 
         setCartItems(prev => [...prev, newItem]);

@@ -85,7 +85,8 @@ const Checkout = () => {
         quantity: item.quantity,
         seller_id: item.seller_id,
         variant_id: item.variant_id,
-        variant_name: item.variant_name
+        variant_name: item.variant_name,
+        discount_percentage: item.discount_percentage || 0
       }));
 
       // Create address object

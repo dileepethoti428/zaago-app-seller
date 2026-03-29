@@ -20,6 +20,17 @@ export const useSalesReport = (startDate: string | null, endDate: string | null)
     queryFn: async (): Promise<SalesReportItem[]> => {
       if (!user?.id) return [];
 
+      // Fetch products for discount fallback
+      const { data: productsData } = await supabase
+        .from('products')
+        .select('id, discount_percentage')
+        .eq('seller_id', user.id);
+
+      const productDiscountMap: Record<string, number> = {};
+      (productsData || []).forEach((p: any) => {
+        productDiscountMap[p.id] = p.discount_percentage || 0;
+      });
+
       let query = supabase
         .from('orders')
         .select('id, created_at, total, status, items')
@@ -58,7 +69,8 @@ export const useSalesReport = (startDate: string | null, endDate: string | null)
           orderItems.forEach((item: any) => {
             const qty = item.quantity || 1;
             const originalPrice = item.price || 0;
-            const discountPct = item.discount_percentage || 0;
+            const itemId = item.id || item.product_id || '';
+            const discountPct = item.discount_percentage ?? productDiscountMap[itemId] ?? 0;
             const price = originalPrice * (1 - discountPct / 100);
             result.push({
               date: order.created_at,
