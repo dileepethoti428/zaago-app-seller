@@ -50,8 +50,8 @@ export const useSalesReport = (startDate: string | null, endDate: string | null)
             orderId: order.id,
             productName: 'N/A',
             quantity: 1,
-            unitPrice: order.total || 0,
-            total: order.total || 0,
+            unitPrice: 0,
+            total: 0,
             status: order.status,
           });
         } else {
