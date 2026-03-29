@@ -318,14 +318,14 @@ export default function DeliveriesPage() {
 
       // Fetch stats for each period using the working RPC
       const [todayRes, weekRes, monthRes] = await Promise.all([
-        supabase.rpc('get_seller_stats_with_period', { seller_user_id: user.id, period: 'today' }),
-        supabase.rpc('get_seller_stats_with_period', { seller_user_id: user.id, period: 'week' }),
-        supabase.rpc('get_seller_stats_with_period', { seller_user_id: user.id, period: 'month' })
+        supabase.rpc('get_seller_stats_with_period', { seller_uuid: user.id, period: 'today' }),
+        supabase.rpc('get_seller_stats_with_period', { seller_uuid: user.id, period: 'week' }),
+        supabase.rpc('get_seller_stats_with_period', { seller_uuid: user.id, period: 'month' })
       ]);
 
-      const todayData = Array.isArray(todayRes.data) ? todayRes.data[0] : todayRes.data;
-      const weekData = Array.isArray(weekRes.data) ? weekRes.data[0] : weekRes.data;
-      const monthData = Array.isArray(monthRes.data) ? monthRes.data[0] : monthRes.data;
+      const todayData = (Array.isArray(todayRes.data) ? todayRes.data[0] : todayRes.data) as any;
+      const weekData = (Array.isArray(weekRes.data) ? weekRes.data[0] : weekRes.data) as any;
+      const monthData = (Array.isArray(monthRes.data) ? monthRes.data[0] : monthRes.data) as any;
 
       setStats({
         today: Number(todayData?.delivered_count) || 0,

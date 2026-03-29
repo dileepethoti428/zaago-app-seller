@@ -81,14 +81,14 @@ export default function Payments() {
   const fetchRevenueStats = async () => {
     try {
       const { data, error } = await supabase.rpc('get_seller_stats_with_period', {
-        seller_user_id: user?.id,
+        seller_uuid: user?.id!,
         period: selectedPeriod
       });
 
       if (error) throw error;
 
       // Handle array response from RPC
-      const stats_obj = Array.isArray(data) ? data[0] : data;
+      const stats_obj = (Array.isArray(data) ? data[0] : data) as any;
       setRevenueStats({
         regularRevenue: Number(stats_obj?.regular_revenue) || 0,
         subscriptionRevenue: Number(stats_obj?.subscription_revenue) || 0,

@@ -82,7 +82,7 @@ const Index = () => {
 
       // Use the new seller stats function with period for accurate data
       const { data: statsData, error: statsError } = await supabase.rpc('get_seller_stats_with_period', {
-        seller_user_id: user.id,
+        seller_uuid: user.id,
         period: selectedPeriod === '1week' ? 'week' : selectedPeriod === '1month' ? 'month' : selectedPeriod === '3months' ? 'month' : selectedPeriod === '6months' ? 'month' : selectedPeriod
       });
 
@@ -92,7 +92,7 @@ const Index = () => {
       }
 
       // The RPC returns an array, get first row
-      const stats_obj = Array.isArray(statsData) ? statsData[0] : statsData;
+      const stats_obj = (Array.isArray(statsData) ? statsData[0] : statsData) as any;
       const totalProducts = Number(stats_obj?.total_products) || 0;
       const activeOrders = Number(stats_obj?.active_orders) || 0;
       const totalDeliveries = Number(stats_obj?.delivered_count) || 0;
