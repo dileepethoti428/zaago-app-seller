@@ -256,7 +256,7 @@ export const SellerNotifications = () => {
       channelRef.current = null;
     }
     
-    const channel = supabase.channel('seller-notifications');
+    const channel = supabase.channel(`seller-notifications-${user.id}-${Date.now()}`);
     
     channel
       .on('postgres_changes', {

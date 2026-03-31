@@ -15,7 +15,7 @@ export const AgentNotifications = () => {
 
     // Subscribe to agent notifications with server-side filtering
     const agentNotificationsChannel = supabase
-      .channel('agent-notifications-enhanced')
+      .channel(`agent-notifications-${user.id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {

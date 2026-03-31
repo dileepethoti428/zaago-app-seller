@@ -13,7 +13,7 @@ export const CustomerNotifications = () => {
 
     // Subscribe to customer notifications
     const customerNotificationsChannel = supabase
-      .channel('customer-notifications')
+      .channel(`customer-notifications-${user.id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
