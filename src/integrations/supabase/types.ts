@@ -3629,7 +3629,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          body: string
+          body?: string
           created_at?: string | null
           data?: Json | null
           id?: number
