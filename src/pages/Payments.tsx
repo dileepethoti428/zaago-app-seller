@@ -145,6 +145,11 @@ export default function Payments() {
       lastPayoutDate: lastPaidPayout?.created_at || null
     });
   };
+  useEffect(() => {
+    if (user) {
+      fetchRevenueStats();
+    }
+  }, [user, selectedPeriod]);
 
   useEffect(() => {
     if (!user) return;
