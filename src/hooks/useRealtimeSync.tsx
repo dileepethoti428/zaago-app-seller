@@ -16,7 +16,7 @@ export const useRealtimeSync = () => {
 
     // Cart items real-time sync - only UPDATE events
     const cartChannel = supabase
-      .channel('cart-changes')
+      .channel(`cart-changes-${user.id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
@@ -36,7 +36,7 @@ export const useRealtimeSync = () => {
 
     // Orders real-time sync - only UPDATE events for status changes
     const ordersChannel = supabase
-      .channel('orders-changes')
+      .channel(`orders-changes-${user.id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
@@ -79,7 +79,7 @@ export const useRealtimeSync = () => {
 
     // Vacation compensations real-time sync
     const compensationsChannel = supabase
-      .channel('compensations-changes')
+      .channel(`compensations-changes-${user.id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
@@ -99,7 +99,7 @@ export const useRealtimeSync = () => {
     channels.push(compensationsChannel);
     // Notifications real-time sync
     const notificationsChannel = supabase
-      .channel('notifications-changes')
+      .channel(`notifications-changes-${user.id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
