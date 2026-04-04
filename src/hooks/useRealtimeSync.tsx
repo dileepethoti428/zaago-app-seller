@@ -79,7 +79,7 @@ export const useRealtimeSync = () => {
 
     // Vacation compensations real-time sync
     const compensationsChannel = supabase
-      .channel('compensations-changes')
+      .channel(`compensations-changes-${user.id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
