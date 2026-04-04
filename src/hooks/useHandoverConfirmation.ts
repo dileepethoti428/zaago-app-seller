@@ -61,7 +61,7 @@ export function useHandoverConfirmation(selectedDate: HandoverDate) {
     if (!user?.id) return;
 
     const channel = supabase
-      .channel('handover-confirmations-realtime')
+      .channel(`handover-confirmations-realtime-${user.id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {

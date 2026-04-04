@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -205,9 +206,11 @@ const App = () => (
     <BrowserRouter>
       <AuthProvider>
         <CartProvider>
-          <ProtectedRoute>
-            <AppContent />
-          </ProtectedRoute>
+          <ErrorBoundary>
+            <ProtectedRoute>
+              <AppContent />
+            </ProtectedRoute>
+          </ErrorBoundary>
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>

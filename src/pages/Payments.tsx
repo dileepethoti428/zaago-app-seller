@@ -64,20 +64,6 @@ export default function Payments() {
   const [selectedPeriod, setSelectedPeriod] = useState<'today' | 'week' | 'month'>('today');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      fetchPayouts();
-      fetchCommissionRate();
-      setupRealtimeSubscription();
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (user) {
-      fetchRevenueStats();
-    }
-  }, [user, selectedPeriod]);
-
   const fetchRevenueStats = async () => {
     try {
       const { data, error } = await supabase.rpc('get_seller_stats_with_period', {
@@ -87,7 +73,6 @@ export default function Payments() {
 
       if (error) throw error;
 
-      // Handle array response from RPC
       const stats_obj = (Array.isArray(data) ? data[0] : data) as any;
       setRevenueStats({
         regularRevenue: Number(stats_obj?.regular_revenue) || 0,
@@ -160,31 +145,40 @@ export default function Payments() {
       lastPayoutDate: lastPaidPayout?.created_at || null
     });
   };
+  useEffect(() => {
+    if (user) {
+      fetchRevenueStats();
+    }
+  }, [user, selectedPeriod]);
 
-  const setupRealtimeSubscription = () => {
+  useEffect(() => {
+    if (!user) return;
+    fetchPayouts();
+    fetchCommissionRate();
+
     const channel = supabase
-      .channel('payouts-changes')
+      .channel(`payouts-changes-${user.id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
           event: 'UPDATE',
           schema: 'public',
           table: 'payouts',
-          filter: `seller_id=eq.${user?.id}`
+          filter: `seller_id=eq.${user.id}`
         },
         (payload) => {
-        const updatedPayout = payload.new as Payout;
-        
-        if (updatedPayout.status === 'paid') {
-          const amount = updatedPayout.net_amount || updatedPayout.amount;
-          toast({
-            title: 'Payment Released!',
-            description: `Your payout of ₹${amount.toFixed(2)} has been processed.`,
-            duration: 5000,
-          });
-        }
+          const updatedPayout = payload.new as Payout;
           
-          fetchPayouts(); // Refresh data
+          if (updatedPayout.status === 'paid') {
+            const amount = updatedPayout.net_amount || updatedPayout.amount;
+            toast({
+              title: 'Payment Released!',
+              description: `Your payout of ₹${amount.toFixed(2)} has been processed.`,
+              duration: 5000,
+            });
+          }
+            
+          fetchPayouts();
         }
       )
       .subscribe();
@@ -192,7 +186,7 @@ export default function Payments() {
     return () => {
       supabase.removeChannel(channel);
     };
-  };
+  }, [user]);
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {

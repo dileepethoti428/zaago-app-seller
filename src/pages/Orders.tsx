@@ -56,32 +56,11 @@ const Orders = () => {
   ];
 
   useEffect(() => {
-    if (user) {
-      fetchOrders(0, true);
-      setupRealtimeSubscription();
-    }
-  }, [user]);
+    if (!user) return;
+    fetchOrders(0, true);
 
-  // Read URL filter parameter on mount
-  useEffect(() => {
-    const filterParam = searchParams.get('filter');
-    if (filterParam && ['all', 'to_accept', 'placed', 'new', 'accepted', 'in_transit', 'delivered'].includes(filterParam)) {
-      setActiveTab(filterParam);
-    }
-  }, [searchParams]);
-
-  // Reset and re-fetch from server when tab changes — pass activeTab explicitly to avoid stale closure
-  useEffect(() => {
-    if (user) {
-      setOffset(0);
-      setOrders([]);
-      fetchOrders(0, true, activeTab);
-    }
-  }, [activeTab]);
-
-  const setupRealtimeSubscription = () => {
     const channel = supabase
-      .channel('seller-orders-realtime')
+      .channel(`seller-orders-realtime-${user.id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
@@ -92,7 +71,6 @@ const Orders = () => {
         (payload) => {
           console.log('Realtime update:', payload);
           
-          // Re-fetch orders when any order changes to get updated seller data
           if (payload.eventType === 'INSERT') {
             fetchOrders(0, true);
             toast({
@@ -110,7 +88,7 @@ const Orders = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  };
+  }, [user]);
 
   const mapOrder = (order: any) => ({
     id: order.order_id,

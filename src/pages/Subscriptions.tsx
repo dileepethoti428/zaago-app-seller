@@ -129,7 +129,7 @@ const Subscriptions = () => {
     if (!user?.id) return;
 
     const channel = supabase
-      .channel('seller-subscriptions-realtime')
+      .channel(`seller-subscriptions-realtime-${user.id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {

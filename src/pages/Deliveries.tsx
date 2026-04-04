@@ -358,7 +358,7 @@ export default function DeliveriesPage() {
   // Set up realtime subscription for order updates
   useEffect(() => {
     const channel = supabase
-      .channel('seller-orders-realtime')
+      .channel(`seller-deliveries-realtime-${Date.now()}`)
       .on(
         'postgres_changes',
         {

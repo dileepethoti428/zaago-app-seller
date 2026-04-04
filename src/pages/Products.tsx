@@ -65,27 +65,18 @@ const Products = () => {
   });
 
   useEffect(() => {
-    if (user) {
-      fetchProducts();
-      setupRealtimeSubscription();
-    }
-  }, [user]);
+    if (!user) return;
+    fetchProducts();
 
-  useEffect(() => {
-    filterProducts();
-    setVisibleCount(5);
-  }, [products, searchTerm, statusFilter]);
-
-  const setupRealtimeSubscription = () => {
     const channel = supabase
-      .channel('products-realtime')
+      .channel(`products-realtime-${user.id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'products',
-          filter: `seller_id=eq.${user?.id}`
+          filter: `seller_id=eq.${user.id}`
         },
         (payload) => {
           console.log('Realtime update:', payload);
@@ -116,7 +107,7 @@ const Products = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  };
+  }, [user]);
 
   const fetchProducts = async () => {
     if (!user?.id) return;
