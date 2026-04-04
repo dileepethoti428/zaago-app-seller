@@ -131,7 +131,7 @@ export function useSubscriptionHandover(selectedDate: HandoverDate) {
     if (!user?.id) return;
 
     const channel = supabase
-      .channel('handover-realtime')
+      .channel(`handover-realtime-${user.id}-${Date.now()}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'subscriptions' },

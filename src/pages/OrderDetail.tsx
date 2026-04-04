@@ -45,17 +45,11 @@ const OrderDetail = () => {
   const [processingAction, setProcessingAction] = useState<string | null>(null);
 
   useEffect(() => {
-    if (id && user) {
-      fetchOrderDetail();
-      setupRealtimeSubscription();
-    }
-  }, [id, user]);
+    if (!id || !user) return;
+    fetchOrderDetail();
 
-  const setupRealtimeSubscription = () => {
-    if (!id) return;
-    
     const channel = supabase
-      .channel(`order-${id}`)
+      .channel(`order-${id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
@@ -80,7 +74,7 @@ const OrderDetail = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  };
+  }, [id, user]);
 
   const fetchOrderDetail = async () => {
     if (!id || !user?.id) return;

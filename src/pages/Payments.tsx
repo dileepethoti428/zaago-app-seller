@@ -65,126 +65,33 @@ export default function Payments() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      fetchPayouts();
-      fetchCommissionRate();
-      setupRealtimeSubscription();
-    }
-  }, [user]);
+    if (!user) return;
+    fetchPayouts();
+    fetchCommissionRate();
 
-  useEffect(() => {
-    if (user) {
-      fetchRevenueStats();
-    }
-  }, [user, selectedPeriod]);
-
-  const fetchRevenueStats = async () => {
-    try {
-      const { data, error } = await supabase.rpc('get_seller_stats_with_period', {
-        seller_uuid: user?.id!,
-        period: selectedPeriod
-      });
-
-      if (error) throw error;
-
-      // Handle array response from RPC
-      const stats_obj = (Array.isArray(data) ? data[0] : data) as any;
-      setRevenueStats({
-        regularRevenue: Number(stats_obj?.regular_revenue) || 0,
-        subscriptionRevenue: Number(stats_obj?.subscription_revenue) || 0,
-        totalRevenue: Number(stats_obj?.total_revenue) || 0,
-        activeSubscriptions: Number(stats_obj?.active_subscriptions) || 0
-      });
-    } catch (error) {
-      console.error('Error fetching revenue stats:', error);
-    }
-  };
-
-  const fetchPayouts = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('payouts')
-        .select('*')
-        .eq('seller_id', user?.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      setPayouts(data || []);
-      calculateStats(data || []);
-    } catch (error) {
-      console.error('Error fetching payouts:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load payouts',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchCommissionRate = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('commission_config')
-        .select('commission_rate')
-        .order('effective_from', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error;
-
-      setCommissionRate(data?.commission_rate || 10);
-    } catch (error) {
-      console.error('Error fetching commission rate:', error);
-    }
-  };
-
-  const calculateStats = (payoutData: Payout[]) => {
-    const totalEarnings = payoutData
-      .filter(p => p.status === 'paid')
-      .reduce((sum, p) => sum + (p.net_amount || p.amount), 0);
-
-    const pendingPayout = payoutData
-      .filter(p => p.status === 'pending' || p.status === 'processing')
-      .reduce((sum, p) => sum + (p.net_amount || p.amount), 0);
-
-    const lastPaidPayout = payoutData
-      .filter(p => p.status === 'paid')
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
-
-    setStats({
-      totalEarnings,
-      pendingPayout,
-      lastPayoutDate: lastPaidPayout?.created_at || null
-    });
-  };
-
-  const setupRealtimeSubscription = () => {
     const channel = supabase
-      .channel('payouts-changes')
+      .channel(`payouts-changes-${user.id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
           event: 'UPDATE',
           schema: 'public',
           table: 'payouts',
-          filter: `seller_id=eq.${user?.id}`
+          filter: `seller_id=eq.${user.id}`
         },
         (payload) => {
-        const updatedPayout = payload.new as Payout;
-        
-        if (updatedPayout.status === 'paid') {
-          const amount = updatedPayout.net_amount || updatedPayout.amount;
-          toast({
-            title: 'Payment Released!',
-            description: `Your payout of ₹${amount.toFixed(2)} has been processed.`,
-            duration: 5000,
-          });
-        }
+          const updatedPayout = payload.new as Payout;
           
-          fetchPayouts(); // Refresh data
+          if (updatedPayout.status === 'paid') {
+            const amount = updatedPayout.net_amount || updatedPayout.amount;
+            toast({
+              title: 'Payment Released!',
+              description: `Your payout of ₹${amount.toFixed(2)} has been processed.`,
+              duration: 5000,
+            });
+          }
+            
+          fetchPayouts();
         }
       )
       .subscribe();
@@ -192,7 +99,7 @@ export default function Payments() {
     return () => {
       supabase.removeChannel(channel);
     };
-  };
+  }, [user]);
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {

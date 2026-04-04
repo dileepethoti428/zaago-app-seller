@@ -74,7 +74,7 @@ export const SubscriptionOrderCard = ({ subscriptionId, deliveryDate }: Subscrip
 
     // Subscribe to real-time updates
     const channel = supabase
-      .channel(`subscription-order-${subscriptionId}`)
+      .channel(`subscription-order-${subscriptionId}-${Date.now()}`)
       .on(
         'postgres_changes',
         {

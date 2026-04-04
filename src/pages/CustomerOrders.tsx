@@ -77,18 +77,9 @@ const CustomerOrders: React.FC = () => {
     }
 
     fetchOrders(0, true);
-    const subscription = setupRealtimeSubscription();
-    
-    return () => {
-      subscription?.unsubscribe?.();
-    };
-  }, [user?.id]);
 
-  const setupRealtimeSubscription = () => {
-    if (!user?.id) return null;
-    
-    return supabase
-      .channel('seller-orders-channel')
+    const channel = supabase
+      .channel(`seller-orders-channel-${user.id}-${Date.now()}`)
       .on('postgres_changes', 
         { 
           event: 'UPDATE', 
@@ -101,7 +92,11 @@ const CustomerOrders: React.FC = () => {
         }
       )
       .subscribe();
-  };
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
 
   const fetchOrders = async (fromOffset = 0, reset = true) => {
     if (!user?.id) return;

@@ -39,41 +39,11 @@ export default function DeliveryAgent() {
     if (!user) return;
     
     fetchPendingOrders();
-    setupRealtimeSubscriptions();
-  }, [user]);
 
-  const fetchPendingOrders = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('status', 'packed')
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-      const ordersData = (data || []).map(order => ({
-        ...order,
-        items: Array.isArray(order.items) ? order.items : (order.items ? [order.items] : [])
-      }));
-      setOrders(ordersData);
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch orders",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const setupRealtimeSubscriptions = () => {
     console.log('🚚 DeliveryAgent: Setting up real-time subscriptions');
 
-    // Listen for all order changes (more comprehensive)
     const ordersChannel = supabase
-      .channel('delivery-agent-orders')
+      .channel(`delivery-agent-orders-${user.id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
@@ -84,7 +54,6 @@ export default function DeliveryAgent() {
         (payload) => {
           console.log('🚚 DeliveryAgent: Order event received:', payload);
           
-          // Handle UPDATE events where status becomes 'packed'
           if (payload.eventType === 'UPDATE' && payload.new.status === 'packed') {
             console.log('🚚 DeliveryAgent: Order packed - adding to list:', payload.new);
             
@@ -96,20 +65,16 @@ export default function DeliveryAgent() {
             setOrders(prev => {
               const exists = prev.find(order => order.id === newOrder.id);
               if (exists) {
-                console.log('🚚 DeliveryAgent: Order already exists, updating');
                 return prev.map(order => 
                   order.id === newOrder.id ? newOrder : order
                 );
               }
-              console.log('🚚 DeliveryAgent: Adding new packed order to list');
               return [newOrder, ...prev];
             });
 
-            // Play phone ringtone for new order
             console.log('🚚 Playing ringtone for new order');
             notificationSound.playNotificationSound('rapido_ringtone');
             
-            // Show notification
             toast({
               title: "🚚 New Delivery Available!",
               description: `Order from ${payload.new.customer_name} is ready for pickup`,
@@ -117,10 +82,7 @@ export default function DeliveryAgent() {
               className: "bg-green-600 text-white border-green-600"
             });
           } 
-          // Handle INSERT events for orders that are already packed
           else if (payload.eventType === 'INSERT' && payload.new.status === 'packed') {
-            console.log('🚚 DeliveryAgent: New packed order inserted:', payload.new);
-            
             const newOrder = {
               ...payload.new,
               items: Array.isArray(payload.new.items) ? payload.new.items : (payload.new.items ? [payload.new.items] : [])
@@ -134,18 +96,15 @@ export default function DeliveryAgent() {
               return prev;
             });
           }
-          // Remove order if status changed away from packed
           else if (payload.eventType === 'UPDATE' && payload.new.status !== 'packed') {
-            console.log('🚚 DeliveryAgent: Order status changed from packed, removing:', payload.new);
             setOrders(prev => prev.filter(order => order.id !== payload.new.id));
           }
         }
       )
       .subscribe();
 
-    // Listen for agent notifications
     const notificationsChannel = supabase
-      .channel('agent-notifications-delivery')
+      .channel(`agent-notifications-delivery-${user.id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
@@ -165,7 +124,6 @@ export default function DeliveryAgent() {
               className: "bg-blue-600 text-white border-blue-600"
             });
             
-            // Refresh orders list
             fetchPendingOrders();
           }
         }
@@ -176,7 +134,7 @@ export default function DeliveryAgent() {
       supabase.removeChannel(ordersChannel);
       supabase.removeChannel(notificationsChannel);
     };
-  };
+  }, [user]);
 
   const handleAcceptOrder = async (orderId: string) => {
     try {
