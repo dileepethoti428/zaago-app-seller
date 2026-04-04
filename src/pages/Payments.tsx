@@ -64,6 +64,88 @@ export default function Payments() {
   const [selectedPeriod, setSelectedPeriod] = useState<'today' | 'week' | 'month'>('today');
   const [loading, setLoading] = useState(true);
 
+  const fetchRevenueStats = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_seller_stats_with_period', {
+        seller_uuid: user?.id!,
+        period: selectedPeriod
+      });
+
+      if (error) throw error;
+
+      const stats_obj = (Array.isArray(data) ? data[0] : data) as any;
+      setRevenueStats({
+        regularRevenue: Number(stats_obj?.regular_revenue) || 0,
+        subscriptionRevenue: Number(stats_obj?.subscription_revenue) || 0,
+        totalRevenue: Number(stats_obj?.total_revenue) || 0,
+        activeSubscriptions: Number(stats_obj?.active_subscriptions) || 0
+      });
+    } catch (error) {
+      console.error('Error fetching revenue stats:', error);
+    }
+  };
+
+  const fetchPayouts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('payouts')
+        .select('*')
+        .eq('seller_id', user?.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setPayouts(data || []);
+      calculateStats(data || []);
+    } catch (error) {
+      console.error('Error fetching payouts:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load payouts',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCommissionRate = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('commission_config')
+        .select('commission_rate')
+        .order('effective_from', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      setCommissionRate(data?.commission_rate || 10);
+    } catch (error) {
+      console.error('Error fetching commission rate:', error);
+    }
+  };
+
+  const calculateStats = (payoutData: Payout[]) => {
+    const totalEarnings = payoutData
+      .filter(p => p.status === 'paid')
+      .reduce((sum, p) => sum + (p.net_amount || p.amount), 0);
+
+    const pendingPayout = payoutData
+      .filter(p => p.status === 'pending' || p.status === 'processing')
+      .reduce((sum, p) => sum + (p.net_amount || p.amount), 0);
+
+    const lastPaidPayout = payoutData
+      .filter(p => p.status === 'paid')
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+
+    setStats({
+      totalEarnings,
+      pendingPayout,
+      lastPayoutDate: lastPaidPayout?.created_at || null
+    });
+  };
+
   useEffect(() => {
     if (!user) return;
     fetchPayouts();
