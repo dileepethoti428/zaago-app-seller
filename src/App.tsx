@@ -206,9 +206,11 @@ const App = () => (
     <BrowserRouter>
       <AuthProvider>
         <CartProvider>
-          <ProtectedRoute>
-            <AppContent />
-          </ProtectedRoute>
+          <ErrorBoundary>
+            <ProtectedRoute>
+              <AppContent />
+            </ProtectedRoute>
+          </ErrorBoundary>
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>
