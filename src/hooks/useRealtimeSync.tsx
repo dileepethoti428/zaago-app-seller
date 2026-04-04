@@ -16,7 +16,7 @@ export const useRealtimeSync = () => {
 
     // Cart items real-time sync - only UPDATE events
     const cartChannel = supabase
-      .channel('cart-changes')
+      .channel(`cart-changes-${user.id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
