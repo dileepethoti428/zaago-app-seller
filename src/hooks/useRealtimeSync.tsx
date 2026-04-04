@@ -99,7 +99,7 @@ export const useRealtimeSync = () => {
     channels.push(compensationsChannel);
     // Notifications real-time sync
     const notificationsChannel = supabase
-      .channel('notifications-changes')
+      .channel(`notifications-changes-${user.id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
