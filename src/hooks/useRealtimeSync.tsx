@@ -36,7 +36,7 @@ export const useRealtimeSync = () => {
 
     // Orders real-time sync - only UPDATE events for status changes
     const ordersChannel = supabase
-      .channel('orders-changes')
+      .channel(`orders-changes-${user.id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
