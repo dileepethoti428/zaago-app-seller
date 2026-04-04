@@ -35,6 +35,32 @@ export default function DeliveryAgent() {
   // Fetch compensation deliveries assigned to this agent
   const { data: compensationDeliveries, isLoading: compensationsLoading } = useAgentCompensationDeliveries();
 
+  const fetchPendingOrders = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('status', 'packed')
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      const ordersData = (data || []).map(order => ({
+        ...order,
+        items: Array.isArray(order.items) ? order.items : (order.items ? [order.items] : [])
+      }));
+      setOrders(ordersData);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch orders",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!user) return;
     
