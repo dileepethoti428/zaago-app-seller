@@ -159,6 +159,10 @@ const Products = () => {
     setFilteredProducts(filtered);
   };
 
+  useEffect(() => {
+    filterProducts();
+  }, [products, searchTerm, statusFilter]);
+
   const resetForm = () => {
     setFormData({
       name: '',
