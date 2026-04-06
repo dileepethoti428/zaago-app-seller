@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 
 const Index = () => {
   const { user } = useAuth();
-  const [selectedPeriod, setSelectedPeriod] = useState('all');
+  const [selectedPeriod, setSelectedPeriod] = useState('today');
   const [subscriptionView, setSubscriptionView] = useState<'today' | 'tomorrow'>('today');
   const [regularDateFilter, setRegularDateFilter] = useState('today');
   const [stats, setStats] = useState([
