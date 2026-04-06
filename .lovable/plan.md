@@ -1,21 +1,19 @@
 
 
-## Fix: "No products found" on Product Inventory page
+## Fix: Change Revenue Period Default from "All Time" to "Today"
 
 ### Root Cause
 
-The `filterProducts()` function (line 141) is defined but **never called**. There is no `useEffect` that invokes it when `products`, `searchTerm`, or `statusFilter` change. So `filteredProducts` remains an empty array forever, and the page always shows "No products found" — even though `products` loads correctly from Supabase.
+In `src/pages/Index.tsx` (line 18), the `selectedPeriod` state is initialized to `'all'` (All Time). The user wants it to default to `'today'`.
 
 ### Fix
 
-Add a `useEffect` after the `filterProducts` function definition (around line 161) that calls `filterProducts()` whenever its dependencies change:
+Change the default value in `useState` from `'all'` to `'today'`:
 
 ```typescript
-useEffect(() => {
-  filterProducts();
-}, [products, searchTerm, statusFilter]);
+const [selectedPeriod, setSelectedPeriod] = useState('today');
 ```
 
 ### Files Changed
-- `src/pages/Products.tsx` — add the missing `useEffect` call to `filterProducts`
+- `src/pages/Index.tsx` — change default `selectedPeriod` from `'all'` to `'today'`
 
