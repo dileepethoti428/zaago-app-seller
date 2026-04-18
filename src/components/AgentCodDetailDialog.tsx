@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { CheckCircle, Clock, IndianRupee } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +39,12 @@ export default function AgentCodDetailDialog({
     period,
     statusFilter
   );
+
+  const [visibleCount, setVisibleCount] = useState(5);
+
+  useEffect(() => {
+    setVisibleCount(5);
+  }, [agentId, period, statusFilter, open]);
 
   const pendingAmount = (orders || [])
     .filter(o => o.status === 'pending')
@@ -89,7 +96,7 @@ export default function AgentCodDetailDialog({
                 <p className="text-sm">No COD orders found</p>
               </div>
             ) : (
-              orders.map(order => (
+              orders.slice(0, visibleCount).map(order => (
                 <div
                   key={order.id}
                   className="flex items-center gap-3 p-3 rounded-lg border bg-card"
@@ -135,6 +142,25 @@ export default function AgentCodDetailDialog({
                   </div>
                 </div>
               ))
+            )}
+
+            {orders && orders.length > visibleCount && (
+              <div className="flex justify-center pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setVisibleCount(prev => prev + 5)}
+                >
+                  View More ({orders.length - visibleCount} remaining)
+                </Button>
+              </div>
+            )}
+            {orders && visibleCount > 5 && orders.length <= visibleCount && (
+              <div className="flex justify-center pt-2">
+                <Button variant="outline" size="sm" onClick={() => setVisibleCount(5)}>
+                  View Less
+                </Button>
+              </div>
             )}
           </div>
         </ScrollArea>
