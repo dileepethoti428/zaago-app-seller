@@ -1,19 +1,21 @@
 
 
-## Fix: Change Revenue Period Default from "All Time" to "Today"
+## Add "View More" pagination to Agent COD orders
 
-### Root Cause
-
-In `src/pages/Index.tsx` (line 18), the `selectedPeriod` state is initialized to `'all'` (All Time). The user wants it to default to `'today'`.
+### Root cause
+In `AgentCodDetailDialog.tsx`, the orders list renders all orders at once via `orders.map(...)`. No pagination is applied.
 
 ### Fix
+Apply the same client-side "View More" pattern already used on the COD Settlements list page (initial 5, +5 per click, with View Less when fully expanded).
 
-Change the default value in `useState` from `'all'` to `'today'`:
+In `src/components/AgentCodDetailDialog.tsx`:
+1. Add `visibleCount` state (default 5).
+2. Reset `visibleCount` to 5 when the sheet opens, when `agentId` changes, or when `period`/`statusFilter` change (via `useEffect`).
+3. Render `orders.slice(0, visibleCount)` instead of `orders`.
+4. Below the list, show:
+   - "View More (N remaining)" button when `orders.length > visibleCount`
+   - "View Less" button when expanded beyond 5 and all are visible
 
-```typescript
-const [selectedPeriod, setSelectedPeriod] = useState('today');
-```
-
-### Files Changed
-- `src/pages/Index.tsx` — change default `selectedPeriod` from `'all'` to `'today'`
+### Files changed
+- `src/components/AgentCodDetailDialog.tsx`
 
