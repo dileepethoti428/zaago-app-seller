@@ -77,7 +77,7 @@ export const useOptimisticCart = () => {
       if (isOnline) {
         const { data, error } = await supabase
           .from('cart_items')
-          .upsert(cartItem)
+          .upsert(cartItem as any)
           .select()
           .single();
 

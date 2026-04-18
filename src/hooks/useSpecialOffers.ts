@@ -167,7 +167,7 @@ export const useUpdateOffer = () => {
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<SpecialOffer> }) => {
       const { data, error } = await supabase
         .from('special_offers')
-        .update(updates)
+        .update(updates as any)
         .eq('id', id)
         .select()
         .single();

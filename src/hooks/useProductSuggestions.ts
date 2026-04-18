@@ -202,7 +202,7 @@ export const useProductSuggestions = () => {
 
       const { error } = await supabase
         .from('product_suggestions')
-        .insert(dataToInsert);
+        .insert(dataToInsert as any);
 
       if (error) {
         console.error('❌ Database insert error:', error);
