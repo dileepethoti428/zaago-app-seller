@@ -156,7 +156,7 @@ const EditCategory = () => {
           gradient_end_color: formData.is_gradient ? formData.gradient_end_color : null,
           display_order: formData.display_order,
           is_active: formData.is_active,
-        })
+        } as any)
         .eq('id', id);
 
       if (error) throw error;

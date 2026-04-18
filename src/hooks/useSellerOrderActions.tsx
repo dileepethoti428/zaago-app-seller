@@ -71,7 +71,7 @@ export const useSellerOrderActions = () => {
 
         const { error: updateError } = await supabase
           .from('orders')
-          .update(updatePayload)
+          .update(updatePayload as any)
           .eq('id', orderId);
 
         if (updateError) throw updateError;
