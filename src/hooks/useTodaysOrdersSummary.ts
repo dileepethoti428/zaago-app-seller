@@ -115,9 +115,8 @@ export const useTodaysOrdersSummary = (
         if (startDate) {
           regularQuery = regularQuery.gte('created_at', `${startDate}T00:00:00`);
         }
-        if (statusFilters.length > 0) {
-          regularQuery = regularQuery.in('status', statusFilters);
-        }
+        // Only count delivered orders
+        regularQuery = regularQuery.eq('status', 'delivered');
 
         const { data: regularData, error: regularError } = await regularQuery;
         
@@ -148,9 +147,8 @@ export const useTodaysOrdersSummary = (
         if (startDate) {
           subQuery = subQuery.gte('created_at', `${startDate}T00:00:00`);
         }
-        if (statusFilters.length > 0) {
-          subQuery = subQuery.in('status', statusFilters);
-        }
+        // Only count delivered orders
+        subQuery = subQuery.eq('status', 'delivered');
 
         const { data: subData, error: subError } = await subQuery;
 
