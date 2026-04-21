@@ -291,11 +291,80 @@ export const useSellerOrderActions = () => {
   const notifyDeliveryAgents = (orderId: string, sellerUserId: string) => 
     handleOrderAction(orderId, sellerUserId, 'notify_agents');
 
+  const cancelAcceptedOrder = async (
+    orderId: string,
+    sellerUserId: string,
+    reason: string
+  ): Promise<boolean> => {
+    if (isProcessing) return false;
+    setIsProcessing(orderId);
+
+    // Optimistic update
+    setOptimisticUpdates(prev => ({ ...prev, [orderId]: 'cancelled' }));
+    window.dispatchEvent(new CustomEvent('orderStatusUpdated', {
+      detail: { orderId, action: 'cancel', status: 'cancelled', optimistic: true }
+    }));
+
+    try {
+      const { data, error } = await supabase.rpc('cancel_accepted_order', {
+        p_order_id: orderId,
+        p_seller_user_id: sellerUserId,
+        p_reason: reason,
+      });
+
+      if (error) throw error;
+
+      const result = data as { success: boolean; message?: string; error?: string; is_late?: boolean };
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to cancel order');
+      }
+
+      setOptimisticUpdates(prev => {
+        const updated = { ...prev };
+        delete updated[orderId];
+        return updated;
+      });
+
+      toast({
+        title: 'Order Cancelled',
+        description: result.is_late
+          ? 'Order cancelled. Delivery partner has been notified to return the parcel.'
+          : result.message || 'Order cancelled successfully',
+      });
+
+      window.dispatchEvent(new CustomEvent('orderStatusUpdated', {
+        detail: { orderId, action: 'cancel', status: 'cancelled', confirmed: true }
+      }));
+
+      return true;
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      setOptimisticUpdates(prev => {
+        const updated = { ...prev };
+        delete updated[orderId];
+        return updated;
+      });
+      window.dispatchEvent(new CustomEvent('orderStatusReverted', {
+        detail: { orderId, action: 'cancel' }
+      }));
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to cancel order',
+        variant: 'destructive',
+      });
+      return false;
+    } finally {
+      setIsProcessing(null);
+    }
+  };
+
   return {
     acceptOrder,
     rejectOrder,
     packOrder,
     notifyDeliveryAgents,
+    cancelAcceptedOrder,
     isProcessing,
     getOptimisticStatus
   };
