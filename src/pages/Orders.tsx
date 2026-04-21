@@ -605,6 +605,20 @@ const Orders = () => {
           });
         }}
       />
+
+      {/* Cancel Order Dialog */}
+      {cancelTarget && (
+        <CancelOrderDialog
+          open={!!cancelTarget}
+          onOpenChange={(open) => !open && setCancelTarget(null)}
+          orderStatus={cancelTarget.status}
+          isProcessing={isProcessing === cancelTarget.id}
+          onConfirm={async (reason) => {
+            const ok = await cancelAcceptedOrder(cancelTarget.id, user?.id || '', reason);
+            if (ok) setCancelTarget(null);
+          }}
+        />
+      )}
     </motion.div>
   );
 };
