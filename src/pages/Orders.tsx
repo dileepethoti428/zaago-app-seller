@@ -531,8 +531,21 @@ const Orders = () => {
                                   Notify Delivery Partners
                                 </Button>
                               )}
+
+                              {/* Cancel Order — available from accepted through out_for_delivery */}
+                              {['accepted', 'accepted_by_seller', 'accepted_late', 'packed', 'assigned', 'out_for_delivery'].includes(order.status) && (
+                                <Button
+                                  onClick={() => setCancelTarget({ id: order.id, status: order.status })}
+                                  disabled={isProcessing === order.id}
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300 flex items-center gap-2"
+                                >
+                                  <Ban className="w-4 h-4" />
+                                  Cancel Order
+                                </Button>
+                              )}
                               
-                              {/* View Details Button - Always available */}
                               <Link to={`/orders/${order.id}`}>
                                 <Button
                                   variant="outline"
