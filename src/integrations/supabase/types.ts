@@ -4037,6 +4037,9 @@ export type Database = {
           agent_notification_sent_at: string | null
           assigned_agent_id: string | null
           assignment_type: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           created_at: string
           customer_name: string | null
           customer_phone: string | null
@@ -4070,6 +4073,7 @@ export type Database = {
           pickup_location: Json | null
           pickup_status: string | null
           price_breakdown: Json | null
+          requires_partner_return: boolean
           seller_accepted_at: string | null
           seller_id: string | null
           seller_latitude: number | null
@@ -4097,6 +4101,9 @@ export type Database = {
           agent_notification_sent_at?: string | null
           assigned_agent_id?: string | null
           assignment_type?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           customer_name?: string | null
           customer_phone?: string | null
@@ -4130,6 +4137,7 @@ export type Database = {
           pickup_location?: Json | null
           pickup_status?: string | null
           price_breakdown?: Json | null
+          requires_partner_return?: boolean
           seller_accepted_at?: string | null
           seller_id?: string | null
           seller_latitude?: number | null
@@ -4157,6 +4165,9 @@ export type Database = {
           agent_notification_sent_at?: string | null
           assigned_agent_id?: string | null
           assignment_type?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           customer_name?: string | null
           customer_phone?: string | null
@@ -4190,6 +4201,7 @@ export type Database = {
           pickup_location?: Json | null
           pickup_status?: string | null
           price_breakdown?: Json | null
+          requires_partner_return?: boolean
           seller_accepted_at?: string | null
           seller_id?: string | null
           seller_latitude?: number | null
@@ -8319,6 +8331,10 @@ export type Database = {
         Returns: number
       }
       can_register_admin: { Args: never; Returns: boolean }
+      cancel_accepted_order: {
+        Args: { p_order_id: string; p_reason: string; p_seller_user_id: string }
+        Returns: Json
+      }
       cancel_vacation_and_resume_subscription:
         | { Args: { p_vacation_id: string }; Returns: boolean }
         | { Args: { p_user_id?: string; p_vacation_id: string }; Returns: Json }

@@ -12,6 +12,7 @@ import {
   Eye,
   CheckSquare,
   XSquare,
+  Ban,
   RefreshCw
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,11 +27,13 @@ import { useToast } from '@/hooks/use-toast';
 import { useSellerOrderActions } from '@/hooks/useSellerOrderActions';
 import { LocationSetupModal } from '@/components/LocationSetupModal';
 import { OrderAcceptanceTimer } from '@/components/OrderAcceptanceTimer';
+import { CancelOrderDialog } from '@/components/CancelOrderDialog';
 
 const Orders = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { acceptOrder, rejectOrder, packOrder, notifyDeliveryAgents, isProcessing } = useSellerOrderActions();
+  const { acceptOrder, rejectOrder, packOrder, notifyDeliveryAgents, cancelAcceptedOrder, isProcessing } = useSellerOrderActions();
+  const [cancelTarget, setCancelTarget] = useState<{ id: string; status: string } | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -528,8 +531,21 @@ const Orders = () => {
                                   Notify Delivery Partners
                                 </Button>
                               )}
+
+                              {/* Cancel Order — available from accepted through out_for_delivery */}
+                              {['accepted', 'accepted_by_seller', 'accepted_late', 'packed', 'assigned', 'out_for_delivery'].includes(order.status) && (
+                                <Button
+                                  onClick={() => setCancelTarget({ id: order.id, status: order.status })}
+                                  disabled={isProcessing === order.id}
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300 flex items-center gap-2"
+                                >
+                                  <Ban className="w-4 h-4" />
+                                  Cancel Order
+                                </Button>
+                              )}
                               
-                              {/* View Details Button - Always available */}
                               <Link to={`/orders/${order.id}`}>
                                 <Button
                                   variant="outline"
@@ -589,6 +605,20 @@ const Orders = () => {
           });
         }}
       />
+
+      {/* Cancel Order Dialog */}
+      {cancelTarget && (
+        <CancelOrderDialog
+          open={!!cancelTarget}
+          onOpenChange={(open) => !open && setCancelTarget(null)}
+          orderStatus={cancelTarget.status}
+          isProcessing={isProcessing === cancelTarget.id}
+          onConfirm={async (reason) => {
+            const ok = await cancelAcceptedOrder(cancelTarget.id, user?.id || '', reason);
+            if (ok) setCancelTarget(null);
+          }}
+        />
+      )}
     </motion.div>
   );
 };
