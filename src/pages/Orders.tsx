@@ -12,6 +12,7 @@ import {
   Eye,
   CheckSquare,
   XSquare,
+  Ban,
   RefreshCw
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,11 +27,13 @@ import { useToast } from '@/hooks/use-toast';
 import { useSellerOrderActions } from '@/hooks/useSellerOrderActions';
 import { LocationSetupModal } from '@/components/LocationSetupModal';
 import { OrderAcceptanceTimer } from '@/components/OrderAcceptanceTimer';
+import { CancelOrderDialog } from '@/components/CancelOrderDialog';
 
 const Orders = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { acceptOrder, rejectOrder, packOrder, notifyDeliveryAgents, isProcessing } = useSellerOrderActions();
+  const { acceptOrder, rejectOrder, packOrder, notifyDeliveryAgents, cancelAcceptedOrder, isProcessing } = useSellerOrderActions();
+  const [cancelTarget, setCancelTarget] = useState<{ id: string; status: string } | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
