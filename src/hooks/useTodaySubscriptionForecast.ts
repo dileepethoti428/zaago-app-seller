@@ -121,7 +121,7 @@ export const useTodaySubscriptionForecast = (mode: ForecastMode = 'today') => {
         error: err instanceof Error ? err.message : 'Failed to fetch forecast',
       }));
     }
-  }, [user]);
+  }, [user, mode]);
 
   useEffect(() => {
     fetchForecast();
