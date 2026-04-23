@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, RefreshCw, Package, Target, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useTodaySubscriptionForecast, ForecastItem } from '@/hooks/useTodaySubscriptionForecast';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useTodaySubscriptionForecast, ForecastItem, ForecastMode } from '@/hooks/useTodaySubscriptionForecast';
 import { format } from 'date-fns';
 
 const ForecastCard = ({ item, index }: { item: ForecastItem; index: number }) => {
