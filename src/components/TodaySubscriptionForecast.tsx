@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, RefreshCw, Package, Target, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useTodaySubscriptionForecast, ForecastItem } from '@/hooks/useTodaySubscriptionForecast';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useTodaySubscriptionForecast, ForecastItem, ForecastMode } from '@/hooks/useTodaySubscriptionForecast';
 import { format } from 'date-fns';
 
 const ForecastCard = ({ item, index }: { item: ForecastItem; index: number }) => {
@@ -86,7 +88,7 @@ const LoadingSkeleton = () => (
   </div>
 );
 
-const EmptyState = () => (
+const EmptyState = ({ label }: { label: string }) => (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
@@ -95,14 +97,15 @@ const EmptyState = () => (
     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-teal-500/10 flex items-center justify-center">
       <Calendar className="h-8 w-8 text-teal-500" />
     </div>
-    <h3 className="text-lg font-medium text-foreground mb-1">No Subscriptions for Today</h3>
+    <h3 className="text-lg font-medium text-foreground mb-1">No Subscriptions for {label}</h3>
     <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-      There are no active subscriptions scheduled for delivery today.
+      There are no active subscriptions scheduled for delivery {label.toLowerCase()}.
     </p>
   </motion.div>
 );
 
 export const TodaySubscriptionForecast = () => {
+  const [mode, setMode] = useState<ForecastMode>('today');
   const {
     todayFormatted,
     totalForecastItems,
@@ -112,7 +115,10 @@ export const TodaySubscriptionForecast = () => {
     isLoading,
     error,
     refetch
-  } = useTodaySubscriptionForecast();
+  } = useTodaySubscriptionForecast(mode);
+
+  const titleLabel = mode === 'today' ? "Today's" : "Tomorrow's";
+  const emptyLabel = mode === 'today' ? 'Today' : 'Tomorrow';
 
   return (
     <motion.div
@@ -122,30 +128,38 @@ export const TodaySubscriptionForecast = () => {
     >
       <Card className="bg-zaago-card/50 border-zaago-border overflow-hidden">
         <CardHeader className="border-b border-border pb-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-teal-500/10">
                 <TrendingUp className="h-5 w-5 text-teal-500" />
               </div>
               <div>
                 <CardTitle className="text-lg font-semibold text-foreground">
-                  Today's Subscription Forecast
+                  {titleLabel} Subscription Forecast
                 </CardTitle>
                 <p className="text-sm text-muted-foreground mt-0.5">
                   📅 {todayFormatted || 'Loading...'} • Based on active subscriptions
                 </p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={refetch}
-              disabled={isLoading}
-              className="bg-transparent border-zaago-border hover:bg-zaago-accent/50"
-            >
-              <RefreshCw className={`h-4 w-4 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
+            <div className="flex items-center gap-2">
+              <Tabs value={mode} onValueChange={(v) => setMode(v as ForecastMode)}>
+                <TabsList className="h-9">
+                  <TabsTrigger value="today" className="text-xs px-3">Today</TabsTrigger>
+                  <TabsTrigger value="tomorrow" className="text-xs px-3">Tomorrow</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={refetch}
+                disabled={isLoading}
+                className="bg-transparent border-zaago-border hover:bg-zaago-accent/50"
+              >
+                <RefreshCw className={`h-4 w-4 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            </div>
           </div>
         </CardHeader>
 
@@ -179,7 +193,7 @@ export const TodaySubscriptionForecast = () => {
 
           {isLoading && <LoadingSkeleton />}
 
-          {!isLoading && !error && productForecast.length === 0 && <EmptyState />}
+          {!isLoading && !error && productForecast.length === 0 && <EmptyState label={emptyLabel} />}
 
           {!isLoading && !error && productForecast.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
