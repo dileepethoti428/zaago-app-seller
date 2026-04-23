@@ -1,57 +1,34 @@
 
 
-## Extend Order Cancellation Window to Include Out-for-Delivery
+## Show Today's Subscription Forecast on Dashboard
 
-Update the previously approved cancellation feature so sellers can also cancel an order **after** it has been handed to the delivery partner — not just while it's `accepted` or `packed`.
+Replace "Tomorrow's Subscription Forecast" on the Dashboard with "Today's Subscription Forecast" so sellers see what subscriptions need to be delivered today rather than tomorrow.
 
-### Updated cancellation window
+### What changes
 
-Cancel button is shown when order status is one of:
-- `accepted`
-- `packed`
-- `assigned` (delivery partner assigned but not picked up)
-- `out_for_delivery` (handed to / picked up by delivery partner)
+1. **New hook** `src/hooks/useTodaySubscriptionForecast.ts`
+   - Identical logic to `useTomorrowSubscriptionForecast` but computes **today's date in IST** instead of tomorrow.
+   - Queries subscriptions where `next_delivery_date = todayStr`.
+   - Keeps all the same vacation-filtering, deduplication, and aggregation logic.
 
-Cancel button is **hidden** once status is:
-- `delivered`, `cancelled`, `rejected`, `returned`
+2. **New component** `src/components/TodaySubscriptionForecast.tsx`
+   - Mirrors `TomorrowSubscriptionForecast` component exactly.
+   - Uses `useTodaySubscriptionForecast` hook.
+   - All labels changed from "Tomorrow" to "Today" (title, empty-state text, comment).
 
-### Extra behavior for late-stage cancellation
+3. **Update** `src/pages/Dashboard.tsx`
+   - Replace import of `TomorrowSubscriptionForecast` with `TodaySubscriptionForecast`.
+   - Replace the component render from `<TomorrowSubscriptionForecast />` to `<TodaySubscriptionForecast />`.
+   - Update the comment above it from "Tomorrow's Subscription Forecast" to "Today's Subscription Forecast".
 
-When cancelling an order that's already `assigned` or `out_for_delivery`:
-- The assigned delivery partner gets a **high-priority push notification**: "Order cancelled by seller — please return the parcel" along with the reason.
-- Order is flagged with `requires_partner_return = true` so ops can track parcels that need to come back.
-- An `admin_notifications` row is inserted (type `late_cancellation`) so the ops team is alerted, similar to the existing late-acceptance flow.
-- Stock is still restored.
-- Customer gets the cancellation notification with reason.
+### Why this approach
 
-### Reason picker (unchanged from prior plan)
-
-- Customer requested cancellation
-- Out of stock
-- Unable to fulfill
-- Other (free text)
-
-Reason remains required.
-
-### Backend changes (delta from prior plan)
-
-- `cancel_accepted_order` RPC accepts statuses: `accepted`, `packed`, `assigned`, `out_for_delivery` (was only `accepted`, `packed`).
-- RPC detects late-stage cancellation (`assigned` / `out_for_delivery`) and:
-  - Notifies the assigned delivery partner
-  - Inserts `admin_notifications` row
-  - Sets `requires_partner_return = true`
-- Migration adds `requires_partner_return boolean default false` to `orders` (in addition to the cancellation columns from the prior plan).
-
-### Frontend changes (delta)
-
-- `src/pages/Orders.tsx` and `src/pages/OrderDetail.tsx`: extend the visibility condition for the Cancel button to include `assigned` and `out_for_delivery`.
-- `CancelOrderDialog.tsx`: when status is `assigned` or `out_for_delivery`, show an amber warning banner: *"This order has already been handed to the delivery partner. Cancelling will notify them to return the parcel."* — so sellers don't cancel late-stage orders casually.
+- `useTomorrowSubscriptionForecast` is also consumed by `useStockAlerts.ts` for stock alerts — keeping it intact avoids breaking that feature.
+- Creating a parallel "today" hook/component pair is clean and follows the existing codebase pattern.
+- Zero functional changes to the tomorrow forecast itself.
 
 ### Files changed
-
-- `supabase/migrations/<new>.sql` — cancellation columns + `requires_partner_return` + updated RPC accepting wider status set + ops notification logic
-- `src/hooks/useSellerOrderActions.tsx` — `cancelAcceptedOrder` (unchanged signature)
-- `src/components/CancelOrderDialog.tsx` — adds late-stage warning banner
-- `src/pages/Orders.tsx` — wider visibility condition for Cancel button
-- `src/pages/OrderDetail.tsx` — wider visibility condition for Cancel button
+- `src/hooks/useTodaySubscriptionForecast.ts` — new
+- `src/components/TodaySubscriptionForecast.tsx` — new
+- `src/pages/Dashboard.tsx` — swap import and component usage
 
