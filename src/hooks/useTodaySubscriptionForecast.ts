@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import { format } from 'date-fns';
+import { addDays, format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
+
+export type ForecastMode = 'today' | 'tomorrow';
 
 export interface ForecastItem {
   productId: string;
