@@ -38,7 +38,7 @@ const IST_TIMEZONE = 'Asia/Kolkata';
 
 const getTodayIST = (): Date => toZonedTime(new Date(), IST_TIMEZONE);
 
-export const useTodaySubscriptionForecast = () => {
+export const useTodaySubscriptionForecast = (mode: ForecastMode = 'today') => {
   const { user } = useAuth();
   const [data, setData] = useState<TodayForecastData>({
     todayDate: '',
@@ -60,9 +60,10 @@ export const useTodaySubscriptionForecast = () => {
     try {
       setData(prev => ({ ...prev, isLoading: true, error: null }));
 
-      const todayDate = getTodayIST();
-      const todayStr = format(todayDate, 'yyyy-MM-dd');
-      const todayFormatted = format(todayDate, 'EEEE, MMM d');
+      const baseDate = getTodayIST();
+      const targetDate = mode === 'tomorrow' ? addDays(baseDate, 1) : baseDate;
+      const todayStr = format(targetDate, 'yyyy-MM-dd');
+      const todayFormatted = format(targetDate, 'EEEE, MMM d');
 
       // Use the same source as the Handover card to guarantee consistency.
       const { data: rows, error: rpcError } = await supabase.rpc(
