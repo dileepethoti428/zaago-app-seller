@@ -193,7 +193,7 @@ export const TodaySubscriptionForecast = () => {
 
           {isLoading && <LoadingSkeleton />}
 
-          {!isLoading && !error && productForecast.length === 0 && <EmptyState />}
+          {!isLoading && !error && productForecast.length === 0 && <EmptyState label={emptyLabel} />}
 
           {!isLoading && !error && productForecast.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
