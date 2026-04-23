@@ -105,6 +105,7 @@ const EmptyState = () => (
 );
 
 export const TodaySubscriptionForecast = () => {
+  const [mode, setMode] = useState<ForecastMode>('today');
   const {
     todayFormatted,
     totalForecastItems,
@@ -114,7 +115,10 @@ export const TodaySubscriptionForecast = () => {
     isLoading,
     error,
     refetch
-  } = useTodaySubscriptionForecast();
+  } = useTodaySubscriptionForecast(mode);
+
+  const titleLabel = mode === 'today' ? "Today's" : "Tomorrow's";
+  const emptyLabel = mode === 'today' ? 'Today' : 'Tomorrow';
 
   return (
     <motion.div
@@ -124,30 +128,38 @@ export const TodaySubscriptionForecast = () => {
     >
       <Card className="bg-zaago-card/50 border-zaago-border overflow-hidden">
         <CardHeader className="border-b border-border pb-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-teal-500/10">
                 <TrendingUp className="h-5 w-5 text-teal-500" />
               </div>
               <div>
                 <CardTitle className="text-lg font-semibold text-foreground">
-                  Today's Subscription Forecast
+                  {titleLabel} Subscription Forecast
                 </CardTitle>
                 <p className="text-sm text-muted-foreground mt-0.5">
                   📅 {todayFormatted || 'Loading...'} • Based on active subscriptions
                 </p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={refetch}
-              disabled={isLoading}
-              className="bg-transparent border-zaago-border hover:bg-zaago-accent/50"
-            >
-              <RefreshCw className={`h-4 w-4 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
+            <div className="flex items-center gap-2">
+              <Tabs value={mode} onValueChange={(v) => setMode(v as ForecastMode)}>
+                <TabsList className="h-9">
+                  <TabsTrigger value="today" className="text-xs px-3">Today</TabsTrigger>
+                  <TabsTrigger value="tomorrow" className="text-xs px-3">Tomorrow</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={refetch}
+                disabled={isLoading}
+                className="bg-transparent border-zaago-border hover:bg-zaago-accent/50"
+              >
+                <RefreshCw className={`h-4 w-4 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            </div>
           </div>
         </CardHeader>
 
