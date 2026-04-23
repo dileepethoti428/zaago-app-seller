@@ -1,34 +1,49 @@
 
 
-## Show Today's Subscription Forecast on Dashboard
+## Fix Today's Subscription Forecast to Match Handover
 
-Replace "Tomorrow's Subscription Forecast" on the Dashboard with "Today's Subscription Forecast" so sellers see what subscriptions need to be delivered today rather than tomorrow.
+### Problem
 
-### What changes
+The **Subscription Delivery Handover** correctly shows today's subscriptions, but **Today's Subscription Forecast** is empty. Two completely different data sources are being used:
 
-1. **New hook** `src/hooks/useTodaySubscriptionForecast.ts`
-   - Identical logic to `useTomorrowSubscriptionForecast` but computes **today's date in IST** instead of tomorrow.
-   - Queries subscriptions where `next_delivery_date = todayStr`.
-   - Keeps all the same vacation-filtering, deduplication, and aggregation logic.
+| Card | Data source |
+|---|---|
+| Handover (works) | `daily_orders` table (actual generated orders for the date), joined via subscription → product → seller |
+| Forecast (broken) | `subscriptions.next_delivery_date = today` |
 
-2. **New component** `src/components/TodaySubscriptionForecast.tsx`
-   - Mirrors `TomorrowSubscriptionForecast` component exactly.
-   - Uses `useTodaySubscriptionForecast` hook.
-   - All labels changed from "Tomorrow" to "Today" (title, empty-state text, comment).
+Once the daily subscription job runs and creates today's `daily_orders` rows, the `next_delivery_date` field on the subscription **advances to the next cycle**. So by the time the seller looks at the dashboard, today's date no longer matches `next_delivery_date` → forecast shows zero.
 
-3. **Update** `src/pages/Dashboard.tsx`
-   - Replace import of `TomorrowSubscriptionForecast` with `TodaySubscriptionForecast`.
-   - Replace the component render from `<TomorrowSubscriptionForecast />` to `<TodaySubscriptionForecast />`.
-   - Update the comment above it from "Tomorrow's Subscription Forecast" to "Today's Subscription Forecast".
+(The Tomorrow forecast worked because tomorrow's daily_orders haven't been generated yet, so `next_delivery_date` is still tomorrow.)
 
-### Why this approach
+### Fix
 
-- `useTomorrowSubscriptionForecast` is also consumed by `useStockAlerts.ts` for stock alerts — keeping it intact avoids breaking that feature.
-- Creating a parallel "today" hook/component pair is clean and follows the existing codebase pattern.
-- Zero functional changes to the tomorrow forecast itself.
+Rewrite `useTodaySubscriptionForecast` to read from the **same source as the handover** so both cards stay in sync:
+
+- Query `daily_orders` for `date = today (IST)` with status `pending` or `assigned`, joined to `subscriptions → products` filtered by `seller_id = current user`.
+- Exclude rows whose subscription has an active vacation covering today (same rule as handover RPC).
+- Aggregate by product → `totalQuantity`, `subscriptionCount`.
+
+This guarantees: **if it shows in Handover, it shows in Forecast.**
+
+### Implementation
+
+Use the existing RPC `get_seller_subscription_handover_direct(seller_user_id, today)` and aggregate its rows by product on the client. No new RPC, no migration.
+
+```ts
+const { data } = await supabase.rpc('get_seller_subscription_handover_direct', {
+  seller_user_id: user.id,
+  handover_date: todayStr,
+});
+// group by product_id → sum customer_quantity, count distinct customer rows
+```
+
+The component (`TodaySubscriptionForecast.tsx`) does not change — only the hook's data-fetching logic.
 
 ### Files changed
-- `src/hooks/useTodaySubscriptionForecast.ts` — new
-- `src/components/TodaySubscriptionForecast.tsx` — new
-- `src/pages/Dashboard.tsx` — swap import and component usage
+
+- `src/hooks/useTodaySubscriptionForecast.ts` — replace the `subscriptions` query with the handover RPC, aggregate by product.
+
+### Expected result
+
+Today's Subscription Forecast will show the exact same product totals that the Handover card shows for "Today" — fixing the empty/missing data issue.
 
