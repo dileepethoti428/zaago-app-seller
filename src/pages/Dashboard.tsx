@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomerLookupDialog } from '@/components/CustomerLookupDialog';
 import { TodaysOrdersSummary } from '@/components/TodaysOrdersSummary';
-import { TomorrowSubscriptionForecast } from '@/components/TomorrowSubscriptionForecast';
+import { TodaySubscriptionForecast } from '@/components/TodaySubscriptionForecast';
 import { StockAlertsRefillSuggestions } from '@/components/StockAlertsRefillSuggestions';
 import { WeeklyRefillTrendReport } from '@/components/WeeklyRefillTrendReport';
 import { TopProductsCard } from '@/components/TopProductsCard';
@@ -146,8 +146,8 @@ const Dashboard = () => {
       {/* Today's Orders Summary */}
       <TodaysOrdersSummary />
 
-      {/* Tomorrow's Subscription Forecast */}
-      <TomorrowSubscriptionForecast />
+      {/* Today's Subscription Forecast */}
+      <TodaySubscriptionForecast />
 
       {/* Subscription Delivery Handover */}
       <SubscriptionHandoverCard />
