@@ -88,7 +88,7 @@ const LoadingSkeleton = () => (
   </div>
 );
 
-const EmptyState = () => (
+const EmptyState = ({ label }: { label: string }) => (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
@@ -97,9 +97,9 @@ const EmptyState = () => (
     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-teal-500/10 flex items-center justify-center">
       <Calendar className="h-8 w-8 text-teal-500" />
     </div>
-    <h3 className="text-lg font-medium text-foreground mb-1">No Subscriptions for Today</h3>
+    <h3 className="text-lg font-medium text-foreground mb-1">No Subscriptions for {label}</h3>
     <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-      There are no active subscriptions scheduled for delivery today.
+      There are no active subscriptions scheduled for delivery {label.toLowerCase()}.
     </p>
   </motion.div>
 );
