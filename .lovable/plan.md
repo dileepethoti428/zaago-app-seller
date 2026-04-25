@@ -1,36 +1,48 @@
+## Add Seller-Only Cost Price (Source Price) on Products Page
 
+### Goal
 
-## Keep Handover Visible All Day (Including After Delivery)
+On the **Product Inventory** (`/products`) page, add a small button on each product row that, when clicked, reveals the **original/source price** the seller paid to procure the product. This is for the seller's **internal reference only** — never shown to customers or delivery partners.
 
-### Problem
+### What changes
 
-In **Subscription Delivery Handover**, agents/products disappear from the card once their `daily_orders` row moves past `pending`/`assigned` (e.g. to `out_for_delivery` or `delivered`). The RPC currently filters:
+**1. Database — new column on `products`**
 
-```sql
-AND d.status IN ('pending', 'assigned')
-```
+Add a new nullable column `cost_price NUMERIC` to `public.products`. This stores the seller's procurement/source price.
 
-So as soon as the partner marks orders delivered, they vanish from the seller's handover view — even though the seller wants to see the full day's handover record until the day ends.
+- Nullable (existing products won't have a value yet).
+- RLS already restricts `products` SELECT/UPDATE to the owning seller for write paths, but we will additionally make sure the value is only ever read/edited from seller-only screens. The customer-facing flows (`get_products_within_range` RPC, `CustomerProductDetail`, etc.) do not select `cost_price`, so it stays hidden from customers.
 
-### Fix
+**2. Products page (`src/pages/Products.tsx`)**
 
-Update the RPC `get_seller_subscription_handover_direct` to include the **entire delivery lifecycle** for the day, excluding only cancelled/failed states. New filter:
+- Extend the local `Product` interface with `cost_price: number | null`.
+- For each product row, add an **"Eye" toggle button** next to the selling price (`₹{product.price}`).
+  - Default state: hidden, shows only a small label like `Cost: ••••` with an eye icon.
+  - On click: toggles to show `Cost: ₹{cost_price}` (or `Not set` if null).
+  - Clicking the button must NOT navigate to the product detail page (`stopPropagation`).
+- Track which product IDs are currently "revealed" in a local `Set<string>` state (so each row toggles independently).
+- A small "Internal only" muted helper tag next to the cost so the seller knows it's private.
 
-```sql
-AND d.status IN ('pending', 'assigned', 'out_for_delivery', 'delivered')
-```
+**3. Setting / editing the cost price**
 
-(Cancelled / failed / refunded statuses stay excluded so they don't pollute the handover totals.)
+Two options to set the value — pick the simplest that fits the existing UX:
 
-This way the card shows the same data the whole day — whether orders are still pending, in transit, or already delivered.
+- **Inline edit**: when revealed, render a small `Edit` icon next to the cost. Clicking opens a tiny inline input + Save/Cancel that updates `products.cost_price` for that row.
+- (Add Product / Edit Product forms can be extended later — out of scope for this change to keep it focused on the Products list reveal feature.)
 
-### Why this is safe
+This keeps the change scoped to the Products page only, as requested.
 
-- Handover is read-only aggregation; widening the status set doesn't change any write paths.
-- Today's Subscription Forecast uses the same RPC, so it stays in sync automatically.
-- Vacation filtering, GROUP BY dedup, and seller scoping are all unchanged.
+### Visibility / Security
+
+- `cost_price` is only ever selected in seller-scoped queries (`Products.tsx` filters by `seller_id = user.id`).
+- Customer-facing RPC `get_products_within_range` and `CustomerProductDetail` do not (and will not) select this column.
+- Existing RLS on `products` already restricts UPDATE to the owning seller, so the inline edit is safe.
 
 ### Files changed
 
-- New migration — `CREATE OR REPLACE FUNCTION public.get_seller_subscription_handover_direct(...)` with the widened status filter. No frontend changes required.
+- New migration — `ALTER TABLE public.products ADD COLUMN cost_price numeric;`
+- `src/pages/Products.tsx` — add `cost_price` to interface, reveal-toggle button, inline edit UI, update mutation.
 
+### Expected result
+
+On `/products`, each product row shows the public selling price as today, plus a hidden "Cost" pill with an eye icon. Clicking the eye reveals the seller's source price (and lets them set/edit it inline). Customers and delivery partners never see this value.
