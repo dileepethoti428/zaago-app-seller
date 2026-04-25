@@ -13,7 +13,12 @@ import {
   Camera,
   Upload,
   X,
-  ChevronRight
+  ChevronRight,
+  Eye,
+  EyeOff,
+  Pencil,
+  Check,
+  Lock
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
