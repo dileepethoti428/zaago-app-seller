@@ -5073,6 +5073,7 @@ export type Database = {
           benefits: string[] | null
           category: string | null
           category_id: string | null
+          cost_price: number | null
           created_at: string
           description: string | null
           discount_percentage: number | null
@@ -5104,6 +5105,7 @@ export type Database = {
           benefits?: string[] | null
           category?: string | null
           category_id?: string | null
+          cost_price?: number | null
           created_at?: string
           description?: string | null
           discount_percentage?: number | null
@@ -5135,6 +5137,7 @@ export type Database = {
           benefits?: string[] | null
           category?: string | null
           category_id?: string | null
+          cost_price?: number | null
           created_at?: string
           description?: string | null
           discount_percentage?: number | null
