@@ -698,22 +698,22 @@ const Products = () => {
                           <Lock className="w-3 h-3 opacity-70" />
                         </button>
                       ) : (
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs border border-zaago-border bg-zaago-card/60">
+                        <div className="inline-flex flex-wrap items-center gap-2 px-3 py-1 rounded-full text-xs border border-zaago-border bg-zaago-card/60 max-w-full">
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleCostReveal(product.id);
                             }}
-                            className="text-muted-foreground hover:text-foreground"
+                            className="text-muted-foreground hover:text-foreground flex-shrink-0"
                             title="Hide cost price"
                           >
                             <EyeOff className="w-3.5 h-3.5" />
                           </button>
 
                           {editingCostId === product.id ? (
-                            <>
-                              <span className="text-muted-foreground">Cost: ₹</span>
+                            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                              <span className="text-muted-foreground flex-shrink-0">Cost: ₹</span>
                               <Input
                                 autoFocus
                                 type="number"
@@ -722,7 +722,7 @@ const Products = () => {
                                 value={costInput}
                                 onChange={(e) => setCostInput(e.target.value)}
                                 onClick={(e) => e.stopPropagation()}
-                                className="h-6 w-24 px-2 py-0 text-xs bg-zaago-card border-zaago-border text-foreground"
+                                className="h-8 w-20 sm:w-24 px-2 py-0 text-xs bg-zaago-card border-zaago-border text-foreground"
                                 placeholder="0.00"
                               />
                               <button
@@ -732,10 +732,10 @@ const Products = () => {
                                   e.stopPropagation();
                                   saveCost(product.id);
                                 }}
-                                className="text-zaago-green hover:opacity-80 disabled:opacity-50"
+                                className="text-zaago-green hover:opacity-80 disabled:opacity-50 flex-shrink-0 inline-flex items-center justify-center min-w-[32px] min-h-[32px] p-1 -m-1 rounded-md hover:bg-zaago-green/10"
                                 title="Save"
                               >
-                                <Check className="w-3.5 h-3.5" />
+                                <Check className="w-4 h-4" />
                               </button>
                               <button
                                 type="button"
@@ -743,12 +743,12 @@ const Products = () => {
                                   e.stopPropagation();
                                   cancelEditCost();
                                 }}
-                                className="text-muted-foreground hover:text-foreground"
+                                className="text-muted-foreground hover:text-foreground flex-shrink-0 inline-flex items-center justify-center min-w-[32px] min-h-[32px] p-1 -m-1 rounded-md hover:bg-zaago-accent/40"
                                 title="Cancel"
                               >
-                                <X className="w-3.5 h-3.5" />
+                                <X className="w-4 h-4" />
                               </button>
-                            </>
+                            </div>
                           ) : (
                             <>
                               <span className="text-foreground font-medium">
