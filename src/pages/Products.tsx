@@ -677,6 +677,102 @@ const Products = () => {
                         {product.is_active ? 'Active' : 'Inactive'}
                       </Badge>
                     </div>
+
+                    {/* Seller-only Cost Price (internal) */}
+                    <div
+                      className="flex items-center gap-2 flex-wrap pt-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {!revealedCostIds.has(product.id) ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleCostReveal(product.id);
+                          }}
+                          className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs border border-zaago-border bg-zaago-card/60 text-muted-foreground hover:text-foreground hover:bg-zaago-accent/40 transition-colors"
+                          title="Show source/cost price (only visible to you)"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Cost: ••••</span>
+                          <Lock className="w-3 h-3 opacity-70" />
+                        </button>
+                      ) : (
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs border border-zaago-border bg-zaago-card/60">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleCostReveal(product.id);
+                            }}
+                            className="text-muted-foreground hover:text-foreground"
+                            title="Hide cost price"
+                          >
+                            <EyeOff className="w-3.5 h-3.5" />
+                          </button>
+
+                          {editingCostId === product.id ? (
+                            <>
+                              <span className="text-muted-foreground">Cost: ₹</span>
+                              <Input
+                                autoFocus
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={costInput}
+                                onChange={(e) => setCostInput(e.target.value)}
+                                onClick={(e) => e.stopPropagation()}
+                                className="h-6 w-24 px-2 py-0 text-xs bg-zaago-card border-zaago-border text-foreground"
+                                placeholder="0.00"
+                              />
+                              <button
+                                type="button"
+                                disabled={savingCostId === product.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  saveCost(product.id);
+                                }}
+                                className="text-zaago-green hover:opacity-80 disabled:opacity-50"
+                                title="Save"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  cancelEditCost();
+                                }}
+                                className="text-muted-foreground hover:text-foreground"
+                                title="Cancel"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-foreground font-medium">
+                                Cost: {product.cost_price != null ? `₹${product.cost_price}` : <span className="italic text-muted-foreground">Not set</span>}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  startEditCost(product);
+                                }}
+                                className="text-muted-foreground hover:text-foreground"
+                                title="Edit cost price"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <span className="text-[10px] uppercase tracking-wide text-muted-foreground/70 ml-1 inline-flex items-center gap-1">
+                                <Lock className="w-2.5 h-2.5" /> Internal
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Click Indicator */}
