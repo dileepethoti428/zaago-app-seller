@@ -59,6 +59,73 @@ const Products = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [visibleCount, setVisibleCount] = useState(5);
+  const [revealedCostIds, setRevealedCostIds] = useState<Set<string>>(new Set());
+  const [editingCostId, setEditingCostId] = useState<string | null>(null);
+  const [costInput, setCostInput] = useState<string>('');
+  const [savingCostId, setSavingCostId] = useState<string | null>(null);
+
+  const toggleCostReveal = (productId: string) => {
+    setRevealedCostIds(prev => {
+      const next = new Set(prev);
+      if (next.has(productId)) {
+        next.delete(productId);
+        if (editingCostId === productId) setEditingCostId(null);
+      } else {
+        next.add(productId);
+      }
+      return next;
+    });
+  };
+
+  const startEditCost = (product: Product) => {
+    setEditingCostId(product.id);
+    setCostInput(product.cost_price != null ? String(product.cost_price) : '');
+  };
+
+  const cancelEditCost = () => {
+    setEditingCostId(null);
+    setCostInput('');
+  };
+
+  const saveCost = async (productId: string) => {
+    if (!user?.id) return;
+    const parsed = costInput.trim() === '' ? null : parseFloat(costInput);
+    if (parsed !== null && (isNaN(parsed) || parsed < 0)) {
+      toast({
+        title: "Invalid cost",
+        description: "Please enter a valid non-negative number.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSavingCostId(productId);
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ cost_price: parsed })
+        .eq('id', productId)
+        .eq('seller_id', user.id);
+
+      if (error) throw error;
+
+      setProducts(prev => prev.map(p => p.id === productId ? { ...p, cost_price: parsed } : p));
+      setEditingCostId(null);
+      setCostInput('');
+      toast({
+        title: "Saved",
+        description: "Cost price updated.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update cost price.",
+        variant: "destructive"
+      });
+    } finally {
+      setSavingCostId(null);
+    }
+  };
 
   // Form state
   const [formData, setFormData] = useState({
