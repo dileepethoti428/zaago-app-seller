@@ -751,6 +751,100 @@ const Products = () => {
           )}
         </div>
       </motion.div>
+
+      {/* Cost Price Edit Dialog (seller-only / internal) */}
+      <Dialog
+        open={editingCostId !== null}
+        onOpenChange={(open) => {
+          if (!open) cancelEditCost();
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="w-4 h-4 text-zaago-green" />
+              Edit Cost Price
+            </DialogTitle>
+            <DialogDescription>
+              Internal — only visible to you. This is the price you paid at the source.
+            </DialogDescription>
+          </DialogHeader>
+
+          {(() => {
+            const editingProduct = products.find(p => p.id === editingCostId);
+            if (!editingProduct) return null;
+            return (
+              <div className="space-y-4 py-2">
+                <div className="rounded-lg border border-zaago-border bg-zaago-card/40 p-3">
+                  <div className="text-xs text-muted-foreground mb-1">Product</div>
+                  <div className="text-sm font-medium text-foreground line-clamp-2">{editingProduct.name}</div>
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    Current cost:{' '}
+                    {editingProduct.cost_price != null ? (
+                      <span className="text-foreground font-medium">₹{editingProduct.cost_price}</span>
+                    ) : (
+                      <span className="italic">Not set</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cost-price-input" className="text-sm">
+                    New cost price
+                  </Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">
+                      ₹
+                    </span>
+                    <Input
+                      id="cost-price-input"
+                      autoFocus
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      inputMode="decimal"
+                      value={costInput}
+                      onChange={(e) => setCostInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && editingCostId) {
+                          e.preventDefault();
+                          saveCost(editingCostId);
+                        }
+                      }}
+                      className="pl-7"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Leave empty and save to clear the cost.
+                  </p>
+                </div>
+              </div>
+            );
+          })()}
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={cancelEditCost}
+              disabled={savingCostId === editingCostId}
+            >
+              <X className="w-4 h-4 mr-1" />
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => editingCostId && saveCost(editingCostId)}
+              disabled={savingCostId === editingCostId}
+              className="bg-zaago-green hover:bg-zaago-green-light text-black"
+            >
+              <Check className="w-4 h-4 mr-1" />
+              {savingCostId === editingCostId ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 };
