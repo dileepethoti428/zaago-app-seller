@@ -675,11 +675,13 @@ const Products = () => {
                           e.stopPropagation();
                           startEditCost(product);
                         }}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs border border-zaago-border bg-zaago-card/60 text-muted-foreground hover:text-foreground hover:bg-zaago-accent/40 transition-colors"
-                        title="View / edit source cost (only visible to you)"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs border border-zaago-border bg-zaago-card/60 text-foreground hover:bg-zaago-accent/40 transition-colors"
+                        title="Edit source cost (only visible to you)"
                       >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Cost</span>
+                        <span className="text-muted-foreground">Cost:</span>
+                        <span className="font-semibold">
+                          {product.cost_price != null ? `₹${product.cost_price}` : <span className="italic text-muted-foreground">Not set</span>}
+                        </span>
                         <Pencil className="w-3 h-3 opacity-70" />
                         <Lock className="w-3 h-3 opacity-70" />
                       </button>
