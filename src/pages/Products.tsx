@@ -59,23 +59,10 @@ const Products = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [visibleCount, setVisibleCount] = useState(5);
-  const [revealedCostIds, setRevealedCostIds] = useState<Set<string>>(new Set());
   const [editingCostId, setEditingCostId] = useState<string | null>(null);
   const [costInput, setCostInput] = useState<string>('');
   const [savingCostId, setSavingCostId] = useState<string | null>(null);
 
-  const toggleCostReveal = (productId: string) => {
-    setRevealedCostIds(prev => {
-      const next = new Set(prev);
-      if (next.has(productId)) {
-        next.delete(productId);
-        if (editingCostId === productId) setEditingCostId(null);
-      } else {
-        next.add(productId);
-      }
-      return next;
-    });
-  };
 
   const startEditCost = (product: Product) => {
     setEditingCostId(product.id);
