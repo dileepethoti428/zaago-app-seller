@@ -225,6 +225,99 @@ export const CustomerLookupDialog = () => {
                 </Card>
               </Collapsible>
 
+              {/* Products Ordered */}
+              {(() => {
+                const items = Array.isArray(result.order_info.items) ? result.order_info.items : [];
+                const subtotal = items.reduce(
+                  (sum: number, it: any) => sum + (Number(it?.price) || 0) * (Number(it?.quantity) || 0),
+                  0
+                );
+                return (
+                  <Collapsible defaultOpen>
+                    <Card>
+                      <CardHeader>
+                        <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-70 transition-opacity">
+                          <CardTitle className="flex items-center gap-2">
+                            <Package className="h-5 w-5" />
+                            Products Ordered
+                            <Badge variant="secondary" className="ml-1">{items.length}</Badge>
+                          </CardTitle>
+                          <ChevronDown className="h-5 w-5" />
+                        </CollapsibleTrigger>
+                      </CardHeader>
+                      <CollapsibleContent>
+                        <CardContent className="space-y-3">
+                          {items.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">No items in this order.</p>
+                          ) : (
+                            <>
+                              {items.map((item: any, idx: number) => {
+                                const qty = Number(item?.quantity) || 0;
+                                const price = Number(item?.price) || 0;
+                                const lineTotal = price * qty;
+                                return (
+                                  <div
+                                    key={item?.id ?? idx}
+                                    className="flex gap-3 p-3 rounded-md border bg-muted/30"
+                                  >
+                                    {item?.image_url ? (
+                                      <img
+                                        src={item.image_url}
+                                        alt={item?.name || 'Product'}
+                                        className="h-12 w-12 rounded object-cover flex-shrink-0"
+                                      />
+                                    ) : (
+                                      <div className="h-12 w-12 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                                        <Package className="h-5 w-5 text-muted-foreground" />
+                                      </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1">
+                                        <div className="min-w-0">
+                                          <p className="font-medium text-sm truncate">{item?.name || 'Unnamed product'}</p>
+                                          <p className="text-xs text-muted-foreground">
+                                            {item?.unit || 'unit'} · ×{qty}
+                                          </p>
+                                          {item?.category?.name && (
+                                            <p className="text-xs text-muted-foreground mt-0.5 capitalize">
+                                              {item.category.name}
+                                            </p>
+                                          )}
+                                        </div>
+                                        <div className="text-left sm:text-right">
+                                          <p className="text-xs text-muted-foreground">₹{price} each</p>
+                                          <p className="font-semibold text-sm">₹{lineTotal}</p>
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-wrap gap-1 mt-2">
+                                        {item?.gst_percentage != null && (
+                                          <Badge variant="outline" className="text-[10px]">
+                                            GST {item.gst_percentage}%
+                                          </Badge>
+                                        )}
+                                        {item?.discount_percentage ? (
+                                          <Badge variant="outline" className="text-[10px] text-green-600">
+                                            -{item.discount_percentage}%
+                                          </Badge>
+                                        ) : null}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                              <div className="flex items-center justify-between pt-2 border-t">
+                                <span className="text-sm text-muted-foreground">Subtotal</span>
+                                <span className="font-semibold">₹{subtotal}</span>
+                              </div>
+                            </>
+                          )}
+                        </CardContent>
+                      </CollapsibleContent>
+                    </Card>
+                  </Collapsible>
+                );
+              })()}
+
               {/* Delivery Status Timeline */}
               {result.delivery_status && result.delivery_status.timeline?.length > 0 && (
                 <Collapsible defaultOpen>
