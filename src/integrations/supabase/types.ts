@@ -4614,6 +4614,13 @@ export type Database = {
             foreignKeyName: "payouts_seller_id_fkey"
             columns: ["seller_id"]
             isOneToOne: false
+            referencedRelation: "active_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "payouts_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
@@ -5199,12 +5206,14 @@ export type Database = {
           created_at: string
           date_of_birth: string | null
           default_address: Json | null
+          deleted_at: string | null
           device_info: Json | null
           documents_submitted: boolean | null
           documents_verified: boolean | null
           emergency_contact: string | null
           full_name: string | null
           id: string
+          is_deleted: boolean
           notification_preferences: Json | null
           onesignal_external_user_id: string | null
           onesignal_player_id: string | null
@@ -5231,12 +5240,14 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           default_address?: Json | null
+          deleted_at?: string | null
           device_info?: Json | null
           documents_submitted?: boolean | null
           documents_verified?: boolean | null
           emergency_contact?: string | null
           full_name?: string | null
           id?: string
+          is_deleted?: boolean
           notification_preferences?: Json | null
           onesignal_external_user_id?: string | null
           onesignal_player_id?: string | null
@@ -5263,12 +5274,14 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           default_address?: Json | null
+          deleted_at?: string | null
           device_info?: Json | null
           documents_submitted?: boolean | null
           documents_verified?: boolean | null
           emergency_contact?: string | null
           full_name?: string | null
           id?: string
+          is_deleted?: boolean
           notification_preferences?: Json | null
           onesignal_external_user_id?: string | null
           onesignal_player_id?: string | null
@@ -5285,6 +5298,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "active_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_referred_by_fkey"
             columns: ["referred_by"]
@@ -5483,7 +5503,21 @@ export type Database = {
             foreignKeyName: "referral_rewards_referred_id_fkey"
             columns: ["referred_id"]
             isOneToOne: false
+            referencedRelation: "active_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_rewards_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_rewards_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -7646,6 +7680,126 @@ export type Database = {
       }
     }
     Views: {
+      active_profiles: {
+        Row: {
+          address: string | null
+          admin_verification_photo: string | null
+          approval_status: string | null
+          approved_at: string | null
+          approved_by: string | null
+          avatar_url: string | null
+          commission_rate: number | null
+          created_at: string | null
+          date_of_birth: string | null
+          default_address: Json | null
+          deleted_at: string | null
+          device_info: Json | null
+          documents_submitted: boolean | null
+          documents_verified: boolean | null
+          emergency_contact: string | null
+          full_name: string | null
+          id: string | null
+          is_deleted: boolean | null
+          notification_preferences: Json | null
+          onesignal_external_user_id: string | null
+          onesignal_player_id: string | null
+          phone: string | null
+          photo_uploaded_at: string | null
+          photo_url: string | null
+          photo_verified: boolean | null
+          referral_applied_at: string | null
+          referral_code: string | null
+          referred_by: string | null
+          rejection_reason: string | null
+          submission_date: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          admin_verification_photo?: string | null
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          avatar_url?: string | null
+          commission_rate?: number | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          default_address?: Json | null
+          deleted_at?: string | null
+          device_info?: Json | null
+          documents_submitted?: boolean | null
+          documents_verified?: boolean | null
+          emergency_contact?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_deleted?: boolean | null
+          notification_preferences?: Json | null
+          onesignal_external_user_id?: string | null
+          onesignal_player_id?: string | null
+          phone?: string | null
+          photo_uploaded_at?: string | null
+          photo_url?: string | null
+          photo_verified?: boolean | null
+          referral_applied_at?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
+          rejection_reason?: string | null
+          submission_date?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          admin_verification_photo?: string | null
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          avatar_url?: string | null
+          commission_rate?: number | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          default_address?: Json | null
+          deleted_at?: string | null
+          device_info?: Json | null
+          documents_submitted?: boolean | null
+          documents_verified?: boolean | null
+          emergency_contact?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_deleted?: boolean | null
+          notification_preferences?: Json | null
+          onesignal_external_user_id?: string | null
+          onesignal_player_id?: string | null
+          phone?: string | null
+          photo_uploaded_at?: string | null
+          photo_url?: string | null
+          photo_verified?: boolean | null
+          referral_applied_at?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
+          rejection_reason?: string | null
+          submission_date?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "active_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_next_delivery: {
         Row: {
           assigned_agent_id: string | null
@@ -9011,6 +9165,16 @@ export type Database = {
         Returns: Json
       }
       get_cart_total: { Args: { cart_user_id: string }; Returns: number }
+      get_center_partner_names: {
+        Args: never
+        Returns: {
+          center_code: string
+          center_id: string
+          center_name: string
+          partner_name: string
+          partner_phone: string
+        }[]
+      }
       get_current_ist_date: { Args: never; Returns: string }
       get_current_user_category: { Args: never; Returns: Json }
       get_current_user_role: {
@@ -9913,6 +10077,7 @@ export type Database = {
       reset_daily_agent_counters: { Args: never; Returns: undefined }
       reset_daily_delivery_counts: { Args: never; Returns: undefined }
       resolve_agent_email: { Args: { identifier: string }; Returns: string }
+      restore_profile: { Args: { _user_id: string }; Returns: undefined }
       resume_expired_vacations: { Args: never; Returns: Json }
       safe_complete_delivery: {
         Args: {
@@ -9993,6 +10158,7 @@ export type Database = {
         }
         Returns: Json
       }
+      soft_delete_my_profile: { Args: never; Returns: undefined }
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
