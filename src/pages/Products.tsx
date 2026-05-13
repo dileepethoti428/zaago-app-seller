@@ -63,6 +63,42 @@ const Products = () => {
   const [editingCostId, setEditingCostId] = useState<string | null>(null);
   const [costInput, setCostInput] = useState<string>('');
   const [savingCostId, setSavingCostId] = useState<string | null>(null);
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
+  const [bulkUpdating, setBulkUpdating] = useState(false);
+
+  const hasAnyActive = products.some(p => p.is_active);
+  const bulkTargetState = !hasAnyActive; // if none active -> activate all; else deactivate all
+  const bulkActionLabel = bulkTargetState ? 'Activate All' : 'Deactivate All';
+
+  const performBulkToggle = async () => {
+    if (!user?.id) return;
+    setBulkUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ is_active: bulkTargetState })
+        .eq('seller_id', user.id);
+
+      if (error) throw error;
+
+      setProducts(prev => prev.map(p => ({ ...p, is_active: bulkTargetState })));
+      toast({
+        title: bulkTargetState ? 'All products activated' : 'All products deactivated',
+        description: bulkTargetState
+          ? 'Your products are now visible to customers.'
+          : 'Your products are hidden from customers.',
+      });
+      setBulkConfirmOpen(false);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update products.',
+        variant: 'destructive',
+      });
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
 
 
   const startEditCost = (product: Product) => {
