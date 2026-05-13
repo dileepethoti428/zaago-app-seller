@@ -17,7 +17,9 @@ import {
   Eye,
   Pencil,
   Check,
-  Lock
+  Lock,
+  EyeOff,
+  Loader2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
