@@ -4054,6 +4054,7 @@ export type Database = {
           delivery_time: string | null
           delivery_time_slot: string | null
           distance_km: number | null
+          hidden_by_user: boolean
           id: string
           items: Json
           last_notified_at: string | null
@@ -4118,6 +4119,7 @@ export type Database = {
           delivery_time?: string | null
           delivery_time_slot?: string | null
           distance_km?: number | null
+          hidden_by_user?: boolean
           id?: string
           items: Json
           last_notified_at?: string | null
@@ -4182,6 +4184,7 @@ export type Database = {
           delivery_time?: string | null
           delivery_time_slot?: string | null
           distance_km?: number | null
+          hidden_by_user?: boolean
           id?: string
           items?: Json
           last_notified_at?: string | null
@@ -9112,6 +9115,11 @@ export type Database = {
           }
       get_agent_profile_with_metrics: {
         Args: { agent_email: string }
+        Returns: Json
+      }
+      get_agent_total_hours: { Args: { agent_uuid: string }; Returns: number }
+      get_agent_work_hours_breakdown: {
+        Args: { agent_uuid: string }
         Returns: Json
       }
       get_agent_work_stats: { Args: { agent_uuid: string }; Returns: Json }
