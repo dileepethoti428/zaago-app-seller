@@ -882,6 +882,42 @@ const Products = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Activate/Deactivate Confirmation */}
+      <Dialog open={bulkConfirmOpen} onOpenChange={(open) => !bulkUpdating && setBulkConfirmOpen(open)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {bulkTargetState ? <Eye className="w-4 h-4 text-zaago-green" /> : <EyeOff className="w-4 h-4 text-destructive" />}
+              {bulkTargetState ? 'Activate All Products?' : 'Deactivate All Products?'}
+            </DialogTitle>
+            <DialogDescription>
+              {bulkTargetState
+                ? `This will make all ${products.length} products visible to customers.`
+                : `This will hide all ${products.length} products from customers. Useful when your shop is closed so no new orders are placed.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setBulkConfirmOpen(false)}
+              disabled={bulkUpdating}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={performBulkToggle}
+              disabled={bulkUpdating}
+              className={bulkTargetState ? 'bg-zaago-green hover:bg-zaago-green-light text-black' : 'bg-destructive hover:bg-destructive/90 text-destructive-foreground'}
+            >
+              {bulkUpdating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : (bulkTargetState ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />)}
+              {bulkUpdating ? 'Updating...' : (bulkTargetState ? 'Activate All' : 'Deactivate All')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 };
