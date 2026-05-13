@@ -1,41 +1,34 @@
-## Add Product Details to Customer Lookup
+## Bulk Activate/Deactivate All Products Button
 
-### Change
+### Goal
+Add a single button to the Products page that lets a seller instantly activate or deactivate **all** their products at once. Use case: shop closes at 12 AM and the seller wants to hide everything from customers with one tap.
 
-In `src/components/CustomerLookupDialog.tsx`, add a new collapsible **"Products Ordered"** card (between Order Information and Delivery Status) that lists every item in `result.order_info.items`.
+### UI Changes
 
-The `items` JSON is already returned by `lookup_order_by_tracking_id` — no DB or hook changes needed.
+**1. New bulk-toggle button** placed in the page header row (next to "Add via Form" / "Quick Add"). Label adapts dynamically:
+- If any products are active: **"Deactivate All"** (with count, e.g. "Deactivate All (5)")
+- If all products are inactive: **"Activate All"**
 
-### Card content (per item)
+**2. Confirmation dialog** on click:
+- Title: "Deactivate All Products?" / "Activate All Products?"
+- Body explains the impact: "This will hide all X products from customers." or "This will make all X products visible to customers."
+- Actions: Cancel / Confirm
 
-- Product image (`image_url`, fallback to a Package icon placeholder)
-- Product name
-- Unit (e.g., "per piece") + quantity badge (e.g., "× 2")
-- Unit price (`₹{price}`) and line total (`₹{price * quantity}`)
-- If present: category name, discount % badge, GST % badge
+**3. Loading & feedback:**
+- Button disabled + spinner while the bulk update is in flight
+- Success toast on completion
+- Error toast if the update fails
 
-Footer of the card shows item count and items subtotal.
+### Implementation
 
-### Layout
+- **File:** `src/pages/Products.tsx` only. No new hooks or backend changes needed.
+- Use the existing `supabase` client with a single query:
+  ```ts
+  await supabase.from('products')
+    .update({ is_active: targetState })
+    .eq('seller_id', user.id);
+  ```
+- The existing realtime `postgres_changes` subscription on the `products` table already refreshes the local list automatically when the bulk update completes, so no manual cache invalidation is required.
 
-```
-┌─ Products Ordered (N items) ──────────── ▼ ┐
-│ [img] Vegetables                            │
-│       per piece · ×1                        │
-│       ₹10  •  Total ₹10   [GST 0%] [-3%]    │
-│ ─────────────────────────────────────────── │
-│ [img] Coffee Powder                         │
-│       per piece · ×1                        │
-│       ₹200 •  Total ₹200                    │
-│ ─────────────────────────────────────────── │
-│ Subtotal: ₹210                              │
-└─────────────────────────────────────────────┘
-```
-
-Mobile-friendly: image 48x48, text wraps, price right-aligned on sm+ screens, stacked on mobile.
-
-### Files
-
-- `src/components/CustomerLookupDialog.tsx` — add the new Collapsible/Card block; render `result.order_info.items` as an array (handle missing/empty gracefully with a "No items" note).
-
-No type, hook, or backend changes.
+### No database changes required
+The `products` table already has `is_active` and `seller_id` columns. The existing RLS policy ` Sellers can update their own products` will permit this bulk update as long as the filter is `seller_id = auth.uid()`.

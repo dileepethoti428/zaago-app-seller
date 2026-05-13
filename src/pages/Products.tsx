@@ -17,7 +17,9 @@ import {
   Eye,
   Pencil,
   Check,
-  Lock
+  Lock,
+  EyeOff,
+  Loader2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -61,6 +63,42 @@ const Products = () => {
   const [editingCostId, setEditingCostId] = useState<string | null>(null);
   const [costInput, setCostInput] = useState<string>('');
   const [savingCostId, setSavingCostId] = useState<string | null>(null);
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
+  const [bulkUpdating, setBulkUpdating] = useState(false);
+
+  const hasAnyActive = products.some(p => p.is_active);
+  const bulkTargetState = !hasAnyActive; // if none active -> activate all; else deactivate all
+  const bulkActionLabel = bulkTargetState ? 'Activate All' : 'Deactivate All';
+
+  const performBulkToggle = async () => {
+    if (!user?.id) return;
+    setBulkUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ is_active: bulkTargetState })
+        .eq('seller_id', user.id);
+
+      if (error) throw error;
+
+      setProducts(prev => prev.map(p => ({ ...p, is_active: bulkTargetState })));
+      toast({
+        title: bulkTargetState ? 'All products activated' : 'All products deactivated',
+        description: bulkTargetState
+          ? 'Your products are now visible to customers.'
+          : 'Your products are hidden from customers.',
+      });
+      setBulkConfirmOpen(false);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update products.',
+        variant: 'destructive',
+      });
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
 
 
   const startEditCost = (product: Product) => {
@@ -352,7 +390,18 @@ const Products = () => {
           </p>
         </div>
         
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
+          {products.length > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setBulkConfirmOpen(true)}
+              className={`border-zaago-border font-medium ${bulkTargetState ? 'text-zaago-green hover:bg-zaago-green/10' : 'text-destructive hover:bg-destructive/10'}`}
+            >
+              {bulkTargetState ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
+              {bulkActionLabel} ({products.length})
+            </Button>
+          )}
           <Link to="/products/new">
             <Button className="bg-zaago-green hover:bg-zaago-green-light text-black font-medium">
               <Plus className="w-4 h-4 mr-2" />
@@ -829,6 +878,42 @@ const Products = () => {
             >
               <Check className="w-4 h-4 mr-1" />
               {savingCostId === editingCostId ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Activate/Deactivate Confirmation */}
+      <Dialog open={bulkConfirmOpen} onOpenChange={(open) => !bulkUpdating && setBulkConfirmOpen(open)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {bulkTargetState ? <Eye className="w-4 h-4 text-zaago-green" /> : <EyeOff className="w-4 h-4 text-destructive" />}
+              {bulkTargetState ? 'Activate All Products?' : 'Deactivate All Products?'}
+            </DialogTitle>
+            <DialogDescription>
+              {bulkTargetState
+                ? `This will make all ${products.length} products visible to customers.`
+                : `This will hide all ${products.length} products from customers. Useful when your shop is closed so no new orders are placed.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setBulkConfirmOpen(false)}
+              disabled={bulkUpdating}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={performBulkToggle}
+              disabled={bulkUpdating}
+              className={bulkTargetState ? 'bg-zaago-green hover:bg-zaago-green-light text-black' : 'bg-destructive hover:bg-destructive/90 text-destructive-foreground'}
+            >
+              {bulkUpdating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : (bulkTargetState ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />)}
+              {bulkUpdating ? 'Updating...' : (bulkTargetState ? 'Activate All' : 'Deactivate All')}
             </Button>
           </DialogFooter>
         </DialogContent>
