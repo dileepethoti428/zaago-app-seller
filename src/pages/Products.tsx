@@ -390,7 +390,18 @@ const Products = () => {
           </p>
         </div>
         
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
+          {products.length > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setBulkConfirmOpen(true)}
+              className={`border-zaago-border font-medium ${bulkTargetState ? 'text-zaago-green hover:bg-zaago-green/10' : 'text-destructive hover:bg-destructive/10'}`}
+            >
+              {bulkTargetState ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
+              {bulkActionLabel} ({products.length})
+            </Button>
+          )}
           <Link to="/products/new">
             <Button className="bg-zaago-green hover:bg-zaago-green-light text-black font-medium">
               <Plus className="w-4 h-4 mr-2" />
