@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { User, Building, Phone, MapPin, Mail, Camera, Save, Edit, Store } from 'lucide-react';
+import { User, Building, Phone, MapPin, Mail, Camera, Save, Edit, Store, HelpCircle, MessageCircle, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -505,6 +505,60 @@ export default function ProfilePage() {
               </button>
             </div>
           )}
+        </div>
+      </motion.div>
+
+      {/* Help & Support */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.3 }}
+        className="zaago-card p-6"
+      >
+        <div className="flex items-center gap-3 mb-1">
+          <HelpCircle className="w-6 h-6 text-zaago-green" />
+          <h2 className="text-xl font-bold text-foreground">Help & Support</h2>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">Get help and contact us</p>
+
+        <div className="space-y-3">
+          <a
+            href="https://wa.me/917842343642"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-4 p-4 rounded-xl bg-zaago-green/10 border border-zaago-green/30 hover:bg-zaago-green/15 transition-colors"
+          >
+            <MessageCircle className="w-6 h-6 text-zaago-green flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-foreground">WhatsApp Support</p>
+              <p className="text-sm text-muted-foreground">+91-7842343642</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </a>
+
+          <a
+            href="mailto:zaago.online@gmail.com"
+            className="flex items-center gap-4 p-4 rounded-xl bg-muted/40 border border-border hover:bg-muted/60 transition-colors"
+          >
+            <Mail className="w-6 h-6 text-muted-foreground flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-foreground">Email Support</p>
+              <p className="text-sm text-muted-foreground truncate">zaago.online@gmail.com</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </a>
+
+          <a
+            href="tel:+917842343642"
+            className="flex items-center gap-4 p-4 rounded-xl bg-muted/40 border border-border hover:bg-muted/60 transition-colors"
+          >
+            <Phone className="w-6 h-6 text-muted-foreground flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-foreground">Call Support</p>
+              <p className="text-sm text-muted-foreground">+91-7842343642</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </a>
         </div>
       </motion.div>
     </motion.div>
