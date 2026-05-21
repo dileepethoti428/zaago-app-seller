@@ -18,7 +18,39 @@ interface SellerApplication {
   user_email?: string;
   rejection_reason?: string;
   is_deactivated?: boolean;
+  aadhaar_number?: string;
+  pan_number?: string;
+  fssai_number?: string;
+  aadhaar_front_url?: string;
+  aadhaar_back_url?: string;
+  pan_image_url?: string;
+  selfie_url?: string;
+  fssai_license_url?: string;
+  kyc_status?: string;
+  kyc_submitted_at?: string;
 }
+
+const KycDoc = ({ label, path }: { label: string; path?: string }) => {
+  const [url, setUrl] = useState<string>('');
+  useEffect(() => {
+    let active = true;
+    if (path) {
+      supabase.storage.from('seller-kyc').createSignedUrl(path, 3600).then(({ data }) => {
+        if (active && data?.signedUrl) setUrl(data.signedUrl);
+      });
+    }
+    return () => { active = false; };
+  }, [path]);
+  if (!path) return (
+    <div className="border border-dashed border-border rounded-md p-2 text-xs text-muted-foreground text-center">{label}<br/>Not uploaded</div>
+  );
+  return (
+    <a href={url || '#'} target="_blank" rel="noreferrer" className="block border border-border rounded-md overflow-hidden hover:opacity-90">
+      {url ? <img src={url} alt={label} className="w-full h-24 object-cover" /> : <div className="h-24 bg-muted animate-pulse" />}
+      <div className="text-xs p-1 text-center bg-muted/50">{label}</div>
+    </a>
+  );
+};
 
 export default function SellerApprovals() {
   const [applications, setApplications] = useState<SellerApplication[]>([]);
