@@ -694,12 +694,14 @@ const Products = () => {
                     </div>
                     <div className="flex items-center gap-3 flex-wrap">
                       {product.stock_quantity <= 10 && product.stock_quantity > 0 && (
-                        <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-sm px-3 py-1">
-                          Low Stock ({product.stock_quantity})
+                        <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-sm px-3 py-1 flex items-center gap-1 animate-pulse">
+                          <AlertTriangle className="w-3.5 h-3.5" />
+                          Low Stock ({product.stock_quantity}) – Refill soon
                         </Badge>
                       )}
                       {product.stock_quantity === 0 && (
-                        <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-sm px-3 py-1">
+                        <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-sm px-3 py-1 flex items-center gap-1 animate-pulse">
+                          <AlertTriangle className="w-3.5 h-3.5" />
                           Out of Stock
                         </Badge>
                       )}
