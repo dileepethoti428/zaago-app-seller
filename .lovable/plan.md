@@ -1,18 +1,19 @@
-## Add Help & Support section on Profile page
+## Low-Stock Warning on Products Page
 
-### Goal
-Add a single "Help & Support" card on the Profile page combining the three contact methods into one section (matching the reference image).
+Add a visible warning indicator on each product card when stock is low.
 
-### Card contents
-- **Header:** Help icon (green) + title "Help & Support" + subtitle "Get help and contact us"
-- **Row 1 — WhatsApp Support:** green WhatsApp icon, label "WhatsApp Support", value "+91-7842343642" → opens `https://wa.me/917842343642`
-- **Row 2 — Email Support:** mail icon, label "Email Support", value "zaago.online@gmail.com" → opens `mailto:zaago.online@gmail.com`
-- **Row 3 — Call Support:** phone icon, label "Call Support", value "+91-7842343642" → opens `tel:+917842343642`
-- Each row is a clickable button with a chevron-right on the right; WhatsApp row uses a subtle green-tinted background, the other two use muted card background.
+### Threshold
+- **Low stock**: `stock_quantity > 0 && stock_quantity <= 10`
+- **Out of stock**: `stock_quantity === 0` (already styled separately with stronger emphasis)
 
-### Implementation
-- **File:** `src/pages/Profile.tsx` only.
-- Use existing `Card`/`CardHeader`/`CardContent` and lucide icons (`HelpCircle`, `MessageCircle`, `Mail`, `Phone`, `ChevronRight`).
-- Place the card near the bottom of the Profile content (above any sign-out / delete section if present).
-- Use semantic Tailwind tokens (`bg-card`, `text-muted-foreground`, `text-zaago-green`, `border-border`) — no hard-coded colors.
-- No backend/DB changes. No new dependencies.
+### UI Changes (`src/components/ProductCard.tsx`)
+1. **Badge on the image** (next to the ACTIVE/INACTIVE badge): show an amber "Low Stock" pill with `AlertTriangle` icon when stock ≤ 10 (and > 0). Show a red "Out of Stock" pill when stock = 0.
+2. **Stock line below price**: when low, color the stock text amber (`text-amber-600`) and prefix with `AlertTriangle` icon; when out, color red (`text-destructive`).
+3. Use semantic tokens / existing Tailwind amber utilities, no inline hex colors.
+
+### No changes to
+- Database, business logic, or Products.tsx filters.
+- Visibility — products remain visible regardless of stock.
+
+### Files
+- `src/components/ProductCard.tsx` (only)
