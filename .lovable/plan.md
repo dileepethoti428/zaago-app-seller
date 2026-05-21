@@ -1,56 +1,40 @@
-## Add KYC Documents to Bank Details Setup
+## Move Bank + KYC into the Create Account page
 
-Extend the existing Bank Details Setup page to also collect KYC documents during signup so admins can review and approve sellers from one place.
+Merge the Bank Details Setup and KYC Verification into the signup screen so the seller fills everything in one flow on `Login.tsx` (the "Create Account" page). Remove the redirect to `/bank-details` after signup.
 
-### Scope
-- Page: `src/pages/BankDetails.tsx` (no new page, no route changes)
-- New KYC fields collected alongside bank info:
-  - Aadhaar Card — number + front/back image upload
-  - PAN Card — number + image upload
-  - Selfie / Live Photo — image upload (camera capture preferred on mobile)
-  - FSSAI License — number + license image upload
+### Flow (single screen, 3 steps in one card)
+On the existing Create Account view, when `isSignUp` is true, replace the single submit with a stepper:
 
-### Database changes (`sellers` table)
-Add columns:
-- `aadhaar_number` text
-- `aadhaar_front_url` text
-- `aadhaar_back_url` text
-- `pan_number` text
-- `pan_image_url` text
-- `selfie_url` text
-- `fssai_number` text
-- `fssai_license_url` text
-- `kyc_submitted_at` timestamptz
-- `kyc_status` text default `'pending'` (`pending` | `approved` | `rejected`)
+```text
+Step 1 — Account     Step 2 — Bank Details     Step 3 — KYC Verification
+ (email, password,    (account holder,           (Aadhaar/PAN/FSSAI numbers
+  phone, business,     account no, IFSC,          + 5 document uploads:
+  T&C checkbox)        bank, branch, type)        Aadhaar front/back,
+                                                  PAN, FSSAI, Selfie)
+```
 
-Existing `approval_status` continues to gate access (stays `pending` until admin approves).
+- Header stays "Create Account / Sign up for your Zaago Seller account".
+- A progress indicator (1 → 2 → 3) sits under the header.
+- "Next" advances after validating the current step. "Back" returns. Final button is "Create Account & Submit for Approval".
 
-### Storage
-- Create a private bucket `seller-kyc` (not public).
-- RLS on `storage.objects`:
-  - Seller can `INSERT`/`SELECT` their own files in `seller-kyc/{auth.uid()}/...`
-  - Admins (via existing role check / `has_role`) can `SELECT` all KYC files.
+### What happens on final submit
+1. `supabase.auth.signUp(...)` with the same metadata it sends today.
+2. Wait for the returned session (sign-up is configured to return one in this project — same as today's bank page flow).
+3. Upload the 5 KYC files to private bucket `seller-kyc/{user.id}/...` (bucket and RLS already created).
+4. `update sellers` with all bank fields, KYC numbers, KYC file paths, `kyc_submitted_at = now()`, `kyc_status = 'pending'`.
+5. Toast success → `navigate('/pending-approval')`.
 
-### UI (BankDetails.tsx)
-- Add a new section **"KYC Verification"** below Bank Account Details with:
-  - Text inputs for Aadhaar, PAN, FSSAI numbers (with format validation: Aadhaar 12 digits, PAN regex, FSSAI 14 digits).
-  - File upload tiles for: Aadhaar front, Aadhaar back, PAN image, FSSAI license, Selfie (selfie uses `capture="user"` on mobile).
-  - Show thumbnail previews after upload; reuse `compressImage` helper.
-- All KYC fields required on submit (remove "Skip for Now" or keep it but only when KYC already submitted).
-- On submit: upload files to `seller-kyc/{userId}/...`, save URLs + numbers + bank fields in one `update`, set `kyc_submitted_at = now()`, `kyc_status = 'pending'`.
-- After submit → redirect to `/pending-approval` (already exists).
+If signup returns no session (email confirmation required), show a toast asking the user to verify email and sign in — then on first sign-in we route them to `/bank-details` as a fallback so nothing is lost. (Keeps the existing page as a safety net.)
 
-### Admin Dashboard
-- Page `src/pages/SellerApprovals.tsx` already exists. Extend the seller detail/row view to display:
-  - KYC numbers (Aadhaar / PAN / FSSAI)
-  - Clickable thumbnails for each uploaded document + selfie (open in lightbox/new tab using signed URLs since bucket is private)
-- Approve/Reject already updates `approval_status`; also set `kyc_status` accordingly.
-
-### Files touched
-- `supabase/migrations/*` — schema + bucket + RLS (via migration tool)
-- `src/pages/BankDetails.tsx` — add KYC section, uploads, validation, submit logic
-- `src/pages/SellerApprovals.tsx` — show KYC docs to admin
+### Files changed
+- `src/pages/Login.tsx` — convert sign-up form into a 3-step wizard; integrate uploads + bank/KYC update; keep sign-in unchanged.
+- `src/components/ProtectedRoute.tsx` — after successful signup with session, allow redirect to `/pending-approval` directly (skip forced `/bank-details` push when `kyc_submitted_at` is already set).
+- `src/pages/BankDetails.tsx` — keep as fallback for users who must verify email first or who skipped earlier; no functional change required.
 
 ### Out of scope
-- No third-party KYC API verification (Aadhaar/PAN OCR or DigiLocker) — admin manually reviews.
-- No changes to login/signup screens themselves.
+- No schema changes (already done in the previous migration).
+- No admin dashboard changes (already updated to show KYC).
+- No new routes.
+
+### Validation rules (same as current BankDetails)
+- IFSC `^[A-Z]{4}0[A-Z0-9]{6}$`, Account no ≥ 8 digits, Aadhaar 12 digits, PAN `^[A-Z]{5}[0-9]{4}[A-Z]$`, FSSAI 14 digits, all 5 documents required.
