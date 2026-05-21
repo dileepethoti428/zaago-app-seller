@@ -18,7 +18,39 @@ interface SellerApplication {
   user_email?: string;
   rejection_reason?: string;
   is_deactivated?: boolean;
+  aadhaar_number?: string;
+  pan_number?: string;
+  fssai_number?: string;
+  aadhaar_front_url?: string;
+  aadhaar_back_url?: string;
+  pan_image_url?: string;
+  selfie_url?: string;
+  fssai_license_url?: string;
+  kyc_status?: string;
+  kyc_submitted_at?: string;
 }
+
+const KycDoc = ({ label, path }: { label: string; path?: string }) => {
+  const [url, setUrl] = useState<string>('');
+  useEffect(() => {
+    let active = true;
+    if (path) {
+      supabase.storage.from('seller-kyc').createSignedUrl(path, 3600).then(({ data }) => {
+        if (active && data?.signedUrl) setUrl(data.signedUrl);
+      });
+    }
+    return () => { active = false; };
+  }, [path]);
+  if (!path) return (
+    <div className="border border-dashed border-border rounded-md p-2 text-xs text-muted-foreground text-center">{label}<br/>Not uploaded</div>
+  );
+  return (
+    <a href={url || '#'} target="_blank" rel="noreferrer" className="block border border-border rounded-md overflow-hidden hover:opacity-90">
+      {url ? <img src={url} alt={label} className="w-full h-24 object-cover" /> : <div className="h-24 bg-muted animate-pulse" />}
+      <div className="text-xs p-1 text-center bg-muted/50">{label}</div>
+    </a>
+  );
+};
 
 export default function SellerApprovals() {
   const [applications, setApplications] = useState<SellerApplication[]>([]);
@@ -44,7 +76,17 @@ export default function SellerApprovals() {
           approval_status,
           created_at,
           rejection_reason,
-          is_deactivated
+          is_deactivated,
+          aadhaar_number,
+          pan_number,
+          fssai_number,
+          aadhaar_front_url,
+          aadhaar_back_url,
+          pan_image_url,
+          selfie_url,
+          fssai_license_url,
+          kyc_status,
+          kyc_submitted_at
         `)
         .order('created_at', { ascending: false });
 
@@ -205,6 +247,32 @@ export default function SellerApprovals() {
                   <p className="text-sm text-muted-foreground">{app.rejection_reason}</p>
                 </div>
               )}
+
+              <div className="border border-border rounded-lg p-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold">KYC Verification</p>
+                  <Badge variant={app.kyc_submitted_at ? 'default' : 'secondary'}>
+                    {app.kyc_submitted_at ? `Submitted` : 'Not submitted'}
+                  </Badge>
+                </div>
+                {app.kyc_submitted_at && (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                      <div><span className="text-muted-foreground">Aadhaar:</span> {app.aadhaar_number || '—'}</div>
+                      <div><span className="text-muted-foreground">PAN:</span> {app.pan_number || '—'}</div>
+                      <div><span className="text-muted-foreground">FSSAI:</span> {app.fssai_number || '—'}</div>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      <KycDoc label="Aadhaar Front" path={app.aadhaar_front_url} />
+                      <KycDoc label="Aadhaar Back" path={app.aadhaar_back_url} />
+                      <KycDoc label="PAN" path={app.pan_image_url} />
+                      <KycDoc label="FSSAI" path={app.fssai_license_url} />
+                      <KycDoc label="Selfie" path={app.selfie_url} />
+                    </div>
+                  </>
+                )}
+              </div>
+
 
               {app.approval_status === 'pending' && (
                 <div className="flex gap-3 pt-4">
