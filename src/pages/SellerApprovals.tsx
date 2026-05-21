@@ -76,7 +76,17 @@ export default function SellerApprovals() {
           approval_status,
           created_at,
           rejection_reason,
-          is_deactivated
+          is_deactivated,
+          aadhaar_number,
+          pan_number,
+          fssai_number,
+          aadhaar_front_url,
+          aadhaar_back_url,
+          pan_image_url,
+          selfie_url,
+          fssai_license_url,
+          kyc_status,
+          kyc_submitted_at
         `)
         .order('created_at', { ascending: false });
 
