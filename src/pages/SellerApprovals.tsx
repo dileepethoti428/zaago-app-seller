@@ -248,6 +248,32 @@ export default function SellerApprovals() {
                 </div>
               )}
 
+              <div className="border border-border rounded-lg p-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold">KYC Verification</p>
+                  <Badge variant={app.kyc_submitted_at ? 'default' : 'secondary'}>
+                    {app.kyc_submitted_at ? `Submitted` : 'Not submitted'}
+                  </Badge>
+                </div>
+                {app.kyc_submitted_at && (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                      <div><span className="text-muted-foreground">Aadhaar:</span> {app.aadhaar_number || '—'}</div>
+                      <div><span className="text-muted-foreground">PAN:</span> {app.pan_number || '—'}</div>
+                      <div><span className="text-muted-foreground">FSSAI:</span> {app.fssai_number || '—'}</div>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      <KycDoc label="Aadhaar Front" path={app.aadhaar_front_url} />
+                      <KycDoc label="Aadhaar Back" path={app.aadhaar_back_url} />
+                      <KycDoc label="PAN" path={app.pan_image_url} />
+                      <KycDoc label="FSSAI" path={app.fssai_license_url} />
+                      <KycDoc label="Selfie" path={app.selfie_url} />
+                    </div>
+                  </>
+                )}
+              </div>
+
+
               {app.approval_status === 'pending' && (
                 <div className="flex gap-3 pt-4">
                   <Button
