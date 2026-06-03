@@ -1,40 +1,41 @@
-## Move Bank + KYC into the Create Account page
+# Delivery Calendar: missing status fix
 
-Merge the Bank Details Setup and KYC Verification into the signup screen so the seller fills everything in one flow on `Login.tsx` (the "Create Account" page). Remove the redirect to `/bank-details` after signup.
+## What's happening
 
-### Flow (single screen, 3 steps in one card)
-On the existing Create Account view, when `isSignUp` is true, replace the single submit with a stepper:
+The calendar only paints a day when a row exists in `daily_orders` for that subscription + date. For many subscriptions, rows are sparse — example: an "everyday" subscription starting 2026‑04‑19 has only 8 `daily_orders` rows across April–May (delivered/pending), so every other day in the month renders blank. Subscriptions where `process-daily-subscriptions` consistently created rows look fine; the others look "empty".
 
-```text
-Step 1 — Account     Step 2 — Bank Details     Step 3 — KYC Verification
- (email, password,    (account holder,           (Aadhaar/PAN/FSSAI numbers
-  phone, business,     account no, IFSC,          + 5 document uploads:
-  T&C checkbox)        bank, branch, type)        Aadhaar front/back,
-                                                  PAN, FSSAI, Selfie)
-```
+Root cause: the calendar treats absence of a `daily_orders` row as "no delivery scheduled", but the seller's mental model is "this is an everyday/alternative/custom plan, every scheduled date should be visible".
 
-- Header stays "Create Account / Sign up for your Zaago Seller account".
-- A progress indicator (1 → 2 → 3) sits under the header.
-- "Next" advances after validating the current step. "Back" returns. Final button is "Create Account & Submit for Approval".
+## Fix
 
-### What happens on final submit
-1. `supabase.auth.signUp(...)` with the same metadata it sends today.
-2. Wait for the returned session (sign-up is configured to return one in this project — same as today's bank page flow).
-3. Upload the 5 KYC files to private bucket `seller-kyc/{user.id}/...` (bucket and RLS already created).
-4. `update sellers` with all bank fields, KYC numbers, KYC file paths, `kyc_submitted_at = now()`, `kyc_status = 'pending'`.
-5. Toast success → `navigate('/pending-approval')`.
+Rebuild `useSubscriptionDeliveryHistory` so the calendar is driven by the subscription's own schedule, and `daily_orders` only supplies the actual status for days that have records.
 
-If signup returns no session (email confirmation required), show a toast asking the user to verify email and sign in — then on first sign-in we route them to `/bank-details` as a fallback so nothing is lost. (Keeps the existing page as a safety net.)
+### Steps
 
-### Files changed
-- `src/pages/Login.tsx` — convert sign-up form into a 3-step wizard; integrate uploads + bank/KYC update; keep sign-in unchanged.
-- `src/components/ProtectedRoute.tsx` — after successful signup with session, allow redirect to `/pending-approval` directly (skip forced `/bank-details` push when `kyc_submitted_at` is already set).
-- `src/pages/BankDetails.tsx` — keep as fallback for users who must verify email first or who skipped earlier; no functional change required.
+1. **Hook signature** — change `useSubscriptionDeliveryHistory(subscriptionId)` to also accept the subscription object (or fetch it inside the hook by id): `start_date`, `end_date`, `subscription_type`, `delivery_days`, `status`.
+2. **Compute scheduled dates** for the visible window (last 30 days through 30 days ahead in IST):
+   - `everyday` → every date in window from `start_date` to `min(end_date, window_end)`
+   - `alternative` → every other day from `start_date`
+   - `custom` → dates whose weekday is in `delivery_days`
+   - Skip dates before `start_date` or after `end_date`/cancellation
+3. **Overlay `daily_orders`** (existing query, extended to also include future dates up to window end, not just `<= today`) and `vacation_compensations`.
+4. **Per-day status resolution**:
+   - Has `daily_orders` row → use that status (current logic: delivered/missed/in_progress/skipped)
+   - No row, date < today, scheduled by plan → `missed` (clickable to compensate) with `dailyOrderId = null`
+   - No row, date >= today, scheduled by plan → `scheduled`
+   - Not in plan → blank (unchanged)
+5. **Compensation click path** — `SubscriptionDeliveryCalendar` already passes `dailyOrderId` (nullable) to `onMissedDateClick`; `CompensationAssignmentDialog` must accept `null` and create the compensation without linking a daily order row. Verify and adjust if needed.
+6. **Missed counts hook** (`useSubscriptionMissedCounts`) — same gap exists in the badge count. Mirror the schedule-based computation so the count reflects truly missed scheduled days, not just rows present in `daily_orders`.
 
 ### Out of scope
-- No schema changes (already done in the previous migration).
-- No admin dashboard changes (already updated to show KYC).
-- No new routes.
 
-### Validation rules (same as current BankDetails)
-- IFSC `^[A-Z]{4}0[A-Z0-9]{6}$`, Account no ≥ 8 digits, Aadhaar 12 digits, PAN `^[A-Z]{5}[0-9]{4}[A-Z]$`, FSSAI 14 digits, all 5 documents required.
+- No backfill of historical `daily_orders` rows.
+- No changes to `process-daily-subscriptions` cron behavior.
+- No schema changes.
+
+### Files
+
+- `src/hooks/useSubscriptionDeliveryHistory.ts` (rewrite both hooks)
+- `src/components/SubscriptionDeliveryCalendar.tsx` (minor: handle null `dailyOrderId`)
+- `src/components/CompensationAssignmentDialog.tsx` (allow null `dailyOrderId` if not already)
+- `src/components/CustomerDetailsDialog.tsx` (pass subscription schedule fields into the hook)
