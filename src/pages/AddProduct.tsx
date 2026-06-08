@@ -286,6 +286,24 @@ export default function AddProductPage() {
       return;
     }
 
+    // Guard: ensure a sellers row exists for this user so products are never orphaned
+    const { data: sellerRow, error: sellerCheckError } = await supabase
+      .from('sellers')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (sellerCheckError || !sellerRow) {
+      toast({
+        title: "Seller profile missing",
+        description: "Your seller account is not fully set up. Please complete signup/KYC before adding products.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+
+
     // Check if GPS location is detected
     if (!productLocation.latitude || !productLocation.longitude) {
       toast({
