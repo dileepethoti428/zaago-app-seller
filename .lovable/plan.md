@@ -1,41 +1,40 @@
-# Delivery Calendar: missing status fix
+# Plan: Show products per category + edit shortcuts
 
-## What's happening
+## Goal
+On the **Manage Categories** page, let the seller:
+1. Expand any category card to see which products are assigned to it.
+2. Edit the category (already exists) and jump to edit any of its products from the same place.
 
-The calendar only paints a day when a row exists in `daily_orders` for that subscription + date. For many subscriptions, rows are sparse — example: an "everyday" subscription starting 2026‑04‑19 has only 8 `daily_orders` rows across April–May (delivered/pending), so every other day in the month renders blank. Subscriptions where `process-daily-subscriptions` consistently created rows look fine; the others look "empty".
+## Changes (single file: `src/pages/ManageCategories.tsx`)
 
-Root cause: the calendar treats absence of a `daily_orders` row as "no delivery scheduled", but the seller's mental model is "this is an everyday/alternative/custom plan, every scheduled date should be visible".
+### 1. Make each category card expandable
+- Wrap each category `Card` in a `Collapsible` (already in the UI kit: `@/components/ui/collapsible`).
+- Add a chevron button on the card that toggles open/closed.
+- Show a small count badge next to the category name: "X products".
 
-## Fix
+### 2. Fetch products per category (lazy, on expand)
+- New `useQuery` keyed by `['category-products', categoryId]`, enabled only when that category is expanded.
+- Query: `products` table where `seller_id = user.id` AND `category = <category.name>` (the products table stores category by name string today — confirmed by existing AddProduct/Products code). Select `id, name, price, image_url, stock_quantity, is_active`.
+- Sort by name.
 
-Rebuild `useSubscriptionDeliveryHistory` so the calendar is driven by the subscription's own schedule, and `daily_orders` only supplies the actual status for days that have records.
+### 3. Expanded content UI
+For each product show:
+- Thumbnail (image_url) + name
+- Price + stock + active/inactive pill
+- **Edit** button → `navigate('/products/' + id + '/edit')` (uses existing EditProduct route)
 
-### Steps
+Empty state: "No products in this category yet" + a small "Add product" button → `/add-product`.
 
-1. **Hook signature** — change `useSubscriptionDeliveryHistory(subscriptionId)` to also accept the subscription object (or fetch it inside the hook by id): `start_date`, `end_date`, `subscription_type`, `delivery_days`, `status`.
-2. **Compute scheduled dates** for the visible window (last 30 days through 30 days ahead in IST):
-   - `everyday` → every date in window from `start_date` to `min(end_date, window_end)`
-   - `alternative` → every other day from `start_date`
-   - `custom` → dates whose weekday is in `delivery_days`
-   - Skip dates before `start_date` or after `end_date`/cancellation
-3. **Overlay `daily_orders`** (existing query, extended to also include future dates up to window end, not just `<= today`) and `vacation_compensations`.
-4. **Per-day status resolution**:
-   - Has `daily_orders` row → use that status (current logic: delivered/missed/in_progress/skipped)
-   - No row, date < today, scheduled by plan → `missed` (clickable to compensate) with `dailyOrderId = null`
-   - No row, date >= today, scheduled by plan → `scheduled`
-   - Not in plan → blank (unchanged)
-5. **Compensation click path** — `SubscriptionDeliveryCalendar` already passes `dailyOrderId` (nullable) to `onMissedDateClick`; `CompensationAssignmentDialog` must accept `null` and create the compensation without linking a daily order row. Verify and adjust if needed.
-6. **Missed counts hook** (`useSubscriptionMissedCounts`) — same gap exists in the badge count. Mirror the schedule-based computation so the count reflects truly missed scheduled days, not just rows present in `daily_orders`.
+### 4. Category edit
+Already wired (`/categories/:id/edit` via the pencil button) — no change, just confirming it stays.
 
-### Out of scope
-
-- No backfill of historical `daily_orders` rows.
-- No changes to `process-daily-subscriptions` cron behavior.
+## Out of scope
 - No schema changes.
+- No changes to AddProduct/EditProduct themselves.
+- No drag-to-reassign products between categories (can be a follow-up if you want it).
 
-### Files
+## Files touched
+- `src/pages/ManageCategories.tsx` (only)
 
-- `src/hooks/useSubscriptionDeliveryHistory.ts` (rewrite both hooks)
-- `src/components/SubscriptionDeliveryCalendar.tsx` (minor: handle null `dailyOrderId`)
-- `src/components/CompensationAssignmentDialog.tsx` (allow null `dailyOrderId` if not already)
-- `src/components/CustomerDetailsDialog.tsx` (pass subscription schedule fields into the hook)
+## Open question
+Products in this project are linked to categories by **name string** (`products.category`), not by `categories.id`. The plan uses name-match, which works with current data. Want me to also migrate to id-based linkage? (Bigger change — recommend doing it separately.)
