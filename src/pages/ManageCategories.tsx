@@ -245,7 +245,7 @@ const ManageCategories = () => {
                           categoryName={category.name}
                           sellerId={user?.id}
                           enabled={isOpen}
-                          onEdit={(pid) => navigate(`/edit-product/${pid}`)}
+                          onEdit={(pid) => navigate(`/products/${pid}/edit`)}
                           onAdd={() => navigate('/add-product')}
                         />
                       </div>
