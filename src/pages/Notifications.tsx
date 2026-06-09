@@ -56,7 +56,7 @@ const Notifications = () => {
         .from('sellers')
         .select('id')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
       
       const isSeller = !!sellerData;
       
