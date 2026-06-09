@@ -29,10 +29,10 @@ const Notifications = () => {
 
   const notificationTypes = [
     { value: 'all', label: 'All Notifications' },
-    { value: 'delivery', label: 'Product Delivered' },
     { value: 'stock_alert', label: 'Stock Alerts' },
-    { value: 'order', label: 'Order Updates' },
-    { value: 'payment', label: 'Payment Updates' },
+    { value: 'delivery', label: 'Delivery Updates' },
+    { value: 'order_update', label: 'Order Updates' },
+    { value: 'payment_confirmed', label: 'Payment Updates' },
     { value: 'system', label: 'System Notifications' }
   ];
 
