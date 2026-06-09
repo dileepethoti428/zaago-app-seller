@@ -1,40 +1,30 @@
-# Plan: Show products per category + edit shortcuts
+# Fix Notifications page showing "No notifications found"
 
-## Goal
-On the **Manage Categories** page, let the seller:
-1. Expand any category card to see which products are assigned to it.
-2. Edit the category (already exists) and jump to edit any of its products from the same place.
+## Root cause
+The `public.notifications` table has only INSERT RLS policies. There is no `SELECT` policy, so every read from the client is blocked by RLS and returns an empty array. Your account (`034f84a0…`) actually has 148 seller notifications in the database (98 `stock_alert` + 50 `delivery`), they just can't be fetched from the browser.
 
-## Changes (single file: `src/pages/ManageCategories.tsx`)
+## Changes
 
-### 1. Make each category card expandable
-- Wrap each category `Card` in a `Collapsible` (already in the UI kit: `@/components/ui/collapsible`).
-- Add a chevron button on the card that toggles open/closed.
-- Show a small count badge next to the category name: "X products".
+### 1. Database migration — add SELECT policies on `notifications`
+- Add policy: a user can `SELECT` rows where `user_id = auth.uid()`.
+- Add policy: a user can `UPDATE` rows where `user_id = auth.uid()` (so "Mark as read" / "Mark all as read" actually persist — they're silently failing today for the same reason).
+- Grant `SELECT, UPDATE` on `public.notifications` to `authenticated` (kept narrow — no DELETE, no anon access).
 
-### 2. Fetch products per category (lazy, on expand)
-- New `useQuery` keyed by `['category-products', categoryId]`, enabled only when that category is expanded.
-- Query: `products` table where `seller_id = user.id` AND `category = <category.name>` (the products table stores category by name string today — confirmed by existing AddProduct/Products code). Select `id, name, price, image_url, stock_quantity, is_active`.
-- Sort by name.
+No schema/column changes. No effect on the existing INSERT policies used by triggers/edge functions.
 
-### 3. Expanded content UI
-For each product show:
-- Thumbnail (image_url) + name
-- Price + stock + active/inactive pill
-- **Edit** button → `navigate('/products/' + id + '/edit')` (uses existing EditProduct route)
-
-Empty state: "No products in this category yet" + a small "Add product" button → `/add-product`.
-
-### 4. Category edit
-Already wired (`/categories/:id/edit` via the pencil button) — no change, just confirming it stays.
+### 2. `src/pages/Notifications.tsx` — small UX fixes (frontend only)
+- Replace the `.single()` seller lookup with `.maybeSingle()` so a missing seller row doesn't throw.
+- Keep the existing "if seller, show only `role='seller'`" filter (this matches what you want — stock alerts, delivery updates, etc. for the seller).
+- Fix the type-filter dropdown values so they line up with the actual `type` values stored for sellers (`stock_alert`, `delivery`, plus future `order_update`, `payment`, `system`). Currently the option `order` doesn't match anything in the DB.
+- Re-fetch on the realtime `notifications` INSERT event (already wired in `useRealtimeSync`) so new stock alerts appear without a refresh.
 
 ## Out of scope
-- No schema changes.
-- No changes to AddProduct/EditProduct themselves.
-- No drag-to-reassign products between categories (can be a follow-up if you want it).
+- Firebase / push delivery — untouched, you confirmed it's working.
+- No changes to how notifications are created (triggers / edge functions stay as-is).
+- No changes to admin or customer notification flows.
 
-## Files touched
-- `src/pages/ManageCategories.tsx` (only)
-
-## Open question
-Products in this project are linked to categories by **name string** (`products.category`), not by `categories.id`. The plan uses name-match, which works with current data. Want me to also migrate to id-based linkage? (Bigger change — recommend doing it separately.)
+## Verification
+After the migration:
+1. Log in as the seller, open Notifications → should immediately list the 98 stock alerts + 50 delivery notifications.
+2. Click "Mark all as read" → unread count drops to 0 and persists on refresh.
+3. Trigger a new low-stock event → new row appears in the list via realtime.
