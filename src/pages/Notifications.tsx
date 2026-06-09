@@ -47,6 +47,10 @@ const Notifications = () => {
     filterNotifications();
   }, [notifications, searchTerm, typeFilter]);
 
+  useEffect(() => {
+    setVisibleCount(10);
+  }, [searchTerm, typeFilter]);
+
   const fetchNotifications = async () => {
     if (!user?.id) return;
     
