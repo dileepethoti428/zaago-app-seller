@@ -266,62 +266,76 @@ const Notifications = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
             </div>
           ) : filteredNotifications.length > 0 ? (
-            filteredNotifications.map((notification) => (
-              <div
-                key={notification.id}
-                className={`p-6 flex items-start gap-4 hover:bg-muted/50 transition-colors ${
-                  !notification.is_read ? 'bg-primary/5' : ''
-                }`}
-              >
-                <Bell className="w-5 h-5 text-muted-foreground mt-1" />
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-foreground">
-                      {notification.title || 'System'}
-                    </span>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      notification.type === 'delivery' ? 'bg-green-100 text-green-800' :
-                      notification.type === 'stock_alert' ? 'bg-orange-100 text-orange-800' :
-                      notification.type === 'order' ? 'bg-blue-100 text-blue-800' :
-                      notification.type === 'payment' ? 'bg-purple-100 text-purple-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {notification.type === 'delivery' ? 'Delivery_success' :
-                       notification.type === 'stock_alert' ? 'Assignment' :
-                       notification.type === 'order' ? 'Order_update' :
-                       notification.type === 'payment' ? 'Promotion' :
-                       'General'}
-                    </span>
-                    {!notification.is_read && (
-                      <div className="w-2 h-2 bg-primary rounded-full"></div>
-                    )}
-                  </div>
-                  
-                  <p className="text-muted-foreground text-sm mb-2">
-                    {notification.message}
-                  </p>
-                  
-                  <p className="text-muted-foreground text-xs">
-                    {new Date(notification.created_at).toLocaleDateString('en-GB', {
-                      day: '2-digit',
-                      month: '2-digit', 
-                      year: 'numeric'
-                    })}, {new Date(notification.created_at).toLocaleTimeString('en-GB', {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => markAsRead(notification.id)}
-                  className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+            <>
+              {filteredNotifications.slice(0, visibleCount).map((notification) => (
+                <div
+                  key={notification.id}
+                  className={`p-6 flex items-start gap-4 hover:bg-muted/50 transition-colors ${
+                    !notification.is_read ? 'bg-primary/5' : ''
+                  }`}
                 >
-                  <CheckCircle2 className="w-5 h-5" />
-                </button>
-              </div>
-            ))
+                  <Bell className="w-5 h-5 text-muted-foreground mt-1" />
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-semibold text-foreground">
+                        {notification.title || 'System'}
+                      </span>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        notification.type === 'delivery' ? 'bg-green-100 text-green-800' :
+                        notification.type === 'stock_alert' ? 'bg-orange-100 text-orange-800' :
+                        notification.type === 'order' ? 'bg-blue-100 text-blue-800' :
+                        notification.type === 'payment' ? 'bg-purple-100 text-purple-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {notification.type === 'delivery' ? 'Delivery_success' :
+                         notification.type === 'stock_alert' ? 'Assignment' :
+                         notification.type === 'order' ? 'Order_update' :
+                         notification.type === 'payment' ? 'Promotion' :
+                         'General'}
+                      </span>
+                      {!notification.is_read && (
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                      )}
+                    </div>
+                    
+                    <p className="text-muted-foreground text-sm mb-2">
+                      {notification.message}
+                    </p>
+                    
+                    <p className="text-muted-foreground text-xs">
+                      {new Date(notification.created_at).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit', 
+                        year: 'numeric'
+                      })}, {new Date(notification.created_at).toLocaleTimeString('en-GB', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => markAsRead(notification.id)}
+                    className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <CheckCircle2 className="w-5 h-5" />
+                  </button>
+                </div>
+              ))}
+              
+              {visibleCount < filteredNotifications.length && (
+                <div className="p-4 text-center">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setVisibleCount(prev => prev + 10)}
+                    className="min-w-[140px]"
+                  >
+                    View More
+                  </Button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="p-8 text-center">
               <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
