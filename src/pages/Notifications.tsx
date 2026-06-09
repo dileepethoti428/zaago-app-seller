@@ -26,6 +26,7 @@ const Notifications = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [visibleCount, setVisibleCount] = useState(10);
 
   const notificationTypes = [
     { value: 'all', label: 'All Notifications' },
