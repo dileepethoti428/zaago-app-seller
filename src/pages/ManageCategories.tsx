@@ -276,23 +276,42 @@ const ManageCategories = () => {
         </div>
       )}
 
-      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Category?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. Products in this category will need to be reassigned.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => deleteId && deleteMutation.mutate(deleteId)}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
+          {deleteTarget && deleteTarget.productCount > 0 ? (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Cannot delete category</AlertDialogTitle>
+                <AlertDialogDescription>
+                  "{deleteTarget.name}" has {deleteTarget.productCount} product
+                  {deleteTarget.productCount === 1 ? '' : 's'}. Please move or delete those products
+                  before deleting the category.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Close</AlertDialogCancel>
+              </AlertDialogFooter>
+            </>
+          ) : (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Category?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. The category "{deleteTarget?.name}" will be
+                  permanently removed.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
         </AlertDialogContent>
       </AlertDialog>
     </div>
