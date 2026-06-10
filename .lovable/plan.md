@@ -1,30 +1,20 @@
-# Fix Notifications page showing "No notifications found"
+# Safer Category Deletion
 
-## Root cause
-The `public.notifications` table has only INSERT RLS policies. There is no `SELECT` policy, so every read from the client is blocked by RLS and returns an empty array. Your account (`034f84a0…`) actually has 148 seller notifications in the database (98 `stock_alert` + 50 `delivery`), they just can't be fetched from the browser.
+Update the delete flow on **Manage Categories** so a category can't be deleted while it still has products linked to it.
 
-## Changes
+## Behavior
 
-### 1. Database migration — add SELECT policies on `notifications`
-- Add policy: a user can `SELECT` rows where `user_id = auth.uid()`.
-- Add policy: a user can `UPDATE` rows where `user_id = auth.uid()` (so "Mark as read" / "Mark all as read" actually persist — they're silently failing today for the same reason).
-- Grant `SELECT, UPDATE` on `public.notifications` to `authenticated` (kept narrow — no DELETE, no anon access).
+- Each category already knows its product count (via the existing `countFor(category)` helper).
+- When the user clicks the trash icon:
+  - **If product count > 0** → open the existing confirm dialog in a "blocked" state:
+    - Title: "Cannot delete category"
+    - Description: "This category has N product(s). Please move or delete those products before deleting the category."
+    - Footer: only a "Close" button (no destructive Delete action).
+  - **If product count = 0** → keep current confirm dialog with a clear warning ("This action cannot be undone.") and the red **Delete** button that calls `deleteMutation`.
 
-No schema/column changes. No effect on the existing INSERT policies used by triggers/edge functions.
+## Implementation notes (frontend only, `src/pages/ManageCategories.tsx`)
 
-### 2. `src/pages/Notifications.tsx` — small UX fixes (frontend only)
-- Replace the `.single()` seller lookup with `.maybeSingle()` so a missing seller row doesn't throw.
-- Keep the existing "if seller, show only `role='seller'`" filter (this matches what you want — stock alerts, delivery updates, etc. for the seller).
-- Fix the type-filter dropdown values so they line up with the actual `type` values stored for sellers (`stock_alert`, `delivery`, plus future `order_update`, `payment`, `system`). Currently the option `order` doesn't match anything in the DB.
-- Re-fetch on the realtime `notifications` INSERT event (already wired in `useRealtimeSync`) so new stock alerts appear without a refresh.
-
-## Out of scope
-- Firebase / push delivery — untouched, you confirmed it's working.
-- No changes to how notifications are created (triggers / edge functions stay as-is).
-- No changes to admin or customer notification flows.
-
-## Verification
-After the migration:
-1. Log in as the seller, open Notifications → should immediately list the 98 stock alerts + 50 delivery notifications.
-2. Click "Mark all as read" → unread count drops to 0 and persists on refresh.
-3. Trigger a new low-stock event → new row appears in the list via realtime.
+- Store the full category object (or `{ id, productCount }`) in state instead of just `deleteId`, so the dialog can branch on count.
+- Render dialog body/footer conditionally based on whether the selected category has products.
+- As a safety net (in case counts are stale), the `deleteMutation`'s `mutationFn` re-checks product count with a quick `products` query before deleting; if any exist, abort and show a toast "Category has products and can't be deleted."
+- No DB / RLS / migration changes.

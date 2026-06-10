@@ -26,7 +26,7 @@ const ManageCategories = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string; productCount: number } | null>(null);
   const [openIds, setOpenIds] = useState<Record<string, boolean>>({});
 
   const { data: categories, isLoading } = useQuery({
