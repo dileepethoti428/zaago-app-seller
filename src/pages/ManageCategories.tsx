@@ -85,6 +85,18 @@ const ManageCategories = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      // Safety net: re-check product count before deleting
+      const { data: linked, error: checkErr } = await supabase
+        .from('products')
+        .select('id', { count: 'exact', head: false })
+        .eq('seller_id', user?.id)
+        .or(`category_id.eq.${id},category.eq.${deleteTarget?.name ?? ''}`)
+        .limit(1);
+      if (checkErr) throw checkErr;
+      if (linked && linked.length > 0) {
+        throw new Error('HAS_PRODUCTS');
+      }
+
       const { error } = await supabase
         .from('categories')
         .delete()
@@ -94,11 +106,17 @@ const ManageCategories = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['seller-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['seller-category-counts'] });
       toast({ title: 'Category deleted' });
-      setDeleteId(null);
+      setDeleteTarget(null);
     },
-    onError: () => {
-      toast({ title: 'Error deleting category', variant: 'destructive' });
+    onError: (err: any) => {
+      if (err?.message === 'HAS_PRODUCTS') {
+        toast({ title: "Category has products and can't be deleted.", variant: 'destructive' });
+      } else {
+        toast({ title: 'Error deleting category', variant: 'destructive' });
+      }
+      setDeleteTarget(null);
     },
   });
 
