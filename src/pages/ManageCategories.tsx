@@ -26,7 +26,7 @@ const ManageCategories = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string; productCount: number } | null>(null);
   const [openIds, setOpenIds] = useState<Record<string, boolean>>({});
 
   const { data: categories, isLoading } = useQuery({
@@ -85,6 +85,18 @@ const ManageCategories = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      // Safety net: re-check product count before deleting
+      const { data: linked, error: checkErr } = await supabase
+        .from('products')
+        .select('id', { count: 'exact', head: false })
+        .eq('seller_id', user?.id)
+        .or(`category_id.eq.${id},category.eq.${deleteTarget?.name ?? ''}`)
+        .limit(1);
+      if (checkErr) throw checkErr;
+      if (linked && linked.length > 0) {
+        throw new Error('HAS_PRODUCTS');
+      }
+
       const { error } = await supabase
         .from('categories')
         .delete()
@@ -94,11 +106,17 @@ const ManageCategories = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['seller-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['seller-category-counts'] });
       toast({ title: 'Category deleted' });
-      setDeleteId(null);
+      setDeleteTarget(null);
     },
-    onError: () => {
-      toast({ title: 'Error deleting category', variant: 'destructive' });
+    onError: (err: any) => {
+      if (err?.message === 'HAS_PRODUCTS') {
+        toast({ title: "Category has products and can't be deleted.", variant: 'destructive' });
+      } else {
+        toast({ title: 'Error deleting category', variant: 'destructive' });
+      }
+      setDeleteTarget(null);
     },
   });
 
@@ -222,7 +240,7 @@ const ManageCategories = () => {
                           variant="outline"
                           size="icon"
                           className="text-destructive hover:text-destructive"
-                          onClick={() => setDeleteId(category.id)}
+                          onClick={() => setDeleteTarget({ id: category.id, name: category.name, productCount })}
                           title="Delete category"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -258,23 +276,42 @@ const ManageCategories = () => {
         </div>
       )}
 
-      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Category?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. Products in this category will need to be reassigned.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => deleteId && deleteMutation.mutate(deleteId)}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
+          {deleteTarget && deleteTarget.productCount > 0 ? (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Cannot delete category</AlertDialogTitle>
+                <AlertDialogDescription>
+                  "{deleteTarget.name}" has {deleteTarget.productCount} product
+                  {deleteTarget.productCount === 1 ? '' : 's'}. Please move or delete those products
+                  before deleting the category.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Close</AlertDialogCancel>
+              </AlertDialogFooter>
+            </>
+          ) : (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Category?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. The category "{deleteTarget?.name}" will be
+                  permanently removed.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
         </AlertDialogContent>
       </AlertDialog>
     </div>
