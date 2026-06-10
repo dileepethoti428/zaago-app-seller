@@ -20,7 +20,7 @@ import EditProduct from "./pages/EditProduct";
 import EditCategory from "./pages/EditCategory";
 import ManageCategories from "./pages/ManageCategories";
 import Subscriptions from "./pages/Subscriptions";
-import VacationCompensations from "./pages/VacationCompensations";
+
 import Payments from "./pages/Payments";
 import PaymentDetail from "./pages/PaymentDetail";
 import Settings from "./pages/Settings";
@@ -176,7 +176,7 @@ const AppContent = () => {
           <Route path="categories" element={<ManageCategories />} />
           <Route path="categories/:id/edit" element={<EditCategory />} />
           <Route path="subscriptions" element={<Subscriptions />} />
-          <Route path="vacation-compensations" element={<VacationCompensations />} />
+          
           <Route path="deliveries" element={<Deliveries />} />
           <Route path="delivery-agent" element={<DeliveryAgent />} />
           <Route path="delivery-agents" element={<DeliveryAgents />} />
