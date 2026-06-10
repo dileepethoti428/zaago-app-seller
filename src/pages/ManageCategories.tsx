@@ -240,7 +240,7 @@ const ManageCategories = () => {
                           variant="outline"
                           size="icon"
                           className="text-destructive hover:text-destructive"
-                          onClick={() => setDeleteId(category.id)}
+                          onClick={() => setDeleteTarget({ id: category.id, name: category.name, productCount })}
                           title="Delete category"
                         >
                           <Trash2 className="h-4 w-4" />
