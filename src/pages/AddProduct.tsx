@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { PlusCircle, Upload, Tag, DollarSign, Package, Plus, Minus, Camera, X, Check, Trash2, ChevronsUpDown } from 'lucide-react';
+import { PlusCircle, Upload, Tag, DollarSign, Package, Plus, Minus, Camera, X, Check, Trash2, ChevronsUpDown, Pencil } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
