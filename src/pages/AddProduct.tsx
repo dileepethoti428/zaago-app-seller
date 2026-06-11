@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { PlusCircle, Upload, Tag, DollarSign, Package, Plus, Minus, Camera, X, Check } from 'lucide-react';
+import { PlusCircle, Upload, Tag, DollarSign, Package, Plus, Minus, Camera, X, Check, Trash2, ChevronsUpDown } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +16,17 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function AddProductPage() {
   const { user } = useAuth();
