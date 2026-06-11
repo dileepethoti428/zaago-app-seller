@@ -79,6 +79,9 @@ export default function AddProductPage() {
   const [customUnit, setCustomUnit] = useState('');
   const [showCustomTagInput, setShowCustomTagInput] = useState(false);
   const [customTagName, setCustomTagName] = useState('');
+  const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string; hasProducts: boolean } | null>(null);
+  const [deletingCategory, setDeletingCategory] = useState(false);
 
   const [productVariants, setProductVariants] = useState<Array<{
     id?: string;
