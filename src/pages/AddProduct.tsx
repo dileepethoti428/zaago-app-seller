@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { PlusCircle, Upload, Tag, DollarSign, Package, Plus, Minus, Camera, X, Check } from 'lucide-react';
+import { PlusCircle, Upload, Tag, DollarSign, Package, Plus, Minus, Camera, X, Check, Trash2, ChevronsUpDown } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +16,17 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function AddProductPage() {
   const { user } = useAuth();
@@ -68,6 +79,9 @@ export default function AddProductPage() {
   const [customUnit, setCustomUnit] = useState('');
   const [showCustomTagInput, setShowCustomTagInput] = useState(false);
   const [customTagName, setCustomTagName] = useState('');
+  const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string; hasProducts: boolean } | null>(null);
+  const [deletingCategory, setDeletingCategory] = useState(false);
 
   const [productVariants, setProductVariants] = useState<Array<{
     id?: string;
@@ -656,29 +670,145 @@ export default function AddProductPage() {
                   </div>
                 ) : (
                   <>
-                    <select
-                      required={!showNewCategoryInput}
-                      value={showNewCategoryInput ? 'other' : formData.category_id}
-                      onChange={(e) => {
-                        if (e.target.value === 'other') {
-                          setShowNewCategoryInput(true);
-                          handleInputChange('category_id', '');
-                        } else {
-                          setShowNewCategoryInput(false);
-                          setNewCategoryName('');
-                          handleInputChange('category_id', e.target.value);
-                        }
-                      }}
-                      className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                    >
-                      <option value="">Select a category</option>
-                      {categories.map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
-                      <option value="other">+ Other (Add New)</option>
-                    </select>
+                    <Popover open={categoryPickerOpen} onOpenChange={setCategoryPickerOpen}>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all flex items-center justify-between"
+                        >
+                          <span className={showNewCategoryInput || !formData.category_id ? 'text-muted-foreground' : ''}>
+                            {showNewCategoryInput
+                              ? '+ Other (Add New)'
+                              : categories.find((c) => c.id === formData.category_id)?.name || 'Select a category'}
+                          </span>
+                          <ChevronsUpDown className="w-4 h-4 opacity-60 ml-2 shrink-0" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        align="start"
+                        className="p-1 w-[--radix-popover-trigger-width] max-h-72 overflow-y-auto bg-popover"
+                      >
+                        {categories.map((category) => {
+                          const isSelected = formData.category_id === category.id && !showNewCategoryInput;
+                          return (
+                            <div
+                              key={category.id}
+                              className={`flex items-center justify-between gap-2 rounded-md px-3 py-2 hover:bg-accent ${
+                                isSelected ? 'bg-accent' : ''
+                              }`}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowNewCategoryInput(false);
+                                  setNewCategoryName('');
+                                  handleInputChange('category_id', category.id);
+                                  setCategoryPickerOpen(false);
+                                }}
+                                className="flex-1 text-left flex items-center gap-2 text-foreground"
+                              >
+                                {isSelected && <Check className="w-4 h-4 text-primary" />}
+                                <span className="truncate">{category.name}</span>
+                              </button>
+                              <button
+                                type="button"
+                                aria-label={`Delete ${category.name}`}
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (!user?.id) return;
+                                  // Check products before opening dialog
+                                  const { data: prods } = await supabase
+                                    .from('products')
+                                    .select('id')
+                                    .eq('seller_id', user.id)
+                                    .or(`category_id.eq.${category.id},category.eq.${category.name}`)
+                                    .limit(1);
+                                  setDeleteTarget({
+                                    id: category.id,
+                                    name: category.name,
+                                    hasProducts: !!(prods && prods.length > 0),
+                                  });
+                                }}
+                                className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowNewCategoryInput(true);
+                            handleInputChange('category_id', '');
+                            setCategoryPickerOpen(false);
+                          }}
+                          className="w-full text-left rounded-md px-3 py-2 hover:bg-accent text-primary"
+                        >
+                          + Other (Add New)
+                        </button>
+                      </PopoverContent>
+                    </Popover>
+
+                    <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+                      <AlertDialogContent>
+                        {deleteTarget?.hasProducts ? (
+                          <>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Cannot delete category</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                "{deleteTarget.name}" has products in it. Move or delete those products first, then try again.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Close</AlertDialogCancel>
+                            </AlertDialogFooter>
+                          </>
+                        ) : (
+                          <>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Category?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{deleteTarget?.name}"? This cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                disabled={deletingCategory}
+                                onClick={async (e) => {
+                                  e.preventDefault();
+                                  if (!deleteTarget) return;
+                                  setDeletingCategory(true);
+                                  const { error } = await supabase
+                                    .from('categories')
+                                    .delete()
+                                    .eq('id', deleteTarget.id);
+                                  setDeletingCategory(false);
+                                  if (error) {
+                                    toast({
+                                      title: 'Delete failed',
+                                      description: error.message,
+                                      variant: 'destructive',
+                                    });
+                                    return;
+                                  }
+                                  setCategories((prev) => prev.filter((c) => c.id !== deleteTarget.id));
+                                  if (formData.category_id === deleteTarget.id) {
+                                    handleInputChange('category_id', '');
+                                  }
+                                  toast({ title: 'Category deleted' });
+                                  setDeleteTarget(null);
+                                }}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                {deletingCategory ? 'Deleting...' : 'Delete'}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </>
+                        )}
+                      </AlertDialogContent>
+                    </AlertDialog>
                     
                     {showNewCategoryInput && (
                       <div className="mt-2">

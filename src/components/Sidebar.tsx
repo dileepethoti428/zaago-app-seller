@@ -18,7 +18,6 @@ import {
   FileText,
   CalendarOff,
   IndianRupee,
-  Tag
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -41,7 +40,7 @@ const navigationLinks = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/customer-orders', label: 'Orders', icon: ShoppingCart },
   { href: '/subscriptions', label: 'Subscriptions', icon: CalendarClock },
-  { href: '/categories', label: 'Manage Categories', icon: Tag },
+  
   { href: '/delivery-agents', label: 'Delivery Partners', icon: Truck },
   { href: '/unassigned-orders', label: 'Unassigned Orders', icon: AlertTriangle },
   { href: '/products', label: 'Products', icon: Package },
