@@ -712,6 +712,18 @@ export default function AddProductPage() {
                               </button>
                               <button
                                 type="button"
+                                aria-label={`Edit ${category.name}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCategoryPickerOpen(false);
+                                  navigate(`/categories/${category.id}/edit`);
+                                }}
+                                className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
                                 aria-label={`Delete ${category.name}`}
                                 onClick={async (e) => {
                                   e.stopPropagation();
