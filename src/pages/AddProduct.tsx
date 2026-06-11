@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { PlusCircle, Upload, Tag, DollarSign, Package, Plus, Minus, Camera, X, Check, Trash2, ChevronsUpDown } from 'lucide-react';
+import { PlusCircle, Upload, Tag, DollarSign, Package, Plus, Minus, Camera, X, Check, Trash2, ChevronsUpDown, Pencil } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -709,6 +709,18 @@ export default function AddProductPage() {
                               >
                                 {isSelected && <Check className="w-4 h-4 text-primary" />}
                                 <span className="truncate">{category.name}</span>
+                              </button>
+                              <button
+                                type="button"
+                                aria-label={`Edit ${category.name}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCategoryPickerOpen(false);
+                                  navigate(`/categories/${category.id}/edit`);
+                                }}
+                                className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10"
+                              >
+                                <Pencil className="w-4 h-4" />
                               </button>
                               <button
                                 type="button"
