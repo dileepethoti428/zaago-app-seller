@@ -128,22 +128,7 @@ const ProductDetail = () => {
 
   const handleEdit = () => {
     if (!product) return;
-    
-    setFormData({
-      name: product.name,
-      description: product.description || '',
-      price: product.price.toString(),
-      stock_quantity: product.stock_quantity.toString(),
-      image_url: product.image_url || '',
-      is_active: product.is_active,
-      category: product.category || 'food',
-      type: product.type || '',
-      unit: product.unit || 'per litre',
-      discount_percentage: product.discount_percentage?.toString() || '',
-      benefits: product.benefits && product.benefits.length > 0 ? product.benefits : [''],
-      ingredients: product.ingredients && product.ingredients.length > 0 ? product.ingredients : ['']
-    });
-    setIsEditDialogOpen(true);
+    navigate(`/products/${product.id}/edit`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
