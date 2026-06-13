@@ -1,4 +1,4 @@
-import { ArrowRight, UserPlus, Mail, Lock, Phone, Building, Upload, Camera, CheckCircle2, ChevronLeft } from "lucide-react";
+import { ArrowRight, UserPlus, Mail, Lock, Phone, Building, Upload, Camera, CheckCircle2, ChevronLeft, Eye, EyeOff } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +29,7 @@ export default function LoginPage() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [uploadingKey, setUploadingKey] = useState<DocKey | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -377,9 +378,14 @@ export default function LoginPage() {
                 <label className="text-white text-base font-medium mb-3 block">Password</label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 w-5 h-5" />
-                  <input type="password" required minLength={6} value={formData.password}
+                  <input type={showPassword ? "text" : "password"} required minLength={6} value={formData.password}
                     onChange={(e) => setField('password', e.target.value)}
-                    placeholder="Enter your password" className={inputCls} />
+                    placeholder="Enter your password" className={`${inputCls} !pr-12`} />
+                  <button type="button" onClick={() => setShowPassword(s => !s)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                    aria-label={showPassword ? "Hide password" : "Show password"}>
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
                 </div>
                 <div className="mt-2 text-right">
                   <Link to="/forgot-password" className="text-green-500 hover:text-green-400 text-sm font-medium">Forgot Password?</Link>
@@ -406,8 +412,13 @@ export default function LoginPage() {
                 <label className="text-white text-sm font-medium mb-2 block">Password</label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 w-5 h-5" />
-                  <input type="password" minLength={6} value={formData.password}
-                    onChange={(e) => setField('password', e.target.value)} placeholder="Enter your password" className={inputCls} />
+                  <input type={showPassword ? "text" : "password"} minLength={6} value={formData.password}
+                    onChange={(e) => setField('password', e.target.value)} placeholder="Enter your password" className={`${inputCls} !pr-12`} />
+                  <button type="button" onClick={() => setShowPassword(s => !s)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                    aria-label={showPassword ? "Hide password" : "Show password"}>
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
                 </div>
                 <p className="text-xs text-zinc-500 mt-2">Password must be at least 6 characters</p>
               </div>
