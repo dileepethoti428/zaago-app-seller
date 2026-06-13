@@ -1,4 +1,4 @@
-import { ArrowRight, UserPlus, Mail, Lock, Phone, Building, Upload, Camera, CheckCircle2, ChevronLeft } from "lucide-react";
+import { ArrowRight, UserPlus, Mail, Lock, Phone, Building, Upload, Camera, CheckCircle2, ChevronLeft, Eye, EyeOff } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
