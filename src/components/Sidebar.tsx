@@ -179,7 +179,7 @@ export default function Sidebar() {
         {/* Logout and Toggle */}
         <div className="p-2 sm:p-4 border-t border-border space-y-1 sm:space-y-2">
           <button
-            onClick={handleLogout}
+            onClick={() => setShowSignOutDialog(true)}
             className="w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl sm:rounded-2xl zaago-button-ghost hover:bg-red-500/10 hover:text-red-400 active:bg-red-500/20 active:text-red-400/90 transition-colors"
           >
             <LogOut size={18} className="shrink-0 sm:w-5 sm:h-5" />
@@ -187,6 +187,14 @@ export default function Sidebar() {
               <span className="font-medium text-sm sm:text-base text-white">Sign Out</span>
             )}
           </button>
+          <SignOutConfirmationDialog
+            open={showSignOutDialog}
+            onOpenChange={setShowSignOutDialog}
+            onConfirm={async () => {
+              setShowSignOutDialog(false);
+              await handleLogout();
+            }}
+          />
           <SidebarTrigger className="w-full flex items-center justify-center p-2 rounded-xl sm:rounded-2xl zaago-button-ghost active:bg-zaago-accent/70">
             <Menu size={18} className="sm:w-5 sm:h-5" />
           </SidebarTrigger>
