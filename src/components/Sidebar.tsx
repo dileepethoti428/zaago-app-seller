@@ -1,5 +1,7 @@
 'use client';
+import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import SignOutConfirmationDialog from '@/components/SignOutConfirmationDialog';
 import { 
   LayoutDashboard,
   ShoppingCart,
