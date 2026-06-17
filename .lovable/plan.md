@@ -1,25 +1,36 @@
-# Fix Top Products revenue calculation
+## Add sign-out confirmation dialog
 
-## Problem
-The Dashboard's **Top Products** card shows revenue at the **original (undiscounted) price**. The RPC `get_seller_top_products_analytics` multiplies quantity by `item.unit_price` (which doesn't exist on order items) and falls back to `p.price` — neither applies the product discount.
+### Goal
+Prevent accidental sign-outs by requiring the user to confirm before the app logs them out. This applies to both the **Sidebar** Sign Out button and the **Topbar** logout flow (if reachable), using the existing shadcn AlertDialog component.
 
-This is inconsistent with the project's revenue rule:
-`revenue = quantity * price * (1 - discount/100)` (with fallback to product's current discount when historical item lacks one).
+### Implementation
 
-## Fix
-Update the RPC `public.get_seller_top_products_analytics` via a new migration to compute revenue using discount, in both the `SELECT` and the `ORDER BY`:
+1. **Create a reusable confirmation component** at `src/components/SignOutConfirmationDialog.tsx`.
+   - Wraps `AlertDialog`, `AlertDialogTrigger`, `AlertDialogContent`, `AlertDialogHeader`, `AlertDialogTitle`, `AlertDialogDescription`, `AlertDialogFooter`, `AlertDialogCancel`, `AlertDialogAction` from `src/components/ui/alert-dialog.tsx`.
+   - Accepts `open`, `onOpenChange`, and `onConfirm` props.
+   - Title: "Sign Out"
+   - Description: "Are you sure you want to sign out?"
+   - Cancel button: "Cancel"
+   - Confirm button: "Sign Out" (destructive variant).
 
-```sql
-SUM(
-  (item->>'quantity')::int *
-  COALESCE((item->>'price')::numeric, (item->>'base_price')::numeric, p.price) *
-  (1 - COALESCE((item->>'discount_percentage')::numeric, p.discount_percentage, 0) / 100)
-)
-```
+2. **Update `src/components/Sidebar.tsx`**
+   - Add local state `const [showSignOutDialog, setShowSignOutDialog] = useState(false);`.
+   - Change the logout button's `onClick` from `handleLogout` to `() => setShowSignOutDialog(true)`.
+   - Add `<SignOutConfirmationDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog} onConfirm={handleLogout} />` after the button.
+   - Leave the existing `handleLogout` implementation and error/toast logic untouched.
 
-Apply the same expression in the `ORDER BY` branch for `sort_by = 'revenue'`. Keep all other logic (seller filter, status filter, period window, quantity/orders sorting) unchanged.
+3. **Update `src/components/Topbar.tsx`**
+   - The Topbar currently hides the logout button behind a cart/user branch. Add the same `SignOutConfirmationDialog` wired to the logout button there, if a logout action is exposed in that component; otherwise, no change.
+   - If no logout button is present, the Topbar is unaffected.
 
-## Scope
-- One migration replacing the function body.
-- No frontend changes (`TopProductsCard.tsx`, `useTopProductsAnalytics.ts` untouched — return shape stays the same).
-- No impact on Performance Trends or other revenue queries.
+4. **No backend changes** required; this is a UI-only change.
+
+### Files changed
+- `src/components/SignOutConfirmationDialog.tsx` (new)
+- `src/components/Sidebar.tsx` (edit)
+- `src/components/Topbar.tsx` (conditional edit)
+
+### Validation
+- After implementation, confirm the Sign Out button in the Sidebar opens a centered confirmation dialog.
+- Clicking Cancel keeps the user logged in.
+- Clicking Sign Out executes the existing logout flow and shows the existing toast.
