@@ -68,6 +68,7 @@ export default function Sidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
   const collapsed = state === 'collapsed';
+  const [showSignOutDialog, setShowSignOutDialog] = useState(false);
 
   const handleNavClick = () => {
     // Keep sidebar open when navigation items are clicked
