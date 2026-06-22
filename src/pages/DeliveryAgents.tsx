@@ -76,14 +76,20 @@ export default function DeliveryAgents() {
     setEditValue(30);
   };
 
-  const handleMarkAbsent = async () => {
+  const handleMarkAbsent = async (replacementAgentUserId: string | null) => {
     if (!agentToMark) return;
-    await markAbsent.mutateAsync({ 
-      agentId: agentToMark.id, 
-      agentUserId: agentToMark.agent_id 
+    await markAbsent.mutateAsync({
+      agentId: agentToMark.id,
+      agentUserId: agentToMark.agent_id,
+      replacementAgentUserId,
     });
     setAgentToMark(null);
   };
+
+  const replacementCandidates = (agents ?? [])
+    .filter(a => a.is_online && a.is_active !== false && a.id !== agentToMark?.id)
+    .map(a => ({ userId: a.agent_id, name: a.name }));
+
 
   const handleMarkOnline = async (agentId: string) => {
     await markOnline.mutateAsync({ agentId });
@@ -426,9 +432,11 @@ export default function DeliveryAgents() {
         onOpenChange={(open) => !open && setAgentToMark(null)}
         agentName={agentToMark?.name || ''}
         ordersToday={agentToMark?.ordersToday || 0}
+        availableAgents={replacementCandidates}
         onConfirm={handleMarkAbsent}
         isPending={markAbsent.isPending}
       />
+
     </div>
   );
 }
