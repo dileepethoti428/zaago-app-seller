@@ -56,6 +56,7 @@ export default function AddProductPage() {
     name: '',
     description: '',
     base_price: '',
+    cost_price: '',
     stock_quantity: '',
     category_id: '',
     unit: 'per litre',
@@ -430,11 +431,28 @@ export default function AddProductPage() {
       // Handle custom unit
       const finalUnit = showCustomUnitInput && customUnit.trim() ? customUnit.trim() : formData.unit;
 
+      // Validate cost price if provided
+      let parsedCostPrice: number | null = null;
+      if (formData.cost_price.trim() !== '') {
+        const c = parseFloat(formData.cost_price);
+        if (isNaN(c) || c < 0) {
+          toast({
+            title: "Invalid cost price",
+            description: "Please enter a valid non-negative number for cost price.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+        parsedCostPrice = c;
+      }
+
       const productData = {
         name: formData.name,
         description: formData.description || null,
         base_price: parseFloat(formData.base_price),
         price: calculatedPrice,
+        cost_price: parsedCostPrice,
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         category_id: finalCategoryId,
         unit: finalUnit,
@@ -629,6 +647,25 @@ export default function AddProductPage() {
                     className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <DollarSign className="w-4 h-4" />
+                  Cost Price (Internal)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.cost_price}
+                  onChange={(e) => handleInputChange('cost_price', e.target.value)}
+                  placeholder="0.00"
+                  className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Only visible to you. Price you paid at the source. Leave empty if not applicable.
+                </p>
               </div>
 
               {/* Category Selection */}
