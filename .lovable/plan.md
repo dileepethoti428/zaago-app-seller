@@ -1,36 +1,25 @@
-## Add sign-out confirmation dialog
+Add a "Cost Price" input to the Add Product and Edit Product forms so sellers can record their internal sourcing cost when creating or updating a product.
 
-### Goal
-Prevent accidental sign-outs by requiring the user to confirm before the app logs them out. This applies to both the **Sidebar** Sign Out button and the **Topbar** logout flow (if reachable), using the existing shadcn AlertDialog component.
+Database context: the `products` table already has a `cost_price` numeric column and the proper RLS policies. No schema changes are needed.
 
-### Implementation
+Changes:
 
-1. **Create a reusable confirmation component** at `src/components/SignOutConfirmationDialog.tsx`.
-   - Wraps `AlertDialog`, `AlertDialogTrigger`, `AlertDialogContent`, `AlertDialogHeader`, `AlertDialogTitle`, `AlertDialogDescription`, `AlertDialogFooter`, `AlertDialogCancel`, `AlertDialogAction` from `src/components/ui/alert-dialog.tsx`.
-   - Accepts `open`, `onOpenChange`, and `onConfirm` props.
-   - Title: "Sign Out"
-   - Description: "Are you sure you want to sign out?"
-   - Cancel button: "Cancel"
-   - Confirm button: "Sign Out" (destructive variant).
+1. Add Product page (`src/pages/AddProduct.tsx`)
+   - Add `cost_price: ''` to the `formData` state.
+   - Place a new numeric input directly under the selling price field. Label it "Cost Price (Internal)" with a short note: "Only visible to you. Price you paid at the source."
+   - Validate that the value, if provided, is a non-negative number.
+   - Include `cost_price: formData.cost_price ? parseFloat(formData.cost_price) : null` in the product insert payload.
 
-2. **Update `src/components/Sidebar.tsx`**
-   - Add local state `const [showSignOutDialog, setShowSignOutDialog] = useState(false);`.
-   - Change the logout button's `onClick` from `handleLogout` to `() => setShowSignOutDialog(true)`.
-   - Add `<SignOutConfirmationDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog} onConfirm={handleLogout} />` after the button.
-   - Leave the existing `handleLogout` implementation and error/toast logic untouched.
+2. Edit Product page (`src/pages/EditProduct.tsx`)
+   - Add `cost_price: ''` to the `formData` state.
+   - Populate it from the existing product (`product.cost_price ?? ''`).
+   - Add the same input and label under the selling price field.
+   - Validate non-negative value.
+   - Include `cost_price: formData.cost_price ? parseFloat(formData.cost_price) : null` in the update payload.
 
-3. **Update `src/components/Topbar.tsx`**
-   - The Topbar currently hides the logout button behind a cart/user branch. Add the same `SignOutConfirmationDialog` wired to the logout button there, if a logout action is exposed in that component; otherwise, no change.
-   - If no logout button is present, the Topbar is unaffected.
+Validation:
+   - If a value is entered and it is not a valid number or is negative, show a toast error and block submission, matching the behavior on the Products listing cost edit dialog.
 
-4. **No backend changes** required; this is a UI-only change.
-
-### Files changed
-- `src/components/SignOutConfirmationDialog.tsx` (new)
-- `src/components/Sidebar.tsx` (edit)
-- `src/components/Topbar.tsx` (conditional edit)
-
-### Validation
-- After implementation, confirm the Sign Out button in the Sidebar opens a centered confirmation dialog.
-- Clicking Cancel keeps the user logged in.
-- Clicking Sign Out executes the existing logout flow and shows the existing toast.
+UI notes:
+   - Use the same unstyled/native number input pattern already used for price/stock in both forms.
+   - Keep the field optional and allow leaving it empty (stored as `null`).
