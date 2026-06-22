@@ -8,7 +8,15 @@ export function useMarkAgentAbsent() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ agentId, agentUserId }: { agentId: string; agentUserId: string }) => {
+    mutationFn: async ({
+      agentId,
+      agentUserId,
+      replacementAgentUserId,
+    }: {
+      agentId: string;
+      agentUserId: string;
+      replacementAgentUserId?: string | null;
+    }) => {
       const today = format(new Date(), 'yyyy-MM-dd');
 
       // Step 1: Set agent is_online = false
@@ -19,18 +27,19 @@ export function useMarkAgentAbsent() {
 
       if (agentError) throw agentError;
 
-      // Step 2: Unassign today's orders for this agent (using agent_id which is the user ID)
-      const { error: ordersError } = await supabase
+      // Step 2: Either transfer today's orders to replacement, or unassign them
+      const { data: updated, error: ordersError } = await supabase
         .from('daily_orders')
-        .update({ assigned_agent_id: null })
+        .update({ assigned_agent_id: replacementAgentUserId ?? null })
         .eq('assigned_agent_id', agentUserId)
-        .eq('date', today);
+        .eq('date', today)
+        .select('id');
 
       if (ordersError) throw ordersError;
 
-      return { success: true };
+      return { success: true, transferred: updated?.length ?? 0, replacementAgentUserId: replacementAgentUserId ?? null };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['delivery-agents-capacity'] });
       queryClient.invalidateQueries({ queryKey: ['delivery-agents-list'] });
       queryClient.invalidateQueries({ queryKey: ['daily-orders-counts'] });
@@ -42,9 +51,12 @@ export function useMarkAgentAbsent() {
       queryClient.invalidateQueries({ queryKey: ['seller-agent-order-counts-gps'] });
       toast({
         title: 'Agent Marked Absent',
-        description: "Agent is now offline and today's orders have been unassigned.",
+        description: result.replacementAgentUserId
+          ? `Agent is offline. ${result.transferred} order${result.transferred === 1 ? '' : 's'} transferred to replacement partner.`
+          : "Agent is now offline and today's orders have been unassigned.",
       });
     },
+
     onError: (error) => {
       toast({
         title: 'Error',
