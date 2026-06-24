@@ -11,7 +11,7 @@ import { useProductLocation } from '@/hooks/useProductLocation';
 import { MapPin, Navigation, RefreshCw, AlertCircle, Loader } from 'lucide-react';
 import { compressImage } from '@/lib/imageCompression';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { TAG_CATEGORIES, generateAutoTags, AutoTaggingData } from '@/config/productTags';
+import { TAG_CATEGORIES } from '@/config/productTags';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -369,23 +369,8 @@ export default function AddProductPage() {
       const benefits = formData.benefits.filter(b => b.trim() !== '');
       const ingredients = formData.ingredients.filter(i => i.trim() !== '');
 
-      // Determine final tags: use manual if selected, otherwise auto-generate
-      let finalTags: string[] = [];
-
-      if (formData.selectedTags.length > 0) {
-        finalTags = formData.selectedTags;
-      } else {
-        const selectedCategory = categories.find(c => c.id === formData.category_id);
-        const autoTagData: AutoTaggingData = {
-          categoryName: selectedCategory?.name || '',
-          stockQuantity: parseInt(formData.stock_quantity) || 0,
-          createdAt: new Date().toISOString(),
-          averageRating: 0,
-          totalOrders: 0,
-        };
-        
-        finalTags = generateAutoTags(autoTagData);
-      }
+      // Tags are optional — only save what the seller explicitly selected
+      const finalTags: string[] = formData.selectedTags;
 
       // Handle custom category creation - private to this seller
       let finalCategoryId = formData.category_id;
@@ -1191,8 +1176,7 @@ export default function AddProductPage() {
             
             <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4 mb-4">
               <p className="text-sm text-blue-900 dark:text-blue-200">
-                <strong>Auto-tagging:</strong> If you don't select any tags, the system will automatically 
-                assign tags based on product category, stock, orders, and ratings.
+                <strong>Tags are optional.</strong> If you don't select any, your product will be shown without tags.
               </p>
             </div>
 
