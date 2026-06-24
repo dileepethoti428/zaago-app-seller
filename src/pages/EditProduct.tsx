@@ -13,7 +13,7 @@ import { useSellerLocation } from '@/hooks/useSellerLocation';
 import { useProductVariants } from '@/hooks/useProductVariants';
 import ProductVariants from '@/components/ProductVariants';
 import { compressImage } from '@/lib/imageCompression';
-import { TAG_CATEGORIES, generateAutoTags, AutoTaggingData } from '@/config/productTags';
+import { TAG_CATEGORIES } from '@/config/productTags';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -370,24 +370,8 @@ export default function EditProductPage() {
       const benefits = formData.benefits.filter(b => b.trim() !== '');
       const ingredients = formData.ingredients.filter(i => i.trim() !== '');
 
-      let finalTags: string[] = [];
-      if (formData.selectedTags.length > 0) {
-        finalTags = formData.selectedTags;
-      } else {
-        const { count: orderCount } = await supabase
-          .from('order_items')
-          .select('id', { count: 'exact', head: true })
-          .eq('product_id', id);
-        const selectedCategory = categories.find(c => c.id === formData.category_id);
-        const autoTagData: AutoTaggingData = {
-          categoryName: selectedCategory?.name || '',
-          stockQuantity: parseInt(formData.stock_quantity) || 0,
-          createdAt: product.created_at,
-          averageRating: (product as any).average_rating || 0,
-          totalOrders: orderCount || 0,
-        };
-        finalTags = generateAutoTags(autoTagData);
-      }
+      // Tags are optional — only save what the seller explicitly selected
+      const finalTags: string[] = formData.selectedTags;
 
       // Handle new category creation
       let finalCategoryId = formData.category_id;
@@ -1063,8 +1047,7 @@ export default function EditProductPage() {
 
             <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4 mb-4">
               <p className="text-sm text-blue-900 dark:text-blue-200">
-                <strong>Auto-tagging:</strong> If you don't select any tags, the system will automatically
-                assign tags based on product category, stock, orders, and ratings.
+                <strong>Tags are optional.</strong> If you don't select any, your product will be shown without tags.
               </p>
             </div>
 
