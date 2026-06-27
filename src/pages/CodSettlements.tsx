@@ -22,7 +22,7 @@ export default function CodSettlements() {
   const [search, setSearch] = useState('');
   const [period, setPeriod] = useState<TimePeriod>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [selectedAgent, setSelectedAgent] = useState<{ id: string; name: string; image: string | null } | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState<AgentSettlement | null>(null);
   const [visibleCount, setVisibleCount] = useState(5);
 
   const { data: agents, isLoading, settle, isSettling } = useCodSettlements(period, statusFilter, search);
