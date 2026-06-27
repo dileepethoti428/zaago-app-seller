@@ -11,6 +11,12 @@ export interface AgentSettlement {
   agent_id: string;
   agent_name: string;
   profile_image: string | null;
+  phone: string | null;
+  vehicle_type: string | null;
+  vehicle_number: string | null;
+  is_online: boolean;
+  joined_at: string | null;
+  total_deliveries: number;
   total_amount: number;
   pending_count: number;
   settled_count: number;
