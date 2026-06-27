@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useCodSettlements, type TimePeriod, type StatusFilter } from '@/hooks/useCodSettlements';
+import { useCodSettlements, type TimePeriod, type StatusFilter, type AgentSettlement } from '@/hooks/useCodSettlements';
 import { Skeleton } from '@/components/ui/skeleton';
 import AgentCodDetailDialog from '@/components/AgentCodDetailDialog';
 
