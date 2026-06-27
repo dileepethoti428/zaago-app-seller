@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { CheckCircle, Clock, IndianRupee } from 'lucide-react';
+import { CheckCircle, Clock, IndianRupee, Phone, Bike, Calendar, Package } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -21,6 +21,12 @@ interface Props {
   agentId: string | null;
   agentName: string;
   profileImage: string | null;
+  phone?: string | null;
+  vehicleType?: string | null;
+  vehicleNumber?: string | null;
+  isOnline?: boolean;
+  joinedAt?: string | null;
+  totalDeliveries?: number;
   period: TimePeriod;
   statusFilter: StatusFilter;
 }
