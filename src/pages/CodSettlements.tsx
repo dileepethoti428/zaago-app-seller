@@ -104,7 +104,7 @@ export default function CodSettlements() {
             <Card
               key={agent.agent_id}
               className="hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => setSelectedAgent({ id: agent.agent_id, name: agent.agent_name, image: agent.profile_image })}
+              onClick={() => setSelectedAgent(agent)}
             >
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
