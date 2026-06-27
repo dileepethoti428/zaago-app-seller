@@ -1,20 +1,49 @@
-## Goal
-When a seller doesn't pick any product tags, save the product with no tags (instead of auto-generating tags like "Fresh", "Best Seller", etc.). Currently, leaving the tag picker empty triggers auto-tagging, which is why products show tags the seller never chose.
+# Add Delivery Partner Details in COD Settlement Sheet
 
-## Changes
+Show the partner's contact and team info inside the COD detail sheet so you can quickly call them when money isn't settled.
 
-### 1. `src/pages/AddProduct.tsx`
-- Replace the auto-tagging fallback (lines ~372-389) so that `finalTags = formData.selectedTags` always. Remove the `else` branch that builds `AutoTaggingData` and calls `generateAutoTags`.
-- Remove the now-unused `generateAutoTags` / `AutoTaggingData` imports.
-- Update the helper text under the tag picker (line ~1194) from "Auto-tagging: If you don't select any tags…" to a neutral note like "Tags are optional. If you don't select any, your product will be shown without tags."
+## What you'll see
 
-### 2. `src/pages/EditProduct.tsx`
-- Same change as AddProduct: always use `formData.selectedTags` (lines ~373-389), drop the auto-tag branch and unused imports.
-- Update the helper text at line ~1066 to the same neutral wording.
+When you tap a partner in COD Settlements, the top of the detail sheet will show:
 
-### 3. No other changes
-- `ProductTags.tsx` already returns `null` when `tags` is empty, so the Products list and Customer Product Detail pages will automatically render nothing when a product has no tags.
-- `generateAutoTags` in `src/config/productTags.ts` can stay (unused) — leaving it avoids touching unrelated config.
+- **Profile + name** (as today)
+- **Phone number** with a green "Call" button — tap dials directly
+- **Online / Offline badge** next to the name (live status)
+- **Vehicle**: type + number (e.g. "Bike • TS09 AB 1234")
+- **Joined date**: "Partner since 12 Mar 2024"
+- **Total deliveries**: lifetime completed count
+- A small helper line: *"Not settled? Tap call to follow up."*
+
+Below that, the Pending / Settled summary and order list stay exactly as they are today.
+
+## Layout sketch
+
+```text
+┌────────────────────────────────────────┐
+│ [avatar] Ramesh Kumar     ● Online     │
+│          COD Order History             │
+│                                        │
+│ 📞 +91 98xxx xxxxx        [ Call ]     │
+│ 🛵 Bike • TS09 AB 1234                 │
+│ 📅 Partner since 12 Mar 2024           │
+│ 📦 348 deliveries completed            │
+│ ─────────────────────────────────────  │
+│ [Pending ₹420]   [Settled ₹1,200]      │
+│ ...order list...                       │
+└────────────────────────────────────────┘
+```
+
+## Technical notes
+
+- **No DB changes.** All fields already exist on `delivery_agents` (`phone`, `vehicle_type`, `vehicle_number`, `is_online`, `created_at`) and lifetime deliveries can come from a count of `delivery_history` for that agent, or an existing aggregate column if present (will verify on implementation).
+- **`AgentCodDetailDialog.tsx`**: accept new props (`phone`, `vehicleType`, `vehicleNumber`, `isOnline`, `joinedAt`, `totalDeliveries`) and render the new header block. Call button uses `<a href="tel:...">`.
+- **`CodSettlements.tsx`**: extend the agent fetch in `useCodSettlements` to also pull `phone, vehicle_type, vehicle_number, is_online, created_at`, expose them in `AgentSettlement`, and pass through `selectedAgent` to the dialog.
+- **`useCodSettlements.ts`**: widen the `delivery_agents` select; add a lightweight `delivery_history` count query (or reuse an existing count field) keyed by agent id for the selected partner only — fetched inside the dialog to avoid loading counts for every row.
+- Online badge: green dot if `is_online = true`, grey "Offline" otherwise.
+- Missing phone → show "No phone on file" and disable the Call button.
 
 ## Out of scope
-- No backfill of existing products that were already saved with auto-generated tags. (Tell me if you also want those cleared.)
+
+- No changes to the list card.
+- No SMS / WhatsApp action (only tap-to-dial).
+- No changes to settle / order list behavior.

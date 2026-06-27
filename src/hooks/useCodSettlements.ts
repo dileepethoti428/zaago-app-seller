@@ -11,6 +11,12 @@ export interface AgentSettlement {
   agent_id: string;
   agent_name: string;
   profile_image: string | null;
+  phone: string | null;
+  vehicle_type: string | null;
+  vehicle_number: string | null;
+  is_online: boolean;
+  joined_at: string | null;
+  total_deliveries: number;
   total_amount: number;
   pending_count: number;
   settled_count: number;
@@ -60,7 +66,7 @@ export function useCodSettlements(period: TimePeriod, statusFilter: StatusFilter
       // Fetch agent details
       const { data: agents, error: agentError } = await supabase
         .from('delivery_agents')
-        .select('id, name, profile_image')
+        .select('id, name, profile_image, phone, vehicle_type, vehicle_number, is_online, created_at, total_deliveries')
         .in('id', agentIds);
       if (agentError) throw agentError;
 
@@ -77,6 +83,12 @@ export function useCodSettlements(period: TimePeriod, statusFilter: StatusFilter
             agent_id: s.agent_id,
             agent_name: agent.name,
             profile_image: agent.profile_image,
+            phone: (agent as any).phone ?? null,
+            vehicle_type: (agent as any).vehicle_type ?? null,
+            vehicle_number: (agent as any).vehicle_number ?? null,
+            is_online: Boolean((agent as any).is_online),
+            joined_at: (agent as any).created_at ?? null,
+            total_deliveries: Number((agent as any).total_deliveries ?? 0),
             total_amount: 0,
             pending_count: 0,
             settled_count: 0,

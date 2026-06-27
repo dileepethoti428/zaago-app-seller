@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useCodSettlements, type TimePeriod, type StatusFilter } from '@/hooks/useCodSettlements';
+import { useCodSettlements, type TimePeriod, type StatusFilter, type AgentSettlement } from '@/hooks/useCodSettlements';
 import { Skeleton } from '@/components/ui/skeleton';
 import AgentCodDetailDialog from '@/components/AgentCodDetailDialog';
 
@@ -22,7 +22,7 @@ export default function CodSettlements() {
   const [search, setSearch] = useState('');
   const [period, setPeriod] = useState<TimePeriod>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [selectedAgent, setSelectedAgent] = useState<{ id: string; name: string; image: string | null } | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState<AgentSettlement | null>(null);
   const [visibleCount, setVisibleCount] = useState(5);
 
   const { data: agents, isLoading, settle, isSettling } = useCodSettlements(period, statusFilter, search);
@@ -104,7 +104,7 @@ export default function CodSettlements() {
             <Card
               key={agent.agent_id}
               className="hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => setSelectedAgent({ id: agent.agent_id, name: agent.agent_name, image: agent.profile_image })}
+              onClick={() => setSelectedAgent(agent)}
             >
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
@@ -180,9 +180,15 @@ export default function CodSettlements() {
       <AgentCodDetailDialog
         open={!!selectedAgent}
         onOpenChange={(open) => { if (!open) setSelectedAgent(null); }}
-        agentId={selectedAgent?.id || null}
-        agentName={selectedAgent?.name || ''}
-        profileImage={selectedAgent?.image || null}
+        agentId={selectedAgent?.agent_id || null}
+        agentName={selectedAgent?.agent_name || ''}
+        profileImage={selectedAgent?.profile_image || null}
+        phone={selectedAgent?.phone || null}
+        vehicleType={selectedAgent?.vehicle_type || null}
+        vehicleNumber={selectedAgent?.vehicle_number || null}
+        isOnline={selectedAgent?.is_online || false}
+        joinedAt={selectedAgent?.joined_at || null}
+        totalDeliveries={selectedAgent?.total_deliveries}
         period={period}
         statusFilter={statusFilter}
       />
