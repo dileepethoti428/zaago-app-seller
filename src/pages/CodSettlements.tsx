@@ -180,9 +180,15 @@ export default function CodSettlements() {
       <AgentCodDetailDialog
         open={!!selectedAgent}
         onOpenChange={(open) => { if (!open) setSelectedAgent(null); }}
-        agentId={selectedAgent?.id || null}
-        agentName={selectedAgent?.name || ''}
-        profileImage={selectedAgent?.image || null}
+        agentId={selectedAgent?.agent_id || null}
+        agentName={selectedAgent?.agent_name || ''}
+        profileImage={selectedAgent?.profile_image || null}
+        phone={selectedAgent?.phone || null}
+        vehicleType={selectedAgent?.vehicle_type || null}
+        vehicleNumber={selectedAgent?.vehicle_number || null}
+        isOnline={selectedAgent?.is_online || false}
+        joinedAt={selectedAgent?.joined_at || null}
+        totalDeliveries={selectedAgent?.total_deliveries}
         period={period}
         statusFilter={statusFilter}
       />
