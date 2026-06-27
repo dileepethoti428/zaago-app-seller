@@ -4094,6 +4094,8 @@ export type Database = {
           cancellation_reason: string | null
           cancelled_at: string | null
           cancelled_by: string | null
+          coupon_code: string | null
+          coupon_id: string | null
           created_at: string
           customer_name: string | null
           customer_phone: string | null
@@ -4159,6 +4161,8 @@ export type Database = {
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
+          coupon_code?: string | null
+          coupon_id?: string | null
           created_at?: string
           customer_name?: string | null
           customer_phone?: string | null
@@ -4224,6 +4228,8 @@ export type Database = {
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
+          coupon_code?: string | null
+          coupon_id?: string | null
           created_at?: string
           customer_name?: string | null
           customer_phone?: string | null
@@ -4290,6 +4296,20 @@ export type Database = {
             columns: ["assigned_agent_id"]
             isOneToOne: false
             referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "user_eligible_coupons"
             referencedColumns: ["id"]
           },
           {
