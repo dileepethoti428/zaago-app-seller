@@ -1,9 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useMapboxToken } from '@/hooks/useMapboxToken';
 import { supabase } from '@/integrations/supabase/client';
 
 interface MapSelectorProps {
@@ -12,130 +9,160 @@ interface MapSelectorProps {
   initialLocation?: { latitude: number; longitude: number };
 }
 
+declare global {
+  interface Window {
+    google?: any;
+    __zaagoInitGmaps?: () => void;
+  }
+}
+
+let gmapsLoaderPromise: Promise<void> | null = null;
+
+const loadGoogleMaps = (): Promise<void> => {
+  if (typeof window === 'undefined') return Promise.reject(new Error('No window'));
+  if (window.google?.maps) return Promise.resolve();
+  if (gmapsLoaderPromise) return gmapsLoaderPromise;
+
+  const browserKey = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
+  const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
+  if (!browserKey) {
+    return Promise.reject(new Error('Google Maps browser key is not configured.'));
+  }
+
+  gmapsLoaderPromise = new Promise<void>((resolve, reject) => {
+    window.__zaagoInitGmaps = () => resolve();
+    const script = document.createElement('script');
+    const params = new URLSearchParams({
+      key: browserKey,
+      loading: 'async',
+      callback: '__zaagoInitGmaps',
+    });
+    if (channel) params.set('channel', channel);
+    script.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
+    script.async = true;
+    script.defer = true;
+    script.onerror = () => {
+      gmapsLoaderPromise = null;
+      reject(new Error('Failed to load Google Maps script.'));
+    };
+    document.head.appendChild(script);
+  });
+
+  return gmapsLoaderPromise;
+};
+
 export const MapSelector = ({ onLocationSelect, onClose, initialLocation }: MapSelectorProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const marker = useRef<mapboxgl.Marker | null>(null);
+  const mapRef = useRef<any>(null);
+  const markerRef = useRef<any>(null);
   const [selectedLocation, setSelectedLocation] = useState<{ latitude: number; longitude: number } | null>(
     initialLocation || null
   );
-  
-  // Use cached Mapbox token
-  const { token: mapboxToken, loading, error: tokenError } = useMapboxToken();
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Initialize map when token is available
   useEffect(() => {
-    if (tokenError) {
-      setError('Failed to load map. Please check your Mapbox token configuration.');
-      return;
-    }
-    
-    if (mapboxToken) {
-      console.log('Token received, initializing map...');
-      initializeMap(mapboxToken);
-    }
-  }, [mapboxToken, tokenError]);
+    let cancelled = false;
 
-  const initializeMap = (token: string) => {
-    if (!mapContainer.current || !token) return;
+    loadGoogleMaps()
+      .then(() => {
+        if (cancelled || !mapContainer.current || !window.google?.maps) return;
 
-    try {
-      mapboxgl.accessToken = token;
-      
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: initialLocation ? [initialLocation.longitude, initialLocation.latitude] : [75.7006, 31.2509], // Default to Phagwara, Punjab
-        zoom: 12,
-        attributionControl: false,
-      });
+        const center = initialLocation
+          ? { lat: initialLocation.latitude, lng: initialLocation.longitude }
+          : { lat: 31.2509, lng: 75.7006 };
 
-      // Add navigation controls
-      map.current.addControl(
-        new mapboxgl.NavigationControl(),
-        'top-right'
-      );
+        const map = new window.google.maps.Map(mapContainer.current, {
+          center,
+          zoom: 13,
+          disableDefaultUI: false,
+          streetViewControl: false,
+          mapTypeControl: false,
+          fullscreenControl: false,
+        });
+        mapRef.current = map;
 
-      // Wait for map to load before adding interactions
-      map.current.on('load', () => {
-        console.log('Map loaded successfully');
-        
-        // Add click handler
-        map.current!.on('click', (e) => {
-          const { lng, lat } = e.lngLat;
-          console.log('Map clicked:', { lat, lng });
-          setSelectedLocation({ latitude: lat, longitude: lng });
-          
-          // Remove existing marker
-          if (marker.current) {
-            marker.current.remove();
+        const placeMarker = (lat: number, lng: number) => {
+          if (markerRef.current) {
+            markerRef.current.setPosition({ lat, lng });
+          } else {
+            markerRef.current = new window.google.maps.Marker({
+              position: { lat, lng },
+              map,
+              draggable: true,
+            });
+            markerRef.current.addListener('dragend', (e: any) => {
+              const pos = e.latLng;
+              if (!pos) return;
+              setSelectedLocation({ latitude: pos.lat(), longitude: pos.lng() });
+            });
           }
-          
-          // Add new marker
-          marker.current = new mapboxgl.Marker({ 
-            color: '#00e676',
-            scale: 1.2
-          })
-            .setLngLat([lng, lat])
-            .addTo(map.current!);
+        };
+
+        if (initialLocation) {
+          placeMarker(initialLocation.latitude, initialLocation.longitude);
+        }
+
+        map.addListener('click', (e: any) => {
+          const pos = e.latLng;
+          if (!pos) return;
+          const lat = pos.lat();
+          const lng = pos.lng();
+          setSelectedLocation({ latitude: lat, longitude: lng });
+          placeMarker(lat, lng);
         });
 
-        // Add initial marker if location provided
-        if (initialLocation) {
-          marker.current = new mapboxgl.Marker({ 
-            color: '#00e676',
-            scale: 1.2
-          })
-            .setLngLat([initialLocation.longitude, initialLocation.latitude])
-            .addTo(map.current!);
-        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('Google Maps load error:', err);
+        setError(err?.message || 'Failed to load map. Please check your internet connection.');
+        setLoading(false);
       });
 
-      map.current.on('error', (e) => {
-        console.error('Map error:', e);
-        setError('Failed to load map. Please check your internet connection.');
-      });
-
-      setError(null);
-    } catch (error) {
-      console.error('Error initializing map:', error);
-      setError('Failed to initialize map. Please check your Mapbox token.');
-    }
-  };
+    return () => {
+      cancelled = true;
+      if (markerRef.current) {
+        markerRef.current.setMap(null);
+        markerRef.current = null;
+      }
+      mapRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleConfirmLocation = async () => {
     if (!selectedLocation) {
       toast({
-        title: "No Location Selected",
-        description: "Please click on the map to select a location.",
-        variant: "destructive",
+        title: 'No Location Selected',
+        description: 'Please click on the map to select a location.',
+        variant: 'destructive',
       });
       return;
     }
 
     try {
-      // Use Google Places edge function for reverse geocoding
       const { data: addressData } = await supabase.functions.invoke('google-places', {
-        body: { 
+        body: {
           type: 'reverse_geocode',
           lat: selectedLocation.latitude,
-          lng: selectedLocation.longitude
-        }
+          lng: selectedLocation.longitude,
+        },
       });
 
-      const address = addressData?.result?.address || 
+      const address =
+        addressData?.result?.address ||
         `${selectedLocation.latitude.toFixed(4)}, ${selectedLocation.longitude.toFixed(4)}`;
-      
+
       onLocationSelect({
         latitude: selectedLocation.latitude,
         longitude: selectedLocation.longitude,
         address,
       });
-    } catch (error) {
-      console.error('Error getting address:', error);
-      // Still allow confirmation with coordinates if geocoding fails
+    } catch (err) {
+      console.error('Error getting address:', err);
       onLocationSelect({
         latitude: selectedLocation.latitude,
         longitude: selectedLocation.longitude,
@@ -144,23 +171,6 @@ export const MapSelector = ({ onLocationSelect, onClose, initialLocation }: MapS
     }
   };
 
-  useEffect(() => {
-    return () => {
-      map.current?.remove();
-    };
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-80 bg-zaago-card/50 rounded-lg border border-zaago-border">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zaago-green mx-auto mb-2"></div>
-          <p className="text-sm text-zaago-muted-foreground">Loading map...</p>
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="space-y-4 p-4">
@@ -168,7 +178,6 @@ export const MapSelector = ({ onLocationSelect, onClose, initialLocation }: MapS
           <h3 className="text-lg font-semibold text-foreground mb-2">Map Unavailable</h3>
           <p className="text-sm text-zaago-muted-foreground mb-4">{error}</p>
         </div>
-        
         <Button
           onClick={onClose}
           variant="outline"
@@ -182,16 +191,22 @@ export const MapSelector = ({ onLocationSelect, onClose, initialLocation }: MapS
 
   return (
     <div className="space-y-4">
-      <div 
-        ref={mapContainer} 
-        className="w-full h-[450px] rounded-lg border border-zaago-border"
-        style={{ 
-          minHeight: '450px',
-          width: '100%',
-          position: 'relative'
-        }}
-      />
-      
+      <div className="relative">
+        <div
+          ref={mapContainer}
+          className="w-full h-[450px] rounded-lg border border-zaago-border bg-zaago-card/50"
+          style={{ minHeight: '450px', width: '100%', position: 'relative' }}
+        />
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-zaago-card/70 rounded-lg">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zaago-green mx-auto mb-2"></div>
+              <p className="text-sm text-zaago-muted-foreground">Loading map...</p>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="flex items-center justify-between gap-2">
         <div className="flex-1">
           {selectedLocation ? (
@@ -199,12 +214,10 @@ export const MapSelector = ({ onLocationSelect, onClose, initialLocation }: MapS
               Selected: {selectedLocation.latitude.toFixed(4)}, {selectedLocation.longitude.toFixed(4)}
             </p>
           ) : (
-            <p className="text-sm text-zaago-muted-foreground">
-              Click on the map to select a location
-            </p>
+            <p className="text-sm text-zaago-muted-foreground">Click on the map to select a location</p>
           )}
         </div>
-        
+
         <div className="flex gap-2">
           <Button
             onClick={onClose}

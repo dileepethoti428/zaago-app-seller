@@ -1,20 +1,25 @@
-# Add "View More" to Sales Report Product Summary
+# Replace Mapbox with Google Maps in "Select on Map"
 
-Show only the first 5 products in the **Product Summary** table on the Sales Report page, with a "View More" button to reveal more (5 at a time), and a "Show Less" option to collapse back.
+`MapSelector.tsx` currently uses Mapbox GL, which fails because no Mapbox token is configured. Replace it with the Google Maps JavaScript API (already working for "Select Automatically" via the Google Maps connector).
 
 ## Changes
 
-**File:** `src/pages/SalesReport.tsx`
+**File:** `src/components/MapSelector.tsx` — rewrite to use Google Maps JS API.
 
-1. Add `visibleCount` state, default `5`.
-2. Reset `visibleCount` to 5 whenever the date range changes (preset or custom).
-3. In the Product Summary card:
-   - Compute the sorted product-summary array once (via `useMemo`).
-   - Render only `.slice(0, visibleCount)` rows.
-   - Below the table, if `visibleCount < total`, show a "View More" button (increments by 5). If everything is shown and total > 5, show a "Show Less" button to collapse back to 5.
-   - Show a small counter like `Showing X of Y products`.
+1. Remove `mapbox-gl` imports, `useMapboxToken` hook usage, and Mapbox-specific refs/types.
+2. Load the Google Maps JS API once via a small script-loader (idempotent):
+   - URL: `https://maps.googleapis.com/maps/api/js?key=${VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY}&loading=async&libraries=marker&callback=__zaagoInitGmaps&channel=${VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID}`
+   - Use a global callback + a module-level promise so multiple mounts share one load.
+   - If the env key is missing, surface the existing "Map Unavailable" error UI with a clearer message.
+3. Initialize `google.maps.Map` in the container div (no `mapId`), center on `initialLocation` or default `[31.2509, 75.7006]`, zoom 12.
+4. Use `google.maps.Marker` (per connector guidance, NOT `AdvancedMarkerElement`) with `#00e676` color via a simple SVG icon or default marker, draggable.
+5. On map `click`, set/move the marker and update `selectedLocation` with `lat`/`lng` from `e.latLng`.
+6. Keep `handleConfirmLocation` exactly as-is — it already uses the existing `google-places` edge function for reverse geocoding.
+7. Keep the same outer JSX (container div, footer with selected coords + Cancel/Confirm buttons), loading skeleton, and error fallback so the rest of the app is unaffected.
+8. Cleanup on unmount: remove marker, clear listeners, drop map ref.
 
 ## Notes
 
-- Pure frontend/presentation change — no hook, query, or PDF export logic touched.
-- The downloaded PDF still includes all items (unchanged).
+- Pure frontend swap inside `MapSelector.tsx`. No other files, hooks, or edge functions touched.
+- `useMapboxToken` hook remains in the codebase (harmless) and can be removed later if no other consumer uses it.
+- The browser key `VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY` is already used elsewhere for the same connector.
