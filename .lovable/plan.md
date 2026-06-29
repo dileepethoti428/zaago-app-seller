@@ -1,49 +1,20 @@
-# Add Delivery Partner Details in COD Settlement Sheet
+# Add "View More" to Sales Report Product Summary
 
-Show the partner's contact and team info inside the COD detail sheet so you can quickly call them when money isn't settled.
+Show only the first 5 products in the **Product Summary** table on the Sales Report page, with a "View More" button to reveal more (5 at a time), and a "Show Less" option to collapse back.
 
-## What you'll see
+## Changes
 
-When you tap a partner in COD Settlements, the top of the detail sheet will show:
+**File:** `src/pages/SalesReport.tsx`
 
-- **Profile + name** (as today)
-- **Phone number** with a green "Call" button — tap dials directly
-- **Online / Offline badge** next to the name (live status)
-- **Vehicle**: type + number (e.g. "Bike • TS09 AB 1234")
-- **Joined date**: "Partner since 12 Mar 2024"
-- **Total deliveries**: lifetime completed count
-- A small helper line: *"Not settled? Tap call to follow up."*
+1. Add `visibleCount` state, default `5`.
+2. Reset `visibleCount` to 5 whenever the date range changes (preset or custom).
+3. In the Product Summary card:
+   - Compute the sorted product-summary array once (via `useMemo`).
+   - Render only `.slice(0, visibleCount)` rows.
+   - Below the table, if `visibleCount < total`, show a "View More" button (increments by 5). If everything is shown and total > 5, show a "Show Less" button to collapse back to 5.
+   - Show a small counter like `Showing X of Y products`.
 
-Below that, the Pending / Settled summary and order list stay exactly as they are today.
+## Notes
 
-## Layout sketch
-
-```text
-┌────────────────────────────────────────┐
-│ [avatar] Ramesh Kumar     ● Online     │
-│          COD Order History             │
-│                                        │
-│ 📞 +91 98xxx xxxxx        [ Call ]     │
-│ 🛵 Bike • TS09 AB 1234                 │
-│ 📅 Partner since 12 Mar 2024           │
-│ 📦 348 deliveries completed            │
-│ ─────────────────────────────────────  │
-│ [Pending ₹420]   [Settled ₹1,200]      │
-│ ...order list...                       │
-└────────────────────────────────────────┘
-```
-
-## Technical notes
-
-- **No DB changes.** All fields already exist on `delivery_agents` (`phone`, `vehicle_type`, `vehicle_number`, `is_online`, `created_at`) and lifetime deliveries can come from a count of `delivery_history` for that agent, or an existing aggregate column if present (will verify on implementation).
-- **`AgentCodDetailDialog.tsx`**: accept new props (`phone`, `vehicleType`, `vehicleNumber`, `isOnline`, `joinedAt`, `totalDeliveries`) and render the new header block. Call button uses `<a href="tel:...">`.
-- **`CodSettlements.tsx`**: extend the agent fetch in `useCodSettlements` to also pull `phone, vehicle_type, vehicle_number, is_online, created_at`, expose them in `AgentSettlement`, and pass through `selectedAgent` to the dialog.
-- **`useCodSettlements.ts`**: widen the `delivery_agents` select; add a lightweight `delivery_history` count query (or reuse an existing count field) keyed by agent id for the selected partner only — fetched inside the dialog to avoid loading counts for every row.
-- Online badge: green dot if `is_online = true`, grey "Offline" otherwise.
-- Missing phone → show "No phone on file" and disable the Call button.
-
-## Out of scope
-
-- No changes to the list card.
-- No SMS / WhatsApp action (only tap-to-dial).
-- No changes to settle / order list behavior.
+- Pure frontend/presentation change — no hook, query, or PDF export logic touched.
+- The downloaded PDF still includes all items (unchanged).

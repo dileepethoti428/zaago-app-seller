@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { format, subDays, subMonths, startOfDay } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,6 +35,22 @@ export default function SalesReport() {
   }, [activePreset, useCustom, customStart, customEnd]);
 
   const { data: items, isLoading } = useSalesReport(dateRange.start, dateRange.end);
+
+  const [visibleCount, setVisibleCount] = useState(5);
+  useEffect(() => { setVisibleCount(5); }, [dateRange.start, dateRange.end]);
+
+  const productSummary = useMemo(() => {
+    const grouped = (items || []).reduce<Record<string, { qty: number; revenue: number }>>((acc, item) => {
+      const name = item.productName || 'Unknown';
+      if (!acc[name]) acc[name] = { qty: 0, revenue: 0 };
+      acc[name].qty += item.quantity;
+      acc[name].revenue += item.total;
+      return acc;
+    }, {});
+    return Object.entries(grouped).sort((a, b) => b[1].revenue - a[1].revenue);
+  }, [items]);
+
+
 
   const totalRevenue = useMemo(() => (items || []).reduce((s, i) => s + i.total, 0), [items]);
   const totalQty = useMemo(() => (items || []).reduce((s, i) => s + i.quantity, 0), [items]);
@@ -140,26 +156,35 @@ export default function SalesReport() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {Object.entries(
-                    (items || []).reduce<Record<string, { qty: number; revenue: number }>>((acc, item) => {
-                      const name = item.productName || 'Unknown';
-                      if (!acc[name]) acc[name] = { qty: 0, revenue: 0 };
-                      acc[name].qty += item.quantity;
-                      acc[name].revenue += item.total;
-                      return acc;
-                    }, {})
-                  )
-                    .sort((a, b) => b[1].revenue - a[1].revenue)
-                    .map(([name, data]) => (
-                      <TableRow key={name}>
-                        <TableCell className="font-medium">{name}</TableCell>
-                        <TableCell className="text-right">{data.qty}</TableCell>
-                        <TableCell className="text-right font-medium">₹{data.revenue.toFixed(2)}</TableCell>
-                      </TableRow>
-                    ))}
+                  {productSummary.slice(0, visibleCount).map(([name, data]) => (
+                    <TableRow key={name}>
+                      <TableCell className="font-medium">{name}</TableCell>
+                      <TableCell className="text-right">{data.qty}</TableCell>
+                      <TableCell className="text-right font-medium">₹{data.revenue.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </div>
+            {productSummary.length > 5 && (
+              <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                <p className="text-sm text-muted-foreground">
+                  Showing {Math.min(visibleCount, productSummary.length)} of {productSummary.length} products
+                </p>
+                <div className="flex gap-2">
+                  {visibleCount < productSummary.length && (
+                    <Button size="sm" variant="outline" onClick={() => setVisibleCount((c) => c + 5)}>
+                      View More
+                    </Button>
+                  )}
+                  {visibleCount >= productSummary.length && (
+                    <Button size="sm" variant="ghost" onClick={() => setVisibleCount(5)}>
+                      Show Less
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
