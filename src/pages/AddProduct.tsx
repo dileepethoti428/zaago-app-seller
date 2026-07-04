@@ -64,6 +64,7 @@ export default function AddProductPage() {
     discount_percentage: '',
     gst_percentage: '0',
     is_active: true,
+    is_subscribable: false,
     benefits: [''],
     ingredients: [''],
     selectedTags: [] as string[]
@@ -449,6 +450,7 @@ export default function AddProductPage() {
         benefits: benefits.length > 0 ? benefits : null,
         ingredients: ingredients.length > 0 ? ingredients : null,
         is_active: formData.is_active,
+        is_subscribable: formData.is_subscribable,
         seller_id: user?.id,
         product_lat: productLocation.latitude,
         product_lng: productLocation.longitude,
@@ -1032,7 +1034,31 @@ export default function AddProductPage() {
                     </div>
                     <span className="text-sm text-foreground">Inactive</span>
                   </label>
+              </div>
+
+              {/* Subscription Availability */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Available as Subscription</label>
+                <div className="flex items-start justify-between gap-4 p-4 bg-card border border-border rounded-lg">
+                  <div className="flex-1">
+                    <p className="text-sm text-foreground font-medium">Enable subscription for this product</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Turn on for items customers buy regularly (e.g. daily milk). Leave off for one-off purchases (e.g. rice). Customers will only see a Subscribe button on products with this enabled.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={formData.is_subscribable}
+                    onClick={() => handleInputChange('is_subscribable', !formData.is_subscribable)}
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${formData.is_subscribable ? 'bg-primary' : 'bg-muted'}`}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform mt-0.5 ${formData.is_subscribable ? 'translate-x-5' : 'translate-x-0.5'}`}
+                    />
+                  </button>
                 </div>
+              </div>
               </div>
 
               <div className="space-y-2">

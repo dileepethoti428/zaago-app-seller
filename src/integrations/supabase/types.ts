@@ -5293,6 +5293,7 @@ export type Database = {
           images: string[] | null
           ingredients: string[] | null
           is_active: boolean
+          is_subscribable: boolean
           low_stock_notified: boolean | null
           name: string
           nutritional_info: Json | null
@@ -5325,6 +5326,7 @@ export type Database = {
           images?: string[] | null
           ingredients?: string[] | null
           is_active?: boolean
+          is_subscribable?: boolean
           low_stock_notified?: boolean | null
           name: string
           nutritional_info?: Json | null
@@ -5357,6 +5359,7 @@ export type Database = {
           images?: string[] | null
           ingredients?: string[] | null
           is_active?: boolean
+          is_subscribable?: boolean
           low_stock_notified?: boolean | null
           name?: string
           nutritional_info?: Json | null

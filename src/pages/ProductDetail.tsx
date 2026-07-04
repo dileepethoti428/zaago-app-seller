@@ -39,6 +39,7 @@ interface Product {
   image_url: string | null;
   images?: string[];
   is_active: boolean;
+  is_subscribable?: boolean;
   category: string | null;
   type?: string;
   unit?: string;
@@ -300,6 +301,11 @@ const ProductDetail = () => {
               } text-sm font-medium px-3 py-1`}>
                 {product.is_active ? 'Active' : 'Inactive'}
               </Badge>
+              {product.is_subscribable && (
+                <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-sm font-medium px-3 py-1">
+                  Subscription enabled
+                </Badge>
+              )}
             </div>
             
             {/* Action Buttons */}
