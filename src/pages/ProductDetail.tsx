@@ -39,6 +39,7 @@ interface Product {
   image_url: string | null;
   images?: string[];
   is_active: boolean;
+  is_subscribable?: boolean;
   category: string | null;
   type?: string;
   unit?: string;
