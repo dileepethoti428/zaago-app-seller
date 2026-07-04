@@ -1,26 +1,34 @@
 ## Problem
 
-`useMfaStatus` uses the React Query key `["mfa-status"]` with no user scope. When Seller A signs out and Seller B signs in on the same device (or when the AuthContext swaps users without a full reload), Seller B briefly — or persistently — sees Seller A's cached "Enabled" status. The database RPC itself is correct (it filters by `auth.uid()`), so this is purely a client-side cache-scoping bug.
+In `src/pages/Settings.tsx`, `saveProfile()` calls:
+
+```ts
+supabase.from('profiles').upsert({ user_id, full_name, phone, updated_at })
+```
+
+The `profiles` table's primary key is `id` (not `user_id`), while `user_id` has a `UNIQUE` constraint. Without an explicit conflict target, Supabase upsert conflicts on the primary key (`id`). Since we don't pass `id`, Postgres tries an INSERT with a new `id`, which then violates the `UNIQUE (user_id)` constraint → `duplicate key value violates unique constraint`.
+
+`saveBankDetails()` on the `sellers` table has the same pattern and same latent bug.
 
 ## Fix
 
-1. **Scope the MFA query to the current user** in `src/hooks/useMfa.tsx`:
-   - Change `useMfaStatus` to accept the current user id from `useAuth()` and use `queryKey: ["mfa-status", user?.id]`.
-   - Set `enabled: !!user?.id` so it doesn't run before auth is ready.
-   - Do the same for any other user-scoped MFA reads that get added later.
+Tell upsert to resolve conflicts on `user_id`:
 
-2. **Clear the React Query cache on sign-out / user change** in `src/context/AuthContext.tsx`:
-   - On `SIGNED_OUT`, call `queryClient.clear()` so no previous seller's MFA (or any other) data leaks.
-   - On `SIGNED_IN` where the user id differs from the previous one, also call `queryClient.clear()` before setting the new user.
+1. `src/pages/Settings.tsx` → `saveProfile`
+   ```ts
+   .upsert({ user_id: user.id, full_name, phone, updated_at }, { onConflict: 'user_id' })
+   ```
 
-3. **Force a fresh MFA check on the Security page** (`src/pages/Security.tsx`): pass `refetchOnMount: "always"` (via the hook) so the badge reflects the actual signed-in seller, not a stale cache entry.
+2. `src/pages/Settings.tsx` → `saveBankDetails` (both call sites on `sellers`)
+   ```ts
+   .upsert({ ...sellerFields, user_id: user.id, updated_at }, { onConflict: 'user_id' })
+   ```
 
-4. **Sanity check** after the fix by signing in as Seller A → enable 2FA → sign out → sign in as Seller B and confirm Security shows "Disabled" immediately.
+No database, RLS, or schema changes needed — `user_id` unique constraints already exist on both tables.
 
-No database or migration changes are needed — the RPC is already per-user correct.
+## Verification
 
-## Files to change
-
-- `src/hooks/useMfa.tsx` — scope `useMfaStatus` query key to `user.id`, add `enabled` + `refetchOnMount`.
-- `src/context/AuthContext.tsx` — `queryClient.clear()` on sign-out and on user-id change.
-- `src/pages/Security.tsx` — pass through any new hook signature (minor).
+- Save Profile with existing row → success toast, no duplicate-key error.
+- Save Profile as a brand-new user (no row yet) → row is created.
+- Save Business Info / Bank Details → same behavior.
+- Confirm no regression for other sellers (per-user scoping unchanged).
