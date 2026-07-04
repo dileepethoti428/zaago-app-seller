@@ -3203,6 +3203,33 @@ export type Database = {
         }
         Relationships: []
       }
+      login_lockouts: {
+        Row: {
+          created_at: string
+          failed_count: number
+          last_failed_at: string
+          locked_until: string | null
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          failed_count?: number
+          last_failed_at?: string
+          locked_until?: string | null
+          phone: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          failed_count?: number
+          last_failed_at?: string
+          locked_until?: string | null
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       marketing_content: {
         Row: {
           created_at: string | null
