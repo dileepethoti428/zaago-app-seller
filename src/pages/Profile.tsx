@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { User, Building, Phone, MapPin, Mail, Camera, Save, Edit, Store, HelpCircle, MessageCircle, ChevronRight } from 'lucide-react';
+import { User, Building, Phone, MapPin, Mail, Camera, Save, Edit, Store, HelpCircle, MessageCircle, ChevronRight, ShieldCheck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
