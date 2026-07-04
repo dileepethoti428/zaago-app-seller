@@ -3325,6 +3325,7 @@ export type Database = {
       }
       mfa_verification_attempts: {
         Row: {
+          app_key: string
           attempted_at: string
           context: string
           id: string
@@ -3332,6 +3333,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          app_key?: string
           attempted_at?: string
           context: string
           id?: string
@@ -3339,6 +3341,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          app_key?: string
           attempted_at?: string
           context?: string
           id?: string
@@ -7581,6 +7584,7 @@ export type Database = {
       }
       user_recovery_codes: {
         Row: {
+          app_key: string
           code_hash: string
           created_at: string
           id: string
@@ -7588,6 +7592,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          app_key?: string
           code_hash: string
           created_at?: string
           id?: string
@@ -7595,6 +7600,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          app_key?: string
           code_hash?: string
           created_at?: string
           id?: string
