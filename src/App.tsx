@@ -48,6 +48,8 @@ import AccountDeactivated from "./pages/AccountDeactivated";
 import SalesReport from "./pages/SalesReport";
 import CodSettlements from "./pages/CodSettlements";
 import ResetPassword from "./pages/ResetPassword";
+import Security from "./pages/Security";
+import MfaChallenge from "./pages/MfaChallenge";
 import { CustomerNotifications } from "@/components/CustomerNotifications";
 import { AgentNotifications } from "@/components/AgentNotifications";
 import { SellerNotifications } from "@/components/SellerNotifications";
@@ -163,6 +165,7 @@ const AppContent = () => {
         <Route path="/terms-conditions" element={<TermsConditions />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/mfa-challenge" element={<MfaChallenge />} />
         <Route path="/" element={<Layout />}>
           <Route index element={<Index />} />
           <Route path="dashboard" element={<Dashboard />} />
@@ -194,6 +197,7 @@ const AppContent = () => {
           <Route path="product-suggestions" element={<ProductSuggestions />} />
           <Route path="sales-report" element={<SalesReport />} />
           <Route path="cod-settlements" element={<CodSettlements />} />
+          <Route path="profile/security" element={<Security />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

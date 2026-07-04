@@ -13,14 +13,36 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation();
 
   const publicRoutes = ['/login', '/forgot-password', '/reset-password', '/privacy-policy', '/terms-conditions', '/account-deactivated'];
+  const mfaRoute = '/mfa-challenge';
 
   useEffect(() => {
     if (!loading && !user && !publicRoutes.includes(location.pathname)) {
       navigate('/login');
     } else if (!loading && user) {
-      checkBankDetailsAndRedirect();
+      checkMfaAndBank();
     }
   }, [user, loading, location.pathname]);
+
+  const checkMfaAndBank = async () => {
+    try {
+      const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (!error && data?.currentLevel === 'aal1' && data?.nextLevel === 'aal2') {
+        if (location.pathname !== mfaRoute) {
+          navigate(mfaRoute, { replace: true });
+          return;
+        }
+        return;
+      }
+      // If aal2 satisfied and user is on /mfa-challenge, send them home
+      if (location.pathname === mfaRoute) {
+        navigate('/', { replace: true });
+        return;
+      }
+    } catch (e) {
+      console.error('MFA check failed', e);
+    }
+    checkBankDetailsAndRedirect();
+  };
 
   const checkBankDetailsAndRedirect = async () => {
     if (!user) return;
