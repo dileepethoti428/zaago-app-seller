@@ -510,6 +510,31 @@ export default function ProfilePage() {
         </div>
       </motion.div>
 
+      {/* Security */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25, duration: 0.3 }}
+        className="zaago-card p-6"
+      >
+        <div className="flex items-center gap-3 mb-1">
+          <ShieldCheck className="w-6 h-6 text-zaago-green" />
+          <h2 className="text-xl font-bold text-foreground">Security</h2>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">Two-factor authentication & recovery codes</p>
+        <button
+          onClick={() => navigate('/profile/security')}
+          className="w-full flex items-center gap-4 p-4 rounded-xl bg-muted/40 border border-border hover:bg-muted/60 transition-colors text-left"
+        >
+          <ShieldCheck className="w-6 h-6 text-zaago-green flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-foreground">Two-Factor Authentication</p>
+            <p className="text-sm text-muted-foreground">Manage 2FA and recovery codes</p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-muted-foreground" />
+        </button>
+      </motion.div>
+
       {/* Help & Support */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
