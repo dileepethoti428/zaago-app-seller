@@ -190,6 +190,7 @@ export default function EditProductPage() {
           discount_percentage: data.discount_percentage?.toString() || '',
           gst_percentage: data.gst_percentage?.toString() || '0',
           is_active: data.is_active,
+          is_subscribable: (data as any).is_subscribable ?? false,
           benefits: data.benefits && data.benefits.length > 0 ? data.benefits : [''],
           ingredients: data.ingredients && data.ingredients.length > 0 ? data.ingredients : [''],
           selectedTags: data.tags || [],
