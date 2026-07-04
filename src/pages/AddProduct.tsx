@@ -450,6 +450,7 @@ export default function AddProductPage() {
         benefits: benefits.length > 0 ? benefits : null,
         ingredients: ingredients.length > 0 ? ingredients : null,
         is_active: formData.is_active,
+        is_subscribable: formData.is_subscribable,
         seller_id: user?.id,
         product_lat: productLocation.latitude,
         product_lng: productLocation.longitude,
