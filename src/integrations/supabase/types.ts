@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_mfa_factors: {
+        Row: {
+          created_at: string
+          enabled_at: string | null
+          secret_encrypted: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled_at?: string | null
+          secret_encrypted: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled_at?: string | null
+          secret_encrypted?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      admin_mfa_recovery_codes: {
+        Row: {
+          code_hash: string
+          created_at: string
+          id: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_notifications: {
         Row: {
           created_at: string
@@ -10290,7 +10338,7 @@ export type Database = {
       reconcile_completed_orders: { Args: never; Returns: Json }
       record_mfa_attempt: {
         Args: { _context: string; _success: boolean }
-        Returns: undefined
+        Returns: string
       }
       refresh_todays_best_deals: { Args: never; Returns: undefined }
       regenerate_all_product_tags: {
