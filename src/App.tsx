@@ -48,6 +48,8 @@ import AccountDeactivated from "./pages/AccountDeactivated";
 import SalesReport from "./pages/SalesReport";
 import CodSettlements from "./pages/CodSettlements";
 import ResetPassword from "./pages/ResetPassword";
+import Security from "./pages/Security";
+import MfaChallenge from "./pages/MfaChallenge";
 import { CustomerNotifications } from "@/components/CustomerNotifications";
 import { AgentNotifications } from "@/components/AgentNotifications";
 import { SellerNotifications } from "@/components/SellerNotifications";
