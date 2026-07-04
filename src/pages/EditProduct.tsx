@@ -48,6 +48,7 @@ interface Product {
   ingredients?: string[];
   tags?: string[];
   is_active: boolean;
+  is_subscribable?: boolean;
   seller_id: string;
   category_id?: string;
   product_lat?: number | null;
