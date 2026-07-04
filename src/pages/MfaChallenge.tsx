@@ -83,10 +83,13 @@ export default function MfaChallenge() {
         throw new Error("Invalid or already used recovery code");
       }
       await recordMfaAttempt("recovery", true);
-      // Recovery code use: sign out and require the user to re-enroll / re-verify
+      // Unenroll factor so user can sign in without TOTP, then re-enable from Security page.
+      if (factorId) {
+        try { await supabase.auth.mfa.unenroll({ factorId }); } catch {}
+      }
       toast({
         title: "Recovery code accepted",
-        description: "Please sign in again and re-enable 2FA from Security settings.",
+        description: "2FA has been reset. Sign in again and re-enable it from Security settings.",
       });
       await supabase.auth.signOut();
       navigate("/login", { replace: true });
