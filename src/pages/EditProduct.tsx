@@ -429,6 +429,7 @@ export default function EditProductPage() {
         benefits: benefits.length > 0 ? benefits : null,
         ingredients: ingredients.length > 0 ? ingredients : null,
         is_active: formData.is_active,
+        is_subscribable: formData.is_subscribable,
       };
       if (productLat && productLng) {
         updateData.product_lat = productLat;
