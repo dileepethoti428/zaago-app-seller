@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { generateRecoveryCodes, hashRecoveryCode } from "@/lib/recoveryCodes";
+import { useAuth } from "@/context/AuthContext";
 
 export type MfaStatus = {
   enabled: boolean;
@@ -10,8 +11,13 @@ export type MfaStatus = {
 };
 
 export function useMfaStatus() {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ["mfa-status"],
+    queryKey: ["mfa-status", user?.id ?? null],
+    enabled: !!user?.id,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: "always",
     queryFn: async (): Promise<MfaStatus> => {
       const { data, error } = await supabase.rpc("get_mfa_status");
       if (error) throw error;
