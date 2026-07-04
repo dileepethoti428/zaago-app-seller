@@ -3275,6 +3275,30 @@ export type Database = {
         }
         Relationships: []
       }
+      mfa_verification_attempts: {
+        Row: {
+          attempted_at: string
+          context: string
+          id: string
+          success: boolean
+          user_id: string
+        }
+        Insert: {
+          attempted_at?: string
+          context: string
+          id?: string
+          success?: boolean
+          user_id: string
+        }
+        Update: {
+          attempted_at?: string
+          context?: string
+          id?: string
+          success?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       milk_entries: {
         Row: {
           center_id: string | null
@@ -7507,6 +7531,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_recovery_codes: {
+        Row: {
+          code_hash: string
+          created_at: string
+          id: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -8695,6 +8743,14 @@ export type Database = {
         }
         Returns: string
       }
+      check_mfa_lockout: {
+        Args: { _context: string }
+        Returns: {
+          fails: number
+          locked: boolean
+          seconds_remaining: number
+        }[]
+      }
       check_rate_limit: {
         Args: {
           action_type: string
@@ -8872,6 +8928,7 @@ export type Database = {
         }
         Returns: Json
       }
+      consume_recovery_code: { Args: { _code_hash: string }; Returns: boolean }
       create_admin_notification_for_agent: {
         Args: {
           admin_id?: string
@@ -9470,6 +9527,15 @@ export type Database = {
           product_name: string
           product_price: number
           purchase_count: number
+        }[]
+      }
+      get_mfa_status: {
+        Args: never
+        Returns: {
+          enabled: boolean
+          factor_created_at: string
+          factor_id: string
+          recovery_codes_remaining: number
         }[]
       }
       get_next_delivery_date_v3: {
@@ -10222,6 +10288,10 @@ export type Database = {
       }
       reassign_absent_agents_today: { Args: never; Returns: undefined }
       reconcile_completed_orders: { Args: never; Returns: Json }
+      record_mfa_attempt: {
+        Args: { _context: string; _success: boolean }
+        Returns: undefined
+      }
       refresh_todays_best_deals: { Args: never; Returns: undefined }
       regenerate_all_product_tags: {
         Args: never
