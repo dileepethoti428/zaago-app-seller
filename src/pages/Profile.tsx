@@ -28,6 +28,7 @@ interface Profile {
 }
 
 export default function ProfilePage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
