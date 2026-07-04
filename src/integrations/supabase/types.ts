@@ -5024,6 +5024,30 @@ export type Database = {
           },
         ]
       }
+      product_realtime_events: {
+        Row: {
+          event_type: string
+          id: string
+          is_visible: boolean
+          occurred_at: string
+          product_id: string
+        }
+        Insert: {
+          event_type: string
+          id?: string
+          is_visible?: boolean
+          occurred_at?: string
+          product_id: string
+        }
+        Update: {
+          event_type?: string
+          id?: string
+          is_visible?: boolean
+          occurred_at?: string
+          product_id?: string
+        }
+        Relationships: []
+      }
       product_stock_notifications: {
         Row: {
           created_at: string
