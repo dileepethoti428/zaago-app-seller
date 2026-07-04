@@ -165,6 +165,7 @@ const AppContent = () => {
         <Route path="/terms-conditions" element={<TermsConditions />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/mfa-challenge" element={<MfaChallenge />} />
         <Route path="/" element={<Layout />}>
           <Route index element={<Index />} />
           <Route path="dashboard" element={<Dashboard />} />
