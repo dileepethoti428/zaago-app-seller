@@ -64,6 +64,7 @@ export default function AddProductPage() {
     discount_percentage: '',
     gst_percentage: '0',
     is_active: true,
+    is_subscribable: false,
     benefits: [''],
     ingredients: [''],
     selectedTags: [] as string[]
