@@ -168,7 +168,7 @@ const Settings = () => {
           full_name: profile.full_name,
           phone: profile.phone,
           updated_at: new Date().toISOString()
-        });
+        }, { onConflict: 'user_id' });
 
       if (error) {
         throw error;
