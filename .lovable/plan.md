@@ -1,34 +1,36 @@
-## Problem
+## Goal
 
-In `src/pages/Settings.tsx`, `saveProfile()` calls:
+Let sellers mark whether a product is subscribable (e.g. milk = yes, rice = no) from the Add/Edit Product pages. The customer app already shows a Subscribe button on every item — after this change, it will only show it for products the seller explicitly enabled.
 
-```ts
-supabase.from('profiles').upsert({ user_id, full_name, phone, updated_at })
-```
+## Changes
 
-The `profiles` table's primary key is `id` (not `user_id`), while `user_id` has a `UNIQUE` constraint. Without an explicit conflict target, Supabase upsert conflicts on the primary key (`id`). Since we don't pass `id`, Postgres tries an INSERT with a new `id`, which then violates the `UNIQUE (user_id)` constraint → `duplicate key value violates unique constraint`.
+### 1. Database (migration)
+Add a new column to `public.products`:
+- `is_subscribable boolean NOT NULL DEFAULT false`
 
-`saveBankDetails()` on the `sellers` table has the same pattern and same latent bug.
+No RLS/policy changes needed — existing seller policies already cover updates to their own products.
 
-## Fix
+### 2. Add Product page (`src/pages/AddProduct.tsx`)
+- Add a Switch field: **"Available as subscription"** with helper text: *"Enable this if customers can subscribe to receive this product regularly (e.g. daily milk). Leave off for one-off purchases (e.g. rice)."*
+- Default: OFF.
+- Include `is_subscribable` in the insert payload.
 
-Tell upsert to resolve conflicts on `user_id`:
+### 3. Edit Product page (`src/pages/EditProduct.tsx`)
+- Same Switch field, pre-filled from the loaded product.
+- Include `is_subscribable` in the update payload.
 
-1. `src/pages/Settings.tsx` → `saveProfile`
-   ```ts
-   .upsert({ user_id: user.id, full_name, phone, updated_at }, { onConflict: 'user_id' })
-   ```
+### 4. Product Detail page (`src/pages/ProductDetail.tsx`)
+- Show a small badge "Subscription enabled" when `is_subscribable` is true (read-only display).
 
-2. `src/pages/Settings.tsx` → `saveBankDetails` (both call sites on `sellers`)
-   ```ts
-   .upsert({ ...sellerFields, user_id: user.id, updated_at }, { onConflict: 'user_id' })
-   ```
+### 5. Types
+- Regenerated automatically after the migration so `is_subscribable` is available in `products` inserts/updates.
 
-No database, RLS, or schema changes needed — `user_id` unique constraints already exist on both tables.
+## Out of scope (customer app)
+
+The customer app is a separate project. Once this column exists, that app should conditionally render its Subscribe button using `product.is_subscribable`. I can share the exact snippet, but the change itself must be made in the customer app repo — not here.
 
 ## Verification
-
-- Save Profile with existing row → success toast, no duplicate-key error.
-- Save Profile as a brand-new user (no row yet) → row is created.
-- Save Business Info / Bank Details → same behavior.
-- Confirm no regression for other sellers (per-user scoping unchanged).
+- Add a new product with the toggle ON → row saved with `is_subscribable=true`.
+- Add without toggling → `is_subscribable=false`.
+- Edit an existing product, flip the toggle, save → value persists.
+- Product Detail shows the badge only when enabled.
