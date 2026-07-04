@@ -197,6 +197,7 @@ const AppContent = () => {
           <Route path="product-suggestions" element={<ProductSuggestions />} />
           <Route path="sales-report" element={<SalesReport />} />
           <Route path="cod-settlements" element={<CodSettlements />} />
+          <Route path="profile/security" element={<Security />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
