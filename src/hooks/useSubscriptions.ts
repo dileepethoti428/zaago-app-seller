@@ -23,6 +23,7 @@ interface SubscriptionWithDetails extends Subscription {
   products: {
     name: string;
     price: number;
+    unit: string | null;
   } | null;
   vacation: {
     start_date: string;
@@ -74,7 +75,7 @@ export const useSellerSubscriptions = () => {
         .from('subscriptions')
         .select(`
           *,
-          products!subscriptions_product_id_fkey(name, price, seller_id),
+          products!subscriptions_product_id_fkey(name, price, unit, seller_id),
           vacation:subscription_vacation_periods(start_date, end_date, status),
           primary_agent:delivery_agents!subscriptions_primary_agent_id_fkey(id, name, phone, is_active, is_online)
         `)

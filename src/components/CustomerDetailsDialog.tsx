@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { User, Phone, Mail, MapPin, Home, Truck } from 'lucide-react';
+import { User, Phone, Mail, MapPin, Home, Truck, Package } from 'lucide-react';
 import { useSubscriptionDeliveryHistory } from '@/hooks/useSubscriptionDeliveryHistory';
 import { SubscriptionDeliveryCalendar } from '@/components/SubscriptionDeliveryCalendar';
 import { CompensationAssignmentDialog } from '@/components/CompensationAssignmentDialog';
@@ -36,6 +36,7 @@ interface SubscriptionInfo {
   customer_id?: string;
   product_id?: string;
   product_name?: string;
+  product_unit?: string;
   quantity?: number;
 }
 
@@ -100,6 +101,7 @@ export const CustomerDetailsDialog = ({
                   customerInfo={customerInfo}
                   fullAddress={fullAddress}
                   assignedAgent={assignedAgent}
+                  subscriptionInfo={subscriptionInfo}
                 />
               </TabsContent>
 
@@ -118,6 +120,7 @@ export const CustomerDetailsDialog = ({
               customerInfo={customerInfo}
               fullAddress={fullAddress}
               assignedAgent={assignedAgent}
+              subscriptionInfo={subscriptionInfo}
             />
           )}
         </DialogContent>
@@ -146,12 +149,30 @@ const CustomerDetailFields = ({
   customerInfo,
   fullAddress,
   assignedAgent,
+  subscriptionInfo,
 }: {
   customerInfo: CustomerInfo;
   fullAddress: string;
   assignedAgent?: AgentInfo | null;
+  subscriptionInfo?: SubscriptionInfo | null;
 }) => (
   <div className="space-y-4 py-4">
+    {/* Product */}
+    {subscriptionInfo && (
+      <div className="flex items-start gap-3">
+        <div className="p-2 rounded-lg bg-primary/10">
+          <Package className="h-4 w-4 text-primary" />
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">Subscribed Product</p>
+          <p className="font-medium">
+            {subscriptionInfo.product_name || 'Unknown Product'}
+            {subscriptionInfo.product_unit ? ` ${subscriptionInfo.product_unit}` : ''}
+          </p>
+        </div>
+      </div>
+    )}
+
     {/* Name */}
     <div className="flex items-start gap-3">
       <div className="p-2 rounded-lg bg-primary/10">
