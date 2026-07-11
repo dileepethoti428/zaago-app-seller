@@ -12,6 +12,7 @@ interface VariantTemplate {
 
 interface ProductVariant {
   id?: string;
+  _key?: string;
   variant_name: string;
   variant_value: string;
   price: number;
@@ -20,6 +21,11 @@ interface ProductVariant {
   is_default: boolean;
   is_active: boolean;
 }
+
+const makeKey = () =>
+  (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
+    ? crypto.randomUUID()
+    : `v_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
 interface ProductVariantsProps {
   selectedCategory: string;
@@ -77,6 +83,7 @@ export default function ProductVariants({ selectedCategory, variants, onVariants
 
   const addVariantFromTemplate = (template: VariantTemplate) => {
     const newVariant: ProductVariant = {
+      _key: makeKey(),
       variant_name: template.template_name,
       variant_value: template.template_value,
       price: 0,
@@ -91,6 +98,7 @@ export default function ProductVariants({ selectedCategory, variants, onVariants
 
   const addCustomVariant = () => {
     const newVariant: ProductVariant = {
+      _key: makeKey(),
       variant_name: '',
       variant_value: '',
       price: 0,
@@ -169,7 +177,7 @@ export default function ProductVariants({ selectedCategory, variants, onVariants
 
       {/* Existing Variants */}
       {variants.map((variant, index) => (
-        <div key={index} className="p-4 bg-card border border-border rounded-lg space-y-3">
+        <div key={variant.id || variant._key || `idx-${index}`} className="p-4 bg-card border border-border rounded-lg space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-medium text-foreground">Variant {index + 1}</h4>
             <button

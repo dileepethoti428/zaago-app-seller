@@ -1,27 +1,39 @@
-## Goal
-On the Subscriptions page, display each subscription's product as `"Onion 500g"` instead of just `"Onion (x1)"` by appending the product's unit/quantity from the product catalog.
+## Problem
 
-## Changes
+On the Edit Product page, tapping the minus (−) button on a variant does not remove it from the screen.
 
-### 1. Data layer
-- Update `src/hooks/useSubscriptions.ts`:
-  - Include `unit` in the `products` relation select.
-  - Add `unit: string | null` to the `SubscriptionWithDetails.products` type.
+## Root cause
 
-### 2. Subscription list card
-- Update `src/pages/Subscriptions.tsx`:
-  - Replace the current product line `{product.name} (x{subscription.quantity})` with `{product.name} {product.unit}` (e.g., "Onion 500g").
-  - Keep the existing fallback to "Unknown Product" when product data is missing.
+In `src/pages/EditProduct.tsx`, the effect that loads existing variants into local form state is:
 
-### 3. Customer details dialog (consistency)
-- Update `src/components/CustomerDetailsDialog.tsx`:
-  - Add `product_unit?: string` to the `SubscriptionInfo` interface.
-  - Pass `product_unit` from `Subscriptions.tsx` when opening the dialog.
-  - Display the product name + unit in the Details tab so the View dialog matches the list card.
+```ts
+useEffect(() => {
+  if (existingVariants.length > 0 && variants.length === 0) {
+    // populate variants from DB
+  }
+}, [existingVariants, variants.length]);
+```
 
-## Out of scope
-- Other forecast/summary components (e.g., `TodayCompensationBanner`, `useTodaySubscriptionForecast`) are not part of the main Subscriptions page and will not be changed unless requested.
-- No database migration is needed; the `unit` column already exists on `products`.
+Because `variants.length` is in the dependency array, this effect re-runs every time the variants array changes. When the user removes the **last remaining** variant, `variants.length` becomes `0`, the guard passes again, and the effect immediately re-populates the list from the originally-fetched `existingVariants` — so the removed variant instantly reappears. (Same reappearance happens after tapping minus on a single-variant product, which matches what you're seeing.)
 
-## Expected result
-Every subscription card on `/subscriptions` shows the product name followed by its catalog unit, matching the requested `"Onion 500g"` format.
+A secondary issue: variant cards use `key={index}`. When items are removed, React reuses DOM by index, which can also cause stale rendering of input values.
+
+## Fix
+
+1. **`src/pages/EditProduct.tsx`**
+   - Replace the `variants.length === 0` guard with a one-shot load using a `useRef` flag (e.g. `variantsLoadedRef`) so existing variants are copied into form state only the first time they arrive from the hook. After that, user edits (including deletions down to zero) are respected.
+   - Remove `variants.length` from the effect's dependency array.
+
+2. **`src/components/ProductVariants.tsx`**
+   - Give each variant a stable local `key` (either the existing DB `id` when present, or a client-generated `_key` created when the variant is added) and use it instead of `key={index}` so removals don't leave stale card state.
+
+3. **Save flow sanity check (no behavior change intended)**
+   - Keep the current "delete all product_variants for this product, then insert the remaining ones" logic in `handleSubmit`. Add error logging on the delete call so any future RLS/permission failure is visible in the console (silent today).
+
+## Verification
+
+- Open Edit Product for a product with 1 variant → tap − → card disappears and stays gone → Save → reopen → variant is gone in DB.
+- Open Edit Product for a product with 2+ variants → remove any one → remaining variants keep their correct values → Save → reopen → only removed variant is gone.
+- Add a new custom variant, remove it before saving → it disappears immediately.
+
+No database or RLS changes are required — the existing `Sellers can manage their own product variants` policy already permits the delete/insert.
