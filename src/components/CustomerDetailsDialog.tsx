@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { User, Phone, Mail, MapPin, Home, Truck } from 'lucide-react';
+import { User, Phone, Mail, MapPin, Home, Truck, Package } from 'lucide-react';
 import { useSubscriptionDeliveryHistory } from '@/hooks/useSubscriptionDeliveryHistory';
 import { SubscriptionDeliveryCalendar } from '@/components/SubscriptionDeliveryCalendar';
 import { CompensationAssignmentDialog } from '@/components/CompensationAssignmentDialog';
