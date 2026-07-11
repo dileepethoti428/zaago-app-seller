@@ -691,6 +691,7 @@ const Subscriptions = () => {
                           <span>
                             {subscription.products?.name || 'Unknown Product'}
                             {subscription.products?.unit ? ` ${subscription.products.unit}` : ''}
+                            {` x${subscription.quantity ?? 1}`}
                           </span>
                         </div>
                       </div>

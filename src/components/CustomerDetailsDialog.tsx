@@ -168,6 +168,7 @@ const CustomerDetailFields = ({
           <p className="font-medium">
             {subscriptionInfo.product_name || 'Unknown Product'}
             {subscriptionInfo.product_unit ? ` ${subscriptionInfo.product_unit}` : ''}
+            {` x${subscriptionInfo.quantity ?? 1}`}
           </p>
         </div>
       </div>
