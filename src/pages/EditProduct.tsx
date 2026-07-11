@@ -5,7 +5,7 @@ import {
   AlertCircle, Loader,
 } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -221,9 +221,11 @@ export default function EditProductPage() {
     fetchProduct();
   }, [id, user, navigate, toast]);
 
-  // Load variants
+  // Load variants once (subsequent edits/removals must not be overwritten)
+  const variantsLoadedRef = useRef(false);
   useEffect(() => {
-    if (existingVariants.length > 0 && variants.length === 0) {
+    if (variantsLoadedRef.current) return;
+    if (existingVariants.length > 0) {
       setVariants(existingVariants.map(v => ({
         id: v.id,
         variant_name: v.variant_name,
@@ -234,8 +236,9 @@ export default function EditProductPage() {
         is_default: v.is_default,
         is_active: v.is_active,
       })));
+      variantsLoadedRef.current = true;
     }
-  }, [existingVariants, variants.length]);
+  }, [existingVariants]);
 
   // Fetch seller's categories
   useEffect(() => {
@@ -448,7 +451,13 @@ export default function EditProductPage() {
       }
 
       // Replace variants
-      await supabase.from('product_variants').delete().eq('product_id', product.id);
+      const { error: variantDeleteError } = await supabase
+        .from('product_variants')
+        .delete()
+        .eq('product_id', product.id);
+      if (variantDeleteError) {
+        console.error('Failed to delete existing product variants:', variantDeleteError);
+      }
       if (variants.length > 0) {
         const variantInserts = variants.map(v => ({
           product_id: product.id,
