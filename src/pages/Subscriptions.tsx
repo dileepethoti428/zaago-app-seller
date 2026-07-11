@@ -526,6 +526,7 @@ const Subscriptions = () => {
                                 customer_id: subscription.customer_id,
                                 product_id: subscription.product_id,
                                 product_name: subscription.products?.name,
+                                product_unit: subscription.products?.unit,
                                 quantity: subscription.quantity,
                               },
                             })}
@@ -688,8 +689,8 @@ const Subscriptions = () => {
                         <div className="flex items-center gap-2 text-sm">
                           <Package className="h-4 w-4 text-muted-foreground" />
                           <span>
-                            {subscription.products?.name || 'Unknown Product'} (x
-                            {subscription.quantity})
+                            {subscription.products?.name || 'Unknown Product'}
+                            {subscription.products?.unit ? ` ${subscription.products.unit}` : ''}
                           </span>
                         </div>
                       </div>

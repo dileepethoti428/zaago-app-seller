@@ -36,6 +36,7 @@ interface SubscriptionInfo {
   customer_id?: string;
   product_id?: string;
   product_name?: string;
+  product_unit?: string;
   quantity?: number;
 }
 
