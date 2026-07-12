@@ -32,7 +32,7 @@ import { CancelOrderDialog } from '@/components/CancelOrderDialog';
 const Orders = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { acceptOrder, rejectOrder, packOrder, notifyDeliveryAgents, cancelAcceptedOrder, isProcessing } = useSellerOrderActions();
+  const { acceptOrder, rejectOrder, packOrder, cancelAcceptedOrder, isProcessing } = useSellerOrderActions();
   const [cancelTarget, setCancelTarget] = useState<{ id: string; status: string } | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
@@ -520,17 +520,6 @@ const Orders = () => {
                                 </Button>
                               )}
 
-                              {order.status === 'packed' && (
-                                <Button
-                                  onClick={() => notifyDeliveryAgents(order.id, user?.id || '')}
-                                  disabled={isProcessing === order.id}
-                                  size="sm"
-                                  className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
-                                >
-                                  <Truck className="w-4 h-4" />
-                                  Notify Delivery Partners
-                                </Button>
-                              )}
 
                               {/* Cancel Order — available from accepted through out_for_delivery */}
                               {['accepted', 'accepted_by_seller', 'accepted_late', 'packed', 'assigned', 'out_for_delivery'].includes(order.status) && (
