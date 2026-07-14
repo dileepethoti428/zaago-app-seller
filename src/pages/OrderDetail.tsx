@@ -381,7 +381,12 @@ const OrderDetail = () => {
                 {order.items && Array.isArray(order.items) ? order.items.map((item: any, index: number) => (
                   <div key={index} className="flex items-center justify-between py-3 border-b border-zaago-border last:border-b-0">
                     <div className="flex-1">
-                      <h4 className="font-medium text-foreground text-lg">{item.name}</h4>
+                      <h4 className="font-medium text-foreground text-lg">
+                        {item.name}
+                        {item.unit && (
+                          <span className="ml-2 text-sm text-zaago-muted-foreground font-normal">({item.unit})</span>
+                        )}
+                      </h4>
                       <p className="text-zaago-muted-foreground text-sm">
                         Quantity: {item.quantity} × ₹{item.price}
                       </p>
