@@ -654,9 +654,14 @@ const CustomerOrders: React.FC = () => {
                                     <div>
                                       <p className="font-medium text-foreground">
                                         {item.name || item.product_name || 'Product'}
-                                        {item.unit && (
-                                          <span className="ml-2 text-xs text-zaago-muted-foreground font-normal">({item.unit})</span>
+                                        {(item.unit || item.product_unit) && (
+                                          <span className="ml-2 text-xs text-zaago-muted-foreground font-normal">
+                                            ({item.unit || item.product_unit})
+                                          </span>
                                         )}
+                                        <span className="ml-2 text-xs text-zaago-muted-foreground font-normal">
+                                          × {item.quantity ?? 1}
+                                        </span>
                                       </p>
                                       <p className="text-zaago-muted-foreground text-sm">
                                         Qty: {item.quantity} × ₹{item.price?.toFixed(2)}

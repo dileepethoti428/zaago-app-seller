@@ -471,12 +471,17 @@ const Orders = () => {
                                 </p>
                                 {Array.isArray(order.items) && order.items.length > 0 && (
                                   <div className="mt-1 space-y-0.5">
-                                    {order.items.map((it: any, i: number) => (
-                                      <p key={i} className="text-zaago-muted-foreground text-xs">
-                                        {it.name}
-                                        {it.unit ? ` (${it.unit})` : ''} × {it.quantity ?? 1}
-                                      </p>
-                                    ))}
+                                    {order.items.map((it: any, i: number) => {
+                                      const itemName = it.name || it.product_name || 'Product';
+                                      const itemUnit = it.unit || it.product_unit;
+
+                                      return (
+                                        <p key={i} className="text-zaago-muted-foreground text-xs">
+                                          {itemName}
+                                          {itemUnit ? ` (${itemUnit})` : ''} × {it.quantity ?? 1}
+                                        </p>
+                                      );
+                                    })}
                                   </div>
                                 )}
                               </div>
