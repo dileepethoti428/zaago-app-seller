@@ -165,10 +165,12 @@ export const useWeeklyRefillTrend = () => {
       const productIds = products.map(p => p.id);
       const productMap = new Map(products.map(p => [p.id, p]));
 
-      // Fetch orders for last 7 days
+      // Fetch DELIVERED orders for last 7 days (sold = actually delivered)
       const { data: orders, error: ordersError } = await supabase
         .from('orders')
-        .select('id, items, created_at, status')
+        .select('id, items, created_at, status, seller_id')
+        .eq('seller_id', user.id)
+        .eq('status', 'delivered')
         .gte('created_at', `${weekAgo}T00:00:00`)
         .lte('created_at', `${today}T23:59:59`);
 
@@ -211,13 +213,12 @@ export const useWeeklyRefillTrend = () => {
         const dailyData: DailyTrendData[] = [];
         let totalRefill = 0;
         let daysWithRefill = 0;
-        let runningStock = product.stock_quantity || 0;
 
-        days.forEach((day, dayIndex) => {
+        days.forEach((day) => {
           const dayStr = format(day, 'yyyy-MM-dd');
           const dayLabel = format(day, 'EEE');
 
-          // Calculate sold for this day
+          // Sold on this day = units of THIS product delivered on this day
           let soldOnDay = 0;
           (orders || []).forEach(order => {
             const orderDate = format(parseISO(order.created_at), 'yyyy-MM-dd');
@@ -225,32 +226,27 @@ export const useWeeklyRefillTrend = () => {
 
             const items = (order.items as unknown as OrderItem[]) || [];
             items.forEach(item => {
-              if (item.id === product.id || item.seller_id === user.id) {
+              if (item.id === product.id) {
                 soldOnDay += item.quantity || 0;
               }
             });
           });
 
-          // Calculate forecast for next day (subscriptions)
-          const nextDay = addDays(day, 1);
-          let forecastForNextDay = 0;
+          // Forecast for this day = subscription units scheduled to deliver on this day
+          let forecastOnDay = 0;
           (subscriptions || []).forEach(sub => {
             if (sub.product_id !== product.id) return;
             const subWithVacations = {
               ...sub,
               subscription_vacation_periods: sub.subscription_vacation_periods || []
             } as Subscription;
-            if (shouldDeliverOnDate(subWithVacations, nextDay)) {
-              forecastForNextDay += sub.quantity || 1;
+            if (shouldDeliverOnDate(subWithVacations, day)) {
+              forecastOnDay += sub.quantity || 1;
             }
           });
 
-          // Calculate refill needed
-          const projectedNeed = soldOnDay + forecastForNextDay;
-          const refillNeeded = projectedNeed > runningStock ? projectedNeed - runningStock : 0;
-
-          // Update running stock (simple simulation)
-          runningStock = Math.max(0, runningStock - soldOnDay);
+          // Refill needed = total demand for the day (units you needed in stock)
+          const refillNeeded = soldOnDay + forecastOnDay;
 
           if (refillNeeded > 0) {
             totalRefill += refillNeeded;
@@ -261,10 +257,11 @@ export const useWeeklyRefillTrend = () => {
             date: dayStr,
             dayLabel,
             sold: soldOnDay,
-            forecast: forecastForNextDay,
+            forecast: forecastOnDay,
             refillNeeded
           });
         });
+
 
         if (totalRefill > 0 || dailyData.some(d => d.sold > 0 || d.forecast > 0)) {
           productTrendMap.set(product.id, {

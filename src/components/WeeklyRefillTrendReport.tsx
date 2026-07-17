@@ -181,6 +181,9 @@ export const WeeklyRefillTrendReport = () => {
                 <p className="text-zaago-muted-foreground text-sm">
                   Last 7 days • {dateRange.start} to {dateRange.end}
                 </p>
+                <p className="text-[11px] text-zaago-muted-foreground mt-1 leading-snug">
+                  Sold = delivered units • Forecast = subscription units scheduled that day • Refill Needed = sold + forecast (total demand)
+                </p>
               </div>
             </div>
 
