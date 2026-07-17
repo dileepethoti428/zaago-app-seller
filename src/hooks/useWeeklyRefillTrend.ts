@@ -165,10 +165,12 @@ export const useWeeklyRefillTrend = () => {
       const productIds = products.map(p => p.id);
       const productMap = new Map(products.map(p => [p.id, p]));
 
-      // Fetch orders for last 7 days
+      // Fetch DELIVERED orders for last 7 days (sold = actually delivered)
       const { data: orders, error: ordersError } = await supabase
         .from('orders')
-        .select('id, items, created_at, status')
+        .select('id, items, created_at, status, seller_id')
+        .eq('seller_id', user.id)
+        .eq('status', 'delivered')
         .gte('created_at', `${weekAgo}T00:00:00`)
         .lte('created_at', `${today}T23:59:59`);
 
