@@ -115,17 +115,24 @@ const Subscriptions = () => {
   const { data: subscriptions, isLoading, refetch } = useSellerSubscriptions();
   const { sellerLocation } = useSellerLocation();
 
+  const getCoords = (deliveryAddress: any) => {
+    const c = deliveryAddress?.coordinates;
+    const lat = c?.latitude ?? c?.lat ?? deliveryAddress?.latitude ?? deliveryAddress?.lat;
+    const lng = c?.longitude ?? c?.lng ?? deliveryAddress?.longitude ?? deliveryAddress?.lng;
+    return { lat, lng };
+  };
+
   const openDirections = (deliveryAddress: any) => {
-    const custLat = deliveryAddress?.latitude ?? deliveryAddress?.lat;
-    const custLng = deliveryAddress?.longitude ?? deliveryAddress?.lng;
+    const { lat, lng } = getCoords(deliveryAddress);
     const addr = deliveryAddress?.full_address || deliveryAddress?.address;
-    const destination = custLat && custLng ? `${custLat},${custLng}` : addr ? encodeURIComponent(addr) : null;
+    const destination = lat && lng ? `${lat},${lng}` : addr ? encodeURIComponent(addr) : null;
     if (!destination) return;
     const origin = sellerLocation?.latitude && sellerLocation?.longitude
       ? `&origin=${sellerLocation.latitude},${sellerLocation.longitude}`
       : '';
     window.open(`https://www.google.com/maps/dir/?api=1${origin}&destination=${destination}`, '_blank', 'noopener,noreferrer');
   };
+
 
   // Compute missed delivery counts
   const subscriptionIds = useMemo(() => (subscriptions || []).map(s => s.id), [subscriptions]);
