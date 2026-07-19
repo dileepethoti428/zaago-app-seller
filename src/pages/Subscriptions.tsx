@@ -20,7 +20,8 @@ import { VacationDatesSection } from '@/components/VacationDatesSection';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getCurrentISTTime, isAfter11_30PM_IST, getTomorrowDateIST, isDateTomorrow } from '@/utils/timeZone';
 import { formatDateForDisplay, formatDateWithLabel } from '@/utils/subscriptionDateCalculator';
-import { Search, RefreshCw, Calendar, User, Phone, MapPin, Package, CheckCircle, XCircle, Clock, CalendarClock, UserPlus, UserMinus, Eye, Pencil, Tag } from 'lucide-react';
+import { Search, RefreshCw, Calendar, User, Phone, MapPin, Package, CheckCircle, XCircle, Clock, CalendarClock, UserPlus, UserMinus, Eye, Pencil, Tag, Navigation } from 'lucide-react';
+import { useSellerLocation } from '@/hooks/useSellerLocation';
 
 const formatTimeSlot = (slot: string): string => {
   const map: Record<string, string> = {
@@ -112,6 +113,19 @@ const Subscriptions = () => {
   });
 
   const { data: subscriptions, isLoading, refetch } = useSellerSubscriptions();
+  const { sellerLocation } = useSellerLocation();
+
+  const openDirections = (deliveryAddress: any) => {
+    const custLat = deliveryAddress?.latitude ?? deliveryAddress?.lat;
+    const custLng = deliveryAddress?.longitude ?? deliveryAddress?.lng;
+    const addr = deliveryAddress?.full_address || deliveryAddress?.address;
+    const destination = custLat && custLng ? `${custLat},${custLng}` : addr ? encodeURIComponent(addr) : null;
+    if (!destination) return;
+    const origin = sellerLocation?.latitude && sellerLocation?.longitude
+      ? `&origin=${sellerLocation.latitude},${sellerLocation.longitude}`
+      : '';
+    window.open(`https://www.google.com/maps/dir/?api=1${origin}&destination=${destination}`, '_blank', 'noopener,noreferrer');
+  };
 
   // Compute missed delivery counts
   const subscriptionIds = useMemo(() => (subscriptions || []).map(s => s.id), [subscriptions]);
@@ -685,6 +699,24 @@ const Subscriptions = () => {
                             )}
                           </div>
                         </div>
+
+                        {(() => {
+                          const addr: any = subscription.delivery_address;
+                          const hasDest = !!(addr?.latitude || addr?.lat || addr?.full_address || addr?.address);
+                          if (!hasDest) return null;
+                          return (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="ml-6 h-8"
+                              onClick={() => openDirections(addr)}
+                            >
+                              <Navigation className="h-3.5 w-3.5 mr-1.5" />
+                              Directions
+                            </Button>
+                          );
+                        })()}
 
                         <div className="flex items-center gap-2 text-sm">
                           <Package className="h-4 w-4 text-muted-foreground" />

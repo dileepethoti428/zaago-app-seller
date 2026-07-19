@@ -1,25 +1,20 @@
-I found the actual problem.
+## Add "Directions" button on subscription cards
 
-The View Details page reads `orders.items` directly, and that JSON already contains the unit:
-- `Apple` has `unit: "per kg"`
-- `Buffalo Milk` has `unit: "per litre"`
+Add a small button/link right after the customer address on each subscription card in `src/pages/Subscriptions.tsx`. Tapping it opens Google Maps in a new tab with directions from the seller's location to the customer's delivery location, so you can check distance before assigning a delivery partner.
 
-But both list pages, `Orders Management` and `Seller Orders`, use the database function `get_seller_specific_orders`. That function rebuilds `seller_items` and currently returns only:
-- id
-- name
-- price
-- quantity
-- seller_id
+### Behavior
+- Button label: "Directions" with a `Navigation` (or `MapPin`) icon.
+- On click: open `https://www.google.com/maps/dir/?api=1&origin=<sellerLat>,<sellerLng>&destination=<customerLat>,<customerLng>` in a new tab (`_blank`, `noopener`).
+- Fallback when coordinates are missing:
+  - If customer has only an address string → open `...&destination=<encoded address>`.
+  - If seller coords missing → omit origin (Google will use current location).
+- Button is disabled with a tooltip "No address available" only when neither customer coords nor address exist.
 
-It drops the product `unit`, so the frontend has nothing to display on those pages.
+### Data sources
+- Seller lat/lng: reuse existing `useSellerLocation()` hook (already in project).
+- Customer lat/lng/address: read from `subscription.delivery_address` (already fetched in `useSellerSubscriptions`); no schema or query changes.
 
-Plan:
-1. Update the Supabase function `public.get_seller_specific_orders(p_seller_user_id uuid)` so every returned seller item includes:
-   - `unit: COALESCE(item->>'unit', p.unit)`
-2. Keep the existing frontend display logic that already renders `item.unit || item.product_unit`.
-3. Confirm the live function output now returns units inside `seller_items`.
-4. Run TypeScript check to ensure the app still compiles.
+### Files touched
+- `src/pages/Subscriptions.tsx` — add the button in the address block on each card; wire up the URL builder and seller location hook.
 
-After this, the same format should show on the list pages:
-- `Apple (per kg) × 1`
-- `Buffalo Milk (per litre) × 1`
+No backend, RLS, or data model changes.
