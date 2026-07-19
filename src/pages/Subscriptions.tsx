@@ -700,6 +700,24 @@ const Subscriptions = () => {
                           </div>
                         </div>
 
+                        {(() => {
+                          const addr: any = subscription.delivery_address;
+                          const hasDest = !!(addr?.latitude || addr?.lat || addr?.full_address || addr?.address);
+                          if (!hasDest) return null;
+                          return (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="ml-6 h-8"
+                              onClick={() => openDirections(addr)}
+                            >
+                              <Navigation className="h-3.5 w-3.5 mr-1.5" />
+                              Directions
+                            </Button>
+                          );
+                        })()}
+
                         <div className="flex items-center gap-2 text-sm">
                           <Package className="h-4 w-4 text-muted-foreground" />
                           <span>
