@@ -704,26 +704,27 @@ const Subscriptions = () => {
                                 Near: {(subscription.delivery_address as any).landmark}
                               </p>
                             )}
+                            {(() => {
+                              const addr: any = subscription.delivery_address;
+                              const { lat, lng } = getCoords(addr);
+                              const hasDest = !!(lat && lng) || !!(addr?.full_address || addr?.address);
+                              if (!hasDest) return null;
+                              return (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 mt-1 px-2 text-xs"
+                                  onClick={() => openDirections(addr)}
+                                >
+                                  <Navigation className="h-3 w-3 mr-1" />
+                                  Directions
+                                </Button>
+                              );
+                            })()}
                           </div>
                         </div>
 
-                        {(() => {
-                          const addr: any = subscription.delivery_address;
-                          const hasDest = !!(addr?.latitude || addr?.lat || addr?.full_address || addr?.address);
-                          if (!hasDest) return null;
-                          return (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="ml-6 h-8"
-                              onClick={() => openDirections(addr)}
-                            >
-                              <Navigation className="h-3.5 w-3.5 mr-1.5" />
-                              Directions
-                            </Button>
-                          );
-                        })()}
 
                         <div className="flex items-center gap-2 text-sm">
                           <Package className="h-4 w-4 text-muted-foreground" />
