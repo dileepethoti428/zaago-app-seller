@@ -52,6 +52,7 @@ const Orders = () => {
 
   const orderTabs = [
     { value: 'all', label: 'All Orders', count: 0 },
+    { value: 'scheduled', label: 'Scheduled (Later)', count: 0 },
     { value: 'to_accept', label: 'To Accept', count: 0 },
     { value: 'placed', label: 'Placed', count: 0 },
     { value: 'new', label: 'New', count: 0 },
