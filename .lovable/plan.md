@@ -1,18 +1,31 @@
-## Fix Directions button in Subscriptions page
+## Goal
+Make it obvious on Seller Orders and Orders Management which orders are "Book Now, Get Later" (scheduled for a future date/slot) and when the seller needs to pack them.
 
-**Two issues to fix in `src/pages/Subscriptions.tsx`:**
+## What defines a scheduled order
+An order is treated as "Book Now, Get Later" when it has a `delivery_time_slot` set (e.g. `18:00-20:00`) OR its `delivery_date` is later than the order's `created_at` date (IST). Otherwise it's treated as immediate.
 
-### 1. Wrong destination (opens text address, not exact coordinates)
-The customer's coordinates in `delivery_address` are nested under a `coordinates` object (either `coordinates.lat/lng` or `coordinates.latitude/longitude`), but the current `openDirections` reads `addr.latitude / addr.lat` at the top level. Those keys don't exist, so it always falls back to the free-text `full_address` — which Google Maps then geocodes to a different place.
+## Changes
 
-Fix the coordinate lookup order:
-```
-addr.coordinates?.latitude ?? addr.coordinates?.lat ?? addr.latitude ?? addr.lat
-addr.coordinates?.longitude ?? addr.coordinates?.lng ?? addr.longitude ?? addr.lng
-```
-Only fall back to the text address if no coordinates are present. Also update the `hasDest` guard the same way.
+### 1. `src/pages/Orders.tsx` (Orders Management)
+- On each order card add a small badge row when the order is scheduled:
+  - Blue "Scheduled" badge with a `Clock` icon
+  - Line: `Deliver: <delivery_date formatted> · <delivery_time_slot>` (slot omitted if null)
+  - Line: `Pack by: <slot start − 1 hour>` (or `delivery_time − 1 hour` fallback) so the seller knows when to have it ready
+- Add a filter chip "Scheduled" alongside existing status filters that shows only scheduled orders, sorted by delivery date/slot ascending.
 
-### 2. Button placement
-Move the Directions button out of its own row and inline it right after the "Near: {landmark}" line inside the address block, so it sits beside "Near: Galiveedu" as a small icon button (rendered inline whether or not a landmark exists — placed at the end of the address text block, indented under the address).
+### 2. `src/pages/CustomerOrders.tsx` (Seller Orders per customer)
+- Same badge + "Deliver / Pack by" lines under each order header.
 
-No other files change. No DB or business-logic changes.
+### 3. `src/pages/OrderDetail.tsx`
+- In the order summary card, when scheduled, show a highlighted "Scheduled Delivery" block with:
+  - Delivery date, slot, and computed "Pack by" time.
+
+### 4. Shared helper `src/utils/scheduledOrder.ts` (new)
+- `isScheduledOrder(order)` — boolean
+- `getPackByTime(order)` — returns a Date/label for when to pack
+- `formatDeliveryWindow(order)` — returns e.g. `"Fri 24 Jul · 6:00 – 8:00 PM"`
+Used by all three pages so formatting stays consistent.
+
+## Out of scope
+- No DB schema changes (`delivery_date`, `delivery_time`, `delivery_time_slot` already exist).
+- No changes to order creation or the customer app.
