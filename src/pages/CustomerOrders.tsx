@@ -619,6 +619,24 @@ const CustomerOrders: React.FC = () => {
                           {getStatusBadge(order.status)}
                         </div>
 
+                        {isScheduledOrder(order) && (
+                          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 flex items-start gap-2">
+                            <CalendarClock className="w-4 h-4 mt-0.5 text-amber-500 flex-shrink-0" />
+                            <div className="text-sm">
+                              <p className="font-semibold text-amber-700 dark:text-amber-300">
+                                Scheduled · Book Now, Get Later
+                              </p>
+                              <p className="text-amber-700/90 dark:text-amber-200/90">
+                                Deliver: {formatDeliveryWindow(order) || '—'}
+                                {getPackByLabel(order) && (
+                                  <> · Pack by <span className="font-medium">{getPackByLabel(order)}</span></>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+
                         {/* Customer Info */}
                         <div className="flex items-center justify-between bg-zaago-card/30 rounded-lg p-4">
                           <div>
