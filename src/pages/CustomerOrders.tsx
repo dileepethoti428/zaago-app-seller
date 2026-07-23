@@ -148,6 +148,9 @@ const CustomerOrders: React.FC = () => {
         seller_total: order.seller_total,
         seller_items: Array.isArray(order.seller_items) ? order.seller_items.length : 0,
         assigned_agent_id: order.agent_id || null,
+        delivery_date: order.delivery_date,
+        delivery_time: order.delivery_time,
+        delivery_time_slot: order.delivery_time_slot,
       }));
 
       // Fetch agent details for orders that have an assigned agent
