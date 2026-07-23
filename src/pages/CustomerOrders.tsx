@@ -38,6 +38,9 @@ interface Order {
   agent_vehicle_type?: string;
   agent_vehicle_number?: string;
   agent_profile_image?: string;
+  delivery_date?: string | null;
+  delivery_time?: string | null;
+  delivery_time_slot?: string | null;
 }
 
 interface AgentInfo {
