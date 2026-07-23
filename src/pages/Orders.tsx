@@ -117,7 +117,9 @@ const Orders = () => {
   const applyFilters = (orderList: any[], tab: string = activeTab, search: string = searchTerm) => {
     let filtered = orderList;
     if (tab !== 'all') {
-      if (tab === 'to_accept') {
+      if (tab === 'scheduled') {
+        filtered = filtered.filter(o => isScheduledOrder(o));
+      } else if (tab === 'to_accept') {
         filtered = filtered.filter(o => ['placed', 'pending', 'new'].includes(o.status));
       } else if (tab === 'placed') {
         filtered = filtered.filter(o => o.status === 'placed');
