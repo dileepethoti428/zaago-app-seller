@@ -105,6 +105,8 @@ const Orders = () => {
     customer_name: order.customer_name,
     customer_phone: order.customer_phone,
     delivery_date: order.delivery_date,
+    delivery_time: order.delivery_time,
+    delivery_time_slot: order.delivery_time_slot,
     items: order.seller_items,
     address: order.address,
     payment_status: order.payment_status,
