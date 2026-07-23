@@ -15,8 +15,10 @@ import {
   User,
   CheckSquare,
   XSquare,
-  RefreshCw
+  RefreshCw,
+  CalendarClock
 } from 'lucide-react';
+import { isScheduledOrder, formatDeliveryWindow, getPackByLabel } from '@/utils/scheduledOrder';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
