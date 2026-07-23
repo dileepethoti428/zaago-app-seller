@@ -28,6 +28,8 @@ import { useSellerOrderActions } from '@/hooks/useSellerOrderActions';
 import { LocationSetupModal } from '@/components/LocationSetupModal';
 import { OrderAcceptanceTimer } from '@/components/OrderAcceptanceTimer';
 import { CancelOrderDialog } from '@/components/CancelOrderDialog';
+import { isScheduledOrder, formatDeliveryWindow, getPackByLabel } from '@/utils/scheduledOrder';
+import { CalendarClock } from 'lucide-react';
 
 const Orders = () => {
   const { user } = useAuth();
@@ -50,6 +52,7 @@ const Orders = () => {
 
   const orderTabs = [
     { value: 'all', label: 'All Orders', count: 0 },
+    { value: 'scheduled', label: 'Scheduled (Later)', count: 0 },
     { value: 'to_accept', label: 'To Accept', count: 0 },
     { value: 'placed', label: 'Placed', count: 0 },
     { value: 'new', label: 'New', count: 0 },
@@ -102,6 +105,8 @@ const Orders = () => {
     customer_name: order.customer_name,
     customer_phone: order.customer_phone,
     delivery_date: order.delivery_date,
+    delivery_time: order.delivery_time,
+    delivery_time_slot: order.delivery_time_slot,
     items: order.seller_items,
     address: order.address,
     payment_status: order.payment_status,
@@ -112,7 +117,9 @@ const Orders = () => {
   const applyFilters = (orderList: any[], tab: string = activeTab, search: string = searchTerm) => {
     let filtered = orderList;
     if (tab !== 'all') {
-      if (tab === 'to_accept') {
+      if (tab === 'scheduled') {
+        filtered = filtered.filter(o => isScheduledOrder(o));
+      } else if (tab === 'to_accept') {
         filtered = filtered.filter(o => ['placed', 'pending', 'new'].includes(o.status));
       } else if (tab === 'placed') {
         filtered = filtered.filter(o => o.status === 'placed');
@@ -285,15 +292,17 @@ const Orders = () => {
   // Calculate tab counts
   const tabCounts = orderTabs.map(tab => ({
     ...tab,
-    count: tab.value === 'all' 
-      ? orders.length 
-      : tab.value === 'to_accept'
-        ? orders.filter(order => ['placed', 'pending', 'new'].includes(order.status)).length
-        : tab.value === 'placed'
-          ? orders.filter(order => order.status === 'placed').length
-          : tab.value === 'new'
-            ? orders.filter(order => order.status === 'new' || order.status === 'pending').length
-            : orders.filter(order => order.status === tab.value).length
+    count: tab.value === 'all'
+      ? orders.length
+      : tab.value === 'scheduled'
+        ? orders.filter(order => isScheduledOrder(order)).length
+        : tab.value === 'to_accept'
+          ? orders.filter(order => ['placed', 'pending', 'new'].includes(order.status)).length
+          : tab.value === 'placed'
+            ? orders.filter(order => order.status === 'placed').length
+            : tab.value === 'new'
+              ? orders.filter(order => order.status === 'new' || order.status === 'pending').length
+              : orders.filter(order => order.status === tab.value).length
   }));
 
   return (
@@ -454,6 +463,24 @@ const Orders = () => {
                               </div>
                             </div>
                           </div>
+
+                          {isScheduledOrder(order) && (
+                            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 flex items-start gap-2">
+                              <CalendarClock className="w-4 h-4 mt-0.5 text-amber-500 flex-shrink-0" />
+                              <div className="text-sm">
+                                <p className="font-semibold text-amber-700 dark:text-amber-300">
+                                  Scheduled · Book Now, Get Later
+                                </p>
+                                <p className="text-amber-700/90 dark:text-amber-200/90">
+                                  Deliver: {formatDeliveryWindow(order) || '—'}
+                                  {getPackByLabel(order) && (
+                                    <> · Pack by <span className="font-medium">{getPackByLabel(order)}</span></>
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
 
                           {/* Order Details */}
                           <div className="flex flex-col sm:flex-row sm:items-center gap-6 lg:gap-8">

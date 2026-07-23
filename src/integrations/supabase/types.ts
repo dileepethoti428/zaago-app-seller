@@ -9917,6 +9917,8 @@ export type Database = {
           customer_name: string
           customer_phone: string
           delivery_date: string
+          delivery_time: string
+          delivery_time_slot: string
           order_id: string
           order_status: string
           payment_status: string

@@ -9,13 +9,14 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Clock, Package, CheckCircle, Truck, MapPin, Search, RefreshCw, Eye, Phone, X, Filter, Calendar, DollarSign, User } from 'lucide-react';
+import { Clock, Package, CheckCircle, Truck, MapPin, Search, RefreshCw, Eye, Phone, X, Filter, Calendar, DollarSign, User, CalendarClock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useSellerOrderActions } from '@/hooks/useSellerOrderActions';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
 import { LocationSetupModal } from '@/components/LocationSetupModal';
+import { isScheduledOrder, formatDeliveryWindow, getPackByLabel } from '@/utils/scheduledOrder';
 
 interface Order {
   id: string;
@@ -37,6 +38,9 @@ interface Order {
   agent_vehicle_type?: string;
   agent_vehicle_number?: string;
   agent_profile_image?: string;
+  delivery_date?: string | null;
+  delivery_time?: string | null;
+  delivery_time_slot?: string | null;
 }
 
 interface AgentInfo {
@@ -144,6 +148,9 @@ const CustomerOrders: React.FC = () => {
         seller_total: order.seller_total,
         seller_items: Array.isArray(order.seller_items) ? order.seller_items.length : 0,
         assigned_agent_id: order.agent_id || null,
+        delivery_date: order.delivery_date,
+        delivery_time: order.delivery_time,
+        delivery_time_slot: order.delivery_time_slot,
       }));
 
       // Fetch agent details for orders that have an assigned agent
@@ -611,6 +618,24 @@ const CustomerOrders: React.FC = () => {
                           </div>
                           {getStatusBadge(order.status)}
                         </div>
+
+                        {isScheduledOrder(order) && (
+                          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 flex items-start gap-2">
+                            <CalendarClock className="w-4 h-4 mt-0.5 text-amber-500 flex-shrink-0" />
+                            <div className="text-sm">
+                              <p className="font-semibold text-amber-700 dark:text-amber-300">
+                                Scheduled · Book Now, Get Later
+                              </p>
+                              <p className="text-amber-700/90 dark:text-amber-200/90">
+                                Deliver: {formatDeliveryWindow(order) || '—'}
+                                {getPackByLabel(order) && (
+                                  <> · Pack by <span className="font-medium">{getPackByLabel(order)}</span></>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
 
                         {/* Customer Info */}
                         <div className="flex items-center justify-between bg-zaago-card/30 rounded-lg p-4">
