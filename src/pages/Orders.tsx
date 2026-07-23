@@ -28,6 +28,8 @@ import { useSellerOrderActions } from '@/hooks/useSellerOrderActions';
 import { LocationSetupModal } from '@/components/LocationSetupModal';
 import { OrderAcceptanceTimer } from '@/components/OrderAcceptanceTimer';
 import { CancelOrderDialog } from '@/components/CancelOrderDialog';
+import { isScheduledOrder, formatDeliveryWindow, getPackByLabel } from '@/utils/scheduledOrder';
+import { CalendarClock } from 'lucide-react';
 
 const Orders = () => {
   const { user } = useAuth();
