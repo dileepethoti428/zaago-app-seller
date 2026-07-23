@@ -292,15 +292,17 @@ const Orders = () => {
   // Calculate tab counts
   const tabCounts = orderTabs.map(tab => ({
     ...tab,
-    count: tab.value === 'all' 
-      ? orders.length 
-      : tab.value === 'to_accept'
-        ? orders.filter(order => ['placed', 'pending', 'new'].includes(order.status)).length
-        : tab.value === 'placed'
-          ? orders.filter(order => order.status === 'placed').length
-          : tab.value === 'new'
-            ? orders.filter(order => order.status === 'new' || order.status === 'pending').length
-            : orders.filter(order => order.status === tab.value).length
+    count: tab.value === 'all'
+      ? orders.length
+      : tab.value === 'scheduled'
+        ? orders.filter(order => isScheduledOrder(order)).length
+        : tab.value === 'to_accept'
+          ? orders.filter(order => ['placed', 'pending', 'new'].includes(order.status)).length
+          : tab.value === 'placed'
+            ? orders.filter(order => order.status === 'placed').length
+            : tab.value === 'new'
+              ? orders.filter(order => order.status === 'new' || order.status === 'pending').length
+              : orders.filter(order => order.status === tab.value).length
   }));
 
   return (
