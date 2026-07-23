@@ -9,13 +9,14 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Clock, Package, CheckCircle, Truck, MapPin, Search, RefreshCw, Eye, Phone, X, Filter, Calendar, DollarSign, User } from 'lucide-react';
+import { Clock, Package, CheckCircle, Truck, MapPin, Search, RefreshCw, Eye, Phone, X, Filter, Calendar, DollarSign, User, CalendarClock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useSellerOrderActions } from '@/hooks/useSellerOrderActions';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
 import { LocationSetupModal } from '@/components/LocationSetupModal';
+import { isScheduledOrder, formatDeliveryWindow, getPackByLabel } from '@/utils/scheduledOrder';
 
 interface Order {
   id: string;
