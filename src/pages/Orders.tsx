@@ -464,6 +464,24 @@ const Orders = () => {
                             </div>
                           </div>
 
+                          {isScheduledOrder(order) && (
+                            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 flex items-start gap-2">
+                              <CalendarClock className="w-4 h-4 mt-0.5 text-amber-500 flex-shrink-0" />
+                              <div className="text-sm">
+                                <p className="font-semibold text-amber-700 dark:text-amber-300">
+                                  Scheduled · Book Now, Get Later
+                                </p>
+                                <p className="text-amber-700/90 dark:text-amber-200/90">
+                                  Deliver: {formatDeliveryWindow(order) || '—'}
+                                  {getPackByLabel(order) && (
+                                    <> · Pack by <span className="font-medium">{getPackByLabel(order)}</span></>
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+
                           {/* Order Details */}
                           <div className="flex flex-col sm:flex-row sm:items-center gap-6 lg:gap-8">
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 lg:gap-8">
