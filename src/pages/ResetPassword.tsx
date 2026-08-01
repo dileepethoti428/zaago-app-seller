@@ -103,6 +103,7 @@ export default function ResetPassword() {
         throw error;
       }
 
+      try { sessionStorage.removeItem("pendingPasswordRecovery"); } catch {}
       setSuccess(true);
       toast({
         title: "Password Updated",
