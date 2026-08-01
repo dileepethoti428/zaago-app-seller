@@ -22,6 +22,7 @@ export default function ResetPassword() {
         
         if (event === "PASSWORD_RECOVERY") {
           // User came from password reset link
+          try { sessionStorage.setItem("pendingPasswordRecovery", "1"); } catch {}
           setIsValidSession(true);
           setCheckingSession(false);
         } else if (event === "SIGNED_IN" && session) {
@@ -102,6 +103,7 @@ export default function ResetPassword() {
         throw error;
       }
 
+      try { sessionStorage.removeItem("pendingPasswordRecovery"); } catch {}
       setSuccess(true);
       toast({
         title: "Password Updated",

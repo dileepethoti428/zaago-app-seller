@@ -75,6 +75,7 @@ const AppContent = () => {
   // Supabase redirects to root with #type=recovery hash — we intercept and redirect
   useEffect(() => {
     if (window.location.hash.includes('type=recovery')) {
+      try { sessionStorage.setItem('pendingPasswordRecovery', '1'); } catch {}
       navigate('/reset-password');
     }
   }, [navigate]);
