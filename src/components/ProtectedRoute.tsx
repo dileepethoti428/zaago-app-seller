@@ -15,7 +15,21 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const publicRoutes = ['/login', '/forgot-password', '/reset-password', '/privacy-policy', '/terms-conditions', '/account-deactivated'];
   const mfaRoute = '/mfa-challenge';
 
+  const isRecoveryFlow = () => {
+    try {
+      return (
+        sessionStorage.getItem('pendingPasswordRecovery') === '1' ||
+        window.location.hash.includes('type=recovery')
+      );
+    } catch {
+      return false;
+    }
+  };
+
   useEffect(() => {
+    // Never interrupt the password recovery flow with MFA / approval redirects
+    if (location.pathname === '/reset-password' || isRecoveryFlow()) return;
+
     if (!loading && !user && !publicRoutes.includes(location.pathname)) {
       navigate('/login');
     } else if (!loading && user) {
