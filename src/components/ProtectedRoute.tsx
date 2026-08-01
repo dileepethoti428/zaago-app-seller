@@ -28,8 +28,8 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   useEffect(() => {
     if (isRecoveryFlow()) {
-      if (!loading && user) {
-        checkRecoveryMfa();
+      if (!loading && user && location.pathname !== '/reset-password') {
+        navigate('/reset-password', { replace: true });
       }
       return;
     }
@@ -40,25 +40,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       checkMfaAndBank();
     }
   }, [user, loading, location.pathname]);
-
-  const checkRecoveryMfa = async () => {
-    try {
-      const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      if (error) throw error;
-
-      const needsMfa = data?.currentLevel === 'aal1' && data?.nextLevel === 'aal2';
-      if (needsMfa && location.pathname !== mfaRoute) {
-        navigate(mfaRoute, { replace: true });
-        return;
-      }
-
-      if (!needsMfa && location.pathname === mfaRoute) {
-        navigate('/reset-password', { replace: true });
-      }
-    } catch (error) {
-      console.error('Recovery MFA check failed', error);
-    }
-  };
 
   const checkMfaAndBank = async () => {
     try {
