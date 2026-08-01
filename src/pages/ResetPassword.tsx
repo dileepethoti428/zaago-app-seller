@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Lock, CheckCircle, ShieldCheck, Loader2 } from "lucide-react";
+import { Lock, CheckCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -17,7 +17,6 @@ export default function ResetPassword() {
   const [mfaRequired, setMfaRequired] = useState(false);
   const [factorId, setFactorId] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");
-  const [verifyingMfa, setVerifyingMfa] = useState(false);
   const [lockSeconds, setLockSeconds] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -110,42 +109,6 @@ export default function ResetPassword() {
     }
   }, [checkingSession, isValidSession, navigate, toast]);
 
-  const handleMfaVerification = async () => {
-    if (!factorId || mfaCode.length !== 6 || lockSeconds > 0) return;
-
-    setVerifyingMfa(true);
-    try {
-      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId });
-      if (challengeError) throw challengeError;
-
-      const { error: verifyError } = await supabase.auth.mfa.verify({
-        factorId,
-        challengeId: challenge.id,
-        code: mfaCode,
-      });
-      if (verifyError) {
-        await recordMfaAttempt("login", false);
-        const lock = await checkMfaLockout("login");
-        if (lock.locked) setLockSeconds(lock.secondsRemaining);
-        throw new Error("Invalid authenticator code");
-      }
-
-      await recordMfaAttempt("login", true);
-      setMfaRequired(false);
-      setMfaCode("");
-      toast({ title: "Identity verified", description: "You can now set your new password." });
-    } catch (error: any) {
-      toast({
-        title: "Verification failed",
-        description: error.message || "Please try again.",
-        variant: "destructive",
-      });
-      setMfaCode("");
-    } finally {
-      setVerifyingMfa(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -176,6 +139,17 @@ export default function ResetPassword() {
       return;
     }
 
+    if (mfaRequired && mfaCode.length !== 6) {
+      toast({
+        title: "Authenticator Code Required",
+        description: "Enter the 6-digit code from your authenticator app.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (mfaRequired && lockSeconds > 0) return;
+
     setLoading(true);
 
     try {
@@ -183,16 +157,40 @@ export default function ResetPassword() {
       if (aalError) throw aalError;
 
       if (aal?.currentLevel === "aal1" && aal?.nextLevel === "aal2") {
-        setMfaRequired(true);
-        const { data: factors } = await supabase.auth.mfa.listFactors();
-        const verifiedFactor = (factors?.totp ?? []).find((factor) => factor.status === "verified");
-        setFactorId(verifiedFactor?.id ?? null);
-        toast({
-          title: "Authenticator verification required",
-          description: "Enter your 6-digit code before updating your password.",
-          variant: "destructive",
+        let activeFactorId = factorId;
+
+        if (!activeFactorId) {
+          const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
+          if (factorsError) throw factorsError;
+          const verifiedFactor = (factors?.totp ?? []).find((factor) => factor.status === "verified");
+          activeFactorId = verifiedFactor?.id ?? null;
+          setFactorId(activeFactorId);
+        }
+
+        if (!activeFactorId) {
+          throw new Error("No verified authenticator was found for this account.");
+        }
+
+        const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
+          factorId: activeFactorId,
         });
-        return;
+        if (challengeError) throw challengeError;
+
+        const { error: verifyError } = await supabase.auth.mfa.verify({
+          factorId: activeFactorId,
+          challengeId: challenge.id,
+          code: mfaCode,
+        });
+
+        if (verifyError) {
+          await recordMfaAttempt("login", false);
+          const lock = await checkMfaLockout("login");
+          if (lock.locked) setLockSeconds(lock.secondsRemaining);
+          setMfaCode("");
+          throw new Error("Invalid authenticator code");
+        }
+
+        await recordMfaAttempt("login", true);
       }
 
       const { error } = await supabase.auth.updateUser({
@@ -264,60 +262,6 @@ export default function ResetPassword() {
     );
   }
 
-  if (mfaRequired) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
-            <div className="text-center mb-8">
-              <div className="flex justify-center mb-6">
-                <div className="w-16 h-16 rounded-full bg-zaago-green/10 flex items-center justify-center">
-                  <ShieldCheck className="w-8 h-8 text-zaago-green" />
-                </div>
-              </div>
-              <h1 className="text-3xl font-bold text-white mb-2">Verify Your Identity</h1>
-              <p className="text-zinc-400 text-base">
-                Enter the 6-digit code from your Authenticator app to continue resetting your password.
-              </p>
-            </div>
-
-            {lockSeconds > 0 && (
-              <div className="mb-5 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive text-center">
-                Too many attempts. Try again in {lockSeconds}s.
-              </div>
-            )}
-
-            <div className="space-y-6">
-              <div className="flex justify-center">
-                <InputOTP
-                  maxLength={6}
-                  value={mfaCode}
-                  onChange={setMfaCode}
-                  disabled={verifyingMfa || lockSeconds > 0}
-                >
-                  <InputOTPGroup>
-                    {[0, 1, 2, 3, 4, 5].map((index) => (
-                      <InputOTPSlot key={index} index={index} className="bg-zinc-800 text-white border-zinc-700" />
-                    ))}
-                  </InputOTPGroup>
-                </InputOTP>
-              </div>
-
-              <Button
-                type="button"
-                onClick={handleMfaVerification}
-                disabled={verifyingMfa || mfaCode.length !== 6 || lockSeconds > 0}
-                className="w-full bg-zaago-green hover:bg-zaago-green/90 text-white"
-              >
-                {verifyingMfa ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify & Continue"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4">
       <div className="w-full max-w-md">
@@ -369,14 +313,42 @@ export default function ResetPassword() {
               </div>
             </div>
 
+            {mfaRequired && password.length > 0 && (
+              <div>
+                <label className="text-white text-base font-medium mb-3 block">Authenticator Code</label>
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={6}
+                    value={mfaCode}
+                    onChange={setMfaCode}
+                    disabled={loading || lockSeconds > 0}
+                  >
+                    <InputOTPGroup>
+                      {[0, 1, 2, 3, 4, 5].map((index) => (
+                        <InputOTPSlot key={index} index={index} className="bg-zinc-800 text-white border-zinc-700" />
+                      ))}
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+                <p className="text-sm text-zinc-400 mt-3">
+                  Your account has two-factor authentication enabled. Enter the code from your authenticator app to confirm the password change.
+                </p>
+                {lockSeconds > 0 && (
+                  <div className="mt-3 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive text-center">
+                    Too many attempts. Try again in {lockSeconds}s.
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Submit Button */}
-            <button
+            <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || lockSeconds > 0}
               className="w-full bg-green-500 text-white py-4 rounded-xl font-semibold text-base hover:bg-green-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Updating..." : "Update Password"}
-            </button>
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Update Password"}
+            </Button>
           </form>
         </div>
       </div>
