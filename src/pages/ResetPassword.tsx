@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
-import { Lock, CheckCircle } from "lucide-react";
+import { Lock, CheckCircle, ShieldCheck, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { checkMfaLockout, recordMfaAttempt } from "@/hooks/useMfa";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
@@ -11,24 +14,59 @@ export default function ResetPassword() {
   const [success, setSuccess] = useState(false);
   const [isValidSession, setIsValidSession] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [factorId, setFactorId] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
+  const [verifyingMfa, setVerifyingMfa] = useState(false);
+  const [lockSeconds, setLockSeconds] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
+    const prepareRecoverySession = async () => {
+      const { data: aal, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aalError) throw aalError;
+
+      if (aal?.currentLevel === "aal1" && aal?.nextLevel === "aal2") {
+        const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
+        if (factorsError) throw factorsError;
+        const verifiedFactor = (factors?.totp ?? []).find((factor) => factor.status === "verified");
+        if (!verifiedFactor) throw new Error("No verified authenticator was found for this account.");
+
+        setFactorId(verifiedFactor.id);
+        setMfaRequired(true);
+        const lock = await checkMfaLockout("login");
+        if (lock.locked) setLockSeconds(lock.secondsRemaining);
+      } else {
+        setMfaRequired(false);
+      }
+    };
+
+    const acceptSession = async () => {
+      setIsValidSession(true);
+      try {
+        await prepareRecoverySession();
+      } catch (error: any) {
+        toast({
+          title: "Unable to verify account security",
+          description: error.message || "Please request a new password reset link.",
+          variant: "destructive",
+        });
+      } finally {
+        setCheckingSession(false);
+      }
+    };
+
     // Listen for auth state changes (PASSWORD_RECOVERY event)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log("Auth event:", event, session);
-        
+
         if (event === "PASSWORD_RECOVERY") {
-          // User came from password reset link
           try { sessionStorage.setItem("pendingPasswordRecovery", "1"); } catch {}
-          setIsValidSession(true);
-          setCheckingSession(false);
+          void acceptSession();
         } else if (event === "SIGNED_IN" && session) {
-          // User is signed in (could be from recovery)
-          setIsValidSession(true);
-          setCheckingSession(false);
+          void acceptSession();
         }
       }
     );
@@ -37,9 +75,10 @@ export default function ResetPassword() {
     const checkExistingSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        setIsValidSession(true);
+        await acceptSession();
+      } else {
+        setCheckingSession(false);
       }
-      setCheckingSession(false);
     };
     
     // Give Supabase a moment to process the URL hash
@@ -48,7 +87,16 @@ export default function ResetPassword() {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [toast]);
+
+  useEffect(() => {
+    if (lockSeconds <= 0) return;
+    const timer = window.setInterval(
+      () => setLockSeconds((seconds) => Math.max(0, seconds - 1)),
+      1000,
+    );
+    return () => window.clearInterval(timer);
+  }, [lockSeconds]);
 
   // Redirect if no valid session after checking
   useEffect(() => {
@@ -61,6 +109,42 @@ export default function ResetPassword() {
       navigate("/forgot-password");
     }
   }, [checkingSession, isValidSession, navigate, toast]);
+
+  const handleMfaVerification = async () => {
+    if (!factorId || mfaCode.length !== 6 || lockSeconds > 0) return;
+
+    setVerifyingMfa(true);
+    try {
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId });
+      if (challengeError) throw challengeError;
+
+      const { error: verifyError } = await supabase.auth.mfa.verify({
+        factorId,
+        challengeId: challenge.id,
+        code: mfaCode,
+      });
+      if (verifyError) {
+        await recordMfaAttempt("login", false);
+        const lock = await checkMfaLockout("login");
+        if (lock.locked) setLockSeconds(lock.secondsRemaining);
+        throw new Error("Invalid authenticator code");
+      }
+
+      await recordMfaAttempt("login", true);
+      setMfaRequired(false);
+      setMfaCode("");
+      toast({ title: "Identity verified", description: "You can now set your new password." });
+    } catch (error: any) {
+      toast({
+        title: "Verification failed",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+      setMfaCode("");
+    } finally {
+      setVerifyingMfa(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,7 +183,15 @@ export default function ResetPassword() {
       if (aalError) throw aalError;
 
       if (aal?.currentLevel === "aal1" && aal?.nextLevel === "aal2") {
-        navigate("/mfa-challenge", { replace: true });
+        setMfaRequired(true);
+        const { data: factors } = await supabase.auth.mfa.listFactors();
+        const verifiedFactor = (factors?.totp ?? []).find((factor) => factor.status === "verified");
+        setFactorId(verifiedFactor?.id ?? null);
+        toast({
+          title: "Authenticator verification required",
+          description: "Enter your 6-digit code before updating your password.",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -166,6 +258,60 @@ export default function ResetPassword() {
             <p className="text-zinc-400 text-base">
               Redirecting you to login...
             </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (mfaRequired) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-md">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+            <div className="text-center mb-8">
+              <div className="flex justify-center mb-6">
+                <div className="w-16 h-16 rounded-full bg-zaago-green/10 flex items-center justify-center">
+                  <ShieldCheck className="w-8 h-8 text-zaago-green" />
+                </div>
+              </div>
+              <h1 className="text-3xl font-bold text-white mb-2">Verify Your Identity</h1>
+              <p className="text-zinc-400 text-base">
+                Enter the 6-digit code from your Authenticator app to continue resetting your password.
+              </p>
+            </div>
+
+            {lockSeconds > 0 && (
+              <div className="mb-5 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive text-center">
+                Too many attempts. Try again in {lockSeconds}s.
+              </div>
+            )}
+
+            <div className="space-y-6">
+              <div className="flex justify-center">
+                <InputOTP
+                  maxLength={6}
+                  value={mfaCode}
+                  onChange={setMfaCode}
+                  disabled={verifyingMfa || lockSeconds > 0}
+                >
+                  <InputOTPGroup>
+                    {[0, 1, 2, 3, 4, 5].map((index) => (
+                      <InputOTPSlot key={index} index={index} className="bg-zinc-800 text-white border-zinc-700" />
+                    ))}
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+
+              <Button
+                type="button"
+                onClick={handleMfaVerification}
+                disabled={verifyingMfa || mfaCode.length !== 6 || lockSeconds > 0}
+                className="w-full bg-zaago-green hover:bg-zaago-green/90 text-white"
+              >
+                {verifyingMfa ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify & Continue"}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
