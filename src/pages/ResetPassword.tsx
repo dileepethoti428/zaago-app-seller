@@ -95,6 +95,14 @@ export default function ResetPassword() {
     setLoading(true);
 
     try {
+      const { data: aal, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aalError) throw aalError;
+
+      if (aal?.currentLevel === "aal1" && aal?.nextLevel === "aal2") {
+        navigate("/mfa-challenge", { replace: true });
+        return;
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: password,
       });

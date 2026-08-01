@@ -27,8 +27,12 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   };
 
   useEffect(() => {
-    // Never interrupt the password recovery flow with MFA / approval redirects
-    if (location.pathname === '/reset-password' || isRecoveryFlow()) return;
+    if (isRecoveryFlow()) {
+      if (!loading && user) {
+        checkRecoveryMfa();
+      }
+      return;
+    }
 
     if (!loading && !user && !publicRoutes.includes(location.pathname)) {
       navigate('/login');
@@ -36,6 +40,25 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       checkMfaAndBank();
     }
   }, [user, loading, location.pathname]);
+
+  const checkRecoveryMfa = async () => {
+    try {
+      const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (error) throw error;
+
+      const needsMfa = data?.currentLevel === 'aal1' && data?.nextLevel === 'aal2';
+      if (needsMfa && location.pathname !== mfaRoute) {
+        navigate(mfaRoute, { replace: true });
+        return;
+      }
+
+      if (!needsMfa && location.pathname === mfaRoute) {
+        navigate('/reset-password', { replace: true });
+      }
+    } catch (error) {
+      console.error('Recovery MFA check failed', error);
+    }
+  };
 
   const checkMfaAndBank = async () => {
     try {

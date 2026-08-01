@@ -23,13 +23,23 @@ export default function MfaChallenge() {
   const [factorId, setFactorId] = useState<string | null>(null);
   const [lockSeconds, setLockSeconds] = useState(0);
 
+  const getSuccessDestination = () => {
+    try {
+      return sessionStorage.getItem("pendingPasswordRecovery") === "1"
+        ? "/reset-password"
+        : "/";
+    } catch {
+      return "/";
+    }
+  };
+
   useEffect(() => {
     (async () => {
       const { data } = await supabase.auth.mfa.listFactors();
       const totp = (data?.totp ?? []).find((f: any) => f.status === "verified");
       if (!totp) {
         // No factor — user shouldn't be here
-        navigate("/", { replace: true });
+        navigate(getSuccessDestination(), { replace: true });
         return;
       }
       setFactorId(totp.id);
@@ -62,9 +72,7 @@ export default function MfaChallenge() {
         throw new Error("Invalid code");
       }
       await recordMfaAttempt("login", true);
-      let recovering = false;
-      try { recovering = sessionStorage.getItem("pendingPasswordRecovery") === "1"; } catch {}
-      navigate(recovering ? "/reset-password" : "/", { replace: true });
+      navigate(getSuccessDestination(), { replace: true });
     } catch (e: any) {
       toast({ title: "Verification failed", description: e.message, variant: "destructive" });
       setCode("");
@@ -94,6 +102,7 @@ export default function MfaChallenge() {
         description: "2FA has been reset. Sign in again and re-enable it from Security settings.",
       });
       await supabase.auth.signOut();
+      try { sessionStorage.removeItem("pendingPasswordRecovery"); } catch {}
       navigate("/login", { replace: true });
     } catch (e: any) {
       toast({ title: "Failed", description: e.message, variant: "destructive" });
@@ -105,6 +114,7 @@ export default function MfaChallenge() {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    try { sessionStorage.removeItem("pendingPasswordRecovery"); } catch {}
     navigate("/login", { replace: true });
   };
 
