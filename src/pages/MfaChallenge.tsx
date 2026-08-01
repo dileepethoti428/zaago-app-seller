@@ -62,7 +62,9 @@ export default function MfaChallenge() {
         throw new Error("Invalid code");
       }
       await recordMfaAttempt("login", true);
-      navigate("/", { replace: true });
+      let recovering = false;
+      try { recovering = sessionStorage.getItem("pendingPasswordRecovery") === "1"; } catch {}
+      navigate(recovering ? "/reset-password" : "/", { replace: true });
     } catch (e: any) {
       toast({ title: "Verification failed", description: e.message, variant: "destructive" });
       setCode("");
