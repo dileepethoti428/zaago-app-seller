@@ -1,31 +1,23 @@
-## Goal
-Make it obvious on Seller Orders and Orders Management which orders are "Book Now, Get Later" (scheduled for a future date/slot) and when the seller needs to pack them.
+# Fix: password reset link ends up on Home instead of Reset Password
 
-## What defines a scheduled order
-An order is treated as "Book Now, Get Later" when it has a `delivery_time_slot` set (e.g. `18:00-20:00`) OR its `delivery_date` is later than the order's `created_at` date (IST). Otherwise it's treated as immediate.
+## What happens today
 
-## Changes
+Clicking the Supabase reset link signs the user in with a temporary recovery session. Two things then hijack the flow:
 
-### 1. `src/pages/Orders.tsx` (Orders Management)
-- On each order card add a small badge row when the order is scheduled:
-  - Blue "Scheduled" badge with a `Clock` icon
-  - Line: `Deliver: <delivery_date formatted> · <delivery_time_slot>` (slot omitted if null)
-  - Line: `Pack by: <slot start − 1 hour>` (or `delivery_time − 1 hour` fallback) so the seller knows when to have it ready
-- Add a filter chip "Scheduled" alongside existing status filters that shows only scheduled orders, sorted by delivery date/slot ascending.
+1. `ProtectedRoute` runs its 2FA check for any signed-in user — including on `/reset-password`, which is in its public-route list — and sends them to `/mfa-challenge`.
+2. After the 2FA code is verified, `MfaChallenge` always navigates to `/`, so the reset intent is lost and the user lands on Home with no chance to set a new password.
 
-### 2. `src/pages/CustomerOrders.tsx` (Seller Orders per customer)
-- Same badge + "Deliver / Pack by" lines under each order header.
+## Fix
 
-### 3. `src/pages/OrderDetail.tsx`
-- In the order summary card, when scheduled, show a highlighted "Scheduled Delivery" block with:
-  - Delivery date, slot, and computed "Pack by" time.
+Remember that the session came from a recovery link, and route around it:
 
-### 4. Shared helper `src/utils/scheduledOrder.ts` (new)
-- `isScheduledOrder(order)` — boolean
-- `getPackByTime(order)` — returns a Date/label for when to pack
-- `formatDeliveryWindow(order)` — returns e.g. `"Fri 24 Jul · 6:00 – 8:00 PM"`
-Used by all three pages so formatting stays consistent.
+- When the recovery hash is detected (in `App.tsx`), store a short-lived `pendingPasswordRecovery` flag in `sessionStorage` before navigating to `/reset-password`. Also set it in `ResetPassword` on the `PASSWORD_RECOVERY` auth event, so a direct hit on the page works too.
+- `ProtectedRoute`: skip the 2FA/bank/approval redirects entirely while on `/reset-password` (and while the recovery flag is set), so the user is never pulled off the page.
+- `MfaChallenge`: if the recovery flag is set, redirect to `/reset-password` after a successful code instead of `/`. (Only relevant if 2FA is still triggered by another route.)
+- `ResetPassword`: clear the flag once the password is successfully updated, then continue with the existing sign-out/redirect-to-login behaviour.
 
-## Out of scope
-- No DB schema changes (`delivery_date`, `delivery_time`, `delivery_time_slot` already exist).
-- No changes to order creation or the customer app.
+## Notes
+
+- No database or Supabase auth-config changes needed.
+- The reset link's `redirectTo` in `ForgotPassword.tsx` points at `https://zaago-app-seller.vercel.app/reset-password`; leave as-is unless you want it changed to the current domain.
+- Files touched: `src/App.tsx`, `src/components/ProtectedRoute.tsx`, `src/pages/MfaChallenge.tsx`, `src/pages/ResetPassword.tsx`.
