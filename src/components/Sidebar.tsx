@@ -44,6 +44,8 @@ import {
 const navigationLinks = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/daily-operations', label: 'Daily Operations', icon: ClipboardList },
+  { href: '/insights', label: 'Insights', icon: BarChart3 },
+
   { href: '/customer-orders', label: 'Orders', icon: ShoppingCart },
   { href: '/subscriptions', label: 'Subscriptions', icon: CalendarClock },
   
