@@ -143,16 +143,8 @@ const Dashboard = () => {
       transition={{ duration: 0.5 }}
       className="space-y-6 sm:space-y-8"
     >
-      {/* Today's Orders Summary */}
-      <TodaysOrdersSummary />
-
-      {/* Today's Subscription Forecast */}
-      <TodaySubscriptionForecast />
-
-      {/* Subscription Delivery Handover */}
-      <SubscriptionHandoverCard />
-
       {/* Stock Alerts & Refill Suggestions */}
+
       <StockAlertsRefillSuggestions />
 
       {/* Weekly Refill Trend Report */}
