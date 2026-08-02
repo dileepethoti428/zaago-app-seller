@@ -11,6 +11,7 @@ import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import DailyOperations from "./pages/DailyOperations";
 import Orders from "./pages/Orders";
 import OrderDetail from "./pages/OrderDetail";
 import Products from "./pages/Products";
