@@ -19,13 +19,10 @@ import { useAuth } from '@/context/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomerLookupDialog } from '@/components/CustomerLookupDialog';
-import { TodaysOrdersSummary } from '@/components/TodaysOrdersSummary';
-import { TodaySubscriptionForecast } from '@/components/TodaySubscriptionForecast';
 import { StockAlertsRefillSuggestions } from '@/components/StockAlertsRefillSuggestions';
 import { WeeklyRefillTrendReport } from '@/components/WeeklyRefillTrendReport';
 import { TopProductsCard } from '@/components/TopProductsCard';
 import { PerformanceTrendCard } from '@/components/PerformanceTrendCard';
-import { SubscriptionHandoverCard } from '@/components/SubscriptionHandoverCard';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -143,16 +140,8 @@ const Dashboard = () => {
       transition={{ duration: 0.5 }}
       className="space-y-6 sm:space-y-8"
     >
-      {/* Today's Orders Summary */}
-      <TodaysOrdersSummary />
-
-      {/* Today's Subscription Forecast */}
-      <TodaySubscriptionForecast />
-
-      {/* Subscription Delivery Handover */}
-      <SubscriptionHandoverCard />
-
       {/* Stock Alerts & Refill Suggestions */}
+
       <StockAlertsRefillSuggestions />
 
       {/* Weekly Refill Trend Report */}
