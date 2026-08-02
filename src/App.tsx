@@ -174,6 +174,8 @@ const AppContent = () => {
           <Route index element={<Index />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="daily-operations" element={<DailyOperations />} />
+          <Route path="insights" element={<Insights />} />
+
           <Route path="orders" element={<Orders />} />
           <Route path="customer-orders" element={<CustomerOrders />} />
           <Route path="orders/:id" element={<OrderDetail />} />
