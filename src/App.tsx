@@ -12,6 +12,8 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import DailyOperations from "./pages/DailyOperations";
+import Insights from "./pages/Insights";
+
 import Orders from "./pages/Orders";
 import OrderDetail from "./pages/OrderDetail";
 import Products from "./pages/Products";
