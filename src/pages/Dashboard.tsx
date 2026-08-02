@@ -19,10 +19,6 @@ import { useAuth } from '@/context/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomerLookupDialog } from '@/components/CustomerLookupDialog';
-import { StockAlertsRefillSuggestions } from '@/components/StockAlertsRefillSuggestions';
-import { WeeklyRefillTrendReport } from '@/components/WeeklyRefillTrendReport';
-import { TopProductsCard } from '@/components/TopProductsCard';
-import { PerformanceTrendCard } from '@/components/PerformanceTrendCard';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -140,18 +136,6 @@ const Dashboard = () => {
       transition={{ duration: 0.5 }}
       className="space-y-6 sm:space-y-8"
     >
-      {/* Stock Alerts & Refill Suggestions */}
-
-      <StockAlertsRefillSuggestions />
-
-      {/* Weekly Refill Trend Report */}
-      <WeeklyRefillTrendReport />
-
-      {/* Top Products Analytics */}
-      <TopProductsCard />
-
-      {/* Performance Trends */}
-      <PerformanceTrendCard />
 
       {/* Header */}
       <motion.div

@@ -12,6 +12,8 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import DailyOperations from "./pages/DailyOperations";
+import Insights from "./pages/Insights";
+
 import Orders from "./pages/Orders";
 import OrderDetail from "./pages/OrderDetail";
 import Products from "./pages/Products";
@@ -172,6 +174,8 @@ const AppContent = () => {
           <Route index element={<Index />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="daily-operations" element={<DailyOperations />} />
+          <Route path="insights" element={<Insights />} />
+
           <Route path="orders" element={<Orders />} />
           <Route path="customer-orders" element={<CustomerOrders />} />
           <Route path="orders/:id" element={<OrderDetail />} />
