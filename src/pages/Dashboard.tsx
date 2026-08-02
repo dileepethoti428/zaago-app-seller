@@ -19,12 +19,10 @@ import { useAuth } from '@/context/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomerLookupDialog } from '@/components/CustomerLookupDialog';
-import { TodaySubscriptionForecast } from '@/components/TodaySubscriptionForecast';
 import { StockAlertsRefillSuggestions } from '@/components/StockAlertsRefillSuggestions';
 import { WeeklyRefillTrendReport } from '@/components/WeeklyRefillTrendReport';
 import { TopProductsCard } from '@/components/TopProductsCard';
 import { PerformanceTrendCard } from '@/components/PerformanceTrendCard';
-import { SubscriptionHandoverCard } from '@/components/SubscriptionHandoverCard';
 
 const Dashboard = () => {
   const { user } = useAuth();
