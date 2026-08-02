@@ -19,7 +19,6 @@ import { useAuth } from '@/context/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomerLookupDialog } from '@/components/CustomerLookupDialog';
-import { TodaysOrdersSummary } from '@/components/TodaysOrdersSummary';
 import { TodaySubscriptionForecast } from '@/components/TodaySubscriptionForecast';
 import { StockAlertsRefillSuggestions } from '@/components/StockAlertsRefillSuggestions';
 import { WeeklyRefillTrendReport } from '@/components/WeeklyRefillTrendReport';
