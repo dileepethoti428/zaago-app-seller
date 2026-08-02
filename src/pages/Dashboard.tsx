@@ -140,18 +140,6 @@ const Dashboard = () => {
       transition={{ duration: 0.5 }}
       className="space-y-6 sm:space-y-8"
     >
-      {/* Stock Alerts & Refill Suggestions */}
-
-      <StockAlertsRefillSuggestions />
-
-      {/* Weekly Refill Trend Report */}
-      <WeeklyRefillTrendReport />
-
-      {/* Top Products Analytics */}
-      <TopProductsCard />
-
-      {/* Performance Trends */}
-      <PerformanceTrendCard />
 
       {/* Header */}
       <motion.div
