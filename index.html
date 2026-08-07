@@ -2,40 +2,106 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <link rel="icon" type="image/x-icon" href="/zaago-new-logo.jpeg">
-    <link rel="manifest" href="/manifest.json">
-    
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/zaago-favicon.png" />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
     <!-- iOS PWA Support -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Zaago Seller">
-    <link rel="apple-touch-icon" href="/zaago-new-logo.jpeg">
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Zaago Seller" />
+    <link rel="apple-touch-icon" href="/zaago-favicon.png" />
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#ffffff" />
+
+    <!-- Resource Hints -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- =========================
+         ZAAGO SELLER SEO
+    ========================== -->
+
+    <!-- Page Title -->
     <title>Zaago Seller App - Manage Your Business</title>
-    <meta name="description" content="Futuristic seller dashboard for managing products, tracking deliveries, and growing your business with Zaago">
+
+    <!-- Basic SEO -->
+    <meta
+      name="description"
+      content="Manage products, track deliveries, monitor orders, and grow your business with the Zaago Seller App."
+    />
+
     <meta name="author" content="Zaago" />
+    <meta name="robots" content="index, follow" />
+    <meta name="googlebot" content="index, follow" />
 
-    
-    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://zaago-app-seller.vercel.app/" />
+
+    <!-- Open Graph / WhatsApp / Facebook / LinkedIn -->
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/60f58ec4-6aa0-48ec-a79d-3fd420b3896e/id-preview-07a4d0d0--8c7cee0e-afa8-4214-9d97-91d1ae6a4e24.lovable.app-1777107171825.png">
+    <meta property="og:site_name" content="Zaago Seller" />
+    <meta property="og:url" content="https://zaago-app-seller.vercel.app/" />
 
+    <meta property="og:title" content="Zaago Seller App - Manage Your Business" />
+
+    <meta
+      property="og:description"
+      content="Manage products, track deliveries, monitor orders, and grow your business with the Zaago Seller App."
+    />
+
+    <meta property="og:image" content="https://zaago-app-seller.vercel.app/zaago-favicon.png" />
+
+    <meta property="og:image:alt" content="Zaago Seller App" />
+
+    <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/60f58ec4-6aa0-48ec-a79d-3fd420b3896e/id-preview-07a4d0d0--8c7cee0e-afa8-4214-9d97-91d1ae6a4e24.lovable.app-1777107171825.png">
+
+    <meta name="twitter:title" content="Zaago Seller App - Manage Your Business" />
+
+    <meta
+      name="twitter:description"
+      content="Manage products, track deliveries, monitor orders, and grow your business with the Zaago Seller App."
+    />
+
+    <meta name="twitter:image" content="https://zaago-app-seller.vercel.app/zaago-favicon.png" />
+
+    <meta name="twitter:image:alt" content="Zaago Seller App" />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Zaago Seller App",
+        "url": "https://zaago-app-seller.vercel.app/",
+        "description": "Zaago Seller App helps sellers manage products, track deliveries, monitor orders, and grow their business.",
+        "image": "https://zaago-app-seller.vercel.app/zaago-favicon.png",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web"
+      }
+    </script>
+
+    <!-- OneSignal Push Notifications -->
     <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" defer></script>
-    <meta property="og:title" content="Zaago Seller App - Manage Your Business">
-  <meta name="twitter:title" content="Zaago Seller App - Manage Your Business">
-  <meta property="og:description" content="Futuristic seller dashboard for managing products, tracking deliveries, and growing your business with Zaago">
-  <meta name="twitter:description" content="Futuristic seller dashboard for managing products, tracking deliveries, and growing your business with Zaago">
-</head>
+  </head>
 
   <body>
     <div id="root"></div>
+
+    <!-- React Application -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
