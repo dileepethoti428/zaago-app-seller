@@ -24,8 +24,8 @@ import type { HandoverAgent } from '@/hooks/useSubscriptionHandover';
 import type { HandoverConfirmation } from '@/hooks/useHandoverConfirmation';
 import { cn } from '@/lib/utils';
 
-
 function getInitials(name: string): string {
+
   return name
     .split(' ')
     .map((n) => n[0])
@@ -67,8 +67,8 @@ export function AgentHandoverCard({
     });
   };
 
-
   return (
+
     <div
       className={cn(
         'rounded-lg border transition-colors',
