@@ -52,7 +52,21 @@ export function AgentHandoverCard({
   isUndoing,
 }: AgentHandoverCardProps) {
   const [isOpen, setIsOpen] = useState(true);
+  const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
   const isConfirmed = !!confirmation;
+
+  const toggleProduct = (productId: string) => {
+    setExpandedProducts((prev) => {
+      const next = new Set(prev);
+      if (next.has(productId)) {
+        next.delete(productId);
+      } else {
+        next.add(productId);
+      }
+      return next;
+    });
+  };
+
 
   return (
     <div
