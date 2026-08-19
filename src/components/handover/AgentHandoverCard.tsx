@@ -156,27 +156,52 @@ export function AgentHandoverCard({
                       {product.totalQuantity} {product.productUnit}
                     </Badge>
                   </div>
-                  {/* Customer breakdown */}
+                  {/* Customer breakdown toggle */}
                   {product.customers && product.customers.length > 0 && (
                     <div className="px-2 pb-2 pt-0">
-                      <div className="ml-11 space-y-0.5">
-                        {product.customers.map((customer, idx) => (
-                          <div
-                            key={`${customer.customerName}-${idx}`}
-                            className="flex items-center justify-between text-xs text-muted-foreground"
-                          >
-                            <div className="flex items-center gap-1.5">
-                              <User className="h-3 w-3" />
-                              <span>{customer.customerName}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleProduct(product.productId);
+                        }}
+                        className="h-7 w-full justify-between text-xs text-muted-foreground hover:text-foreground px-2"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Users className="h-3 w-3" />
+                          {expandedProducts.has(product.productId)
+                            ? 'Hide customers'
+                            : `View customers (${product.customers.length})`}
+                        </span>
+                        {expandedProducts.has(product.productId) ? (
+                          <ChevronUp className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )}
+                      </Button>
+
+                      {expandedProducts.has(product.productId) && (
+                        <div className="ml-11 mt-1 space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                          {product.customers.map((customer, idx) => (
+                            <div
+                              key={`${customer.customerName}-${idx}`}
+                              className="flex items-center justify-between text-xs text-muted-foreground"
+                            >
+                              <div className="flex items-center gap-1.5">
+                                <User className="h-3 w-3" />
+                                <span>{customer.customerName}</span>
+                              </div>
+                              <span className="font-mono">
+                                {customer.quantity} {product.productUnit}
+                              </span>
                             </div>
-                            <span className="font-mono">
-                              {customer.quantity} {product.productUnit}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
+
                 </div>
               ))}
             </div>
