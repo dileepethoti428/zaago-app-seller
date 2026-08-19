@@ -11,16 +11,19 @@ import {
 import {
   ChevronDown,
   ChevronRight,
+  ChevronUp,
   Package,
   Phone,
   Check,
   Undo2,
   Loader2,
   User,
+  Users,
 } from 'lucide-react';
 import type { HandoverAgent } from '@/hooks/useSubscriptionHandover';
 import type { HandoverConfirmation } from '@/hooks/useHandoverConfirmation';
 import { cn } from '@/lib/utils';
+
 
 function getInitials(name: string): string {
   return name
