@@ -9973,6 +9973,10 @@ export type Database = {
       get_seller_stats:
         | { Args: { seller_user_id: string }; Returns: Json }
         | { Args: { period?: string; seller_user_id: string }; Returns: Json }
+      get_seller_stats_for_range: {
+        Args: { end_ts: string; seller_uuid: string; start_ts: string }
+        Returns: Json
+      }
       get_seller_stats_with_period: {
         Args: { period?: string; seller_uuid: string }
         Returns: Json
