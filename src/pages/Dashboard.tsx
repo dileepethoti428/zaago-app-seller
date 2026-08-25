@@ -36,6 +36,14 @@ const Dashboard = () => {
     pendingSubscriptionRevenue: 0,
     projectedDailySubscription: 0
   });
+  const [prevStats, setPrevStats] = useState({
+    activeOrders: 0,
+    deliveredToday: 0,
+    totalRevenue: 0,
+    regularRevenue: 0,
+    subscriptionRevenue: 0
+  });
+  const [productsAdded, setProductsAdded] = useState(0);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -51,23 +59,72 @@ const Dashboard = () => {
     }
   }, [user, selectedPeriod]);
 
+  // Build IST-based current & previous period ranges (returned as UTC ISO strings)
+  const getPeriodRanges = (period: string) => {
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+    const nowMs = Date.now();
+    const istNow = new Date(nowMs + IST_OFFSET_MS);
+    const y = istNow.getUTCFullYear();
+    const m = istNow.getUTCMonth();
+    const d = istNow.getUTCDate();
+    const toUtcISO = (istMs: number) => new Date(istMs - IST_OFFSET_MS).toISOString();
+    const DAY = 24 * 60 * 60 * 1000;
+
+    const istMidnight = Date.UTC(y, m, d);
+    const nowIstMs = istNow.getTime();
+
+    if (period === 'week') {
+      // Monday as first day of week
+      const dow = (istNow.getUTCDay() + 6) % 7;
+      const weekStart = istMidnight - dow * DAY;
+      return {
+        current: { start: toUtcISO(weekStart), end: toUtcISO(nowIstMs) },
+        previous: { start: toUtcISO(weekStart - 7 * DAY), end: toUtcISO(nowIstMs - 7 * DAY) }
+      };
+    }
+
+    if (period === 'month') {
+      const monthStart = Date.UTC(y, m, 1);
+      const prevMonthStart = Date.UTC(y, m - 1, 1);
+      const prevEnd = Math.min(Date.UTC(y, m - 1, d) + (nowIstMs - istMidnight), monthStart);
+      return {
+        current: { start: toUtcISO(monthStart), end: toUtcISO(nowIstMs) },
+        previous: { start: toUtcISO(prevMonthStart), end: toUtcISO(prevEnd) }
+      };
+    }
+
+    // today
+    return {
+      current: { start: toUtcISO(istMidnight), end: toUtcISO(nowIstMs) },
+      previous: { start: toUtcISO(istMidnight - DAY), end: toUtcISO(nowIstMs - DAY) }
+    };
+  };
+
   const fetchDashboardData = async () => {
     if (!user?.id) return;
     
     setLoading(true);
     try {
-      // Fetch seller stats using the working RPC with period parameter
-      const { data: statsData, error: statsError } = await supabase.rpc('get_seller_stats_with_period', {
-        seller_uuid: user.id,
-        period: selectedPeriod
-      });
+      const ranges = getPeriodRanges(selectedPeriod);
 
-      if (statsError) {
-        console.error('Error fetching stats:', statsError);
-      } else if (statsData) {
-        // Handle array response from RPC
-        const stats_obj = (Array.isArray(statsData) ? statsData[0] : statsData) as any;
-        
+      const [currentRes, previousRes] = await Promise.all([
+        supabase.rpc('get_seller_stats_for_range', {
+          seller_uuid: user.id,
+          start_ts: ranges.current.start,
+          end_ts: ranges.current.end
+        }),
+        supabase.rpc('get_seller_stats_for_range', {
+          seller_uuid: user.id,
+          start_ts: ranges.previous.start,
+          end_ts: ranges.previous.end
+        })
+      ]);
+
+      if (currentRes.error) {
+        console.error('Error fetching stats:', currentRes.error);
+      } else if (currentRes.data) {
+        const stats_obj = (Array.isArray(currentRes.data) ? currentRes.data[0] : currentRes.data) as any;
+
         setStats({
           totalProducts: Number(stats_obj?.total_products) || 0,
           activeOrders: Number(stats_obj?.active_orders) || 0,
@@ -79,6 +136,18 @@ const Dashboard = () => {
           pendingRevenue: Number(stats_obj?.pending_revenue) || 0,
           pendingSubscriptionRevenue: Number(stats_obj?.pending_subscription_revenue) || 0,
           projectedDailySubscription: Number(stats_obj?.projected_daily_subscription) || 0
+        });
+        setProductsAdded(Number(stats_obj?.products_added) || 0);
+      }
+
+      if (!previousRes.error && previousRes.data) {
+        const prev_obj = (Array.isArray(previousRes.data) ? previousRes.data[0] : previousRes.data) as any;
+        setPrevStats({
+          activeOrders: Number(prev_obj?.active_orders) || 0,
+          deliveredToday: Number(prev_obj?.delivered_count) || 0,
+          totalRevenue: Number(prev_obj?.total_revenue) || 0,
+          regularRevenue: Number(prev_obj?.regular_revenue) || 0,
+          subscriptionRevenue: Number(prev_obj?.subscription_revenue) || 0
         });
       }
 
@@ -100,6 +169,7 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
+
 
   const getStatusIcon = (status: string) => {
     switch (status) {
