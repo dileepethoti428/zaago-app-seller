@@ -5,6 +5,7 @@ import {
   DollarSign, 
   ShoppingCart, 
   TrendingUp, 
+  TrendingDown,
   Clock,
   AlertCircle,
   CheckCircle2,
@@ -199,6 +200,48 @@ const Dashboard = () => {
     }
   };
 
+  const TrendBadge = ({ 
+    current, 
+    previous, 
+    isProducts = false, 
+    productsAdded = 0,
+    loading = false
+  }: { 
+    current: number; 
+    previous: number; 
+    isProducts?: boolean; 
+    productsAdded?: number;
+    loading?: boolean;
+  }) => {
+    if (loading) return null;
+
+    if (isProducts) {
+      if (productsAdded <= 0) return null;
+      return (
+        <span className="text-xs sm:text-sm text-zaago-green font-medium">
+          +{productsAdded} new
+        </span>
+      );
+    }
+
+    if (current === 0 && previous === 0) {
+      return <span className="text-xs sm:text-sm text-muted-foreground font-medium">0%</span>;
+    }
+    if (previous === 0 && current > 0) {
+      return <span className="text-xs sm:text-sm text-zaago-green font-medium">New</span>;
+    }
+
+    const change = ((current - previous) / previous) * 100;
+    const isPositive = change >= 0;
+
+    return (
+      <span className={`text-xs sm:text-sm font-medium flex items-center gap-1 ${isPositive ? 'text-zaago-green' : 'text-destructive'}`}>
+        {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+        {isPositive ? '+' : ''}{change.toFixed(0)}%
+      </span>
+    );
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -284,21 +327,21 @@ const Dashboard = () => {
             label: 'Total Products',
             value: stats.totalProducts.toString(),
             icon: Package,
-            trend: '+12%',
+            trend: <TrendBadge isProducts productsAdded={productsAdded} current={0} previous={0} loading={loading} />,
             color: 'text-zaago-green'
           },
           {
             label: 'Active Orders',
             value: stats.activeOrders.toString(),
             icon: ShoppingCart,
-            trend: '+5%',
+            trend: <TrendBadge current={stats.activeOrders} previous={prevStats.activeOrders} loading={loading} />,
             color: 'text-blue-500'
           },
           {
             label: selectedPeriod === 'today' ? 'Delivered Today' : selectedPeriod === 'week' ? 'Delivered This Week' : 'Delivered This Month',
             value: stats.deliveredToday.toString(),
             icon: Truck,
-            trend: '+18%',
+            trend: <TrendBadge current={stats.deliveredToday} previous={prevStats.deliveredToday} loading={loading} />,
             color: 'text-zaago-green'
           },
           {
@@ -310,7 +353,11 @@ const Dashboard = () => {
                 : stats.subscriptionRevenue
             ).toFixed(2)}`,
             icon: DollarSign,
-            trend: '+23%',
+            trend: (() => {
+              const current = revenueType === 'all' ? stats.totalRevenue : revenueType === 'regular' ? stats.regularRevenue : stats.subscriptionRevenue;
+              const previous = revenueType === 'all' ? prevStats.totalRevenue : revenueType === 'regular' ? prevStats.regularRevenue : prevStats.subscriptionRevenue;
+              return <TrendBadge current={current} previous={previous} loading={loading} />;
+            })(),
             color: 'text-zaago-green'
           }
         ].map(({ label, value, icon: Icon, trend, color }, index) => (
@@ -324,7 +371,7 @@ const Dashboard = () => {
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between mb-3 sm:mb-4">
                   <Icon className={`w-6 h-6 sm:w-7 sm:h-7 ${color}`} />
-                  <span className="text-xs sm:text-sm text-zaago-green font-medium">{trend}</span>
+                  {trend}
                 </div>
                 <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground mb-1">{value}</h3>
                 <p className="text-zaago-muted-foreground text-xs sm:text-sm">{label}</p>
