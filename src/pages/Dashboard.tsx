@@ -4,8 +4,6 @@ import {
   Truck, 
   DollarSign, 
   ShoppingCart, 
-  TrendingUp, 
-  TrendingDown,
   Clock,
   AlertCircle,
   CheckCircle2,
@@ -37,14 +35,6 @@ const Dashboard = () => {
     pendingSubscriptionRevenue: 0,
     projectedDailySubscription: 0
   });
-  const [prevStats, setPrevStats] = useState({
-    activeOrders: 0,
-    deliveredToday: 0,
-    totalRevenue: 0,
-    regularRevenue: 0,
-    subscriptionRevenue: 0
-  });
-  const [productsAdded, setProductsAdded] = useState(0);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -60,8 +50,8 @@ const Dashboard = () => {
     }
   }, [user, selectedPeriod]);
 
-  // Build IST-based current & previous period ranges (returned as UTC ISO strings)
-  const getPeriodRanges = (period: string) => {
+  // Build the selected IST-based period range (returned as UTC ISO strings)
+  const getPeriodRange = (period: string) => {
     const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
     const nowMs = Date.now();
     const istNow = new Date(nowMs + IST_OFFSET_MS);
@@ -78,27 +68,16 @@ const Dashboard = () => {
       // Monday as first day of week
       const dow = (istNow.getUTCDay() + 6) % 7;
       const weekStart = istMidnight - dow * DAY;
-      return {
-        current: { start: toUtcISO(weekStart), end: toUtcISO(nowIstMs) },
-        previous: { start: toUtcISO(weekStart - 7 * DAY), end: toUtcISO(nowIstMs - 7 * DAY) }
-      };
+      return { start: toUtcISO(weekStart), end: toUtcISO(nowIstMs) };
     }
 
     if (period === 'month') {
       const monthStart = Date.UTC(y, m, 1);
-      const prevMonthStart = Date.UTC(y, m - 1, 1);
-      const prevEnd = Math.min(Date.UTC(y, m - 1, d) + (nowIstMs - istMidnight), monthStart);
-      return {
-        current: { start: toUtcISO(monthStart), end: toUtcISO(nowIstMs) },
-        previous: { start: toUtcISO(prevMonthStart), end: toUtcISO(prevEnd) }
-      };
+      return { start: toUtcISO(monthStart), end: toUtcISO(nowIstMs) };
     }
 
     // today
-    return {
-      current: { start: toUtcISO(istMidnight), end: toUtcISO(nowIstMs) },
-      previous: { start: toUtcISO(istMidnight - DAY), end: toUtcISO(nowIstMs - DAY) }
-    };
+    return { start: toUtcISO(istMidnight), end: toUtcISO(nowIstMs) };
   };
 
   const fetchDashboardData = async () => {
@@ -106,20 +85,12 @@ const Dashboard = () => {
     
     setLoading(true);
     try {
-      const ranges = getPeriodRanges(selectedPeriod);
-
-      const [currentRes, previousRes] = await Promise.all([
-        supabase.rpc('get_seller_stats_for_range', {
-          seller_uuid: user.id,
-          start_ts: ranges.current.start,
-          end_ts: ranges.current.end
-        }),
-        supabase.rpc('get_seller_stats_for_range', {
-          seller_uuid: user.id,
-          start_ts: ranges.previous.start,
-          end_ts: ranges.previous.end
-        })
-      ]);
+      const range = getPeriodRange(selectedPeriod);
+      const currentRes = await supabase.rpc('get_seller_stats_for_range', {
+        seller_uuid: user.id,
+        start_ts: range.start,
+        end_ts: range.end
+      });
 
       if (currentRes.error) {
         console.error('Error fetching stats:', currentRes.error);
@@ -137,18 +108,6 @@ const Dashboard = () => {
           pendingRevenue: Number(stats_obj?.pending_revenue) || 0,
           pendingSubscriptionRevenue: Number(stats_obj?.pending_subscription_revenue) || 0,
           projectedDailySubscription: Number(stats_obj?.projected_daily_subscription) || 0
-        });
-        setProductsAdded(Number(stats_obj?.products_added) || 0);
-      }
-
-      if (!previousRes.error && previousRes.data) {
-        const prev_obj = (Array.isArray(previousRes.data) ? previousRes.data[0] : previousRes.data) as any;
-        setPrevStats({
-          activeOrders: Number(prev_obj?.active_orders) || 0,
-          deliveredToday: Number(prev_obj?.delivered_count) || 0,
-          totalRevenue: Number(prev_obj?.total_revenue) || 0,
-          regularRevenue: Number(prev_obj?.regular_revenue) || 0,
-          subscriptionRevenue: Number(prev_obj?.subscription_revenue) || 0
         });
       }
 
@@ -198,48 +157,6 @@ const Dashboard = () => {
       default:
         return 'text-secondary';
     }
-  };
-
-  const TrendBadge = ({ 
-    current, 
-    previous, 
-    isProducts = false, 
-    productsAdded = 0,
-    loading = false
-  }: { 
-    current: number; 
-    previous: number; 
-    isProducts?: boolean; 
-    productsAdded?: number;
-    loading?: boolean;
-  }) => {
-    if (loading) return null;
-
-    if (isProducts) {
-      if (productsAdded <= 0) return null;
-      return (
-        <span className="text-xs sm:text-sm text-zaago-green font-medium">
-          +{productsAdded} new
-        </span>
-      );
-    }
-
-    if (current === 0 && previous === 0) {
-      return <span className="text-xs sm:text-sm text-muted-foreground font-medium">0%</span>;
-    }
-    if (previous === 0 && current > 0) {
-      return <span className="text-xs sm:text-sm text-zaago-green font-medium">New</span>;
-    }
-
-    const change = ((current - previous) / previous) * 100;
-    const isPositive = change >= 0;
-
-    return (
-      <span className={`text-xs sm:text-sm font-medium flex items-center gap-1 ${isPositive ? 'text-zaago-green' : 'text-destructive'}`}>
-        {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-        {isPositive ? '+' : ''}{change.toFixed(0)}%
-      </span>
-    );
   };
 
   return (
@@ -327,21 +244,18 @@ const Dashboard = () => {
             label: 'Total Products',
             value: stats.totalProducts.toString(),
             icon: Package,
-            trend: <TrendBadge isProducts productsAdded={productsAdded} current={0} previous={0} loading={loading} />,
             color: 'text-zaago-green'
           },
           {
             label: 'Active Orders',
             value: stats.activeOrders.toString(),
             icon: ShoppingCart,
-            trend: <TrendBadge current={stats.activeOrders} previous={prevStats.activeOrders} loading={loading} />,
             color: 'text-blue-500'
           },
           {
             label: selectedPeriod === 'today' ? 'Delivered Today' : selectedPeriod === 'week' ? 'Delivered This Week' : 'Delivered This Month',
             value: stats.deliveredToday.toString(),
             icon: Truck,
-            trend: <TrendBadge current={stats.deliveredToday} previous={prevStats.deliveredToday} loading={loading} />,
             color: 'text-zaago-green'
           },
           {
@@ -353,14 +267,9 @@ const Dashboard = () => {
                 : stats.subscriptionRevenue
             ).toFixed(2)}`,
             icon: DollarSign,
-            trend: (() => {
-              const current = revenueType === 'all' ? stats.totalRevenue : revenueType === 'regular' ? stats.regularRevenue : stats.subscriptionRevenue;
-              const previous = revenueType === 'all' ? prevStats.totalRevenue : revenueType === 'regular' ? prevStats.regularRevenue : prevStats.subscriptionRevenue;
-              return <TrendBadge current={current} previous={previous} loading={loading} />;
-            })(),
             color: 'text-zaago-green'
           }
-        ].map(({ label, value, icon: Icon, trend, color }, index) => (
+        ].map(({ label, value, icon: Icon, color }, index) => (
           <motion.div
             key={label}
             initial={{ opacity: 0, y: 20 }}
@@ -369,9 +278,8 @@ const Dashboard = () => {
           >
             <Card className="bg-zaago-card/50 border-zaago-border">
               <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className="mb-3 sm:mb-4">
                   <Icon className={`w-6 h-6 sm:w-7 sm:h-7 ${color}`} />
-                  {trend}
                 </div>
                 <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground mb-1">{value}</h3>
                 <p className="text-zaago-muted-foreground text-xs sm:text-sm">{label}</p>
