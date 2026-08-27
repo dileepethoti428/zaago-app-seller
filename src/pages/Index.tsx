@@ -404,7 +404,7 @@ const Index = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-        {stats.map(({ label, value, icon: Icon, trend }, index) => (
+        {stats.map(({ label, value, icon: Icon }, index) => (
           <motion.div
             key={label}
             initial={{ opacity: 0, y: 20 }}
@@ -412,9 +412,8 @@ const Index = () => {
             transition={{ delay: 0.3 + index * 0.1, duration: 0.3 }}
             className="bg-zaago-card/50 border border-zaago-border rounded-xl p-6"
           >
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4">
               <Icon className="w-8 h-8 text-zaago-green" />
-              <span className="text-sm text-zaago-green font-medium">{trend}</span>
             </div>
             <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">{value}</h3>
             <p className="text-zaago-muted-foreground text-sm">{label}</p>
