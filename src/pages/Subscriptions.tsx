@@ -133,6 +133,30 @@ const Subscriptions = () => {
     window.open(`https://www.google.com/maps/dir/?api=1${origin}&destination=${destination}`, '_blank', 'noopener,noreferrer');
   };
 
+  const copyAddress = async (deliveryAddress: any) => {
+    const parts = [
+      deliveryAddress?.full_address,
+      deliveryAddress?.landmark ? `Near: ${deliveryAddress.landmark}` : null,
+      deliveryAddress?.city,
+      deliveryAddress?.state,
+      deliveryAddress?.pincode,
+    ].filter(Boolean);
+
+    if (parts.length === 0) {
+      toast.error('No address to copy');
+      return;
+    }
+
+    const fullAddress = parts.join(', ');
+    try {
+      await navigator.clipboard.writeText(fullAddress);
+      toast.success('Address copied to clipboard');
+    } catch (err) {
+      console.error('Failed to copy address:', err);
+      toast.error('Failed to copy address');
+    }
+  };
+
 
   // Compute missed delivery counts
   const subscriptionIds = useMemo(() => (subscriptions || []).map(s => s.id), [subscriptions]);
