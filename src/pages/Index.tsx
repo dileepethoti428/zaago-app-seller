@@ -114,10 +114,10 @@ const Index = () => {
       })) || [];
 
       setStats([
-        { label: 'Total Products', value: totalProducts.toString(), icon: Package, trend: '+12%' },
-        { label: 'Active Orders', value: activeOrders.toString(), icon: ShoppingCart, trend: '+5%' },
-        { label: 'Deliveries', value: totalDeliveries.toString(), icon: Truck, trend: '+18%' },
-        { label: 'Revenue', value: `₹${revenue.toFixed(2)}`, icon: DollarSign, trend: '+23%' },
+        { label: 'Total Products', value: totalProducts.toString(), icon: Package },
+        { label: 'Active Orders', value: activeOrders.toString(), icon: ShoppingCart },
+        { label: 'Deliveries', value: totalDeliveries.toString(), icon: Truck },
+        { label: 'Revenue', value: `₹${revenue.toFixed(2)}`, icon: DollarSign },
       ]);
 
       setRevenueBreakdown({
