@@ -19,10 +19,10 @@ const Index = () => {
   const [subscriptionView, setSubscriptionView] = useState<'today' | 'tomorrow'>('today');
   const [regularDateFilter, setRegularDateFilter] = useState('today');
   const [stats, setStats] = useState([
-    { label: 'Total Products', value: '0', icon: Package, trend: '+0%' },
-    { label: 'Active Orders', value: '0', icon: ShoppingCart, trend: '+0%' },
-    { label: 'Deliveries', value: '0', icon: Truck, trend: '+0%' },
-    { label: 'Revenue', value: '₹0', icon: DollarSign, trend: '+0%' },
+    { label: 'Total Products', value: '0', icon: Package },
+    { label: 'Active Orders', value: '0', icon: ShoppingCart },
+    { label: 'Deliveries', value: '0', icon: Truck },
+    { label: 'Revenue', value: '₹0', icon: DollarSign },
   ]);
   const [revenueBreakdown, setRevenueBreakdown] = useState({
     regularRevenue: 0,
@@ -114,10 +114,10 @@ const Index = () => {
       })) || [];
 
       setStats([
-        { label: 'Total Products', value: totalProducts.toString(), icon: Package, trend: '+12%' },
-        { label: 'Active Orders', value: activeOrders.toString(), icon: ShoppingCart, trend: '+5%' },
-        { label: 'Deliveries', value: totalDeliveries.toString(), icon: Truck, trend: '+18%' },
-        { label: 'Revenue', value: `₹${revenue.toFixed(2)}`, icon: DollarSign, trend: '+23%' },
+        { label: 'Total Products', value: totalProducts.toString(), icon: Package },
+        { label: 'Active Orders', value: activeOrders.toString(), icon: ShoppingCart },
+        { label: 'Deliveries', value: totalDeliveries.toString(), icon: Truck },
+        { label: 'Revenue', value: `₹${revenue.toFixed(2)}`, icon: DollarSign },
       ]);
 
       setRevenueBreakdown({
@@ -404,7 +404,7 @@ const Index = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-        {stats.map(({ label, value, icon: Icon, trend }, index) => (
+        {stats.map(({ label, value, icon: Icon }, index) => (
           <motion.div
             key={label}
             initial={{ opacity: 0, y: 20 }}
@@ -412,9 +412,8 @@ const Index = () => {
             transition={{ delay: 0.3 + index * 0.1, duration: 0.3 }}
             className="bg-zaago-card/50 border border-zaago-border rounded-xl p-6"
           >
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4">
               <Icon className="w-8 h-8 text-zaago-green" />
-              <span className="text-sm text-zaago-green font-medium">{trend}</span>
             </div>
             <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">{value}</h3>
             <p className="text-zaago-muted-foreground text-sm">{label}</p>
