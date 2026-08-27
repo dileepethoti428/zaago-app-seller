@@ -20,7 +20,7 @@ import { VacationDatesSection } from '@/components/VacationDatesSection';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getCurrentISTTime, isAfter11_30PM_IST, getTomorrowDateIST, isDateTomorrow } from '@/utils/timeZone';
 import { formatDateForDisplay, formatDateWithLabel } from '@/utils/subscriptionDateCalculator';
-import { Search, RefreshCw, Calendar, User, Phone, MapPin, Package, CheckCircle, XCircle, Clock, CalendarClock, UserPlus, UserMinus, Eye, Pencil, Tag, Navigation } from 'lucide-react';
+import { Search, RefreshCw, Calendar, User, Phone, MapPin, Package, CheckCircle, XCircle, Clock, CalendarClock, UserPlus, UserMinus, Eye, Pencil, Tag, Navigation, Copy } from 'lucide-react';
 import { useSellerLocation } from '@/hooks/useSellerLocation';
 
 const formatTimeSlot = (slot: string): string => {
@@ -131,6 +131,30 @@ const Subscriptions = () => {
       ? `&origin=${sellerLocation.latitude},${sellerLocation.longitude}`
       : '';
     window.open(`https://www.google.com/maps/dir/?api=1${origin}&destination=${destination}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const copyAddress = async (deliveryAddress: any) => {
+    const parts = [
+      deliveryAddress?.full_address,
+      deliveryAddress?.landmark ? `Near: ${deliveryAddress.landmark}` : null,
+      deliveryAddress?.city,
+      deliveryAddress?.state,
+      deliveryAddress?.pincode,
+    ].filter(Boolean);
+
+    if (parts.length === 0) {
+      toast.error('No address to copy');
+      return;
+    }
+
+    const fullAddress = parts.join(', ');
+    try {
+      await navigator.clipboard.writeText(fullAddress);
+      toast.success('Address copied to clipboard');
+    } catch (err) {
+      console.error('Failed to copy address:', err);
+      toast.error('Failed to copy address');
+    }
   };
 
 
@@ -708,18 +732,35 @@ const Subscriptions = () => {
                               const addr: any = subscription.delivery_address;
                               const { lat, lng } = getCoords(addr);
                               const hasDest = !!(lat && lng) || !!(addr?.full_address || addr?.address);
-                              if (!hasDest) return null;
+                              const hasAddress = !!(addr?.full_address || addr?.address);
+                              if (!hasDest && !hasAddress) return null;
                               return (
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-7 mt-1 px-2 text-xs"
-                                  onClick={() => openDirections(addr)}
-                                >
-                                  <Navigation className="h-3 w-3 mr-1" />
-                                  Directions
-                                </Button>
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                  {hasAddress && (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-7 px-2 text-xs"
+                                      onClick={() => copyAddress(addr)}
+                                    >
+                                      <Copy className="h-3 w-3 mr-1" />
+                                      Copy Address
+                                    </Button>
+                                  )}
+                                  {hasDest && (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-7 px-2 text-xs"
+                                      onClick={() => openDirections(addr)}
+                                    >
+                                      <Navigation className="h-3 w-3 mr-1" />
+                                      Directions
+                                    </Button>
+                                  )}
+                                </div>
                               );
                             })()}
                           </div>
