@@ -732,18 +732,35 @@ const Subscriptions = () => {
                               const addr: any = subscription.delivery_address;
                               const { lat, lng } = getCoords(addr);
                               const hasDest = !!(lat && lng) || !!(addr?.full_address || addr?.address);
-                              if (!hasDest) return null;
+                              const hasAddress = !!(addr?.full_address || addr?.address);
+                              if (!hasDest && !hasAddress) return null;
                               return (
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-7 mt-1 px-2 text-xs"
-                                  onClick={() => openDirections(addr)}
-                                >
-                                  <Navigation className="h-3 w-3 mr-1" />
-                                  Directions
-                                </Button>
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                  {hasAddress && (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-7 px-2 text-xs"
+                                      onClick={() => copyAddress(addr)}
+                                    >
+                                      <Copy className="h-3 w-3 mr-1" />
+                                      Copy Address
+                                    </Button>
+                                  )}
+                                  {hasDest && (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-7 px-2 text-xs"
+                                      onClick={() => openDirections(addr)}
+                                    >
+                                      <Navigation className="h-3 w-3 mr-1" />
+                                      Directions
+                                    </Button>
+                                  )}
+                                </div>
                               );
                             })()}
                           </div>
