@@ -1,25 +1,19 @@
-# Remove "Daily Operations" title and consolidate section descriptions
+# Add Copy Address Button on Subscriptions Page
 
-## Goal
-On the Daily Operations page, remove the main "Daily Operations" heading at the top. Keep the descriptive subtitle text — "Today's orders, subscription forecast and delivery partner handover in one place." — visible near the top of the page so the three sections remain clearly introduced.
+Add a one-tap "Copy Address" button to each subscription card so sellers can copy the customer’s delivery address to the clipboard.
 
-## Current state
-`src/pages/DailyOperations.tsx` renders:
-- A top heading: `<h1>Daily Operations</h1>`
-- A subtitle: "Today's orders, subscription forecast and delivery partner handover in one place."
-- Three section components stacked below: `TodaysOrdersSummary`, `TodaySubscriptionForecast`, `SubscriptionHandoverCard`
+## What changes
 
-## Changes
-1. In `src/pages/DailyOperations.tsx`:
-   - Remove the `<h1>` "Daily Operations" title.
-   - Keep the subtitle paragraph at the top, possibly styled as a page intro.
-   - Leave the three section components unchanged.
+- In `src/pages/Subscriptions.tsx`, add a small "Copy" button beside the existing "Directions" button inside the address block of each subscription card.
+- Build a clean, single-line address string from `delivery_address.full_address`, `city`, `state`, `pincode`, and `landmark` when available.
+- Use `navigator.clipboard.writeText(...)` to copy the address.
+- Show a brief `toast.success('Address copied')` confirmation after copying.
+- If clipboard access fails, show `toast.error('Failed to copy address')`.
+- Import the `Copy` icon from `lucide-react` for the button.
+- Keep the existing "Directions" button and layout unchanged.
 
-## Out of scope
-- No changes to `TodaysOrdersSummary`, `TodaySubscriptionForecast`, or `SubscriptionHandoverCard`.
-- No routing, sidebar, or navigation changes.
-- No backend or data logic changes.
+## Technical notes
 
-## Verification
-- Build/typecheck passes.
-- Visually confirm the page no longer shows "Daily Operations" as a heading and the subtitle remains visible at the top.
+- No database or backend changes are required.
+- No new dependencies are needed; `lucide-react` and `sonner` are already used.
+- The copy action is purely client-side and scoped to the existing subscription card UI.
