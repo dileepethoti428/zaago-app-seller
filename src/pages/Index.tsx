@@ -19,10 +19,10 @@ const Index = () => {
   const [subscriptionView, setSubscriptionView] = useState<'today' | 'tomorrow'>('today');
   const [regularDateFilter, setRegularDateFilter] = useState('today');
   const [stats, setStats] = useState([
-    { label: 'Total Products', value: '0', icon: Package, trend: '+0%' },
-    { label: 'Active Orders', value: '0', icon: ShoppingCart, trend: '+0%' },
-    { label: 'Deliveries', value: '0', icon: Truck, trend: '+0%' },
-    { label: 'Revenue', value: '₹0', icon: DollarSign, trend: '+0%' },
+    { label: 'Total Products', value: '0', icon: Package },
+    { label: 'Active Orders', value: '0', icon: ShoppingCart },
+    { label: 'Deliveries', value: '0', icon: Truck },
+    { label: 'Revenue', value: '₹0', icon: DollarSign },
   ]);
   const [revenueBreakdown, setRevenueBreakdown] = useState({
     regularRevenue: 0,
