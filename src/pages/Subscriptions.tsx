@@ -726,21 +726,21 @@ const Subscriptions = () => {
                             {(() => {
                               const addr: any = subscription.delivery_address;
                               const { lat, lng } = getCoords(addr);
-                              const hasDest = !!(lat && lng) || !!(addr?.full_address || addr?.address);
-                              const hasAddress = !!(addr?.full_address || addr?.address);
-                              if (!hasDest && !hasAddress) return null;
+                              const hasCoords = !!(lat && lng);
+                              const hasDest = hasCoords || !!(addr?.full_address || addr?.address);
+                              if (!hasDest && !hasCoords) return null;
                               return (
                                 <div className="flex flex-wrap gap-2 mt-1">
-                                  {hasAddress && (
+                                  {hasCoords && (
                                     <Button
                                       type="button"
                                       variant="outline"
                                       size="sm"
                                       className="h-7 px-2 text-xs"
-                                      onClick={() => copyAddress(addr)}
+                                      onClick={() => copyCoordinates(addr)}
                                     >
                                       <Copy className="h-3 w-3 mr-1" />
-                                      Copy Address
+                                      Copy Coordinates
                                     </Button>
                                   )}
                                   {hasDest && (
