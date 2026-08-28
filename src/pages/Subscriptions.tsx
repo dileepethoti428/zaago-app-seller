@@ -134,27 +134,21 @@ const Subscriptions = () => {
     window.open(`https://www.google.com/maps/dir/?api=1${origin}&destination=${destination}`, '_blank', 'noopener,noreferrer');
   };
 
-  const copyAddress = async (deliveryAddress: any) => {
-    const parts = [
-      deliveryAddress?.full_address,
-      deliveryAddress?.landmark ? `Near: ${deliveryAddress.landmark}` : null,
-      deliveryAddress?.city,
-      deliveryAddress?.state,
-      deliveryAddress?.pincode,
-    ].filter(Boolean);
+  const copyCoordinates = async (deliveryAddress: any) => {
+    const { lat, lng } = getCoords(deliveryAddress);
 
-    if (parts.length === 0) {
-      toast.error('No address to copy');
+    if (!lat || !lng) {
+      toast.error('No coordinates to copy');
       return;
     }
 
-    const fullAddress = parts.join(', ');
+    const coordsText = `${lat},${lng}`;
     try {
-      await navigator.clipboard.writeText(fullAddress);
-      toast.success('Address copied to clipboard');
+      await navigator.clipboard.writeText(coordsText);
+      toast.success('Coordinates copied to clipboard');
     } catch (err) {
-      console.error('Failed to copy address:', err);
-      toast.error('Failed to copy address');
+      console.error('Failed to copy coordinates:', err);
+      toast.error('Failed to copy coordinates');
     }
   };
 
@@ -732,21 +726,21 @@ const Subscriptions = () => {
                             {(() => {
                               const addr: any = subscription.delivery_address;
                               const { lat, lng } = getCoords(addr);
-                              const hasDest = !!(lat && lng) || !!(addr?.full_address || addr?.address);
-                              const hasAddress = !!(addr?.full_address || addr?.address);
-                              if (!hasDest && !hasAddress) return null;
+                              const hasCoords = !!(lat && lng);
+                              const hasDest = hasCoords || !!(addr?.full_address || addr?.address);
+                              if (!hasDest) return null;
                               return (
                                 <div className="flex flex-wrap gap-2 mt-1">
-                                  {hasAddress && (
+                                  {hasCoords && (
                                     <Button
                                       type="button"
                                       variant="outline"
                                       size="sm"
                                       className="h-7 px-2 text-xs"
-                                      onClick={() => copyAddress(addr)}
+                                      onClick={() => copyCoordinates(addr)}
                                     >
                                       <Copy className="h-3 w-3 mr-1" />
-                                      Copy Address
+                                      Copy Coordinates
                                     </Button>
                                   )}
                                   {hasDest && (
