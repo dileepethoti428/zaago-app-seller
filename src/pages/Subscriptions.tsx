@@ -81,6 +81,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 const Subscriptions = () => {
   const { user } = useAuth();
