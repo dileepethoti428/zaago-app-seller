@@ -728,7 +728,7 @@ const Subscriptions = () => {
                               const { lat, lng } = getCoords(addr);
                               const hasCoords = !!(lat && lng);
                               const hasDest = hasCoords || !!(addr?.full_address || addr?.address);
-                              if (!hasDest && !hasCoords) return null;
+                              if (!hasDest) return null;
                               return (
                                 <div className="flex flex-wrap gap-2 mt-1">
                                   {hasCoords && (
