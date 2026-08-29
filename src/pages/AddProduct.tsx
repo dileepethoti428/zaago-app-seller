@@ -1119,14 +1119,14 @@ export default function AddProductPage() {
                     <input
                       type="text"
                       value={benefit}
-                      onChange={(e) => handleArrayChange('benefits', index, e.target.value)}
+                      onChange={(e) => handleArrayChange(index, e.target.value)}
                       placeholder="Enter benefit"
                       className="flex-1 px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     />
                     {formData.benefits.length > 1 && (
                       <button
                         type="button"
-                        onClick={() => removeArrayItem('benefits', index)}
+                        onClick={() => removeArrayItem(index)}
                         className="p-3 text-destructive hover:text-destructive/80 transition-colors"
                       >
                         <Minus className="w-4 h-4" />
@@ -1136,44 +1136,11 @@ export default function AddProductPage() {
                 ))}
                 <button
                   type="button"
-                  onClick={() => addArrayItem('benefits')}
+                  onClick={() => addArrayItem()}
                   className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors text-sm"
                 >
                   <Plus className="w-4 h-4" />
                   Add Benefit
-                </button>
-              </div>
-
-              {/* Ingredients */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Ingredients</label>
-                {formData.ingredients.map((ingredient, index) => (
-                  <div key={index} className="flex gap-2">
-                    <input
-                      type="text"
-                      value={ingredient}
-                      onChange={(e) => handleArrayChange('ingredients', index, e.target.value)}
-                      placeholder="Enter ingredient"
-                      className="flex-1 px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                    />
-                    {formData.ingredients.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeArrayItem('ingredients', index)}
-                        className="p-3 text-destructive hover:text-destructive/80 transition-colors"
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => addArrayItem('ingredients')}
-                  className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors text-sm"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Ingredient
                 </button>
               </div>
             </div>
