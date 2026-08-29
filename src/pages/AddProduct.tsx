@@ -572,20 +572,6 @@ export default function AddProductPage() {
           )}
         </div>
 
-        {/* Live Preview */}
-        <div className="mb-8">
-          <ProductLivePreview
-            name={formData.name}
-            unit={showCustomUnitInput && customUnit ? customUnit : formData.unit}
-            basePrice={formData.base_price}
-            discountPercentage={formData.discount_percentage}
-            stockQuantity={formData.stock_quantity}
-            imagePreview={imagePreviews[0]}
-            tags={formData.selectedTags}
-            isSubscribable={formData.is_subscribable}
-          />
-        </div>
-
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
