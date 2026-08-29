@@ -1449,6 +1449,20 @@ export default function AddProductPage() {
               </button>
             </Link>
           </div>
+
+          {/* Live Preview */}
+          <div className="mt-8">
+            <ProductLivePreview
+              name={formData.name}
+              unit={showCustomUnitInput && customUnit ? customUnit : formData.unit}
+              basePrice={formData.base_price}
+              discountPercentage={formData.discount_percentage}
+              stockQuantity={formData.stock_quantity}
+              imagePreview={imagePreviews[0]}
+              tags={formData.selectedTags}
+              isSubscribable={formData.is_subscribable}
+            />
+          </div>
         </form>
       </div>
     </div>
