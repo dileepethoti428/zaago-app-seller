@@ -15,9 +15,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Search, ChevronDown, Package, User, Store, Truck, Loader2, Phone, Mail, MapPin, Clock, CheckCircle, AlertCircle, Star, Award, Shield } from 'lucide-react';
-import { useCustomerLookup } from '@/hooks/useCustomerLookup';
+import { Search, ChevronDown, Package, User, Store, Truck, Loader2, Phone, Mail, MapPin, Clock, CheckCircle, AlertCircle, Star, Award, Shield, Copy } from 'lucide-react';
+import { useCustomerLookup, type LookupResult } from '@/hooks/useCustomerLookup';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 import { DeliveryStatusTimeline } from './DeliveryStatusTimeline';
 
 export const CustomerLookupDialog = () => {
@@ -33,6 +34,29 @@ export const CustomerLookupDialog = () => {
     setOpen(false);
     setTrackingId('');
     reset();
+  };
+
+  const getCoords = (customerInfo: LookupResult['customer_info']) => {
+    const c = customerInfo?.coordinates ?? customerInfo?.delivery_address?.coordinates;
+    const lat = c?.latitude ?? c?.lat;
+    const lng = c?.longitude ?? c?.lng;
+    return { lat, lng };
+  };
+
+  const copyCoordinates = async () => {
+    if (!result) return;
+    const { lat, lng } = getCoords(result.customer_info);
+    if (!lat || !lng) {
+      toast.error('No coordinates to copy');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(`${lat},${lng}`);
+      toast.success('Coordinates copied to clipboard');
+    } catch (err) {
+      console.error('Failed to copy coordinates:', err);
+      toast.error('Failed to copy coordinates');
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -369,10 +393,26 @@ export const CustomerLookupDialog = () => {
                         <p className="font-medium">{result.customer_info.phone}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground flex items-center gap-2">
-                          <MapPin className="h-4 w-4" />
-                          Delivery Address
-                        </p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-muted-foreground flex items-center gap-2">
+                            <MapPin className="h-4 w-4" />
+                            Delivery Address
+                          </p>
+                          {(() => {
+                            const { lat, lng } = getCoords(result.customer_info);
+                            return lat && lng ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={copyCoordinates}
+                                className="h-7 px-2 text-xs"
+                              >
+                                <Copy className="h-3.5 w-3.5 mr-1" />
+                                Copy Coordinates
+                              </Button>
+                            ) : null;
+                          })()}
+                        </div>
                         {result.customer_info.full_address ? (
                           <div className="space-y-1">
                             {result.customer_info.address_label && (
