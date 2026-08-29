@@ -28,6 +28,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { ProductLivePreview } from '@/components/ProductLivePreview';
 
 export default function AddProductPage() {
   const { user } = useAuth();
@@ -569,6 +570,20 @@ export default function AddProductPage() {
               )}
             </div>
           )}
+        </div>
+
+        {/* Live Preview */}
+        <div className="mb-8">
+          <ProductLivePreview
+            name={formData.name}
+            unit={showCustomUnitInput && customUnit ? customUnit : formData.unit}
+            basePrice={formData.base_price}
+            discountPercentage={formData.discount_percentage}
+            stockQuantity={formData.stock_quantity}
+            imagePreview={imagePreviews[0]}
+            tags={formData.selectedTags}
+            isSubscribable={formData.is_subscribable}
+          />
         </div>
 
         {/* Form */}
