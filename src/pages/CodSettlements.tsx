@@ -203,6 +203,34 @@ export default function CodSettlements() {
         period={period}
         statusFilter={statusFilter}
       />
+
+      <AlertDialog open={!!confirmSettleAgent} onOpenChange={(open) => { if (!open) setConfirmSettleAgent(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Settle All</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to mark all pending COD settlements for{' '}
+              <span className="font-medium text-foreground">{confirmSettleAgent?.agent_name}</span> as settled?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirmSettleAgent(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (confirmSettleAgent) {
+                  await settle(confirmSettleAgent.agent_id);
+                  setConfirmSettleAgent(null);
+                }
+              }}
+              disabled={isSettling}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isSettling ? 'Settling...' : 'Yes, Settle All'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
