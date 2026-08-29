@@ -393,10 +393,26 @@ export const CustomerLookupDialog = () => {
                         <p className="font-medium">{result.customer_info.phone}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground flex items-center gap-2">
-                          <MapPin className="h-4 w-4" />
-                          Delivery Address
-                        </p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-muted-foreground flex items-center gap-2">
+                            <MapPin className="h-4 w-4" />
+                            Delivery Address
+                          </p>
+                          {(() => {
+                            const { lat, lng } = getCoords(result.customer_info);
+                            return lat && lng ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={copyCoordinates}
+                                className="h-7 px-2 text-xs"
+                              >
+                                <Copy className="h-3.5 w-3.5 mr-1" />
+                                Copy Coordinates
+                              </Button>
+                            ) : null;
+                          })()}
+                        </div>
                         {result.customer_info.full_address ? (
                           <div className="space-y-1">
                             {result.customer_info.address_label && (
