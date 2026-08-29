@@ -9,6 +9,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useCodSettlements, type TimePeriod, type StatusFilter, type AgentSettlement } from '@/hooks/useCodSettlements';
 import { Skeleton } from '@/components/ui/skeleton';
 import AgentCodDetailDialog from '@/components/AgentCodDetailDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const periodOptions: { value: TimePeriod; label: string }[] = [
   { value: 'all', label: 'All Time' },
@@ -24,6 +34,7 @@ export default function CodSettlements() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selectedAgent, setSelectedAgent] = useState<AgentSettlement | null>(null);
   const [visibleCount, setVisibleCount] = useState(5);
+  const [confirmSettleAgent, setConfirmSettleAgent] = useState<AgentSettlement | null>(null);
 
   const { data: agents, isLoading, settle, isSettling } = useCodSettlements(period, statusFilter, search);
 
@@ -141,7 +152,7 @@ export default function CodSettlements() {
                     {agent.pending_count > 0 && (
                       <Button
                         size="sm"
-                        onClick={(e) => { e.stopPropagation(); settle(agent.agent_id); }}
+                        onClick={(e) => { e.stopPropagation(); setConfirmSettleAgent(agent); }}
                         disabled={isSettling}
                         className="rounded-full"
                       >
@@ -192,6 +203,34 @@ export default function CodSettlements() {
         period={period}
         statusFilter={statusFilter}
       />
+
+      <AlertDialog open={!!confirmSettleAgent} onOpenChange={(open) => { if (!open) setConfirmSettleAgent(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Settle All</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to mark all pending COD settlements for{' '}
+              <span className="font-medium text-foreground">{confirmSettleAgent?.agent_name}</span> as settled?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirmSettleAgent(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (confirmSettleAgent) {
+                  await settle(confirmSettleAgent.agent_id);
+                  setConfirmSettleAgent(null);
+                }
+              }}
+              disabled={isSettling}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isSettling ? 'Settling...' : 'Yes, Settle All'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
