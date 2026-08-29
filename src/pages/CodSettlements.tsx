@@ -152,7 +152,7 @@ export default function CodSettlements() {
                     {agent.pending_count > 0 && (
                       <Button
                         size="sm"
-                        onClick={(e) => { e.stopPropagation(); settle(agent.agent_id); }}
+                        onClick={(e) => { e.stopPropagation(); setConfirmSettleAgent(agent); }}
                         disabled={isSettling}
                         className="rounded-full"
                       >
