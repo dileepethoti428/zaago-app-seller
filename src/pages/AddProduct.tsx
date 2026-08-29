@@ -368,7 +368,6 @@ export default function AddProductPage() {
 
       // Filter out empty strings from arrays
       const benefits = formData.benefits.filter(b => b.trim() !== '');
-      const ingredients = formData.ingredients.filter(i => i.trim() !== '');
 
       // Tags are optional — only save what the seller explicitly selected
       const finalTags: string[] = formData.selectedTags;
