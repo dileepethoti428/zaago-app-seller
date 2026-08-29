@@ -30,7 +30,7 @@ const periodOptions: { value: TimePeriod; label: string }[] = [
 
 export default function CodSettlements() {
   const [search, setSearch] = useState('');
-  const [period, setPeriod] = useState<TimePeriod>('all');
+  const [period, setPeriod] = useState<TimePeriod>('today');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selectedAgent, setSelectedAgent] = useState<AgentSettlement | null>(null);
   const [visibleCount, setVisibleCount] = useState(5);
