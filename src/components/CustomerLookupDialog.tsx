@@ -36,6 +36,29 @@ export const CustomerLookupDialog = () => {
     reset();
   };
 
+  const getCoords = (customerInfo: typeof result extends null ? never : typeof result.customer_info) => {
+    const c = customerInfo?.coordinates ?? customerInfo?.delivery_address?.coordinates;
+    const lat = c?.latitude ?? c?.lat;
+    const lng = c?.longitude ?? c?.lng;
+    return { lat, lng };
+  };
+
+  const copyCoordinates = async () => {
+    if (!result) return;
+    const { lat, lng } = getCoords(result.customer_info);
+    if (!lat || !lng) {
+      toast.error('No coordinates to copy');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(`${lat},${lng}`);
+      toast.success('Coordinates copied to clipboard');
+    } catch (err) {
+      console.error('Failed to copy coordinates:', err);
+      toast.error('Failed to copy coordinates');
+    }
+  };
+
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       pending: 'bg-yellow-500',
