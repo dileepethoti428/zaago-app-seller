@@ -34,6 +34,7 @@ export default function CodSettlements() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selectedAgent, setSelectedAgent] = useState<AgentSettlement | null>(null);
   const [visibleCount, setVisibleCount] = useState(5);
+  const [confirmSettleAgent, setConfirmSettleAgent] = useState<AgentSettlement | null>(null);
 
   const { data: agents, isLoading, settle, isSettling } = useCodSettlements(period, statusFilter, search);
 
