@@ -36,7 +36,7 @@ export const CustomerLookupDialog = () => {
     reset();
   };
 
-  const getCoords = (customerInfo: typeof result extends null ? never : typeof result.customer_info) => {
+  const getCoords = (customerInfo: LookupResult['customer_info']) => {
     const c = customerInfo?.coordinates ?? customerInfo?.delivery_address?.coordinates;
     const lat = c?.latitude ?? c?.lat;
     const lng = c?.longitude ?? c?.lng;
