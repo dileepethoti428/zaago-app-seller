@@ -447,7 +447,6 @@ export default function AddProductPage() {
         gst_percentage: formData.gst_percentage ? parseFloat(formData.gst_percentage) : 0,
         tags: finalTags,
         benefits: benefits.length > 0 ? benefits : null,
-        ingredients: ingredients.length > 0 ? ingredients : null,
         is_active: formData.is_active,
         is_subscribable: formData.is_subscribable,
         seller_id: user?.id,
