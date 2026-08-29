@@ -67,7 +67,6 @@ export default function AddProductPage() {
     is_active: true,
     is_subscribable: false,
     benefits: [''],
-    ingredients: [''],
     selectedTags: [] as string[]
   });
   
