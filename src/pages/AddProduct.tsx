@@ -102,24 +102,24 @@ export default function AddProductPage() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleArrayChange = (field: 'benefits' | 'ingredients', index: number, value: string) => {
+  const handleArrayChange = (index: number, value: string) => {
     setFormData(prev => ({
       ...prev,
-      [field]: prev[field].map((item, i) => i === index ? value : item)
+      benefits: prev.benefits.map((item, i) => i === index ? value : item)
     }));
   };
 
-  const addArrayItem = (field: 'benefits' | 'ingredients') => {
+  const addArrayItem = () => {
     setFormData(prev => ({
       ...prev,
-      [field]: [...prev[field], '']
+      benefits: [...prev.benefits, '']
     }));
   };
 
-  const removeArrayItem = (field: 'benefits' | 'ingredients', index: number) => {
+  const removeArrayItem = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      [field]: prev[field].filter((_, i) => i !== index)
+      benefits: prev.benefits.filter((_, i) => i !== index)
     }));
   };
 
