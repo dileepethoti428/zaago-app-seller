@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Search, ChevronDown, Package, User, Store, Truck, Loader2, Phone, Mail, MapPin, Clock, CheckCircle, AlertCircle, Star, Award, Shield } from 'lucide-react';
+import { Search, ChevronDown, Package, User, Store, Truck, Loader2, Phone, Mail, MapPin, Clock, CheckCircle, AlertCircle, Star, Award, Shield, Copy } from 'lucide-react';
 import { useCustomerLookup } from '@/hooks/useCustomerLookup';
 import { format } from 'date-fns';
 import { DeliveryStatusTimeline } from './DeliveryStatusTimeline';
