@@ -6,25 +6,34 @@ import { Badge } from '@/components/ui/badge';
 import { DeliveryDayStatus } from '@/hooks/useSubscriptionDeliveryHistory';
 import { getCurrentISTTime } from '@/utils/timeZone';
 import { CompensationDetailDialog } from '@/components/CompensationDetailDialog';
+import { DeliveredDetailDialog } from '@/components/DeliveredDetailDialog';
 import { supabase } from '@/integrations/supabase/client';
 
 interface SubscriptionDeliveryCalendarProps {
   history: Record<string, DeliveryDayStatus>;
   isLoading: boolean;
   onMissedDateClick: (date: string, dailyOrderId: string | null) => void;
+  subscriptionId?: string | null;
 }
 
 export const SubscriptionDeliveryCalendar = ({
   history,
   isLoading,
   onMissedDateClick,
+  subscriptionId = null,
 }: SubscriptionDeliveryCalendarProps) => {
   const today = getCurrentISTTime();
   const [currentMonth, setCurrentMonth] = useState(today);
+  const [deliveredDetail, setDeliveredDetail] = useState<{
+    open: boolean;
+    date: string | null;
+    dailyOrderId: string | null;
+  }>({ open: false, date: null, dailyOrderId: null });
   const [compensationDetail, setCompensationDetail] = useState<{
     open: boolean;
     details: any;
   }>({ open: false, details: null });
+
 
   const calendarDays = useMemo(() => {
     const monthStart = startOfMonth(currentMonth);
