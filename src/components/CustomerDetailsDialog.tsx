@@ -107,7 +107,9 @@ export const CustomerDetailsDialog = ({
 
               <TabsContent value="calendar">
                 <SubscriptionDeliveryCalendar
+                  subscriptionId={subscriptionInfo?.id || null}
                   history={history || {}}
+
                   isLoading={historyLoading}
                   onMissedDateClick={(date, dailyOrderId) => {
                     setCompensationDialog({ open: true, missedDate: date, dailyOrderId });
