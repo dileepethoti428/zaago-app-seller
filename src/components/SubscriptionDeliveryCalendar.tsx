@@ -189,7 +189,7 @@ export const SubscriptionDeliveryCalendar = ({
 
       {/* Legend */}
       <div className="flex flex-wrap gap-3 text-xs text-muted-foreground pt-2 border-t border-border">
-        <div className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-green-500" /> Delivered</div>
+        <div className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-green-500" /> Delivered (click for details)</div>
         <div className="flex items-center gap-1"><XCircle className="h-3 w-3 text-destructive" /> Missed (click to compensate)</div>
         <div className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-blue-500" /> Compensated (click for details)</div>
         <div className="flex items-center gap-1"><Circle className="h-3 w-3 text-muted-foreground" /> Scheduled</div>
