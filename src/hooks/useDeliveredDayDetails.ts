@@ -80,7 +80,7 @@ export const useDeliveredDayDetails = (
           const { data: byUser } = await supabase
             .from('delivery_agents')
             .select('name, phone, vehicle_type')
-            .eq('user_id', agentId)
+            .eq('agent_id', agentId)
             .maybeSingle();
           if (byUser) {
             agentName = byUser.name;
