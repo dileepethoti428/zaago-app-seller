@@ -195,7 +195,16 @@ export const SubscriptionDeliveryCalendar = ({
         <div className="flex items-center gap-1"><Circle className="h-3 w-3 text-muted-foreground" /> Scheduled</div>
       </div>
 
+      <DeliveredDetailDialog
+        open={deliveredDetail.open}
+        onOpenChange={(open) => setDeliveredDetail(prev => ({ ...prev, open }))}
+        date={deliveredDetail.date}
+        dailyOrderId={deliveredDetail.dailyOrderId}
+        subscriptionId={subscriptionId}
+      />
+
       <CompensationDetailDialog
+
         open={compensationDetail.open}
         onOpenChange={(open) => setCompensationDetail(prev => ({ ...prev, open }))}
         details={compensationDetail.details}
