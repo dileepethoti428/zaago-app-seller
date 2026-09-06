@@ -145,13 +145,20 @@ export const SubscriptionDeliveryCalendar = ({
           return (
             <button
               key={i}
-              disabled={status !== 'missed' && status !== 'compensated'}
+              disabled={status !== 'missed' && status !== 'compensated' && status !== 'delivered'}
               onClick={() => {
                 if (status === 'missed') {
                   const entry = history[dateStr];
                   onMissedDateClick(dateStr, entry?.dailyOrderId || null);
                 } else if (status === 'compensated') {
                   handleCompensatedClick(dateStr);
+                } else if (status === 'delivered') {
+                  const entry = history[dateStr];
+                  setDeliveredDetail({
+                    open: true,
+                    date: dateStr,
+                    dailyOrderId: entry?.dailyOrderId || null,
+                  });
                 }
               }}
               className={`
@@ -159,7 +166,8 @@ export const SubscriptionDeliveryCalendar = ({
                 ${!isCurrentMonth ? 'opacity-30' : ''}
                 ${isToday ? 'ring-1 ring-primary' : ''}
                 ${status === 'missed' ? 'cursor-pointer hover:bg-destructive/10 bg-destructive/5' : ''}
-                ${status === 'delivered' ? 'bg-green-500/10' : ''}
+                ${status === 'delivered' ? 'bg-green-500/10 cursor-pointer hover:bg-green-500/20' : ''}
+
                 ${status === 'compensated' ? 'bg-blue-500/10 cursor-pointer hover:bg-blue-500/20' : ''}
                 ${status === 'scheduled' ? 'bg-muted/50' : ''}
                 ${status === 'none' ? '' : ''}
