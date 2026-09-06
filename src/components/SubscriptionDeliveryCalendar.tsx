@@ -6,25 +6,34 @@ import { Badge } from '@/components/ui/badge';
 import { DeliveryDayStatus } from '@/hooks/useSubscriptionDeliveryHistory';
 import { getCurrentISTTime } from '@/utils/timeZone';
 import { CompensationDetailDialog } from '@/components/CompensationDetailDialog';
+import { DeliveredDetailDialog } from '@/components/DeliveredDetailDialog';
 import { supabase } from '@/integrations/supabase/client';
 
 interface SubscriptionDeliveryCalendarProps {
   history: Record<string, DeliveryDayStatus>;
   isLoading: boolean;
   onMissedDateClick: (date: string, dailyOrderId: string | null) => void;
+  subscriptionId?: string | null;
 }
 
 export const SubscriptionDeliveryCalendar = ({
   history,
   isLoading,
   onMissedDateClick,
+  subscriptionId = null,
 }: SubscriptionDeliveryCalendarProps) => {
   const today = getCurrentISTTime();
   const [currentMonth, setCurrentMonth] = useState(today);
+  const [deliveredDetail, setDeliveredDetail] = useState<{
+    open: boolean;
+    date: string | null;
+    dailyOrderId: string | null;
+  }>({ open: false, date: null, dailyOrderId: null });
   const [compensationDetail, setCompensationDetail] = useState<{
     open: boolean;
     details: any;
   }>({ open: false, details: null });
+
 
   const calendarDays = useMemo(() => {
     const monthStart = startOfMonth(currentMonth);
@@ -136,13 +145,20 @@ export const SubscriptionDeliveryCalendar = ({
           return (
             <button
               key={i}
-              disabled={status !== 'missed' && status !== 'compensated'}
+              disabled={status !== 'missed' && status !== 'compensated' && status !== 'delivered'}
               onClick={() => {
                 if (status === 'missed') {
                   const entry = history[dateStr];
                   onMissedDateClick(dateStr, entry?.dailyOrderId || null);
                 } else if (status === 'compensated') {
                   handleCompensatedClick(dateStr);
+                } else if (status === 'delivered') {
+                  const entry = history[dateStr];
+                  setDeliveredDetail({
+                    open: true,
+                    date: dateStr,
+                    dailyOrderId: entry?.dailyOrderId || null,
+                  });
                 }
               }}
               className={`
@@ -150,7 +166,8 @@ export const SubscriptionDeliveryCalendar = ({
                 ${!isCurrentMonth ? 'opacity-30' : ''}
                 ${isToday ? 'ring-1 ring-primary' : ''}
                 ${status === 'missed' ? 'cursor-pointer hover:bg-destructive/10 bg-destructive/5' : ''}
-                ${status === 'delivered' ? 'bg-green-500/10' : ''}
+                ${status === 'delivered' ? 'bg-green-500/10 cursor-pointer hover:bg-green-500/20' : ''}
+
                 ${status === 'compensated' ? 'bg-blue-500/10 cursor-pointer hover:bg-blue-500/20' : ''}
                 ${status === 'scheduled' ? 'bg-muted/50' : ''}
                 ${status === 'none' ? '' : ''}
@@ -172,13 +189,22 @@ export const SubscriptionDeliveryCalendar = ({
 
       {/* Legend */}
       <div className="flex flex-wrap gap-3 text-xs text-muted-foreground pt-2 border-t border-border">
-        <div className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-green-500" /> Delivered</div>
+        <div className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-green-500" /> Delivered (click for details)</div>
         <div className="flex items-center gap-1"><XCircle className="h-3 w-3 text-destructive" /> Missed (click to compensate)</div>
         <div className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-blue-500" /> Compensated (click for details)</div>
         <div className="flex items-center gap-1"><Circle className="h-3 w-3 text-muted-foreground" /> Scheduled</div>
       </div>
 
+      <DeliveredDetailDialog
+        open={deliveredDetail.open}
+        onOpenChange={(open) => setDeliveredDetail(prev => ({ ...prev, open }))}
+        date={deliveredDetail.date}
+        dailyOrderId={deliveredDetail.dailyOrderId}
+        subscriptionId={subscriptionId}
+      />
+
       <CompensationDetailDialog
+
         open={compensationDetail.open}
         onOpenChange={(open) => setCompensationDetail(prev => ({ ...prev, open }))}
         details={compensationDetail.details}
