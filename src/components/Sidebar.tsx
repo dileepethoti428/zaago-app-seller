@@ -85,6 +85,8 @@ export default function Sidebar() {
   const isMobile = useIsMobile();
   const location = useLocation();
   const currentPath = location.pathname;
+  const { data: scheduledOrders } = useUpcomingScheduledOrders();
+  const scheduledCount = scheduledOrders?.total ?? 0;
   const collapsed = state === 'collapsed';
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
 
@@ -112,6 +114,10 @@ export default function Sidebar() {
   const isActive = (path: string) => {
     if (path === '/products' && currentPath.startsWith('/products')) {
       return currentPath === '/products';
+    }
+    if (path.includes('?')) {
+      const [pathname, query] = path.split('?');
+      return currentPath === pathname && location.search === `?${query}`;
     }
     return currentPath === path;
   };
