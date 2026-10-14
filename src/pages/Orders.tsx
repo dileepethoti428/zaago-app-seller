@@ -41,7 +41,7 @@ const Orders = () => {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get('filter') || 'all');
   const [processingOrder, setProcessingOrder] = useState<string | null>(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [offset, setOffset] = useState(0);

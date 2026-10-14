@@ -1,3 +1,4 @@
+import { AvailableDaysPicker } from '@/components/AvailableDaysPicker';
 import { motion } from 'framer-motion';
 import { PlusCircle, Upload, Tag, DollarSign, Package, Plus, Minus, Camera, X, Check, Trash2, ChevronsUpDown, Pencil } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -66,6 +67,7 @@ export default function AddProductPage() {
     gst_percentage: '0',
     is_active: true,
     is_subscribable: false,
+    delivery_days: [] as string[],
     benefits: [''],
     selectedTags: [] as string[]
   });
@@ -449,6 +451,7 @@ export default function AddProductPage() {
         benefits: benefits.length > 0 ? benefits : null,
         is_active: formData.is_active,
         is_subscribable: formData.is_subscribable,
+        delivery_days: formData.delivery_days.length > 0 ? formData.delivery_days : null,
         seller_id: user?.id,
         product_lat: productLocation.latitude,
         product_lng: productLocation.longitude,
@@ -1056,6 +1059,10 @@ export default function AddProductPage() {
                     />
                   </button>
                 </div>
+
+              <div className="mt-4">
+                <AvailableDaysPicker value={formData.delivery_days} onChange={(days) => setFormData((prev: any) => ({ ...prev, delivery_days: days }))} />
+              </div>
               </div>
               </div>
 
@@ -1425,6 +1432,7 @@ export default function AddProductPage() {
               imagePreview={imagePreviews[0]}
               tags={formData.selectedTags}
               isSubscribable={formData.is_subscribable}
+              availableDays={formData.delivery_days}
             />
           </div>
         </form>

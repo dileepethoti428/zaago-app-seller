@@ -1,4 +1,5 @@
-import { Eye, ImageIcon, Package, RefreshCw } from 'lucide-react';
+import { CalendarDays, Eye, ImageIcon, Package, RefreshCw } from 'lucide-react';
+import { formatAvailableDays } from './AvailableDaysPicker';
 import { Badge } from '@/components/ui/badge';
 
 interface ProductLivePreviewProps {
@@ -10,6 +11,7 @@ interface ProductLivePreviewProps {
   imagePreview?: string;
   tags: string[];
   isSubscribable: boolean;
+  availableDays?: string[];
 }
 
 export const ProductLivePreview = ({
@@ -21,6 +23,7 @@ export const ProductLivePreview = ({
   imagePreview,
   tags,
   isSubscribable,
+  availableDays = [],
 }: ProductLivePreviewProps) => {
   const price = parseFloat(basePrice) || 0;
   const discount = parseFloat(discountPercentage) || 0;
@@ -84,6 +87,11 @@ export const ProductLivePreview = ({
               Subscription available
             </div>
           )}
+
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <CalendarDays className="w-3 h-3" />
+            Available: {formatAvailableDays(availableDays)}
+          </div>
 
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-1 pt-1">

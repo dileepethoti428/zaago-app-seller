@@ -18,6 +18,8 @@ import { useAuth } from '@/context/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomerLookupDialog } from '@/components/CustomerLookupDialog';
+import { useUpcomingScheduledOrders } from '@/hooks/useUpcomingScheduledOrders';
+import { CalendarClock, ChevronRight } from 'lucide-react';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -37,6 +39,10 @@ const Dashboard = () => {
   });
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { data: scheduled } = useUpcomingScheduledOrders();
+  const nextLabel = scheduled?.nextDate
+    ? new Date(`${scheduled.nextDate}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })
+    : null;
 
   const timePeriods = [
     { value: 'today', label: 'Today' },
@@ -200,6 +206,24 @@ const Dashboard = () => {
         </div>
       </motion.div>
 
+      {/* Book Now, Get Later */}
+      <Link to="/orders?filter=scheduled" className="block">
+        <Card className="border-primary/40 bg-primary/5 hover:bg-primary/10 transition-colors">
+          <CardContent className="p-4 flex items-center gap-4">
+            <CalendarClock className="w-8 h-8 text-primary shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-foreground">Book Now, Get Later Orders</p>
+              <p className="text-sm text-muted-foreground">
+                {scheduled?.total ? `${scheduled.total} upcoming` : 'No upcoming scheduled orders'}
+                {nextLabel ? ` · Next: ${nextLabel} (${scheduled?.nextCount} orders)` : ''}
+              </p>
+            </div>
+            <span className="text-2xl font-bold text-primary">{scheduled?.total ?? 0}</span>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </CardContent>
+        </Card>
+      </Link>
+
       {/* Revenue Type Toggle */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -362,6 +386,15 @@ const Dashboard = () => {
                 <ShoppingCart className="w-12 h-12 text-zaago-green mb-3 group-hover:scale-110 transition-transform" />
                 <h3 className="font-semibold text-foreground mb-1">View Orders</h3>
                 <p className="text-zaago-muted-foreground text-sm">Manage your orders</p>
+              </Link>
+
+              <Link 
+                to="/orders?filter=scheduled" 
+                className="p-6 text-left group flex flex-col items-center text-center hover:bg-zaago-accent/50 rounded-lg transition-colors"
+              >
+                <CalendarClock className="w-12 h-12 text-zaago-green mb-3 group-hover:scale-110 transition-transform" />
+                <h3 className="font-semibold text-foreground mb-1">Scheduled Orders</h3>
+                <p className="text-zaago-muted-foreground text-sm">Book Now, Get Later</p>
               </Link>
 
               <CustomerLookupDialog />
