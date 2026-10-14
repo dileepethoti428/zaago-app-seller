@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
@@ -64,6 +64,7 @@ export type Database = {
       }
       admin_notifications: {
         Row: {
+          bug_report_id: string | null
           created_at: string
           id: string
           is_read: boolean
@@ -75,6 +76,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          bug_report_id?: string | null
           created_at?: string
           id?: string
           is_read?: boolean
@@ -86,6 +88,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          bug_report_id?: string | null
           created_at?: string
           id?: string
           is_read?: boolean
@@ -96,7 +99,15 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "admin_notifications_bug_report_id_fkey"
+            columns: ["bug_report_id"]
+            isOneToOne: false
+            referencedRelation: "bug_reports"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       admin_pricing_settings: {
         Row: {
@@ -1244,6 +1255,54 @@ export type Database = {
           party_id?: string
           party_type?: string
           reason?: string | null
+        }
+        Relationships: []
+      }
+      bug_reports: {
+        Row: {
+          admin_notes: string | null
+          attachment_paths: string[]
+          created_at: string
+          current_url: string | null
+          description: string
+          id: string
+          priority: string
+          resolved_at: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          attachment_paths?: string[]
+          created_at?: string
+          current_url?: string | null
+          description: string
+          id?: string
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          attachment_paths?: string[]
+          created_at?: string
+          current_url?: string | null
+          description?: string
+          id?: string
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -5195,6 +5254,30 @@ export type Database = {
         }
         Relationships: []
       }
+      product_review_authors: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       product_stock_notifications: {
         Row: {
           created_at: string
@@ -5357,6 +5440,7 @@ export type Database = {
           category_id: string | null
           cost_price: number | null
           created_at: string
+          delivery_days: string[] | null
           description: string | null
           discount_percentage: number | null
           gst_percentage: number | null
@@ -5390,6 +5474,7 @@ export type Database = {
           category_id?: string | null
           cost_price?: number | null
           created_at?: string
+          delivery_days?: string[] | null
           description?: string | null
           discount_percentage?: number | null
           gst_percentage?: number | null
@@ -5423,6 +5508,7 @@ export type Database = {
           category_id?: string | null
           cost_price?: number | null
           created_at?: string
+          delivery_days?: string[] | null
           description?: string | null
           discount_percentage?: number | null
           gst_percentage?: number | null
@@ -9150,6 +9236,7 @@ export type Database = {
         Args: { _customer_id: string; _seller_user_id: string }
         Returns: boolean
       }
+      delete_bug_report: { Args: { p_report_id: string }; Returns: string[] }
       delete_delivery_agent: {
         Args: { agent_uuid: string }
         Returns: undefined
@@ -11191,6 +11278,17 @@ export type Database = {
       st_wrapx: {
         Args: { geom: unknown; move: number; wrap: number }
         Returns: unknown
+      }
+      submit_customer_bug_report: {
+        Args: {
+          p_attachment_paths?: string[]
+          p_current_url?: string
+          p_description: string
+          p_priority: string
+          p_title: string
+          p_user_agent?: string
+        }
+        Returns: string
       }
       sync_special_offers_from_products: { Args: never; Returns: undefined }
       sync_user_player_id: {
