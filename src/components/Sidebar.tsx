@@ -2,8 +2,10 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import SignOutConfirmationDialog from '@/components/SignOutConfirmationDialog';
+import { useUpcomingScheduledOrders } from '@/hooks/useUpcomingScheduledOrders';
 import { 
   LayoutDashboard,
+  Clock,
   ShoppingCart,
   Package, 
   PlusCircle, 
