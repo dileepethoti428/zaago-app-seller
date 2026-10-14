@@ -1,9 +1,12 @@
 'use client';
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import type { LucideIcon } from 'lucide-react';
 import SignOutConfirmationDialog from '@/components/SignOutConfirmationDialog';
+import { useUpcomingScheduledOrders } from '@/hooks/useUpcomingScheduledOrders';
 import { 
   LayoutDashboard,
+  Clock,
   ShoppingCart,
   Package, 
   PlusCircle, 
@@ -41,12 +44,20 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 
-const navigationLinks = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  badge?: 'scheduled';
+};
+
+const navigationLinks: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/daily-operations', label: 'Daily Operations', icon: ClipboardList },
   { href: '/insights', label: 'Insights', icon: BarChart3 },
 
   { href: '/customer-orders', label: 'Orders', icon: ShoppingCart },
+  { href: '/orders?filter=scheduled', label: 'Book Now, Get Later', icon: Clock, badge: 'scheduled' },
   { href: '/subscriptions', label: 'Subscriptions', icon: CalendarClock },
   
   { href: '/delivery-agents', label: 'Delivery Partners', icon: Truck },
@@ -59,6 +70,7 @@ const navigationLinks = [
   { href: '/settings', label: 'Settings', icon: Settings },
   { href: '/profile', label: 'Profile', icon: User },
 ];
+
 
 const customerLinks = [
   { href: '/products-customer', label: 'Browse Products', icon: Package },
@@ -73,6 +85,8 @@ export default function Sidebar() {
   const isMobile = useIsMobile();
   const location = useLocation();
   const currentPath = location.pathname;
+  const { data: scheduledOrders } = useUpcomingScheduledOrders();
+  const scheduledCount = scheduledOrders?.total ?? 0;
   const collapsed = state === 'collapsed';
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
 
@@ -100,6 +114,10 @@ export default function Sidebar() {
   const isActive = (path: string) => {
     if (path === '/products' && currentPath.startsWith('/products')) {
       return currentPath === '/products';
+    }
+    if (path.includes('?')) {
+      const [pathname, query] = path.split('?');
+      return currentPath === pathname && location.search === `?${query}`;
     }
     return currentPath === path;
   };

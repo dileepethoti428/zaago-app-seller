@@ -194,6 +194,13 @@ const Orders = () => {
     setFilteredOrders(applyFilters(orders, activeTab, searchTerm));
   }, [searchTerm, activeTab]);
 
+  // Keep the active tab in sync with the ?filter= URL (sidebar navigation)
+  useEffect(() => {
+    const filter = searchParams.get('filter');
+    if (filter) setActiveTab(filter);
+  }, [searchParams]);
+
+
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     if (processingOrder) return;
     
