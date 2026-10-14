@@ -1,3 +1,4 @@
+import { AvailableDaysPicker } from '@/components/AvailableDaysPicker';
 import { motion } from 'framer-motion';
 import {
   Edit, Save, Trash2, Tag, DollarSign, Package, Upload, Camera, X, Check,
@@ -49,6 +50,7 @@ interface Product {
   tags?: string[];
   is_active: boolean;
   is_subscribable?: boolean;
+  delivery_days?: string[] | null;
   seller_id: string;
   category_id?: string;
   product_lat?: number | null;
@@ -99,6 +101,7 @@ export default function EditProductPage() {
     gst_percentage: '0',
     is_active: true,
     is_subscribable: false,
+    delivery_days: [] as string[],
     benefits: [''],
     ingredients: [''],
     selectedTags: [] as string[],
@@ -191,6 +194,7 @@ export default function EditProductPage() {
           gst_percentage: data.gst_percentage?.toString() || '0',
           is_active: data.is_active,
           is_subscribable: (data as any).is_subscribable ?? false,
+          delivery_days: (data as any).delivery_days ?? [],
           benefits: data.benefits && data.benefits.length > 0 ? data.benefits : [''],
           ingredients: data.ingredients && data.ingredients.length > 0 ? data.ingredients : [''],
           selectedTags: data.tags || [],
@@ -433,6 +437,7 @@ export default function EditProductPage() {
         ingredients: ingredients.length > 0 ? ingredients : null,
         is_active: formData.is_active,
         is_subscribable: formData.is_subscribable,
+        delivery_days: formData.delivery_days.length > 0 ? formData.delivery_days : null,
       };
       if (productLat && productLng) {
         updateData.product_lat = productLat;
@@ -977,6 +982,10 @@ export default function EditProductPage() {
                     />
                   </button>
                 </div>
+
+              <div className="mt-4">
+                <AvailableDaysPicker value={formData.delivery_days} onChange={(days) => setFormData((prev: any) => ({ ...prev, delivery_days: days }))} />
+              </div>
               </div>
               </div>
 
