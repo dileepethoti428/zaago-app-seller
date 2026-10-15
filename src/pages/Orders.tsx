@@ -31,6 +31,7 @@ import { OrderAcceptanceTimer } from '@/components/OrderAcceptanceTimer';
 import { CancelOrderDialog } from '@/components/CancelOrderDialog';
 import { isScheduledOrder, formatDeliveryWindow, getPackByLabel } from '@/utils/scheduledOrder';
 import { CalendarClock } from 'lucide-react';
+import { ScheduledOrdersForecast } from '@/components/ScheduledOrdersForecast';
 
 const Orders = () => {
   const { user } = useAuth();
@@ -428,45 +429,8 @@ const Orders = () => {
 
           {activeTab === 'scheduled' && upcomingScheduled.length > 0 && (
             <div className="space-y-4 mb-6">
-              {/* Product quantity summary */}
-              <Card className="bg-zaago-card/50 border-amber-500/30">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <CalendarClock className="w-4 h-4 text-amber-500" />
-                    What to Prepare — {upcomingScheduled.length} upcoming order{upcomingScheduled.length !== 1 ? 's' : ''}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Product</TableHead>
-                          <TableHead>Unit</TableHead>
-                          <TableHead className="text-center">Total Qty</TableHead>
-                          <TableHead className="text-center">Orders</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {productSummary.map((p) => (
-                          <TableRow key={`${p.name}|${p.unit}`}>
-                            <TableCell className="font-medium">{p.name}</TableCell>
-                            <TableCell className="text-muted-foreground">{p.unit || '—'}</TableCell>
-                            <TableCell className="text-center font-semibold">{p.qty}</TableCell>
-                            <TableCell className="text-center">{p.orders}</TableCell>
-                          </TableRow>
-                        ))}
-                        <TableRow className="border-t-2">
-                          <TableCell className="font-bold">Total</TableCell>
-                          <TableCell />
-                          <TableCell className="text-center font-bold">{totalScheduledQty}</TableCell>
-                          <TableCell className="text-center font-bold">{upcomingScheduled.length}</TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </div>
-                </CardContent>
-              </Card>
+              <ScheduledOrdersForecast orders={upcomingScheduled} />
+
 
               {/* Upcoming orders detail table */}
               <Card className="bg-zaago-card/50 border-zaago-border">
