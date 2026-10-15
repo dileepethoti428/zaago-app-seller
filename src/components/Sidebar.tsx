@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
 import SignOutConfirmationDialog from '@/components/SignOutConfirmationDialog';
+import { Badge } from '@/components/ui/badge';
 import { useUpcomingScheduledOrders } from '@/hooks/useUpcomingScheduledOrders';
 import { 
   LayoutDashboard,
@@ -170,7 +171,7 @@ export default function Sidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5 px-2 sm:px-4">
-              {navigationLinks.map(({ href, label, icon: Icon }) => (
+              {navigationLinks.map(({ href, label, icon: Icon, badge }) => (
                 <SidebarMenuItem key={href}>
                   <NavLink
                     to={href}
@@ -190,6 +191,11 @@ export default function Sidebar() {
                           >
                             {label}
                           </motion.span>
+                        )}
+                        {!collapsed && badge === 'scheduled' && scheduledCount > 0 && (
+                          <Badge className="ml-auto bg-amber-500/20 text-amber-500 border-amber-500/30 text-xs px-1.5">
+                            {scheduledCount}
+                          </Badge>
                         )}
                       </div>
                     </SidebarMenuButton>

@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
@@ -312,6 +313,29 @@ const Orders = () => {
               : orders.filter(order => order.status === tab.value).length
   }));
 
+  // Upcoming scheduled orders (Book Now, Get Later): today or later, not cancelled/rejected/delivered
+  const SCHEDULED_EXCLUDED = ['cancelled', 'rejected', 'delivered', 'payment_pending', 'failed'];
+  const todayIST = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  const upcomingScheduled = orders.filter(
+    (o) => isScheduledOrder(o) && !SCHEDULED_EXCLUDED.includes(o.status) && (!o.delivery_date || o.delivery_date >= todayIST)
+  );
+
+  // Product summary: total quantity and order count per product across upcoming scheduled orders
+  const productSummaryMap = new Map<string, { name: string; unit: string; qty: number; orders: number }>();
+  upcomingScheduled.forEach((o) => {
+    (o.items || []).forEach((item: any) => {
+      const name = item.product_name || item.name || 'Product';
+      const unit = item.unit || item.product_unit || '';
+      const key = `${name}|${unit}`;
+      const entry = productSummaryMap.get(key) || { name, unit, qty: 0, orders: 0 };
+      entry.qty += item.quantity || 0;
+      entry.orders += 1;
+      productSummaryMap.set(key, entry);
+    });
+  });
+  const productSummary = Array.from(productSummaryMap.values()).sort((a, b) => b.qty - a.qty);
+  const totalScheduledQty = productSummary.reduce((sum, p) => sum + p.qty, 0);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -401,6 +425,95 @@ const Orders = () => {
               </p>
             )}
           </div>
+
+          {activeTab === 'scheduled' && upcomingScheduled.length > 0 && (
+            <div className="space-y-4 mb-6">
+              {/* Product quantity summary */}
+              <Card className="bg-zaago-card/50 border-amber-500/30">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <CalendarClock className="w-4 h-4 text-amber-500" />
+                    What to Prepare — {upcomingScheduled.length} upcoming order{upcomingScheduled.length !== 1 ? 's' : ''}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Product</TableHead>
+                          <TableHead>Unit</TableHead>
+                          <TableHead className="text-center">Total Qty</TableHead>
+                          <TableHead className="text-center">Orders</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {productSummary.map((p) => (
+                          <TableRow key={`${p.name}|${p.unit}`}>
+                            <TableCell className="font-medium">{p.name}</TableCell>
+                            <TableCell className="text-muted-foreground">{p.unit || '—'}</TableCell>
+                            <TableCell className="text-center font-semibold">{p.qty}</TableCell>
+                            <TableCell className="text-center">{p.orders}</TableCell>
+                          </TableRow>
+                        ))}
+                        <TableRow className="border-t-2">
+                          <TableCell className="font-bold">Total</TableCell>
+                          <TableCell />
+                          <TableCell className="text-center font-bold">{totalScheduledQty}</TableCell>
+                          <TableCell className="text-center font-bold">{upcomingScheduled.length}</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Upcoming orders detail table */}
+              <Card className="bg-zaago-card/50 border-zaago-border">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Upcoming Scheduled Orders</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Delivery</TableHead>
+                          <TableHead>Customer</TableHead>
+                          <TableHead>Products</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {[...upcomingScheduled]
+                          .sort((a, b) => (a.delivery_date || '').localeCompare(b.delivery_date || ''))
+                          .map((o) => (
+                            <TableRow key={o.id}>
+                              <TableCell className="whitespace-nowrap">
+                                <div className="text-sm font-medium">{formatDeliveryWindow(o) || '—'}</div>
+                                {getPackByLabel(o) && (
+                                  <div className="text-xs text-amber-500">Pack by {getPackByLabel(o)}</div>
+                                )}
+                              </TableCell>
+                              <TableCell>{o.customer_name || 'Customer'}</TableCell>
+                              <TableCell>
+                                {(o.items || []).map((item: any, i: number) => (
+                                  <div key={i} className="text-sm">
+                                    {item.product_name || item.name}
+                                    {(item.unit || item.product_unit) ? ` (${item.unit || item.product_unit})` : ''} × {item.quantity}
+                                  </div>
+                                ))}
+                              </TableCell>
+                              <TableCell>{getStatusBadge(o.status, o.acceptance_window_expired)}</TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
               {loading ? (
                 <div className="flex items-center justify-center py-12">
