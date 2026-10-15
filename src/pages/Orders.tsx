@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
@@ -311,6 +312,29 @@ const Orders = () => {
               ? orders.filter(order => order.status === 'new' || order.status === 'pending').length
               : orders.filter(order => order.status === tab.value).length
   }));
+
+  // Upcoming scheduled orders (Book Now, Get Later): today or later, not cancelled/rejected/delivered
+  const SCHEDULED_EXCLUDED = ['cancelled', 'rejected', 'delivered', 'payment_pending', 'failed'];
+  const todayIST = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  const upcomingScheduled = orders.filter(
+    (o) => isScheduledOrder(o) && !SCHEDULED_EXCLUDED.includes(o.status) && (!o.delivery_date || o.delivery_date >= todayIST)
+  );
+
+  // Product summary: total quantity and order count per product across upcoming scheduled orders
+  const productSummaryMap = new Map<string, { name: string; unit: string; qty: number; orders: number }>();
+  upcomingScheduled.forEach((o) => {
+    (o.items || []).forEach((item: any) => {
+      const name = item.product_name || item.name || 'Product';
+      const unit = item.unit || item.product_unit || '';
+      const key = `${name}|${unit}`;
+      const entry = productSummaryMap.get(key) || { name, unit, qty: 0, orders: 0 };
+      entry.qty += item.quantity || 0;
+      entry.orders += 1;
+      productSummaryMap.set(key, entry);
+    });
+  });
+  const productSummary = Array.from(productSummaryMap.values()).sort((a, b) => b.qty - a.qty);
+  const totalScheduledQty = productSummary.reduce((sum, p) => sum + p.qty, 0);
 
   return (
     <motion.div
