@@ -192,6 +192,11 @@ export default function Sidebar() {
                             {label}
                           </motion.span>
                         )}
+                        {!collapsed && badge === 'scheduled' && scheduledCount > 0 && (
+                          <Badge className="ml-auto bg-amber-500/20 text-amber-500 border-amber-500/30 text-xs px-1.5">
+                            {scheduledCount}
+                          </Badge>
+                        )}
                       </div>
                     </SidebarMenuButton>
                   </NavLink>
