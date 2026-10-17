@@ -3,8 +3,6 @@ import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
 import SignOutConfirmationDialog from '@/components/SignOutConfirmationDialog';
-import { Badge } from '@/components/ui/badge';
-import { useUpcomingScheduledOrders } from '@/hooks/useUpcomingScheduledOrders';
 import { 
   LayoutDashboard,
   Clock,
@@ -49,7 +47,6 @@ type NavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
-  badge?: 'scheduled';
 };
 
 const navigationLinks: NavItem[] = [
@@ -58,7 +55,7 @@ const navigationLinks: NavItem[] = [
   { href: '/insights', label: 'Insights', icon: BarChart3 },
 
   { href: '/customer-orders', label: 'Orders', icon: ShoppingCart },
-  { href: '/orders?filter=scheduled', label: 'Book Now, Get Later', icon: Clock, badge: 'scheduled' },
+  { href: '/orders?filter=scheduled', label: 'Book Now, Get Later', icon: Clock },
   { href: '/subscriptions', label: 'Subscriptions', icon: CalendarClock },
   
   { href: '/delivery-agents', label: 'Delivery Partners', icon: Truck },
@@ -86,8 +83,6 @@ export default function Sidebar() {
   const isMobile = useIsMobile();
   const location = useLocation();
   const currentPath = location.pathname;
-  const { data: scheduledOrders } = useUpcomingScheduledOrders();
-  const scheduledCount = scheduledOrders?.total ?? 0;
   const collapsed = state === 'collapsed';
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
 
@@ -171,7 +166,7 @@ export default function Sidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5 px-2 sm:px-4">
-              {navigationLinks.map(({ href, label, icon: Icon, badge }) => (
+              {navigationLinks.map(({ href, label, icon: Icon }) => (
                 <SidebarMenuItem key={href}>
                   <NavLink
                     to={href}
@@ -191,11 +186,6 @@ export default function Sidebar() {
                           >
                             {label}
                           </motion.span>
-                        )}
-                        {!collapsed && badge === 'scheduled' && scheduledCount > 0 && (
-                          <Badge className="ml-auto bg-amber-500/20 text-amber-500 border-amber-500/30 text-xs px-1.5">
-                            {scheduledCount}
-                          </Badge>
                         )}
                       </div>
                     </SidebarMenuButton>
