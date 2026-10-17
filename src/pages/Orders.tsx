@@ -32,12 +32,19 @@ import { CancelOrderDialog } from '@/components/CancelOrderDialog';
 import { isScheduledOrder, formatDeliveryWindow, getPackByLabel } from '@/utils/scheduledOrder';
 import { CalendarClock } from 'lucide-react';
 import { ScheduledOrdersForecast } from '@/components/ScheduledOrdersForecast';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const Orders = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { acceptOrder, rejectOrder, packOrder, cancelAcceptedOrder, isProcessing } = useSellerOrderActions();
   const [cancelTarget, setCancelTarget] = useState<{ id: string; status: string } | null>(null);
+  const [scheduledDate, setScheduledDate] = useState<string | null>(null);
+  const [scheduledVisible, setScheduledVisible] = useState(5);
+  const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -320,6 +327,17 @@ const Orders = () => {
   const upcomingScheduled = orders.filter(
     (o) => isScheduledOrder(o) && !SCHEDULED_EXCLUDED.includes(o.status) && (!o.delivery_date || o.delivery_date >= todayIST)
   );
+  const scheduledDates = Array.from(
+    new Set(upcomingScheduled.map((o) => o.delivery_date).filter(Boolean))
+  ).sort() as string[];
+  const activeScheduledDate =
+    scheduledDate && (scheduledDate === 'all' || scheduledDates.includes(scheduledDate))
+      ? scheduledDate
+      : scheduledDates[0] || 'all';
+  const scheduledFiltered = (activeScheduledDate === 'all'
+    ? [...upcomingScheduled]
+    : upcomingScheduled.filter((o) => o.delivery_date === activeScheduledDate)
+  ).sort((a, b) => (a.delivery_date || '').localeCompare(b.delivery_date || ''));
 
   // Product summary: total quantity and order count per product across upcoming scheduled orders
   const productSummaryMap = new Map<string, { name: string; unit: string; qty: number; orders: number }>();
@@ -429,53 +447,104 @@ const Orders = () => {
 
           {activeTab === 'scheduled' && upcomingScheduled.length > 0 && (
             <div className="space-y-4 mb-6">
-              <ScheduledOrdersForecast orders={upcomingScheduled} />
+              <ScheduledOrdersForecast
+                orders={upcomingScheduled}
+                dates={scheduledDates}
+                selected={activeScheduledDate}
+                onSelectedChange={(d) => { setScheduledDate(d); setScheduledVisible(5); }}
+              />
 
-
-              {/* Upcoming orders detail table */}
               <Card className="bg-zaago-card/50 border-zaago-border">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Upcoming Scheduled Orders</CardTitle>
+                  <CardTitle className="text-base">
+                    Upcoming Scheduled Orders ({scheduledFiltered.length})
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Delivery</TableHead>
-                          <TableHead>Customer</TableHead>
-                          <TableHead>Products</TableHead>
-                          <TableHead>Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {[...upcomingScheduled]
-                          .sort((a, b) => (a.delivery_date || '').localeCompare(b.delivery_date || ''))
-                          .map((o) => (
-                            <TableRow key={o.id}>
-                              <TableCell className="whitespace-nowrap">
-                                <div className="text-sm font-medium">{formatDeliveryWindow(o) || '—'}</div>
-                                {getPackByLabel(o) && (
-                                  <div className="text-xs text-amber-500">Pack by {getPackByLabel(o)}</div>
-                                )}
-                              </TableCell>
-                              <TableCell>{o.customer_name || 'Customer'}</TableCell>
-                              <TableCell>
-                                {(o.items || []).map((item: any, i: number) => (
-                                  <div key={i} className="text-sm">
-                                    {item.product_name || item.name}
-                                    {(item.unit || item.product_unit) ? ` (${item.unit || item.product_unit})` : ''} × {item.quantity}
-                                  </div>
-                                ))}
-                              </TableCell>
-                              <TableCell>{getStatusBadge(o.status, o.acceptance_window_expired)}</TableCell>
-                            </TableRow>
+                <CardContent className="space-y-3">
+                  {scheduledFiltered.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">No orders for this date.</p>
+                  )}
+                  {scheduledFiltered.slice(0, scheduledVisible).map((o) => {
+                    const canAct = ['new', 'pending', 'placed'].includes(o.status);
+                    return (
+                      <div key={o.id} className="rounded-lg border border-border p-3 space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium">{formatDeliveryWindow(o) || '—'}</div>
+                            {getPackByLabel(o) && (
+                              <div className="text-xs text-amber-500">Pack by {getPackByLabel(o)}</div>
+                            )}
+                          </div>
+                          {getStatusBadge(o.status, o.acceptance_window_expired)}
+                        </div>
+                        <div className="text-sm text-muted-foreground">{o.customer_name || 'Customer'}</div>
+                        <div>
+                          {(o.items || []).map((item: any, i: number) => (
+                            <div key={i} className="text-sm">
+                              {item.product_name || item.name}
+                              {(item.unit || item.product_unit) ? ` (${item.unit || item.product_unit})` : ''} × {item.quantity}
+                            </div>
                           ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                        </div>
+                        {canAct && (
+                          <div className="flex gap-2 pt-1">
+                            <Button
+                              size="sm"
+                              className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                              disabled={isProcessing === o.id}
+                              onClick={() => acceptOrder(o.id, user?.id || '')}
+                            >
+                              <CheckSquare className="w-4 h-4 mr-1" /> Accept
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="flex-1"
+                              disabled={isProcessing === o.id}
+                              onClick={() => setRejectTarget(o.id)}
+                            >
+                              <XSquare className="w-4 h-4 mr-1" /> Reject
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {scheduledFiltered.length > 5 && (
+                    <div className="flex justify-center gap-2">
+                      {scheduledVisible < scheduledFiltered.length && (
+                        <Button variant="outline" size="sm" onClick={() => setScheduledVisible((v) => v + 5)}>
+                          View More ({scheduledFiltered.length - scheduledVisible} left)
+                        </Button>
+                      )}
+                      {scheduledVisible > 5 && (
+                        <Button variant="ghost" size="sm" onClick={() => setScheduledVisible(5)}>
+                          Show Less
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
+
+              <AlertDialog open={!!rejectTarget} onOpenChange={(open) => !open && setRejectTarget(null)}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Reject this order?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      The customer's booking will be rejected. This cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => { if (rejectTarget) rejectOrder(rejectTarget, user?.id || ''); setRejectTarget(null); }}
+                    >
+                      Reject
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           )}
 

@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { motion } from 'framer-motion';
 import { CalendarClock, Package, Target, ShoppingBag, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +8,9 @@ import { Button } from '@/components/ui/button';
 
 interface Props {
   orders: any[];
+  dates: string[];
+  selected: string;
+  onSelectedChange: (d: string) => void;
   onRefresh?: () => void;
   loading?: boolean;
 }
@@ -14,13 +18,9 @@ interface Props {
 const formatDate = (d: string) =>
   new Date(`${d}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
 
-export const ScheduledOrdersForecast = ({ orders, onRefresh, loading }: Props) => {
-  const dates = useMemo(
-    () => Array.from(new Set(orders.map((o) => o.delivery_date).filter(Boolean))).sort() as string[],
-    [orders]
-  );
-  const [selected, setSelected] = useState<string>('all');
-  const active = selected === 'all' || dates.includes(selected) ? selected : 'all';
+export const ScheduledOrdersForecast = ({ orders, dates, selected, onSelectedChange, onRefresh, loading }: Props) => {
+  const active = selected;
+  const countFor = (d: string) => orders.filter((o) => o.delivery_date === d).length;
 
   const filtered = active === 'all' ? orders : orders.filter((o) => o.delivery_date === active);
 
@@ -65,20 +65,20 @@ export const ScheduledOrdersForecast = ({ orders, onRefresh, loading }: Props) =
             </Button>
           )}
         </div>
-        <div className="flex gap-2 overflow-x-auto pt-3 -mb-1 pb-1">
-          {['all', ...dates].map((d) => (
-            <button
-              key={d}
-              onClick={() => setSelected(d)}
-              className={`whitespace-nowrap text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                active === d
-                  ? 'bg-amber-500 text-background border-amber-500'
-                  : 'border-border text-muted-foreground hover:bg-muted'
-              }`}
-            >
-              {d === 'all' ? 'All Upcoming' : formatDate(d)}
-            </button>
-          ))}
+        <div className="pt-3">
+          <Select value={active} onValueChange={onSelectedChange}>
+            <SelectTrigger className="w-full sm:w-64 border-amber-500/40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {dates.map((d) => (
+                <SelectItem key={d} value={d}>
+                  {formatDate(d)} ({countFor(d)} {countFor(d) === 1 ? 'order' : 'orders'})
+                </SelectItem>
+              ))}
+              <SelectItem value="all">All Upcoming ({orders.length} orders)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </CardHeader>
 
