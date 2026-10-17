@@ -12,6 +12,7 @@ import {
   Eye,
   CheckSquare,
   XSquare,
+  Phone,
   Ban,
   RefreshCw
 } from 'lucide-react';
@@ -477,7 +478,16 @@ const Orders = () => {
                           </div>
                           {getStatusBadge(o.status, o.acceptance_window_expired)}
                         </div>
-                        <div className="text-sm text-muted-foreground">{o.customer_name || 'Customer'}</div>
+                        {o.customer_phone ? (
+                          <a
+                            href={`tel:${o.customer_phone}`}
+                            className="text-sm text-muted-foreground inline-flex items-center gap-1 hover:text-zaago-green"
+                          >
+                            {o.customer_name || 'Customer'} <Phone className="w-3.5 h-3.5 text-zaago-green" />
+                          </a>
+                        ) : (
+                          <div className="text-sm text-muted-foreground">{o.customer_name || 'Customer'}</div>
+                        )}
                         <div>
                           {(o.items || []).map((item: any, i: number) => (
                             <div key={i} className="text-sm">
