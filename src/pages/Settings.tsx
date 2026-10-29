@@ -39,6 +39,7 @@ import { TestOrderNotification } from '@/components/TestOrderNotification';
 import { MapSelector } from '@/components/MapSelector';
 import { Link } from 'react-router-dom';
 import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
+import { OperatingHoursCard } from '@/components/OperatingHoursCard';
 
 
 const Settings = () => {
@@ -379,6 +380,8 @@ const Settings = () => {
           transition={{ delay: 0.2, duration: 0.3 }}
           className="space-y-6"
         >
+          <OperatingHoursCard />
+
           {/* Personal Info */}
           <Card className="zaago-card">
             <CardHeader>

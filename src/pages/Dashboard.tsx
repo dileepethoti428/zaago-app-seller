@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomerLookupDialog } from '@/components/CustomerLookupDialog';
 import { useUpcomingScheduledOrders } from '@/hooks/useUpcomingScheduledOrders';
 import { CalendarClock, ChevronRight } from 'lucide-react';
+import { ShopStatusToggle } from '@/components/ShopStatusToggle';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -172,6 +173,8 @@ const Dashboard = () => {
       transition={{ duration: 0.5 }}
       className="space-y-6 sm:space-y-8"
     >
+
+      <ShopStatusToggle />
 
       {/* Header */}
       <motion.div
