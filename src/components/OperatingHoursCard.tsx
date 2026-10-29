@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Clock } from 'lucide-react';
 import { useShopStatus } from '@/hooks/useShopStatus';
+import { ShopStatusToggle } from '@/components/ShopStatusToggle';
 
 export const OperatingHoursCard = () => {
   const { settings, loading, saving, saveTimings } = useShopStatus();
