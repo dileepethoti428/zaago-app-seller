@@ -9808,6 +9808,7 @@ export type Database = {
           partner_phone: string
         }[]
       }
+      get_closed_seller_ids: { Args: never; Returns: string[] }
       get_compensation_details: {
         Args: { p_compensation_id: string }
         Returns: Json

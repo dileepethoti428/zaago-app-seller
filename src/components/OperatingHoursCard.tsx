@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Clock } from 'lucide-react';
 import { useShopStatus } from '@/hooks/useShopStatus';
+import { ShopStatusToggle } from '@/components/ShopStatusToggle';
 
 export const OperatingHoursCard = () => {
   const { settings, loading, saving, saveTimings } = useShopStatus();
@@ -28,6 +29,7 @@ export const OperatingHoursCard = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <ShopStatusToggle />
         <div className="flex items-center justify-between gap-3">
           <Label htmlFor="auto-schedule" className="leading-snug">Auto open and close shop based on timings</Label>
           <Switch id="auto-schedule" checked={auto} onCheckedChange={setAuto} />
