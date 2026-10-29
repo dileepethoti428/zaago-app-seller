@@ -1228,6 +1228,78 @@ export type Database = {
           },
         ]
       }
+      blog_page_settings: {
+        Row: {
+          created_at: string
+          id: boolean
+          introduction: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: boolean
+          introduction: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: boolean
+          introduction?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      blog_posts: {
+        Row: {
+          author_name: string | null
+          content: Json
+          cover_image_url: string | null
+          created_at: string
+          created_by: string | null
+          excerpt: string | null
+          id: string
+          published_at: string | null
+          read_minutes: number
+          slug: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_name?: string | null
+          content?: Json
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          excerpt?: string | null
+          id?: string
+          published_at?: string | null
+          read_minutes?: number
+          slug: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_name?: string | null
+          content?: Json
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          excerpt?: string | null
+          id?: string
+          published_at?: string | null
+          read_minutes?: number
+          slug?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bonuses: {
         Row: {
           amount: number
@@ -6134,6 +6206,39 @@ export type Database = {
         }
         Relationships: []
       }
+      seller_cod_settlements: {
+        Row: {
+          amount: number
+          id: string
+          notes: string | null
+          order_id: string
+          seller_id: string
+          settled_at: string
+          settled_by: string | null
+          transaction_ref: string | null
+        }
+        Insert: {
+          amount?: number
+          id?: string
+          notes?: string | null
+          order_id: string
+          seller_id: string
+          settled_at?: string
+          settled_by?: string | null
+          transaction_ref?: string | null
+        }
+        Update: {
+          amount?: number
+          id?: string
+          notes?: string | null
+          order_id?: string
+          seller_id?: string
+          settled_at?: string
+          settled_by?: string | null
+          transaction_ref?: string | null
+        }
+        Relationships: []
+      }
       seller_earnings: {
         Row: {
           commission_amount: number | null
@@ -6334,11 +6439,13 @@ export type Database = {
           approval_status: string | null
           approved_at: string | null
           approved_by: string | null
+          auto_schedule_enabled: boolean
           bank_branch: string | null
           bank_name: string | null
           business_description: string | null
           business_license: string | null
           business_name: string | null
+          closing_time: string
           created_at: string
           deleted_at: string | null
           deletion_reason: string | null
@@ -6353,6 +6460,7 @@ export type Database = {
           is_bank_verified: boolean | null
           is_deactivated: boolean | null
           is_deleted: boolean | null
+          is_shop_open: boolean
           kyc_status: string | null
           kyc_submitted_at: string | null
           kyc_verified_at: string | null
@@ -6363,6 +6471,7 @@ export type Database = {
           longitude: number | null
           name: string
           onesignal_player_id: string | null
+          opening_time: string
           pan_image_url: string | null
           pan_number: string | null
           pan_verified: boolean
@@ -6389,11 +6498,13 @@ export type Database = {
           approval_status?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          auto_schedule_enabled?: boolean
           bank_branch?: string | null
           bank_name?: string | null
           business_description?: string | null
           business_license?: string | null
           business_name?: string | null
+          closing_time?: string
           created_at?: string
           deleted_at?: string | null
           deletion_reason?: string | null
@@ -6408,6 +6519,7 @@ export type Database = {
           is_bank_verified?: boolean | null
           is_deactivated?: boolean | null
           is_deleted?: boolean | null
+          is_shop_open?: boolean
           kyc_status?: string | null
           kyc_submitted_at?: string | null
           kyc_verified_at?: string | null
@@ -6418,6 +6530,7 @@ export type Database = {
           longitude?: number | null
           name: string
           onesignal_player_id?: string | null
+          opening_time?: string
           pan_image_url?: string | null
           pan_number?: string | null
           pan_verified?: boolean
@@ -6444,11 +6557,13 @@ export type Database = {
           approval_status?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          auto_schedule_enabled?: boolean
           bank_branch?: string | null
           bank_name?: string | null
           business_description?: string | null
           business_license?: string | null
           business_name?: string | null
+          closing_time?: string
           created_at?: string
           deleted_at?: string | null
           deletion_reason?: string | null
@@ -6463,6 +6578,7 @@ export type Database = {
           is_bank_verified?: boolean | null
           is_deactivated?: boolean | null
           is_deleted?: boolean | null
+          is_shop_open?: boolean
           kyc_status?: string | null
           kyc_submitted_at?: string | null
           kyc_verified_at?: string | null
@@ -6473,6 +6589,7 @@ export type Database = {
           longitude?: number | null
           name?: string
           onesignal_player_id?: string | null
+          opening_time?: string
           pan_image_url?: string | null
           pan_number?: string | null
           pan_verified?: boolean
@@ -9668,6 +9785,14 @@ export type Database = {
           total: number
         }[]
       }
+      get_bug_report_customer_details: {
+        Args: { p_report_id: string }
+        Returns: {
+          email: string
+          full_name: string
+          phone: string
+        }[]
+      }
       get_calculate_seller_payouts_json: {
         Args: { end_date: string; start_date: string }
         Returns: Json
@@ -10386,6 +10511,10 @@ export type Database = {
           customer_lon: number
           max_distance_km?: number
         }
+        Returns: boolean
+      }
+      is_seller_shop_open: {
+        Args: { p_seller_user_id: string }
         Returns: boolean
       }
       is_user_eligible_for_coupon: {
