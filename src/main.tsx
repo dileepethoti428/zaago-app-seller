@@ -1,4 +1,12 @@
 import { createRoot } from "react-dom/client";
+
+// Benign browser warning (layout settles next frame); stop it surfacing as a crash.
+window.addEventListener("error", (e) => {
+  if (typeof e.message === "string" && e.message.includes("ResizeObserver loop")) {
+    e.stopImmediatePropagation();
+    e.preventDefault();
+  }
+}, true);
 import { ThemeProvider } from "next-themes";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { PushNotifications } from "@capacitor/push-notifications";
