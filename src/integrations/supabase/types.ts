@@ -6426,6 +6426,57 @@ export type Database = {
           },
         ]
       }
+      seller_subscription_settlements: {
+        Row: {
+          amount: number
+          bonus: number
+          commission: number
+          created_at: string
+          fine: number
+          id: string
+          net_amount: number
+          notes: string | null
+          seller_id: string
+          settled_at: string
+          settled_by: string | null
+          subscription_id: string
+          tds: number
+          transaction_ref: string | null
+        }
+        Insert: {
+          amount?: number
+          bonus?: number
+          commission?: number
+          created_at?: string
+          fine?: number
+          id?: string
+          net_amount?: number
+          notes?: string | null
+          seller_id: string
+          settled_at?: string
+          settled_by?: string | null
+          subscription_id: string
+          tds?: number
+          transaction_ref?: string | null
+        }
+        Update: {
+          amount?: number
+          bonus?: number
+          commission?: number
+          created_at?: string
+          fine?: number
+          id?: string
+          net_amount?: number
+          notes?: string | null
+          seller_id?: string
+          settled_at?: string
+          settled_by?: string | null
+          subscription_id?: string
+          tds?: number
+          transaction_ref?: string | null
+        }
+        Relationships: []
+      }
       sellers: {
         Row: {
           aadhaar_back_url: string | null
