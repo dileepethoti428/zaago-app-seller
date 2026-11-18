@@ -1,4 +1,6 @@
 import { motion } from 'framer-motion';
+import { FolderPen } from 'lucide-react';
+import { CategoriesManagerDialog } from '@/components/CategoriesManagerDialog';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
@@ -68,6 +70,7 @@ const Products = () => {
 
   const hasAnyActive = products.some(p => p.is_active);
   const bulkTargetState = !hasAnyActive; // if none active -> activate all; else deactivate all
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const bulkActionLabel = bulkTargetState ? 'Activate All' : 'Deactivate All';
 
   const performBulkToggle = async () => {
@@ -402,6 +405,11 @@ const Products = () => {
               {bulkActionLabel} ({products.length})
             </Button>
           )}
+          <Button type="button" variant="outline" onClick={() => setCategoriesOpen(true)} className="border-zaago-border text-foreground hover:bg-zaago-accent">
+            <FolderPen className="w-4 h-4 mr-2" />
+            Edit Categories
+          </Button>
+          <CategoriesManagerDialog open={categoriesOpen} onOpenChange={setCategoriesOpen} />
           <Link to="/products/new">
             <Button className="bg-zaago-green hover:bg-zaago-green-light text-black font-medium">
               <Plus className="w-4 h-4 mr-2" />

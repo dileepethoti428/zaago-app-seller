@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
@@ -16,6 +16,8 @@ import { uploadCategoryImage } from '@/utils/categoryImage';
 
 const EditCategory = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const backTo = searchParams.get('from') === 'products' ? '/products' : '/products/new';
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -103,7 +105,7 @@ const EditCategory = () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       queryClient.invalidateQueries({ queryKey: ['category', id] });
       toast({ title: 'Category updated successfully!' });
-      navigate('/products/new');
+      navigate(backTo);
     },
     onError: (error: any) => {
       toast({
@@ -126,7 +128,7 @@ const EditCategory = () => {
   return (
     <div className="p-6 space-y-6 max-w-2xl mx-auto">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/products/new')}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(backTo)}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
