@@ -1,0 +1,1 @@
+ALTER TABLE public.sellers ADD COLUMN IF NOT EXISTS all_category_image_url text;

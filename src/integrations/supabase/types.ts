@@ -6487,6 +6487,7 @@ export type Database = {
           account_number: string | null
           account_type: string | null
           address: Json | null
+          all_category_image_url: string | null
           approval_status: string | null
           approved_at: string | null
           approved_by: string | null
@@ -6546,6 +6547,7 @@ export type Database = {
           account_number?: string | null
           account_type?: string | null
           address?: Json | null
+          all_category_image_url?: string | null
           approval_status?: string | null
           approved_at?: string | null
           approved_by?: string | null
@@ -6605,6 +6607,7 @@ export type Database = {
           account_number?: string | null
           account_type?: string | null
           address?: Json | null
+          all_category_image_url?: string | null
           approval_status?: string | null
           approved_at?: string | null
           approved_by?: string | null
