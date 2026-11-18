@@ -64,9 +64,11 @@ export function CategoriesManagerDialog({ open, onOpenChange }: { open: boolean;
     if (!user?.id) return;
     setSavingAll(true);
     try {
-      const url = file ? await uploadCategoryImage(file) : null;
-      const { error } = await supabase.from('sellers').update({ all_category_image_url: url } as any).eq('user_id', user.id);
+      const raw = file ? await uploadCategoryImage(file) : null;
+      const url = raw ? `${raw}${raw.includes('?') ? '&' : '?'}v=${Date.now()}` : null;
+      const { data: saved, error } = await supabase.from('sellers').update({ all_category_image_url: url } as any).eq('user_id', user.id).select('user_id');
       if (error) throw error;
+      if (!saved || saved.length === 0) throw new Error('Photo not saved — shop profile not found');
       toast.success(url ? 'All photo updated' : 'All photo reset to a product photo');
       setEditingAll(false);
       await load();
