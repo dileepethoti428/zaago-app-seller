@@ -18,6 +18,7 @@ export function CategoriesManagerDialog({ open, onOpenChange }: { open: boolean;
   const { user } = useAuth();
   const navigate = useNavigate();
   const [rows, setRows] = useState<Row[]>([]);
+  const [allInfo, setAllInfo] = useState<{ count: number; photo: string | null }>({ count: 0, photo: null });
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState('');
   const [target, setTarget] = useState<Row | null>(null);
@@ -29,6 +30,8 @@ export function CategoriesManagerDialog({ open, onOpenChange }: { open: boolean;
       supabase.from('categories').select('id, name, image_url, is_active').eq('seller_id', user.id).order('name'),
       supabase.from('products').select('category_id, category, image_url').eq('seller_id', user.id),
     ]);
+    const all = prods || [];
+    setAllInfo({ count: all.length, photo: all.find((p: any) => p.image_url)?.image_url || null });
     setRows((cats || []).map((c: any) => {
       const mine = (prods || []).filter((p: any) => p.category_id === c.id || p.category === c.name);
       const withImg = mine.find((p: any) => p.image_url);
@@ -62,6 +65,17 @@ export function CategoriesManagerDialog({ open, onOpenChange }: { open: boolean;
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search categories" className="pl-9" />
           </div>
           <div className="flex-1 overflow-y-auto space-y-1 -mx-1 px-1">
+            {!loading && 'all'.includes(q.toLowerCase()) && (
+              <div className="flex items-center gap-3 rounded-lg px-2 py-2 border border-border bg-muted/40">
+                <CategoryThumb url={allInfo.photo} />
+                <div className="flex-1 min-w-0">
+                  <p className="truncate text-foreground font-medium">All</p>
+                  <p className="text-xs text-muted-foreground">
+                    {allInfo.count} product{allInfo.count === 1 ? '' : 's'} • Shows everything
+                  </p>
+                </div>
+              </div>
+            )}
             {loading ? (
               <p className="text-sm text-muted-foreground py-6 text-center">Loading...</p>
             ) : filtered.length === 0 ? (
