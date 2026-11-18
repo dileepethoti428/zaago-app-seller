@@ -12,7 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, Save, Upload, X } from 'lucide-react';
-import { compressImage } from '@/lib/imageCompression';
+import { uploadCategoryImage } from '@/utils/categoryImage';
 
 const EditCategory = () => {
   const navigate = useNavigate();
@@ -79,21 +79,7 @@ const EditCategory = () => {
   const uploadImage = async (): Promise<string | null> => {
     if (!selectedImage) return existingImageUrl;
 
-    const compressedImage = await compressImage(selectedImage);
-    const fileName = `${Date.now()}-${selectedImage.name}`;
-    const filePath = `category-images/${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('product-images')
-      .upload(filePath, compressedImage);
-
-    if (uploadError) throw uploadError;
-
-    const { data: publicUrlData } = supabase.storage
-      .from('product-images')
-      .getPublicUrl(filePath);
-
-    return publicUrlData.publicUrl;
+    return uploadCategoryImage(selectedImage);
   };
 
   const updateMutation = useMutation({
@@ -204,6 +190,7 @@ const EditCategory = () => {
                     className="hidden"
                   />
                 </label>
+                <p className="mt-1 text-xs text-muted-foreground">Square, 512×512, white or see-through background, under 1 MB. Photos are resized automatically.</p>
               </div>
             )}
           </div>

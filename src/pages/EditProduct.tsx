@@ -1,3 +1,5 @@
+import { NewCategoryExtras, CategoryThumb } from '@/components/NewCategoryExtras';
+import { uploadCategoryImage } from '@/utils/categoryImage';
 import { AvailableDaysPicker } from '@/components/AvailableDaysPicker';
 import { motion } from 'framer-motion';
 import {
@@ -115,6 +117,7 @@ export default function EditProductPage() {
   // Category / unit / tag UI state — mirrors AddProduct
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryPhoto, setNewCategoryPhoto] = useState<File | null>(null);
   const [showCustomUnitInput, setShowCustomUnitInput] = useState(false);
   const [customUnit, setCustomUnit] = useState('');
   const [showCustomTagInput, setShowCustomTagInput] = useState(false);
@@ -386,9 +389,14 @@ export default function EditProductPage() {
       // Handle new category creation
       let finalCategoryId = formData.category_id;
       if (showNewCategoryInput && newCategoryName.trim()) {
+        let newCategoryImageUrl: string | null = null;
+        if (newCategoryPhoto) {
+          try { newCategoryImageUrl = await uploadCategoryImage(newCategoryPhoto); }
+          catch (e: any) { toast({ title: 'Photo upload failed', description: e.message, variant: 'destructive' }); setLoading(false); return; }
+        }
         const { data: newCategory, error: categoryError } = await supabase
           .from('categories')
-          .insert([{ name: newCategoryName.trim(), is_active: true, seller_id: user.id }])
+          .insert([{ name: newCategoryName.trim(), image_url: newCategoryImageUrl, is_active: true, seller_id: user.id }])
           .select()
           .single();
         if (categoryError) {
@@ -704,6 +712,7 @@ export default function EditProductPage() {
                                 className="flex-1 text-left flex items-center gap-2 text-foreground"
                               >
                                 {isSelected && <Check className="w-4 h-4 text-primary" />}
+                                <CategoryThumb url={(category as any).image_url} />
                                 <span className="truncate">{category.name}</span>
                               </button>
                               <button
@@ -814,6 +823,13 @@ export default function EditProductPage() {
                           onChange={(e) => setNewCategoryName(e.target.value)}
                           placeholder="Enter new category name"
                           className="w-full px-4 py-3 bg-card border border-primary rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                        />
+                        <NewCategoryExtras
+                          name={newCategoryName}
+                          categories={categories}
+                          photo={newCategoryPhoto}
+                          onPhotoChange={setNewCategoryPhoto}
+                          onUseExisting={(cid) => { setShowNewCategoryInput(false); setNewCategoryName(''); setNewCategoryPhoto(null); handleInputChange('category_id', cid); }}
                         />
                         <button
                           type="button"
